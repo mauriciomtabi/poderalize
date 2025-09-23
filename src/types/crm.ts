@@ -1,3 +1,36 @@
+export type LeadStatus = 'novo' | 'qualificado' | 'proposta' | 'negociacao' | 'fechado' | 'perdido';
+
+export interface Lead {
+  id: string;
+  nome: string;
+  empresa: string;
+  email: string;
+  telefone: string;
+  fonte: string;
+  status: LeadStatus;
+  valor: number;
+  probabilidade: number;
+  dataContato: string;
+  observacoes?: string;
+  
+  // Presença Digital
+  site?: string;
+  instagram?: string;
+  facebook?: string;
+  outrasRedesSociais?: string;
+  
+  // Faturamento
+  faturamentoAtual?: number;
+  faturamentoDesejado?: number;
+  
+  // Comportamento e Potencial
+  doresIdentificadas?: string[];
+  nivelConsciencia?: string;
+  etapaJornada?: string;
+  indicadorPotencial?: string;
+  equipeAtual?: string;
+}
+
 export interface LeadAdvanced {
   id: string;
   nome: string;

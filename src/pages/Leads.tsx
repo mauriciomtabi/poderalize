@@ -23,20 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Search, Mail, Phone, Building, Star, Calendar, Target } from "lucide-react";
 import { toast } from "sonner";
-
-interface Lead {
-  id: string;
-  nome: string;
-  empresa: string;
-  email: string;
-  telefone: string;
-  fonte: string;
-  status: "novo" | "qualificado" | "proposta" | "negociacao" | "fechado" | "perdido";
-  valor: number;
-  probabilidade: number;
-  dataContato: string;
-  observacoes?: string;
-}
+import { Lead } from "@/types/crm";
 
 const Leads = () => {
   const [leads, setLeads] = useState<Lead[]>([
@@ -45,39 +32,65 @@ const Leads = () => {
       nome: "Carlos Mendes",
       empresa: "Tech Solutions",
       email: "carlos@techsolutions.com",
-      telefone: "(11) 99999-1111",
+      telefone: "11 99999-1111",
       fonte: "Website",
       status: "novo",
       valor: 50000,
       probabilidade: 25,
       dataContato: "2024-09-20",
-      observacoes: "Interessado em rebranding completo"
+      observacoes: "Interessado em rebranding completo",
+      site: "www.techsolutions.com.br",
+      instagram: "@techsolutions",
+      faturamentoAtual: 80000,
+      faturamentoDesejado: 150000,
+      doresIdentificadas: ["Baixa visibilidade online", "Poucas vendas"],
+      nivelConsciencia: "Consciente do problema",
+      etapaJornada: "Consideração",
+      indicadorPotencial: "Lead com médio potencial (interessado, mas travado)",
+      equipeAtual: "5 colaboradores fixos"
     },
     {
       id: "2",
       nome: "Fernanda Lima",
       empresa: "StartupXYZ",
       email: "fernanda@startupxyz.com",
-      telefone: "(11) 88888-2222",
+      telefone: "11 88888-2222",
       fonte: "LinkedIn",
       status: "qualificado",
       valor: 75000,
       probabilidade: 60,
       dataContato: "2024-09-18",
-      observacoes: "Precisa de estratégia digital completa"
+      observacoes: "Precisa de estratégia digital completa",
+      facebook: "facebook.com/startupxyz",
+      outrasRedesSociais: "LinkedIn, TikTok",
+      faturamentoAtual: 45000,
+      faturamentoDesejado: 100000,
+      doresIdentificadas: ["Falta de estratégia digital", "Concorrência forte"],
+      nivelConsciencia: "Consciente da solução",
+      etapaJornada: "Decisão",
+      indicadorPotencial: "Lead com alto potencial (com verba, decisão e clareza)",
+      equipeAtual: "3 colaboradores fixos e 2 freelancers"
     },
     {
       id: "3",
       nome: "Roberto Santos",
       empresa: "Indústria ABC",
       email: "roberto@industriaabc.com",
-      telefone: "(11) 77777-3333",
+      telefone: "11 77777-3333",
       fonte: "Indicação",
       status: "proposta",
       valor: 120000,
       probabilidade: 80,
       dataContato: "2024-09-15",
-      observacoes: "Aguardando aprovação da diretoria"
+      observacoes: "Aguardando aprovação da diretoria",
+      site: "www.industriaabc.com.br",
+      faturamentoAtual: 200000,
+      faturamentoDesejado: 350000,
+      doresIdentificadas: ["Marca não reconhecida", "Processos desorganizados"],
+      nivelConsciencia: "Totalmente consciente (pronto para comprar)",
+      etapaJornada: "Decisão",
+      indicadorPotencial: "Lead com alto potencial (com verba, decisão e clareza)",
+      equipeAtual: "15 colaboradores"
     },
   ]);
 
@@ -91,6 +104,23 @@ const Leads = () => {
     fonte: "",
     valor: "",
     observacoes: "",
+    
+    // Presença Digital
+    site: "",
+    instagram: "",
+    facebook: "",
+    outrasRedesSociais: "",
+    
+    // Faturamento
+    faturamentoAtual: "",
+    faturamentoDesejado: "",
+    
+    // Comportamento e Potencial
+    doresIdentificadas: [] as string[],
+    nivelConsciencia: "",
+    etapaJornada: "",
+    indicadorPotencial: "",
+    equipeAtual: "",
   });
 
   const statusOptions = [
@@ -114,6 +144,38 @@ const Leads = () => {
     "E-mail Marketing"
   ];
 
+  const doresOptions = [
+    "Baixa visibilidade online",
+    "Poucas vendas",
+    "Dificuldade para gerar leads",
+    "Marca não reconhecida",
+    "Concorrência forte",
+    "Falta de estratégia digital",
+    "Equipe sem capacitação",
+    "Processos desorganizados"
+  ];
+
+  const nivelConscienciaOptions = [
+    "Inconsciente (não sabe que tem um problema)",
+    "Consciente do problema",
+    "Consciente da solução",
+    "Consciente do produto/serviço",
+    "Totalmente consciente (pronto para comprar)"
+  ];
+
+  const etapaJornadaOptions = [
+    "Descoberta",
+    "Consideração",
+    "Decisão",
+    "Fidelização"
+  ];
+
+  const indicadorPotencialOptions = [
+    "Lead com alto potencial (com verba, decisão e clareza)",
+    "Lead com médio potencial (interessado, mas travado)",
+    "Lead com baixo potencial (curioso, mas distante do perfil ideal)"
+  ];
+
   const filteredLeads = leads.filter(lead =>
     lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,6 +192,8 @@ const Leads = () => {
       id: Math.random().toString(36).substr(2, 9),
       ...novoLead,
       valor: parseFloat(novoLead.valor) || 0,
+      faturamentoAtual: parseFloat(novoLead.faturamentoAtual) || undefined,
+      faturamentoDesejado: parseFloat(novoLead.faturamentoDesejado) || undefined,
       status: "novo",
       probabilidade: 25,
       dataContato: new Date().toISOString().split('T')[0]
@@ -144,6 +208,23 @@ const Leads = () => {
       fonte: "",
       valor: "",
       observacoes: "",
+      
+      // Presença Digital
+      site: "",
+      instagram: "",
+      facebook: "",
+      outrasRedesSociais: "",
+      
+      // Faturamento
+      faturamentoAtual: "",
+      faturamentoDesejado: "",
+      
+      // Comportamento e Potencial
+      doresIdentificadas: [] as string[],
+      nivelConsciencia: "",
+      etapaJornada: "",
+      indicadorPotencial: "",
+      equipeAtual: "",
     });
     setIsDialogOpen(false);
     toast.success("Lead adicionado com sucesso!");
@@ -233,72 +314,254 @@ const Leads = () => {
                 Novo Lead
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Adicionar Novo Lead</DialogTitle>
+                <DialogTitle>Cadastro de Lead</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="nome">Nome *</Label>
-                    <Input
-                      id="nome"
-                      value={novoLead.nome}
-                      onChange={(e) => setNovoLead({...novoLead, nome: e.target.value})}
-                      placeholder="Nome do contato"
-                    />
+              <div className="space-y-6">
+                {/* Dados Básicos */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="nome">Nome *</Label>
+                      <Input
+                        id="nome"
+                        value={novoLead.nome}
+                        onChange={(e) => setNovoLead({...novoLead, nome: e.target.value})}
+                        placeholder="Nome do contato"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="empresa">Empresa *</Label>
+                      <Input
+                        id="empresa"
+                        value={novoLead.empresa}
+                        onChange={(e) => setNovoLead({...novoLead, empresa: e.target.value})}
+                        placeholder="Nome da empresa"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="empresa">Empresa *</Label>
-                    <Input
-                      id="empresa"
-                      value={novoLead.empresa}
-                      onChange={(e) => setNovoLead({...novoLead, empresa: e.target.value})}
-                      placeholder="Nome da empresa"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="email">E-mail *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={novoLead.email}
-                      onChange={(e) => setNovoLead({...novoLead, email: e.target.value})}
-                      placeholder="email@empresa.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      value={novoLead.telefone}
-                      onChange={(e) => setNovoLead({...novoLead, telefone: e.target.value})}
-                      placeholder="(11) 99999-9999"
-                    />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="telefone">Telefone</Label>
+                      <div className="flex">
+                        <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-muted">
+                          🇧🇷 +55
+                        </div>
+                        <Input
+                          id="telefone"
+                          value={novoLead.telefone}
+                          onChange={(e) => setNovoLead({...novoLead, telefone: e.target.value})}
+                          placeholder="11 99999-9999"
+                          className="rounded-l-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="email">E-mail *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={novoLead.email}
+                        onChange={(e) => setNovoLead({...novoLead, email: e.target.value})}
+                        placeholder="email@empresa.com"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fonte">Fonte</Label>
-                    <Select onValueChange={(value) => setNovoLead({...novoLead, fonte: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Como nos conheceu?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fonteOptions.map((fonte) => (
-                          <SelectItem key={fonte} value={fonte}>
-                            {fonte}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* Presença Digital */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-primary">PRESENÇA DIGITAL</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="site">Site</Label>
+                      <Input
+                        id="site"
+                        value={novoLead.site}
+                        onChange={(e) => setNovoLead({...novoLead, site: e.target.value})}
+                        placeholder="www.empresa.com.br"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="instagram">Instagram</Label>
+                      <Input
+                        id="instagram"
+                        value={novoLead.instagram}
+                        onChange={(e) => setNovoLead({...novoLead, instagram: e.target.value})}
+                        placeholder="@empresa"
+                      />
+                    </div>
                   </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="facebook">Facebook</Label>
+                      <Input
+                        id="facebook"
+                        value={novoLead.facebook}
+                        onChange={(e) => setNovoLead({...novoLead, facebook: e.target.value})}
+                        placeholder="facebook.com/empresa"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="outrasRedesSociais">Outras Redes Sociais (LinkedIn, TikTok, etc.)</Label>
+                      <Input
+                        id="outrasRedesSociais"
+                        value={novoLead.outrasRedesSociais}
+                        onChange={(e) => setNovoLead({...novoLead, outrasRedesSociais: e.target.value})}
+                        placeholder="LinkedIn, TikTok, YouTube..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Faturamento */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-primary">FATURAMENTO</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="faturamentoAtual">Faturamento Mensal Atual</Label>
+                      <Input
+                        id="faturamentoAtual"
+                        type="number"
+                        value={novoLead.faturamentoAtual}
+                        onChange={(e) => setNovoLead({...novoLead, faturamentoAtual: e.target.value})}
+                        placeholder="50000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="faturamentoDesejado">Faturamento Mensal Desejado</Label>
+                      <Input
+                        id="faturamentoDesejado"
+                        type="number"
+                        value={novoLead.faturamentoDesejado}
+                        onChange={(e) => setNovoLead({...novoLead, faturamentoDesejado: e.target.value})}
+                        placeholder="100000"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comportamento e Potencial */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-primary">COMPORTAMENTO E POTENCIAL</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Dores identificadas</Label>
+                      <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                        {doresOptions.map((dor) => (
+                          <label key={dor} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={novoLead.doresIdentificadas.includes(dor)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setNovoLead({
+                                    ...novoLead,
+                                    doresIdentificadas: [...novoLead.doresIdentificadas, dor]
+                                  });
+                                } else {
+                                  setNovoLead({
+                                    ...novoLead,
+                                    doresIdentificadas: novoLead.doresIdentificadas.filter(d => d !== dor)
+                                  });
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <span className="text-sm">{dor}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="nivelConsciencia">Nível de consciência sobre marketing e vendas</Label>
+                      <Select onValueChange={(value) => setNovoLead({...novoLead, nivelConsciencia: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha uma opção" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {nivelConscienciaOptions.map((opcao) => (
+                            <SelectItem key={opcao} value={opcao}>
+                              {opcao}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="etapaJornada">Etapa da Jornada Poderalize</Label>
+                      <Select onValueChange={(value) => setNovoLead({...novoLead, etapaJornada: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha uma opção" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {etapaJornadaOptions.map((etapa) => (
+                            <SelectItem key={etapa} value={etapa}>
+                              {etapa}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="fonte">Fonte do Lead</Label>
+                      <Select onValueChange={(value) => setNovoLead({...novoLead, fonte: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Como nos conheceu?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fonteOptions.map((fonte) => (
+                            <SelectItem key={fonte} value={fonte}>
+                              {fonte}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="indicadorPotencial">Indicador de Potencial</Label>
+                      <Select onValueChange={(value) => setNovoLead({...novoLead, indicadorPotencial: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha uma opção" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {indicadorPotencialOptions.map((indicador) => (
+                            <SelectItem key={indicador} value={indicador}>
+                              {indicador}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="equipeAtual">Equipe atual / Nº de colaboradores</Label>
+                      <Input
+                        id="equipeAtual"
+                        value={novoLead.equipeAtual}
+                        onChange={(e) => setNovoLead({...novoLead, equipeAtual: e.target.value})}
+                        placeholder="Exemplo: 3 colaboradores fixos e 2 freelancers"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Campos Finais */}
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="valor">Valor Estimado (R$)</Label>
+                    <Label htmlFor="valor">Valor Estimado do Projeto (R$)</Label>
                     <Input
                       id="valor"
                       type="number"
@@ -307,17 +570,17 @@ const Leads = () => {
                       placeholder="50000"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="observacoes">Observações</Label>
-                  <Textarea
-                    id="observacoes"
-                    value={novoLead.observacoes}
-                    onChange={(e) => setNovoLead({...novoLead, observacoes: e.target.value})}
-                    placeholder="Detalhes sobre o lead..."
-                    rows={3}
-                  />
+                  <div>
+                    <Label htmlFor="observacoes">Observações</Label>
+                    <Textarea
+                      id="observacoes"
+                      value={novoLead.observacoes}
+                      onChange={(e) => setNovoLead({...novoLead, observacoes: e.target.value})}
+                      placeholder="Detalhes sobre o lead..."
+                      rows={3}
+                    />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
