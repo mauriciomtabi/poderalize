@@ -118,16 +118,17 @@ export const KanbanView = () => {
 
   return (
     <LoadingOverlay isLoading={state.isLoading}>
-      <div className="h-full p-6 overflow-hidden">
-        <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
-          <Droppable droppableId="board" type="LIST" direction="horizontal">
-            {(provided) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className="flex space-x-6 h-full overflow-x-auto pb-6 min-w-fit"
-                style={{ width: 'max-content' }}
-              >
+      <div className="h-full">
+        <div className="h-full overflow-x-auto overflow-y-hidden">
+          <div className="flex h-full p-6 pb-8 min-w-max">
+            <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
+              <Droppable droppableId="board" type="LIST" direction="horizontal">
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="flex space-x-6 h-full"
+                  >
                 {state.currentBoard.lists
                   .filter(list => !list.archived)
                   .map((list, index) => (
@@ -226,21 +227,23 @@ export const KanbanView = () => {
                 ))}
                 {provided.placeholder}
 
-                {/* Add List Button */}
-                <div className="flex-shrink-0 w-80">
-                  <Button
-                    variant="ghost"
-                    className="w-full h-20 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
-                    onClick={handleAddList}
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Adicionar lista
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+                    {/* Add List Button */}
+                    <div className="flex-shrink-0 w-80">
+                      <Button
+                        variant="ghost"
+                        className="w-full h-20 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
+                        onClick={handleAddList}
+                      >
+                        <Plus className="h-5 w-5 mr-2" />
+                        Adicionar lista
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
+        </div>
 
         <AddCardDialog
           isOpen={isAddCardOpen}
