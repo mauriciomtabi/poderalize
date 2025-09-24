@@ -137,30 +137,29 @@ export const KanbanView = () => {
                         {...provided.draggableProps}
                         className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
                       >
-                        <Card className="h-full flex flex-col kanban-column">
+                        <Card 
+                          className="h-full flex flex-col kanban-column"
+                          style={{ backgroundColor: list.color }}
+                        >
                           <CardHeader 
                             {...provided.dragHandleProps}
                             className="pb-3 cursor-grab active:cursor-grabbing"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-2">
-                                <div 
-                                  className="w-3 h-3 rounded-full" 
-                                  style={{ backgroundColor: list.color }}
-                                />
                                 <InlineEdit
                                   value={list.title}
                                   onSave={(newTitle) => actions.updateList(list.id, { title: newTitle })}
-                                  className="text-sm font-semibold text-foreground"
+                                  className="text-sm font-semibold text-white"
                                   placeholder="Título da lista"
                                 />
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
                                   {list.cards.length}
                                 </Badge>
                               </div>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
+                                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
                                     <MoreHorizontal size={16} />
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -210,7 +209,7 @@ export const KanbanView = () => {
                                 
                                 <Button
                                   variant="ghost"
-                                  className="w-full justify-start text-muted-foreground hover:text-foreground"
+                                  className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
                                   onClick={() => handleAddCard(list.id)}
                                 >
                                   <Plus size={16} className="mr-2" />

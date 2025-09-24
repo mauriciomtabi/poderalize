@@ -195,29 +195,8 @@
 
   /* Kanban específico */
   .kanban-column {
-    @apply bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/30;
-    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
-    border-top: 3px solid hsl(25 95% 53%);
-  }
-
-  .kanban-column-todo {
-    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
-    border-top: 3px solid hsl(25 95% 53%);
-  }
-
-  .kanban-column-inprogress {
-    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
-    border-top: 3px solid hsl(25 95% 53%);
-  }
-
-  .kanban-column-review {
-    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
-    border-top: 3px solid hsl(25 95% 53%);
-  }
-
-  .kanban-column-done {
-    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
-    border-top: 3px solid hsl(25 95% 53%);
+    @apply border border-white/20 shadow-md;
+    /* Background color will be set inline via style attribute */
   }
 
   .kanban-drag-preview {
