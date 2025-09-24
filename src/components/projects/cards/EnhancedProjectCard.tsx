@@ -34,13 +34,15 @@ interface EnhancedProjectCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onClick?: () => void;
 }
 
 export const EnhancedProjectCard = ({ 
   card, 
   onEdit, 
   onDelete, 
-  onDuplicate 
+  onDuplicate,
+  onClick 
 }: EnhancedProjectCardProps) => {
   const PriorityIcon = priorityConfig[card.priority].icon;
   
@@ -55,7 +57,7 @@ export const EnhancedProjectCard = ({
   const isOverdue = card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done';
 
   return (
-    <Card className="card-kanban group">
+    <Card className="card-kanban group" onClick={onClick}>
       {/* Labels */}
       {card.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
@@ -71,7 +73,7 @@ export const EnhancedProjectCard = ({
       )}
 
       {/* Title */}
-      <h3 className="font-medium text-sm mb-2 cursor-pointer" onClick={onEdit}>
+      <h3 className="font-medium text-sm mb-2 cursor-pointer">
         {card.title}
       </h3>
 

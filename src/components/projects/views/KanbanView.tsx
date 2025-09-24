@@ -16,7 +16,7 @@ import { useProjects } from "@/contexts/ProjectsContext";
 import { useState } from "react";
 import { EnhancedProjectCard } from "../cards/EnhancedProjectCard";
 import { AddCardDialog } from "../dialogs/AddCardDialog";
-import { EditCardDialog } from "../dialogs/EditCardDialog";
+import { CardDetailModal } from "../modal/CardDetailModal";
 import { InlineEdit } from "@/components/kanban/InlineEdit";
 import { LoadingOverlay } from "@/components/ui/loading-spinner";
 
@@ -24,7 +24,8 @@ export const KanbanView = () => {
   const { state, actions } = useProjects();
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string>("");
-  const [editingCard, setEditingCard] = useState<any>(null);
+  const [selectedCard, setSelectedCard] = useState<any>(null);
+  const [showCardModal, setShowCardModal] = useState(false);
 
   const onDragStart = (start: any) => {
     actions.setDraggedItem({ type: 'card', id: start.draggableId });
@@ -74,6 +75,23 @@ export const KanbanView = () => {
       watching: false
     });
     setIsAddCardOpen(false);
+  };
+
+  const handleCardClick = (card: any) => {
+    setSelectedCard(card);
+    setShowCardModal(true);
+  };
+
+  const handleEditCard = (card: any) => {
+    setSelectedCard(card);
+    setShowCardModal(true);
+  };
+
+  const handleAddList = () => {
+    const listTitle = prompt("Digite o título da nova lista:");
+    if (listTitle?.trim()) {
+      actions.addList(listTitle.trim(), "hsl(25 95% 53%)");
+    }
   };
 
   if (!state.currentBoard) {
@@ -141,9 +159,10 @@ export const KanbanView = () => {
                               >
                                 <EnhancedProjectCard
                                   card={card}
-                                  onEdit={() => setEditingCard(card)}
+                                  onEdit={() => handleEditCard(card)}
                                   onDelete={() => actions.deleteCard(card.id)}
                                   onDuplicate={() => actions.duplicateCard(card.id)}
+                                  onClick={() => handleCardClick(card)}
                                 />
                               </div>
                             )}
@@ -165,6 +184,18 @@ export const KanbanView = () => {
                 </Card>
               </div>
             ))}
+
+            {/* Add List Button */}
+            <div className="flex-shrink-0 w-80">
+              <Button
+                variant="ghost"
+                className="w-full h-20 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
+                onClick={handleAddList}
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Adicionar lista
+              </Button>
+            </div>
           </div>
         </DragDropContext>
 
@@ -176,17 +207,14 @@ export const KanbanView = () => {
           availableLabels={state.currentBoard.labels}
         />
 
-        {editingCard && (
-          <EditCardDialog
-            card={editingCard}
-            isOpen={!!editingCard}
-            onClose={() => setEditingCard(null)}
-            onUpdateCard={(updatedCard) => {
-              actions.updateCard(updatedCard);
-              setEditingCard(null);
+        {selectedCard && (
+          <CardDetailModal
+            card={selectedCard}
+            isOpen={showCardModal}
+            onClose={() => {
+              setShowCardModal(false);
+              setSelectedCard(null);
             }}
-            availableMembers={state.currentBoard.members}
-            availableLabels={state.currentBoard.labels}
           />
         )}
       </div>
