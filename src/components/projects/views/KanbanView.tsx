@@ -127,7 +127,7 @@ export const KanbanView = () => {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex space-x-6 h-full"
+                    className="flex space-x-6 h-full w-max pr-6"
                   >
                 {state.currentBoard.lists
                   .filter(list => !list.archived)

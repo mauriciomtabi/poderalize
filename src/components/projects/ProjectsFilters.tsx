@@ -47,7 +47,7 @@ function Circle({ size, className }: { size: number; className: string }) {
 
 export const ProjectsFilters = () => {
   const { state, actions } = useProjects();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const handleMemberToggle = (memberId: string) => {
     const currentMembers = state.filters.members;
