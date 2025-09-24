@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useProjects } from "@/contexts/ProjectsContext";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { EnhancedProjectCard } from "../cards/EnhancedProjectCard";
 import { AddCardDialog } from "../dialogs/AddCardDialog";
 import { AddListDialog } from "../dialogs/AddListDialog";
@@ -32,6 +32,15 @@ export const KanbanView = () => {
   const [showAddListDialog, setShowAddListDialog] = useState(false);
   const [selectedList, setSelectedList] = useState<ProjectList | null>(null);
   const [showListActionsDialog, setShowListActionsDialog] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the right when lists change
+  useEffect(() => {
+    if (scrollContainerRef.current && state.currentBoard?.lists) {
+      const scrollContainer = scrollContainerRef.current;
+      scrollContainer.scrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+    }
+  }, [state.currentBoard?.lists.length]);
 
   const onDragStart = (start: any) => {
     actions.setDraggedItem({ 
@@ -118,8 +127,11 @@ export const KanbanView = () => {
 
   return (
     <LoadingOverlay isLoading={state.isLoading}>
-      <div className="h-full">
-        <div className="h-full overflow-x-auto overflow-y-hidden min-w-0">
+      <div className="flex h-full min-w-0 min-h-0">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-x-auto overflow-y-hidden min-w-0"
+        >
           <div className="h-full">
             <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
               <Droppable droppableId="board" type="LIST" direction="horizontal">
@@ -127,7 +139,7 @@ export const KanbanView = () => {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="inline-flex gap-6 h-full w-max pl-6 pr-14 pb-8"
+                    className="inline-flex gap-6 h-full w-max pl-6 pr-20 pb-8"
                   >
                 {state.currentBoard.lists
                   .filter(list => !list.archived)
