@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ProjectsFilters } from "./ProjectsFilters";
 import { KanbanView } from "./views/KanbanView";
@@ -7,13 +6,10 @@ import { CalendarView } from "./views/CalendarView";
 import { DashboardView } from "./views/DashboardView";
 import { TimelineView } from "./views/TimelineView";
 import { MapView } from "./views/MapView";
-import { Button } from "@/components/ui/button";
-import { Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const ProjectsContent = () => {
+export const ProjectsContent = ({ showFilters }: { showFilters: boolean }) => {
   const { state } = useProjects();
-  const [showFilters, setShowFilters] = useState(false);
 
   const renderCurrentView = () => {
     switch (state.currentView) {
@@ -49,21 +45,7 @@ export const ProjectsContent = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 relative">
-        {/* Filter Toggle Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-          className={cn(
-            "absolute top-4 left-4 z-10 transition-all duration-300",
-            showFilters && "left-[-320px]"
-          )}
-        >
-          <Filter size={16} className="mr-1" />
-          {showFilters ? 'Ocultar' : 'Filtros'}
-        </Button>
-
+      <div className="flex-1">
         {/* View Content */}
         <div className="h-full">
           {renderCurrentView()}

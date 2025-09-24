@@ -21,7 +21,7 @@ const viewLabels = {
   timeline: 'Cronograma',
   map: 'Mapa'
 };
-export const ProjectsHeader = () => {
+export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => void }) => {
   const {
     state,
     actions
@@ -46,7 +46,7 @@ export const ProjectsHeader = () => {
       {/* View Selector and Search */}
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">
-          {Object.entries(viewIcons).map(([view, Icon]) => <Button key={view} variant={state.currentView === view ? "secondary" : "ghost"} size="sm" onClick={() => handleViewChange(view as ViewType)} className={cn("h-8 px-3", state.currentView === view && "bg-background shadow-sm")}>
+          {Object.entries(viewIcons).map(([view, Icon]) => <Button key={view} variant={state.currentView === view ? "default" : "ghost"} size="sm" onClick={() => handleViewChange(view as ViewType)} className={cn("h-8 px-3 text-muted-foreground hover:text-foreground", state.currentView === view && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm")}>
               <Icon size={16} className="mr-1" />
               {viewLabels[view as ViewType]}
             </Button>)}
@@ -58,7 +58,7 @@ export const ProjectsHeader = () => {
             <Input placeholder="Buscar cartões..." value={state.filters.search} onChange={e => handleSearchChange(e.target.value)} className="w-64 pl-9" />
           </div>
           
-          <Button variant="outline" size="sm" className="relative">
+          <Button variant="outline" size="sm" className="relative" onClick={onToggleFilters}>
             <Filter size={16} className="mr-1" />
             Filtros
             {activeFiltersCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">
