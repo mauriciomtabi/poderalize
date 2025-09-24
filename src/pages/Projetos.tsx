@@ -1,19 +1,23 @@
 import { Layout } from "@/components/layout/Layout";
-import { KanbanBoard } from "@/components/kanban/KanbanBoard";
-import { KanbanProvider } from "@/contexts/KanbanContext";
+import { ProjectsProvider } from "@/contexts/ProjectsContext";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ProjectsHeader } from "@/components/projects/ProjectsHeader";
+import { ProjectsContent } from "@/components/projects/ProjectsContent";
 
 const Projetos = () => {
   return (
-    <Layout title="Gestão de Projetos">
-      <div className="h-full animate-fade-in">
-        <ErrorBoundary>
-          <KanbanProvider>
-            <KanbanBoard />
-          </KanbanProvider>
-        </ErrorBoundary>
-      </div>
-    </Layout>
+    <ProjectsProvider>
+      <Layout title="Gestão de Projetos">
+        <div className="h-full flex flex-col animate-fade-in">
+          <ErrorBoundary>
+            <ProjectsHeader />
+            <div className="flex-1 overflow-hidden">
+              <ProjectsContent />
+            </div>
+          </ErrorBoundary>
+        </div>
+      </Layout>
+    </ProjectsProvider>
   );
 };
 
