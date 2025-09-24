@@ -31,7 +31,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck } from "lucide-react";
+import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Colaborador {
@@ -84,7 +84,15 @@ const Colaboradores = () => {
   const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [colaboradorToDelete, setColaboradorToDelete] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [novoColaborador, setNovoColaborador] = useState({
+    nome: "",
+    email: "",
+    telefone: "",
+    funcao: "",
+    departamento: "",
+  });
+  const [editingColaborador, setEditingColaborador] = useState({
     nome: "",
     email: "",
     telefone: "",
@@ -125,7 +133,50 @@ const Colaboradores = () => {
 
   const handleCardClick = (colaborador: Colaborador) => {
     setSelectedColaborador(colaborador);
+    setEditingColaborador({
+      nome: colaborador.nome,
+      email: colaborador.email,
+      telefone: colaborador.telefone,
+      funcao: colaborador.funcao,
+      departamento: colaborador.departamento,
+    });
+    setIsEditing(false);
     setIsDetailsOpen(true);
+  };
+
+  const handleEditColaborador = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveColaborador = () => {
+    if (!editingColaborador.nome || !editingColaborador.email || !editingColaborador.funcao) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    const updatedColaboradores = colaboradores.map(c =>
+      c.id === selectedColaborador?.id
+        ? { ...c, ...editingColaborador }
+        : c
+    );
+
+    setColaboradores(updatedColaboradores);
+    setSelectedColaborador({ ...selectedColaborador!, ...editingColaborador });
+    setIsEditing(false);
+    toast.success("Colaborador atualizado com sucesso!");
+  };
+
+  const handleCancelEdit = () => {
+    if (selectedColaborador) {
+      setEditingColaborador({
+        nome: selectedColaborador.nome,
+        email: selectedColaborador.email,
+        telefone: selectedColaborador.telefone,
+        funcao: selectedColaborador.funcao,
+        departamento: selectedColaborador.departamento,
+      });
+    }
+    setIsEditing(false);
   };
 
   const handleDeleteColaborador = (id: string) => {
@@ -332,7 +383,7 @@ const Colaboradores = () => {
                     {selectedColaborador && getInitials(selectedColaborador.nome)}
                   </AvatarFallback>
                 </Avatar>
-                <span>{selectedColaborador?.nome}</span>
+                <span>{isEditing ? editingColaborador.nome : selectedColaborador?.nome}</span>
               </DialogTitle>
             </DialogHeader>
             {selectedColaborador && (
@@ -348,45 +399,104 @@ const Colaboradores = () => {
                   </div>
                   <div>
                     <Label className="text-sm font-semibold text-muted-foreground">Função</Label>
-                    <p className="mt-1 text-sm">{selectedColaborador.funcao}</p>
+                    {isEditing ? (
+                      <Input
+                        value={editingColaborador.funcao}
+                        onChange={(e) => setEditingColaborador({...editingColaborador, funcao: e.target.value})}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm">{selectedColaborador.funcao}</p>
+                    )}
                   </div>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
+                      <UserCheck size={14} />
+                      <span>Nome</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        value={editingColaborador.nome}
+                        onChange={(e) => setEditingColaborador({...editingColaborador, nome: e.target.value})}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm">{selectedColaborador.nome}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
                       <Mail size={14} />
                       <span>E-mail</span>
                     </Label>
-                    <p className="mt-1 text-sm">{selectedColaborador.email}</p>
+                    {isEditing ? (
+                      <Input
+                        type="email"
+                        value={editingColaborador.email}
+                        onChange={(e) => setEditingColaborador({...editingColaborador, email: e.target.value})}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm">{selectedColaborador.email}</p>
+                    )}
                   </div>
                   
-                  {selectedColaborador.telefone && (
-                    <div>
-                      <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
-                        <Phone size={14} />
-                        <span>Telefone</span>
-                      </Label>
-                      <p className="mt-1 text-sm">{selectedColaborador.telefone}</p>
-                    </div>
-                  )}
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
+                      <Phone size={14} />
+                      <span>Telefone</span>
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        value={editingColaborador.telefone}
+                        onChange={(e) => setEditingColaborador({...editingColaborador, telefone: e.target.value})}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 text-sm">{selectedColaborador.telefone || "Não informado"}</p>
+                    )}
+                  </div>
                   
-                  {selectedColaborador.departamento && (
-                    <div>
-                      <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
-                        <Building size={14} />
-                        <span>Departamento</span>
-                      </Label>
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
+                      <Building size={14} />
+                      <span>Departamento</span>
+                    </Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editingColaborador.departamento} 
+                        onValueChange={(value) => setEditingColaborador({...editingColaborador, departamento: value})}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Selecione o departamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Criativo">Criativo</SelectItem>
+                          <SelectItem value="Tecnologia">Tecnologia</SelectItem>
+                          <SelectItem value="Atendimento">Atendimento</SelectItem>
+                          <SelectItem value="Marketing">Marketing</SelectItem>
+                          <SelectItem value="Financeiro">Financeiro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
                       <div className="mt-1">
-                        <Badge 
-                          variant="secondary" 
-                          className={`${getBadgeColor(selectedColaborador.departamento)} text-white`}
-                        >
-                          {selectedColaborador.departamento}
-                        </Badge>
+                        {selectedColaborador.departamento ? (
+                          <Badge 
+                            variant="secondary" 
+                            className={`${getBadgeColor(selectedColaborador.departamento)} text-white`}
+                          >
+                            {selectedColaborador.departamento}
+                          </Badge>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Não informado</p>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   
                   <div>
                     <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
@@ -395,6 +505,36 @@ const Colaboradores = () => {
                     </Label>
                     <p className="mt-1 text-sm">{formatDate(selectedColaborador.dataContratacao)}</p>
                   </div>
+                </div>
+
+                <div className="flex justify-between pt-4 border-t">
+                  {isEditing ? (
+                    <div className="flex space-x-2 ml-auto">
+                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                        <X size={14} className="mr-2" />
+                        Cancelar
+                      </Button>
+                      <Button size="sm" onClick={handleSaveColaborador} className="btn-primary">
+                        <Save size={14} className="mr-2" />
+                        Salvar
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-2 ml-auto">
+                      <Button variant="outline" size="sm" onClick={handleEditColaborador}>
+                        <Edit3 size={14} className="mr-2" />
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => setColaboradorToDelete(selectedColaborador.id)}
+                      >
+                        <Trash2 size={14} className="mr-2" />
+                        Remover
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
