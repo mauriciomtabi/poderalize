@@ -13,6 +13,16 @@ import {
   DialogTrigger,
   DialogFooter 
 } from "@/components/ui/dialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { 
   Select, 
@@ -21,7 +31,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, MapPin, Edit, Trash2, Users } from "lucide-react";
+import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface Colaborador {
@@ -71,6 +81,9 @@ const Colaboradores = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [colaboradorToDelete, setColaboradorToDelete] = useState<string | null>(null);
   const [novoColaborador, setNovoColaborador] = useState({
     nome: "",
     email: "",
@@ -108,6 +121,21 @@ const Colaboradores = () => {
     });
     setIsDialogOpen(false);
     toast.success("Colaborador adicionado com sucesso!");
+  };
+
+  const handleCardClick = (colaborador: Colaborador) => {
+    setSelectedColaborador(colaborador);
+    setIsDetailsOpen(true);
+  };
+
+  const handleDeleteColaborador = (id: string) => {
+    setColaboradores(colaboradores.filter(c => c.id !== id));
+    setColaboradorToDelete(null);
+    toast.success("Colaborador removido com sucesso!");
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
   const getInitials = (nome: string) => {
@@ -220,7 +248,11 @@ const Colaboradores = () => {
         {/* Grid de colaboradores */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredColaboradores.map((colaborador) => (
-            <Card key={colaborador.id} className="card-interactive hover-lift">
+            <Card 
+              key={colaborador.id} 
+              className="card-interactive hover-lift cursor-pointer transition-all duration-200"
+              onClick={() => handleCardClick(colaborador)}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
@@ -259,14 +291,17 @@ const Colaboradores = () => {
                       >
                         {colaborador.departamento}
                       </Badge>
-                      <div className="flex space-x-1">
-                        <Button variant="ghost" size="sm">
-                          <Edit size={14} />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                          <Trash2 size={14} />
-                        </Button>
-                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setColaboradorToDelete(colaborador.id);
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -286,6 +321,108 @@ const Colaboradores = () => {
             </p>
           </div>
         )}
+
+        {/* Modal de Detalhes do Colaborador */}
+        <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-3">
+                <Avatar className="w-10 h-10">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                    {selectedColaborador && getInitials(selectedColaborador.nome)}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{selectedColaborador?.nome}</span>
+              </DialogTitle>
+            </DialogHeader>
+            {selectedColaborador && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground">Status</Label>
+                    <div className="mt-1">
+                      <Badge variant={selectedColaborador.status === "ativo" ? "default" : "secondary"}>
+                        {selectedColaborador.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground">Função</Label>
+                    <p className="mt-1 text-sm">{selectedColaborador.funcao}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
+                      <Mail size={14} />
+                      <span>E-mail</span>
+                    </Label>
+                    <p className="mt-1 text-sm">{selectedColaborador.email}</p>
+                  </div>
+                  
+                  {selectedColaborador.telefone && (
+                    <div>
+                      <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
+                        <Phone size={14} />
+                        <span>Telefone</span>
+                      </Label>
+                      <p className="mt-1 text-sm">{selectedColaborador.telefone}</p>
+                    </div>
+                  )}
+                  
+                  {selectedColaborador.departamento && (
+                    <div>
+                      <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
+                        <Building size={14} />
+                        <span>Departamento</span>
+                      </Label>
+                      <div className="mt-1">
+                        <Badge 
+                          variant="secondary" 
+                          className={`${getBadgeColor(selectedColaborador.departamento)} text-white`}
+                        >
+                          {selectedColaborador.departamento}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
+                      <Calendar size={14} />
+                      <span>Data de Contratação</span>
+                    </Label>
+                    <p className="mt-1 text-sm">{formatDate(selectedColaborador.dataContratacao)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmação de Remoção */}
+        <AlertDialog open={!!colaboradorToDelete} onOpenChange={() => setColaboradorToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza de que deseja remover este colaborador? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setColaboradorToDelete(null)}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => colaboradorToDelete && handleDeleteColaborador(colaboradorToDelete)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );
