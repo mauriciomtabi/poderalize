@@ -120,14 +120,14 @@ export const KanbanView = () => {
     <LoadingOverlay isLoading={state.isLoading}>
       <div className="h-full">
         <div className="h-full overflow-x-auto overflow-y-hidden">
-          <div className="flex h-full p-6 pb-8 min-w-max">
+          <div className="h-full">
             <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
               <Droppable droppableId="board" type="LIST" direction="horizontal">
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex space-x-6 h-full w-max pr-6"
+                    className="inline-flex gap-6 h-full w-max px-6 pb-8"
                   >
                 {state.currentBoard.lists
                   .filter(list => !list.archived)

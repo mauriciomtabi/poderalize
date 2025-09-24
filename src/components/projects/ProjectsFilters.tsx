@@ -100,18 +100,6 @@ export const ProjectsFilters = () => {
     return filter !== null;
   }).length;
 
-  if (!isExpanded && activeFiltersCount === 0) {
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsExpanded(true)}
-        className="text-muted-foreground"
-      >
-        Mostrar filtros
-      </Button>
-    );
-  }
 
   return (
     <Card className="w-80 h-fit">
@@ -129,14 +117,6 @@ export const ProjectsFilters = () => {
                 Limpar tudo
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X size={14} />
-            </Button>
           </div>
         </div>
       </CardHeader>

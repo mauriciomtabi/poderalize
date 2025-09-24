@@ -5,6 +5,8 @@ import { LayoutGrid, Table, Calendar, BarChart3, Clock, Map, Search, Filter, Plu
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ViewType } from "@/types/projects";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { ProjectsFilters } from "@/components/projects/ProjectsFilters";
 const viewIcons = {
   kanban: LayoutGrid,
   table: Table,
@@ -58,13 +60,22 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
             <Input placeholder="Buscar cartões..." value={state.filters.search} onChange={e => handleSearchChange(e.target.value)} className="w-64 pl-9" />
           </div>
           
-          <Button variant="outline" size="sm" className="relative" onClick={onToggleFilters}>
-            <Filter size={16} className="mr-1" />
-            Filtros
-            {activeFiltersCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">
-                {activeFiltersCount}
-              </Badge>}
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="relative">
+                <Filter size={16} className="mr-1" />
+                Filtros
+                {activeFiltersCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" side="bottom" className="p-0 w-80">
+              <ProjectsFilters />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </div>;
