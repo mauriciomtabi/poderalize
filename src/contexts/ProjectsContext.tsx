@@ -442,6 +442,81 @@ const projectsReducer = (state: ProjectsState, action: ProjectsAction): Projects
         }
       };
     }
+
+    case 'DELETE_CARD': {
+      if (!state.currentBoard) return state;
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          lists: state.currentBoard.lists.map(list => ({
+            ...list,
+            cards: list.cards.filter(card => card.id !== action.payload)
+          }))
+        }
+      };
+    }
+
+    case 'DUPLICATE_CARD': {
+      if (!state.currentBoard) return state;
+      const sourceCard = state.currentBoard.lists
+        .flatMap(l => l.cards)
+        .find(c => c.id === action.payload);
+      
+      if (!sourceCard) return state;
+      
+      const sourceList = state.currentBoard.lists.find(l => l.id === sourceCard.listId);
+      if (!sourceList) return state;
+      
+      const duplicatedCard: ProjectCard = {
+        ...sourceCard,
+        id: generateId(),
+        title: `${sourceCard.title} (cópia)`,
+        position: sourceList.cards.length,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        activities: [
+          {
+            id: generateId(),
+            type: 'create',
+            description: 'duplicou este cartão',
+            author: sourceCard.createdBy,
+            authorName: state.currentBoard.members.find(m => m.id === sourceCard.createdBy)?.name || 'Usuário',
+            createdAt: new Date().toISOString()
+          }
+        ]
+      };
+      
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          lists: state.currentBoard.lists.map(list =>
+            list.id === sourceCard.listId
+              ? { ...list, cards: [...list.cards, duplicatedCard] }
+              : list
+          )
+        }
+      };
+    }
+
+    case 'ARCHIVE_CARD': {
+      if (!state.currentBoard) return state;
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          lists: state.currentBoard.lists.map(list => ({
+            ...list,
+            cards: list.cards.map(card =>
+              card.id === action.payload
+                ? { ...card, archived: true, updatedAt: new Date().toISOString() }
+                : card
+            )
+          }))
+        }
+      };
+    }
     
     default:
       return state;
@@ -474,6 +549,7 @@ interface ProjectsContextType {
     deleteCard: (cardId: string) => void;
     moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => void;
     duplicateCard: (cardId: string) => void;
+    archiveCard: (cardId: string) => void;
     
     // Utility functions
     getFilteredCards: () => ProjectCard[];
@@ -619,12 +695,28 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     },
     
     duplicateCard: (cardId: string) => {
-      // Implementation would duplicate the card
+      dispatch({ type: 'DUPLICATE_CARD', payload: cardId });
       appActions.addNotification({
         type: 'success',
         title: 'Cartão duplicado',
         message: 'Cartão foi duplicado com sucesso.',
       });
+    },
+
+    archiveCard: (cardId: string) => {
+      const card = state.currentBoard?.lists
+        .flatMap(l => l.cards)
+        .find(c => c.id === cardId);
+      
+      dispatch({ type: 'ARCHIVE_CARD', payload: cardId });
+      
+      if (card) {
+        appActions.addNotification({
+          type: 'info',
+          title: 'Cartão arquivado',
+          message: `"${card.title}" foi arquivado.`,
+        });
+      }
     },
     
     getFilteredCards: (): ProjectCard[] => {

@@ -11,7 +11,9 @@ import {
   Clock,
   AlertCircle,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  Copy,
+  Trash2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,7 +22,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ProjectCard } from "@/types/projects";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const priorityConfig = {
   low: { icon: Clock, className: 'text-blue-500' },
@@ -44,6 +48,7 @@ export const EnhancedProjectCard = ({
   onDuplicate,
   onClick 
 }: EnhancedProjectCardProps) => {
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const PriorityIcon = priorityConfig[card.priority].icon;
   
   const completedTasks = card.checklists.reduce((acc, checklist) => 

@@ -20,13 +20,20 @@ import {
   Paperclip,
   Plus,
   Edit2,
-  Trash2
+  Trash2,
+  Copy,
+  Archive,
+  Move
 } from "lucide-react";
 import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ChecklistManager } from "./ChecklistManager";
 import { CommentsSection } from "./CommentsSection";
 import { ActivityHistory } from "./ActivityHistory";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { MemberPicker } from "./MemberPicker";
+import { LabelPicker } from "./LabelPicker";
+import { DueDatePicker } from "./DueDatePicker";
 import { cn } from "@/lib/utils";
 
 interface CardDetailModalProps {
@@ -43,6 +50,13 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
   const [description, setDescription] = useState(card.description || '');
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  // Dialog states
+  const [showMemberPicker, setShowMemberPicker] = useState(false);
+  const [showLabelPicker, setShowLabelPicker] = useState(false);
+  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false);
 
   const availableMembers = state.currentBoard?.members || [];
   const availableLabels = state.currentBoard?.labels || [];
@@ -112,6 +126,34 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
       : [...card.assignees, availableMembers.find(m => m.id === memberId)!];
     
     actions.updateCard({ ...card, assignees: newAssignees });
+  };
+
+  // Sidebar action handlers
+  const handleMembersChange = (members: Member[]) => {
+    actions.updateCard({ ...card, assignees: members });
+  };
+
+  const handleLabelsChange = (labels: ProjectLabel[]) => {
+    actions.updateCard({ ...card, labels });
+  };
+
+  const handleDueDateChange = (dueDate?: string) => {
+    actions.updateCard({ ...card, dueDate });
+  };
+
+  const handleDuplicate = () => {
+    actions.duplicateCard(card.id);
+    onClose();
+  };
+
+  const handleArchive = () => {
+    actions.archiveCard(card.id);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    actions.deleteCard(card.id);
+    onClose();
   };
 
   return (
@@ -224,11 +266,21 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             <h3 className="font-medium mb-4">Adicionar ao cartão</h3>
             
             <div className="space-y-2 mb-6">
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={() => setShowMemberPicker(true)}
+              >
                 <Users className="h-4 w-4 mr-2" />
                 Membros
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={() => setShowLabelPicker(true)}
+              >
                 <Tag className="h-4 w-4 mr-2" />
                 Etiquetas
               </Button>
@@ -236,7 +288,12 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
                 <CheckSquare className="h-4 w-4 mr-2" />
                 Lista de verificação
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={() => setShowDueDatePicker(true)}
+              >
                 <Calendar className="h-4 w-4 mr-2" />
                 Data de vencimento
               </Button>
@@ -250,15 +307,34 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             
             <div className="space-y-2">
               <Button variant="ghost" className="w-full justify-start" size="sm">
+                <Move className="h-4 w-4 mr-2" />
                 Mover
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={handleDuplicate}
+              >
+                <Copy className="h-4 w-4 mr-2" />
                 Copiar
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={() => setShowArchiveConfirmation(true)}
+              >
+                <Archive className="h-4 w-4 mr-2" />
                 Arquivar
               </Button>
-              <Button variant="destructive" className="w-full justify-start" size="sm">
+              <Button 
+                variant="destructive" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={() => setShowDeleteConfirmation(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
               </Button>
             </div>
@@ -301,6 +377,49 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             )}
           </div>
         </div>
+
+        {/* Dialogs */}
+        <MemberPicker
+          isOpen={showMemberPicker}
+          onClose={() => setShowMemberPicker(false)}
+          availableMembers={availableMembers}
+          selectedMembers={card.assignees}
+          onMembersChange={handleMembersChange}
+        />
+
+        <LabelPicker
+          isOpen={showLabelPicker}
+          onClose={() => setShowLabelPicker(false)}
+          availableLabels={availableLabels}
+          selectedLabels={card.labels}
+          onLabelsChange={handleLabelsChange}
+        />
+
+        <DueDatePicker
+          isOpen={showDueDatePicker}
+          onClose={() => setShowDueDatePicker(false)}
+          currentDate={card.dueDate}
+          onDateChange={handleDueDateChange}
+        />
+
+        <ConfirmationDialog
+          isOpen={showDeleteConfirmation}
+          onClose={() => setShowDeleteConfirmation(false)}
+          onConfirm={handleDelete}
+          title="Excluir Cartão"
+          description="Tem certeza de que deseja excluir este cartão? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          variant="destructive"
+        />
+
+        <ConfirmationDialog
+          isOpen={showArchiveConfirmation}
+          onClose={() => setShowArchiveConfirmation(false)}
+          onConfirm={handleArchive}
+          title="Arquivar Cartão"
+          description="Tem certeza de que deseja arquivar este cartão?"
+          confirmText="Arquivar"
+        />
       </DialogContent>
     </Dialog>
   );

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ProjectCard, Priority } from "@/types/projects";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { cn } from "@/lib/utils";
 
 const priorityConfig = {
@@ -49,9 +50,19 @@ export const TableView = () => {
   const { state, actions } = useProjects();
   const [sortField, setSortField] = useState<SortField>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
 
   const allCards = state.currentBoard?.lists.flatMap(list => list.cards) || [];
   const filteredCards = actions.getFilteredCards();
+
+  const handleDelete = (cardId: string) => {
+    actions.deleteCard(cardId);
+    setDeleteCardId(null);
+  };
+
+  const handleDuplicate = (cardId: string) => {
+    actions.duplicateCard(cardId);
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -287,7 +298,7 @@ export const TableView = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => actions.duplicateCard(card.id)}
+                        onClick={() => handleDuplicate(card.id)}
                         className="h-6 w-6 p-0"
                       >
                         <Copy size={12} />
@@ -295,7 +306,7 @@ export const TableView = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => actions.deleteCard(card.id)}
+                        onClick={() => setDeleteCardId(card.id)}
                         className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
                       >
                         <Trash2 size={12} />
@@ -308,6 +319,17 @@ export const TableView = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={!!deleteCardId}
+        onClose={() => setDeleteCardId(null)}
+        onConfirm={() => deleteCardId && handleDelete(deleteCardId)}
+        title="Excluir Cartão"
+        description="Tem certeza de que deseja excluir este cartão? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="destructive"
+      />
       
       {sortedCards.length === 0 && (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
