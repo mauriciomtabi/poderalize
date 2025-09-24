@@ -193,39 +193,48 @@
     @apply transition-all duration-300 ease-in-out;
   }
 
+  /* Kanban específico */
+  .kanban-column {
+    @apply bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/30;
+    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
+    border-top: 3px solid hsl(25 95% 53%);
+  }
+
   .kanban-column-todo {
-    background: linear-gradient(145deg, hsl(0 84% 60% / 0.08), hsl(0 84% 60% / 0.02));
-    border-top: 3px solid hsl(0 84% 60%);
+    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
+    border-top: 3px solid hsl(25 95% 53%);
   }
 
   .kanban-column-inprogress {
-    background: linear-gradient(145deg, hsl(45 93% 47% / 0.08), hsl(45 93% 47% / 0.02));
-    border-top: 3px solid hsl(45 93% 47%);
+    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
+    border-top: 3px solid hsl(25 95% 53%);
   }
 
   .kanban-column-review {
-    background: linear-gradient(145deg, hsl(217 91% 60% / 0.08), hsl(217 91% 60% / 0.02));
-    border-top: 3px solid hsl(217 91% 60%);
+    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
+    border-top: 3px solid hsl(25 95% 53%);
   }
 
   .kanban-column-done {
-    background: linear-gradient(145deg, hsl(142 71% 45% / 0.08), hsl(142 71% 45% / 0.02));
-    border-top: 3px solid hsl(142 71% 45%);
+    background: linear-gradient(145deg, hsl(25 95% 53% / 0.08), hsl(25 95% 53% / 0.02));
+    border-top: 3px solid hsl(25 95% 53%);
   }
 
   .kanban-drag-preview {
-    @apply transform rotate-3 scale-105 shadow-lg;
+    @apply scale-105 shadow-xl border border-primary/30 opacity-95;
+    transform: rotate(2deg);
+    transition: none !important;
     filter: drop-shadow(0 10px 25px hsl(var(--primary) / 0.25));
   }
 
   .kanban-drop-zone {
-    @apply transition-all duration-200;
-    background: hsl(var(--primary) / 0.05);
-    border: 2px dashed hsl(var(--primary) / 0.3);
+    @apply bg-orange-100 dark:bg-orange-900/30 border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg;
+    transition: all 0.2s ease;
   }
 
   .kanban-card-dragging {
-    @apply opacity-50 transform rotate-2 scale-95;
+    @apply opacity-30;
+    transition: none !important;
   }
 
   .inline-edit {

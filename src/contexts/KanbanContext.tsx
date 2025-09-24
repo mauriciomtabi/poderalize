@@ -29,7 +29,7 @@ const initialColumns: Column[] = [
   {
     id: "todo",
     title: "A Fazer",
-    color: "hsl(0 84% 60%)",
+    color: "hsl(25 95% 53%)",
     tasks: [
       {
         id: generateId(),
@@ -58,7 +58,7 @@ const initialColumns: Column[] = [
   {
     id: "inprogress",
     title: "Em Andamento",
-    color: "hsl(45 93% 47%)",
+    color: "hsl(25 95% 53%)",
     tasks: [
       {
         id: generateId(),
@@ -77,7 +77,7 @@ const initialColumns: Column[] = [
   {
     id: "review",
     title: "Revisão",
-    color: "hsl(217 91% 60%)",
+    color: "hsl(25 95% 53%)",
     tasks: [
       {
         id: generateId(),
@@ -94,7 +94,7 @@ const initialColumns: Column[] = [
   {
     id: "done",
     title: "Concluído",
-    color: "hsl(142 71% 45%)",
+    color: "hsl(25 95% 53%)",
     tasks: [
       {
         id: generateId(),

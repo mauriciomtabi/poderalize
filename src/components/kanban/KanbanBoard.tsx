@@ -21,6 +21,7 @@ import { InlineEdit } from "./InlineEdit";
 import { LoadingOverlay } from "@/components/ui/loading-spinner";
 import { useKanban } from "@/contexts/KanbanContext";
 import { useState } from "react";
+import { ListActionsDialog } from "./ListActionsDialog";
 
 export interface Task {
   id: string;
@@ -47,6 +48,8 @@ export const KanbanBoard = () => {
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState<string>("");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [listActionsOpen, setListActionsOpen] = useState(false);
+  const [selectedList, setSelectedList] = useState<Column | null>(null);
 
   const onDragStart = (start: any) => {
     actions.setDraggedItem(start.draggableId);
@@ -108,6 +111,11 @@ export const KanbanBoard = () => {
     actions.duplicateTask(task);
   };
 
+  const handleListActions = (column: Column) => {
+    setSelectedList(column);
+    setListActionsOpen(true);
+  };
+
   return (
     <LoadingOverlay isLoading={state.isLoading}>
       <div className="h-full">
@@ -115,7 +123,7 @@ export const KanbanBoard = () => {
           <div className="flex space-x-6 h-full overflow-x-auto pb-6">
             {state.columns.map((column) => (
               <div key={column.id} className="flex-shrink-0 w-80">
-                <Card className={`h-full flex flex-col kanban-column kanban-column-${column.id}`}>
+                <Card className={`h-full flex flex-col kanban-column`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -139,18 +147,14 @@ export const KanbanBoard = () => {
                             <MoreHorizontal size={16} />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
+                        <DropdownMenuContent align="end" className="w-56">
                           <DropdownMenuItem onClick={() => handleAddCard(column.id)}>
                             <Plus size={14} className="mr-2" />
                             Adicionar cartão
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit size={14} className="mr-2" />
-                            Editar lista
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 size={14} className="mr-2" />
-                            Excluir lista
+                          <DropdownMenuItem onClick={() => handleListActions(column)}>
+                            <MoreHorizontal size={14} className="mr-2" />
+                            Ações da lista
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -173,13 +177,7 @@ export const KanbanBoard = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={`${
-                                  snapshot.isDragging 
-                                    ? "kanban-drag-preview" 
-                                    : state.draggedItem === task.id 
-                                      ? "kanban-card-dragging" 
-                                      : ""
-                                }`}
+                                className={snapshot.isDragging ? "kanban-drag-preview" : ""}
                               >
                                 <KanbanCard
                                   task={task}
@@ -223,6 +221,18 @@ export const KanbanBoard = () => {
             isOpen={!!editingTask}
             onClose={() => setEditingTask(null)}
             onUpdateTask={handleUpdateTask}
+          />
+        )}
+
+        {selectedList && (
+          <ListActionsDialog
+            isOpen={listActionsOpen}
+            onClose={() => setListActionsOpen(false)}
+            listTitle={selectedList.title}
+            onAddCard={() => {
+              handleAddCard(selectedList.id);
+              setListActionsOpen(false);
+            }}
           />
         )}
       </div>
