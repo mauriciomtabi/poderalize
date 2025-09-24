@@ -434,31 +434,36 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 // Provider
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(projectsReducer, initialState);
-  const [persistedData, setPersisted, isStorageLoading] = useLocalStorage('projectsData', {
-    boards: [initialBoard],
-    currentBoardId: initialBoard.id,
-    lastUpdated: new Date().toISOString(),
-  });
   const { actions: appActions } = useApp();
 
-  // Load persisted data
+  // Load persisted data from localStorage directly
   useEffect(() => {
-    if (!isStorageLoading && persistedData?.boards?.length) {
-      const currentBoard = persistedData.boards.find((b: ProjectBoard) => b.id === persistedData.currentBoardId) || persistedData.boards[0];
-      dispatch({ type: 'SET_CURRENT_BOARD', payload: currentBoard });
+    try {
+      const saved = localStorage.getItem('projects-data');
+      if (saved) {
+        const parsedData = JSON.parse(saved);
+        if (parsedData.currentBoard) {
+          dispatch({ type: 'SET_CURRENT_BOARD', payload: parsedData.currentBoard });
+        }
+      }
+    } catch (error) {
+      console.error('Error loading projects data:', error);
     }
-  }, [isStorageLoading, persistedData]);
+  }, []);
 
-  // Auto-save
+  // Auto-save to localStorage
   useEffect(() => {
-    if (!isStorageLoading && state.currentBoard) {
-      setPersisted({
-        boards: [state.currentBoard], // For now, just save current board
-        currentBoardId: state.currentBoard.id,
-        lastUpdated: new Date().toISOString(),
-      });
+    if (state.currentBoard) {
+      try {
+        localStorage.setItem('projects-data', JSON.stringify({
+          currentBoard: state.currentBoard,
+          lastUpdated: new Date().toISOString(),
+        }));
+      } catch (error) {
+        console.error('Error saving projects data:', error);
+      }
     }
-  }, [state.currentBoard, isStorageLoading, setPersisted]);
+  }, [state.currentBoard]);
 
   const actions = {
     setCurrentView: (view: ViewType) => {
