@@ -349,6 +349,56 @@ const projectsReducer = (state: ProjectsState, action: ProjectsAction): Projects
         }
       };
     
+    case 'DELETE_LIST':
+      if (!state.currentBoard) return state;
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          lists: state.currentBoard.lists.filter(list => list.id !== action.payload)
+        }
+      };
+    
+    case 'MOVE_LIST': {
+      if (!state.currentBoard) return state;
+      const { listId, newPosition } = action.payload;
+      
+      const lists = [...state.currentBoard.lists];
+      const listIndex = lists.findIndex(l => l.id === listId);
+      
+      if (listIndex === -1) return state;
+      
+      const [movedList] = lists.splice(listIndex, 1);
+      lists.splice(newPosition, 0, movedList);
+      
+      // Update positions
+      lists.forEach((list, index) => {
+        list.position = index;
+      });
+      
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          lists
+        }
+      };
+    }
+    
+    case 'ARCHIVE_LIST':
+      if (!state.currentBoard) return state;
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          lists: state.currentBoard.lists.map(list =>
+            list.id === action.payload
+              ? { ...list, archived: true }
+              : list
+          )
+        }
+      };
+
     case 'MOVE_CARD': {
       if (!state.currentBoard) return state;
       const { cardId, sourceListId, destListId, newPosition } = action.payload;
@@ -415,6 +465,8 @@ interface ProjectsContextType {
     addList: (title: string, color: string) => void;
     updateList: (listId: string, updates: Partial<ProjectList>) => void;
     deleteList: (listId: string) => void;
+    moveList: (listId: string, newPosition: number) => void;
+    archiveList: (listId: string) => void;
     
     // Card actions
     addCard: (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt'>) => void;
@@ -504,7 +556,33 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     },
     
     deleteList: (listId: string) => {
+      const list = state.currentBoard?.lists.find(l => l.id === listId);
       dispatch({ type: 'DELETE_LIST', payload: listId });
+      
+      if (list) {
+        appActions.addNotification({
+          type: 'warning',
+          title: 'Lista excluída',
+          message: `Lista "${list.title}" foi excluída.`,
+        });
+      }
+    },
+    
+    moveList: (listId: string, newPosition: number) => {
+      dispatch({ type: 'MOVE_LIST', payload: { listId, newPosition } });
+    },
+    
+    archiveList: (listId: string) => {
+      const list = state.currentBoard?.lists.find(l => l.id === listId);
+      dispatch({ type: 'ARCHIVE_LIST', payload: listId });
+      
+      if (list) {
+        appActions.addNotification({
+          type: 'info',
+          title: 'Lista arquivada',
+          message: `Lista "${list.title}" foi arquivada.`,
+        });
+      }
     },
     
     addCard: (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt'>) => {
