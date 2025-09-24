@@ -152,12 +152,12 @@ export const KanbanView = () => {
                         className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
                       >
                         <Card 
-                          className="h-full flex flex-col kanban-column"
+                          className="flex flex-col kanban-column max-h-[calc(100vh-12rem)]"
                           style={{ backgroundColor: list.color }}
                         >
                           <CardHeader 
                             {...provided.dragHandleProps}
-                            className="pb-3 cursor-grab active:cursor-grabbing"
+                            className="pb-3 cursor-grab active:cursor-grabbing flex-shrink-0"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-2">
@@ -195,7 +195,7 @@ export const KanbanView = () => {
                               <CardContent
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className={`flex-1 space-y-3 min-h-24 ${
+                                className={`flex-1 space-y-3 min-h-24 overflow-y-auto ${
                                   snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                 }`}
                               >
@@ -223,7 +223,7 @@ export const KanbanView = () => {
                                 
                                 <Button
                                   variant="ghost"
-                                  className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+                                  className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0"
                                   onClick={() => handleAddCard(list.id)}
                                 >
                                   <Plus size={16} className="mr-2" />
