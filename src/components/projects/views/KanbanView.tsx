@@ -238,6 +238,7 @@ export const KanbanView = () => {
                         Adicionar lista
                       </Button>
                     </div>
+                    <div className="flex-shrink-0 w-6" />
                   </div>
                 )}
               </Droppable>

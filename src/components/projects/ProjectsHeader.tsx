@@ -42,7 +42,7 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
     if (typeof filter === 'string') return filter.length > 0;
     return filter !== null;
   }).length;
-  return <div className="border-b border-border bg-card">
+  return <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       
 
       {/* View Selector and Search */}
