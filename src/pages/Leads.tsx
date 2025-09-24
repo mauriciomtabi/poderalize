@@ -21,9 +21,10 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Building, Star, Calendar, Target } from "lucide-react";
+import { Plus, Search, Mail, Phone, Building, Star, Calendar, Target, Edit, Trash2, Eye, Save, X } from "lucide-react";
 import { toast } from "sonner";
-import { Lead } from "@/types/crm";
+import { Lead, LeadStatus } from "@/types/crm";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const Leads = () => {
   const [leads, setLeads] = useState<Lead[]>([
@@ -96,6 +97,11 @@ const Leads = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
   const [novoLead, setNovoLead] = useState({
     nome: "",
     empresa: "",
@@ -242,6 +248,40 @@ const Leads = () => {
   };
 
   const totalValue = leads.reduce((sum, lead) => sum + (lead.valor * lead.probabilidade / 100), 0);
+
+  const handleCardClick = (lead: Lead) => {
+    setSelectedLead(lead);
+    setEditingLead({ ...lead });
+    setIsViewModalOpen(true);
+    setIsEditing(false);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditingLead(selectedLead ? { ...selectedLead } : null);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingLead) return;
+    
+    setLeads(leads.map(lead => 
+      lead.id === editingLead.id ? editingLead : lead
+    ));
+    setSelectedLead(editingLead);
+    setIsEditing(false);
+    toast.success("Lead atualizado com sucesso!");
+  };
+
+  const handleDeleteLead = (leadId: string) => {
+    setLeads(leads.filter(lead => lead.id !== leadId));
+    setLeadToDelete(null);
+    setIsViewModalOpen(false);
+    toast.success("Lead removido com sucesso!");
+  };
 
   return (
     <Layout title="Gestão de Leads">
@@ -600,7 +640,11 @@ const Leads = () => {
           {filteredLeads.map((lead) => {
             const statusConfig = getStatusConfig(lead.status);
             return (
-              <Card key={lead.id} className="card-interactive hover-lift">
+              <Card 
+                key={lead.id} 
+                className="card-interactive hover-lift cursor-pointer transition-all duration-200"
+                onClick={() => handleCardClick(lead)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -667,6 +711,349 @@ const Leads = () => {
             );
           })}
         </div>
+
+        {/* Modal de visualização/edição do lead */}
+        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="flex items-center gap-2">
+                  <Eye size={20} />
+                  {isEditing ? "Editando Lead" : "Detalhes do Lead"}
+                </DialogTitle>
+                <div className="flex gap-2">
+                  {!isEditing ? (
+                    <>
+                      <Button variant="outline" size="sm" onClick={handleEdit}>
+                        <Edit size={16} className="mr-1" />
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => selectedLead && setLeadToDelete(selectedLead.id)}
+                      >
+                        <Trash2 size={16} className="mr-1" />
+                        Remover
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                        <X size={16} className="mr-1" />
+                        Cancelar
+                      </Button>
+                      <Button size="sm" onClick={handleSaveEdit}>
+                        <Save size={16} className="mr-1" />
+                        Salvar
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </DialogHeader>
+            
+            {selectedLead && editingLead && (
+              <div className="space-y-6">
+                {/* Dados Básicos */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-primary">DADOS BÁSICOS</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-nome">Nome</Label>
+                      <Input
+                        id="edit-nome"
+                        value={editingLead.nome}
+                        onChange={(e) => setEditingLead({...editingLead, nome: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-empresa">Empresa</Label>
+                      <Input
+                        id="edit-empresa"
+                        value={editingLead.empresa}
+                        onChange={(e) => setEditingLead({...editingLead, empresa: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-email">E-mail</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editingLead.email}
+                        onChange={(e) => setEditingLead({...editingLead, email: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-telefone">Telefone</Label>
+                      <Input
+                        id="edit-telefone"
+                        value={editingLead.telefone || ""}
+                        onChange={(e) => setEditingLead({...editingLead, telefone: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="edit-status">Status</Label>
+                      <Select 
+                        value={editingLead.status} 
+                        onValueChange={(value) => setEditingLead({...editingLead, status: value as LeadStatus})}
+                        disabled={!isEditing}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-fonte">Fonte</Label>
+                      <Select 
+                        value={editingLead.fonte} 
+                        onValueChange={(value) => setEditingLead({...editingLead, fonte: value})}
+                        disabled={!isEditing}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fonteOptions.map((fonte) => (
+                            <SelectItem key={fonte} value={fonte}>
+                              {fonte}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-valor">Valor Estimado</Label>
+                      <Input
+                        id="edit-valor"
+                        type="number"
+                        value={editingLead.valor}
+                        onChange={(e) => setEditingLead({...editingLead, valor: parseFloat(e.target.value) || 0})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Presença Digital */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-primary">PRESENÇA DIGITAL</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-site">Site</Label>
+                      <Input
+                        id="edit-site"
+                        value={editingLead.site || ""}
+                        onChange={(e) => setEditingLead({...editingLead, site: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-instagram">Instagram</Label>
+                      <Input
+                        id="edit-instagram"
+                        value={editingLead.instagram || ""}
+                        onChange={(e) => setEditingLead({...editingLead, instagram: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-facebook">Facebook</Label>
+                      <Input
+                        id="edit-facebook"
+                        value={editingLead.facebook || ""}
+                        onChange={(e) => setEditingLead({...editingLead, facebook: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-outrasRedes">Outras Redes Sociais</Label>
+                      <Input
+                        id="edit-outrasRedes"
+                        value={editingLead.outrasRedesSociais || ""}
+                        onChange={(e) => setEditingLead({...editingLead, outrasRedesSociais: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Faturamento */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-primary">FATURAMENTO</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-faturamentoAtual">Faturamento Atual</Label>
+                      <Input
+                        id="edit-faturamentoAtual"
+                        type="number"
+                        value={editingLead.faturamentoAtual || ""}
+                        onChange={(e) => setEditingLead({...editingLead, faturamentoAtual: parseFloat(e.target.value) || undefined})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-faturamentoDesejado">Faturamento Desejado</Label>
+                      <Input
+                        id="edit-faturamentoDesejado"
+                        type="number"
+                        value={editingLead.faturamentoDesejado || ""}
+                        onChange={(e) => setEditingLead({...editingLead, faturamentoDesejado: parseFloat(e.target.value) || undefined})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comportamento e Potencial */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-primary">COMPORTAMENTO E POTENCIAL</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Nível de Consciência</Label>
+                      <Select 
+                        value={editingLead.nivelConsciencia || ""} 
+                        onValueChange={(value) => setEditingLead({...editingLead, nivelConsciencia: value})}
+                        disabled={!isEditing}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {nivelConscienciaOptions.map((opcao) => (
+                            <SelectItem key={opcao} value={opcao}>
+                              {opcao}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label>Etapa da Jornada</Label>
+                      <Select 
+                        value={editingLead.etapaJornada || ""} 
+                        onValueChange={(value) => setEditingLead({...editingLead, etapaJornada: value})}
+                        disabled={!isEditing}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {etapaJornadaOptions.map((etapa) => (
+                            <SelectItem key={etapa} value={etapa}>
+                              {etapa}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Indicator de Potencial</Label>
+                      <Select 
+                        value={editingLead.indicadorPotencial || ""} 
+                        onValueChange={(value) => setEditingLead({...editingLead, indicadorPotencial: value})}
+                        disabled={!isEditing}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {indicadorPotencialOptions.map((indicador) => (
+                            <SelectItem key={indicador} value={indicador}>
+                              {indicador}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="edit-equipe">Equipe Atual</Label>
+                      <Input
+                        id="edit-equipe"
+                        value={editingLead.equipeAtual || ""}
+                        onChange={(e) => setEditingLead({...editingLead, equipeAtual: e.target.value})}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+
+                  {editingLead.doresIdentificadas && editingLead.doresIdentificadas.length > 0 && (
+                    <div>
+                      <Label>Dores Identificadas</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {editingLead.doresIdentificadas.map((dor, index) => (
+                          <Badge key={index} variant="secondary">
+                            {dor}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Observações */}
+                <div>
+                  <Label htmlFor="edit-observacoes">Observações</Label>
+                  <Textarea
+                    id="edit-observacoes"
+                    value={editingLead.observacoes || ""}
+                    onChange={(e) => setEditingLead({...editingLead, observacoes: e.target.value})}
+                    disabled={!isEditing}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de confirmação de exclusão */}
+        <AlertDialog open={!!leadToDelete} onOpenChange={() => setLeadToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja remover este lead? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => leadToDelete && handleDeleteLead(leadToDelete)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {filteredLeads.length === 0 && (
           <div className="text-center py-12">
