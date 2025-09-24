@@ -334,27 +334,16 @@ const Colaboradores = () => {
                       <span className="text-muted-foreground">{colaborador.telefone}</span>
                     </div>
                   )}
-                  {colaborador.departamento && (
-                    <div className="flex items-center justify-between">
-                      <Badge 
-                        variant="secondary" 
-                        className={`${getBadgeColor(colaborador.departamento)} text-white`}
-                      >
-                        {colaborador.departamento}
-                      </Badge>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setColaboradorToDelete(colaborador.id);
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  )}
+                   {colaborador.departamento && (
+                     <div>
+                       <Badge 
+                         variant="secondary" 
+                         className={`${getBadgeColor(colaborador.departamento)} text-white`}
+                       >
+                         {colaborador.departamento}
+                       </Badge>
+                     </div>
+                   )}
                 </div>
               </CardContent>
             </Card>
