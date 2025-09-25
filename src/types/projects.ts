@@ -123,6 +123,7 @@ export interface ProjectBoard {
   lists: ProjectList[];
   members: Member[];
   labels: Label[];
+  cardColor?: string; // Color theme for cards in this board
   settings: {
     visibility: 'private' | 'team' | 'public';
     allowComments: boolean;

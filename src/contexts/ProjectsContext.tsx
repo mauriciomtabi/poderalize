@@ -202,6 +202,7 @@ const initialBoard: ProjectBoard = {
   ],
   members: initialMembers,
   labels: initialLabels,
+  cardColor: 'default',
   settings: {
     visibility: 'team',
     allowComments: true,
@@ -246,6 +247,7 @@ type ProjectsAction =
   // Board actions
   | { type: 'SET_CURRENT_BOARD'; payload: ProjectBoard }
   | { type: 'UPDATE_BOARD'; payload: Partial<ProjectBoard> }
+  | { type: 'SET_CARD_COLOR'; payload: string }
   
   // List actions
   | { type: 'ADD_LIST'; payload: { title: string; color: string } }
@@ -309,6 +311,13 @@ const projectsReducer = (state: ProjectsState, action: ProjectsAction): Projects
       return {
         ...state,
         currentBoard: { ...state.currentBoard, ...action.payload }
+      };
+
+    case 'SET_CARD_COLOR':
+      if (!state.currentBoard) return state;
+      return {
+        ...state,
+        currentBoard: { ...state.currentBoard, cardColor: action.payload }
       };
     
     case 'ADD_LIST': {
@@ -697,6 +706,7 @@ interface ProjectsContextType {
     
     // Board actions
     updateBoard: (updates: Partial<ProjectBoard>) => void;
+    setCardColor: (color: string) => void;
     
     // List actions
     addList: (title: string, color: string) => void;
@@ -805,6 +815,10 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     
     updateBoard: (updates: Partial<ProjectBoard>) => {
       dispatch({ type: 'UPDATE_BOARD', payload: updates });
+    },
+
+    setCardColor: (color: string) => {
+      dispatch({ type: 'SET_CARD_COLOR', payload: color });
     },
     
     addList: (title: string, color: string) => {

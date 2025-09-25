@@ -25,12 +25,22 @@ import { ProjectCard } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useProjects } from "@/contexts/ProjectsContext";
 
 const priorityConfig = {
   low: { icon: Clock, className: 'text-blue-500' },
   medium: { icon: AlertCircle, className: 'text-yellow-500' },
   high: { icon: Zap, className: 'text-red-500' },
   urgent: { icon: Zap, className: 'text-red-600' }
+};
+
+const cardColorStyles = {
+  'default': 'bg-card',
+  'orange-light': 'bg-[hsl(20_85%_95%)]',
+  'blue-light': 'bg-[hsl(222_84%_95%)]',
+  'green-light': 'bg-[hsl(142_71%_95%)]',
+  'yellow-light': 'bg-[hsl(38_92%_95%)]',
+  'purple-light': 'bg-[hsl(260_90%_95%)]',
 };
 
 interface EnhancedProjectCardProps {
@@ -49,6 +59,7 @@ export const EnhancedProjectCard = ({
   onClick 
 }: EnhancedProjectCardProps) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const { state } = useProjects();
   const PriorityIcon = priorityConfig[card.priority].icon;
   
   const completedTasks = card.checklists.reduce((acc, checklist) => 
@@ -58,11 +69,13 @@ export const EnhancedProjectCard = ({
     acc + checklist.items.length, 0
   );
   const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-
+  
   const isOverdue = card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done';
+  
+  const cardColorClass = cardColorStyles[state.currentBoard?.cardColor as keyof typeof cardColorStyles] || cardColorStyles.default;
 
   return (
-    <Card className="card-kanban group" onClick={onClick}>
+    <Card className={cn("card-kanban group", cardColorClass)} onClick={onClick}>
       {/* Labels */}
       {card.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">

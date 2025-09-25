@@ -8,7 +8,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Tag, 
   Archive,
-  Settings
+  Settings,
+  Palette
 } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ManageLabelsDialog } from "./dialogs/ManageLabelsDialog";
@@ -21,6 +22,15 @@ interface ProjectsSettingsProps {
 export const ProjectsSettings = ({ isOpen, onClose }: ProjectsSettingsProps) => {
   const { state, actions } = useProjects();
   const [showManageLabels, setShowManageLabels] = useState(false);
+  
+  const cardColors = [
+    { name: "Padrão", value: "default", color: "hsl(var(--card))" },
+    { name: "Laranja Claro", value: "orange-light", color: "hsl(20 85% 95%)" },
+    { name: "Azul Claro", value: "blue-light", color: "hsl(222 84% 95%)" },
+    { name: "Verde Claro", value: "green-light", color: "hsl(142 71% 95%)" },
+    { name: "Amarelo Claro", value: "yellow-light", color: "hsl(38 92% 95%)" },
+    { name: "Roxo Claro", value: "purple-light", color: "hsl(260 90% 95%)" },
+  ];
 
   return (
     <>
@@ -68,6 +78,35 @@ export const ProjectsSettings = ({ isOpen, onClose }: ProjectsSettingsProps) => 
                       />
                       {label.name}
                     </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Card Colors */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Palette size={16} className="text-muted-foreground" />
+                  <h4 className="font-medium text-sm">Cor dos Cards</h4>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  {cardColors.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => actions.setCardColor(color.value)}
+                      className={`p-2 rounded-lg border-2 transition-all duration-200 hover:scale-105 ${
+                        state.currentBoard?.cardColor === color.value
+                          ? "border-primary shadow-sm"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      style={{ backgroundColor: color.color }}
+                    >
+                      <div className="text-xs font-medium text-foreground">
+                        {color.name}
+                      </div>
+                    </button>
                   ))}
                 </div>
               </div>
