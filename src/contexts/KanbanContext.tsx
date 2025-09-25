@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { Task, Column } from '@/components/kanban/KanbanBoard';
 import { generateId } from '@/hooks/useUuid';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useApp } from './AppContext';
+import { useToast } from '@/hooks/use-toast';
 
 // Estado do Kanban
 interface KanbanState {
@@ -247,7 +247,7 @@ export const KanbanProvider = ({ children }: { children: ReactNode }) => {
     columns: initialColumns,
     lastUpdated: new Date().toISOString(),
   });
-  const { actions: appActions } = useApp();
+  const { toast } = useToast();
 
   // Carrega dados persistidos na inicialização
   useEffect(() => {
@@ -269,19 +269,17 @@ export const KanbanProvider = ({ children }: { children: ReactNode }) => {
   const actions = {
     addTask: (columnId: string, task: Omit<Task, 'id'>) => {
       dispatch({ type: 'ADD_TASK', payload: { columnId, task } });
-      appActions.addNotification({
-        type: 'success',
+      toast({
         title: 'Tarefa adicionada',
-        message: `"${task.title}" foi adicionada com sucesso.`,
+        description: `"${task.title}" foi adicionada com sucesso.`,
       });
     },
     
     updateTask: (task: Task) => {
       dispatch({ type: 'UPDATE_TASK', payload: task });
-      appActions.addNotification({
-        type: 'info',
+      toast({
         title: 'Tarefa atualizada',
-        message: `"${task.title}" foi atualizada.`,
+        description: `"${task.title}" foi atualizada.`,
       });
     },
     
@@ -293,10 +291,10 @@ export const KanbanProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'DELETE_TASK', payload: taskId });
       
       if (task) {
-        appActions.addNotification({
-          type: 'warning',
+        toast({
           title: 'Tarefa excluída',
-          message: `"${task.title}" foi excluída.`,
+          description: `"${task.title}" foi excluída.`,
+          variant: 'destructive',
         });
       }
     },
@@ -314,10 +312,9 @@ export const KanbanProvider = ({ children }: { children: ReactNode }) => {
     
     duplicateTask: (task: Task) => {
       dispatch({ type: 'DUPLICATE_TASK', payload: task });
-      appActions.addNotification({
-        type: 'success',
+      toast({
         title: 'Tarefa duplicada',
-        message: `"${task.title}" foi duplicada com sucesso.`,
+        description: `"${task.title}" foi duplicada com sucesso.`,
       });
     },
     

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { ProjectsState, ProjectBoard, ProjectList, ProjectCard, ViewType, FilterState, Priority, CardStatus } from '@/types/projects';
 import { generateId } from '@/hooks/useUuid';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useApp } from './AppContext';
+import { useToast } from '@/hooks/use-toast';
 
 // Initial data with Trello-like structure
 const initialLabels = [
@@ -562,7 +562,7 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 // Provider
 export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(projectsReducer, initialState);
-  const { actions: appActions } = useApp();
+  const { toast } = useToast();
 
   // Load persisted data from localStorage directly
   useEffect(() => {
@@ -620,10 +620,9 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     
     addList: (title: string, color: string) => {
       dispatch({ type: 'ADD_LIST', payload: { title, color } });
-      appActions.addNotification({
-        type: 'success',
+      toast({
         title: 'Lista criada',
-        message: `Lista "${title}" foi criada com sucesso.`,
+        description: `Lista "${title}" foi criada com sucesso.`,
       });
     },
     
@@ -636,10 +635,10 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'DELETE_LIST', payload: listId });
       
       if (list) {
-        appActions.addNotification({
-          type: 'warning',
+        toast({
           title: 'Lista excluída',
-          message: `Lista "${list.title}" foi excluída.`,
+          description: `Lista "${list.title}" foi excluída.`,
+          variant: 'destructive',
         });
       }
     },
@@ -653,20 +652,18 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'ARCHIVE_LIST', payload: listId });
       
       if (list) {
-        appActions.addNotification({
-          type: 'info',
+        toast({
           title: 'Lista arquivada',
-          message: `Lista "${list.title}" foi arquivada.`,
+          description: `Lista "${list.title}" foi arquivada.`,
         });
       }
     },
     
     addCard: (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt'>) => {
       dispatch({ type: 'ADD_CARD', payload: { listId, card } });
-      appActions.addNotification({
-        type: 'success',
+      toast({
         title: 'Cartão criado',
-        message: `"${card.title}" foi criado com sucesso.`,
+        description: `"${card.title}" foi criado com sucesso.`,
       });
     },
     
@@ -682,10 +679,10 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'DELETE_CARD', payload: cardId });
       
       if (card) {
-        appActions.addNotification({
-          type: 'warning',
+        toast({
           title: 'Cartão excluído',
-          message: `"${card.title}" foi excluído.`,
+          description: `"${card.title}" foi excluído.`,
+          variant: 'destructive',
         });
       }
     },
@@ -696,10 +693,9 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     
     duplicateCard: (cardId: string) => {
       dispatch({ type: 'DUPLICATE_CARD', payload: cardId });
-      appActions.addNotification({
-        type: 'success',
+      toast({
         title: 'Cartão duplicado',
-        message: 'Cartão foi duplicado com sucesso.',
+        description: 'Cartão foi duplicado com sucesso.',
       });
     },
 
@@ -711,10 +707,9 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'ARCHIVE_CARD', payload: cardId });
       
       if (card) {
-        appActions.addNotification({
-          type: 'info',
+        toast({
           title: 'Cartão arquivado',
-          message: `"${card.title}" foi arquivado.`,
+          description: `"${card.title}" foi arquivado.`,
         });
       }
     },
