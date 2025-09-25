@@ -45,6 +45,10 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
     }
   };
 
+  const activities = Array.isArray(card.activities)
+    ? [...card.activities].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    : [];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -53,7 +57,7 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
       </div>
 
       <div className="space-y-3">
-        {card.activities.map(activity => (
+        {activities.map(activity => (
           <div key={activity.id} className="flex gap-3">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm">
               {getActivityIcon(activity.type)}
@@ -78,7 +82,7 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
           </div>
         ))}
 
-        {card.activities.length === 0 && (
+        {activities.length === 0 && (
           <div className="text-center py-6 text-muted-foreground">
             <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Nenhuma atividade registrada</p>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -205,6 +205,8 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+        <DialogTitle className="sr-only">Detalhes do cartão</DialogTitle>
+        <DialogDescription className="sr-only">Visualize e edite as informações do cartão.</DialogDescription>
         <div className="flex h-full min-h-[70vh]">
           {/* Main Content with ScrollArea */}
           <div className="flex-1">

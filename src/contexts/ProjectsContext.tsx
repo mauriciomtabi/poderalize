@@ -685,6 +685,7 @@ interface ProjectsContextType {
     // Utility functions
     getFilteredCards: () => ProjectCard[];
     getCurrentUser: () => { id: string; name: string } | null;
+    addActivity: (cardId: string, type: string, description: string, metadata?: any) => void;
   };
 }
 

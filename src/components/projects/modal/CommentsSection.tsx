@@ -31,6 +31,7 @@ export const CommentsSection = ({ card }: CommentsSectionProps) => {
         ...card,
         comments: [...card.comments, comment]
       });
+      actions.addActivity(card.id, 'comment', 'adicionou um comentário', { commentId: comment.id });
 
       setNewComment('');
     }
