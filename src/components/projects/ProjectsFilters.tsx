@@ -20,6 +20,7 @@ import {
 import { useProjects } from "@/contexts/ProjectsContext";
 import { Priority, CardStatus } from "@/types/projects";
 import { cn } from "@/lib/utils";
+import { ManageLabelsDialog } from "./dialogs/ManageLabelsDialog";
 
 const priorityIcons = {
   low: <Clock size={14} className="text-blue-500" />,
@@ -48,6 +49,7 @@ function Circle({ size, className }: { size: number; className: string }) {
 export const ProjectsFilters = () => {
   const { state, actions } = useProjects();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [showManageLabels, setShowManageLabels] = useState(false);
 
   const handleMemberToggle = (memberId: string) => {
     const currentMembers = state.filters.members;
@@ -159,9 +161,19 @@ export const ProjectsFilters = () => {
 
           {/* Labels Filter */}
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Tag size={16} className="text-muted-foreground" />
-              <h4 className="font-medium text-sm">Etiquetas</h4>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Tag size={16} className="text-muted-foreground" />
+                <h4 className="font-medium text-sm">Etiquetas</h4>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowManageLabels(true)}
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                Gerenciar
+              </Button>
             </div>
             
             <div className="space-y-2">
@@ -327,6 +339,11 @@ export const ProjectsFilters = () => {
           </div>
         </ScrollArea>
       </CardContent>
+
+      <ManageLabelsDialog
+        isOpen={showManageLabels}
+        onClose={() => setShowManageLabels(false)}
+      />
     </Card>
   );
 };

@@ -178,11 +178,7 @@ const initialState: ProjectsState = {
   draggedItem: null,
   isLoading: false,
   selectedCard: null,
-  calendarDate: new Date(),
-  timelineRange: {
-    start: new Date(),
-    end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
-  }
+  calendarDate: new Date()
 };
 
 // Actions
@@ -518,6 +514,66 @@ const projectsReducer = (state: ProjectsState, action: ProjectsAction): Projects
       };
     }
     
+    case 'ADD_LABEL': {
+      if (!state.currentBoard) return state;
+      const newLabel = {
+        id: `label-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...action.payload
+      };
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          labels: [...state.currentBoard.labels, newLabel]
+        }
+      };
+    }
+    
+    case 'UPDATE_LABEL': {
+      if (!state.currentBoard) return state;
+      const { labelId, updates } = action.payload;
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          labels: state.currentBoard.labels.map(label =>
+            label.id === labelId
+              ? { ...label, ...updates }
+              : label
+          ),
+          lists: state.currentBoard.lists.map(list => ({
+            ...list,
+            cards: list.cards.map(card => ({
+              ...card,
+              labels: card.labels.map(cardLabel =>
+                cardLabel.id === labelId
+                  ? { ...cardLabel, ...updates }
+                  : cardLabel
+              )
+            }))
+          }))
+        }
+      };
+    }
+    
+    case 'DELETE_LABEL': {
+      if (!state.currentBoard) return state;
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          labels: state.currentBoard.labels.filter(label => label.id !== action.payload),
+          lists: state.currentBoard.lists.map(list => ({
+            ...list,
+            cards: list.cards.map(card => ({
+              ...card,
+              labels: card.labels.filter(label => label.id !== action.payload)
+            }))
+          }))
+        }
+      };
+    }
+    
     default:
       return state;
   }
@@ -550,6 +606,11 @@ interface ProjectsContextType {
     moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => void;
     duplicateCard: (cardId: string) => void;
     archiveCard: (cardId: string) => void;
+    
+    // Label actions
+    addLabel: (name: string, color: string, description?: string) => void;
+    updateLabel: (labelId: string, updates: Partial<{ name: string; color: string; description: string }>) => void;
+    deleteLabel: (labelId: string) => void;
     
     // Utility functions
     getFilteredCards: () => ProjectCard[];
@@ -783,6 +844,35 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
         
         return true;
       });
+    },
+    
+    addLabel: (name: string, color: string, description?: string) => {
+      dispatch({ type: 'ADD_LABEL', payload: { name, color, description } });
+      toast({
+        title: 'Etiqueta criada',
+        description: `Etiqueta "${name}" foi criada com sucesso.`,
+      });
+    },
+    
+    updateLabel: (labelId: string, updates: Partial<{ name: string; color: string; description: string }>) => {
+      dispatch({ type: 'UPDATE_LABEL', payload: { labelId, updates } });
+      toast({
+        title: 'Etiqueta atualizada',
+        description: 'Etiqueta foi atualizada com sucesso.',
+      });
+    },
+    
+    deleteLabel: (labelId: string) => {
+      const label = state.currentBoard?.labels.find(l => l.id === labelId);
+      dispatch({ type: 'DELETE_LABEL', payload: labelId });
+      
+      if (label) {
+        toast({
+          title: 'Etiqueta excluída',
+          description: `Etiqueta "${label.name}" foi excluída.`,
+          variant: 'destructive',
+        });
+      }
     },
     
     getCurrentUser: () => {

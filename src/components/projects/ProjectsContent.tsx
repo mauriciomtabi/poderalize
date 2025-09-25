@@ -4,8 +4,6 @@ import { KanbanView } from "./views/KanbanView";
 import { TableView } from "./views/TableView";
 import { CalendarView } from "./views/CalendarView";
 import { DashboardView } from "./views/DashboardView";
-import { TimelineView } from "./views/TimelineView";
-import { MapView } from "./views/MapView";
 import { ArchivedView } from "./views/ArchivedView";
 
 export const ProjectsContent = ({ showFilters }: { showFilters: boolean }) => {
@@ -21,10 +19,6 @@ export const ProjectsContent = ({ showFilters }: { showFilters: boolean }) => {
         return <CalendarView />;
       case 'dashboard':
         return <DashboardView />;
-      case 'timeline':
-        return <TimelineView />;
-      case 'map':
-        return <MapView />;
       default:
         return <KanbanView />;
     }

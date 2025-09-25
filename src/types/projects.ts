@@ -1,7 +1,7 @@
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export type ProjectStatus = 'active' | 'paused' | 'completed' | 'archived';
 export type CardStatus = 'todo' | 'in-progress' | 'review' | 'blocked' | 'done';
-export type ViewType = 'kanban' | 'table' | 'calendar' | 'dashboard' | 'timeline' | 'map';
+export type ViewType = 'kanban' | 'table' | 'calendar' | 'dashboard';
 
 export interface Label {
   id: string;
@@ -166,10 +166,6 @@ export interface ProjectsState {
   
   // View-specific states
   calendarDate: Date;
-  timelineRange: {
-    start: Date;
-    end: Date;
-  };
 }
 
 export interface DashboardMetrics {

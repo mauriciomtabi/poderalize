@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, Table, Calendar, BarChart3, Clock, Map, Search, Filter, Plus, Settings, Users, Star } from "lucide-react";
+import { LayoutGrid, Table, Calendar, BarChart3, Search, Filter, Plus, Settings, Users, Star } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ViewType } from "@/types/projects";
 import { cn } from "@/lib/utils";
@@ -11,17 +11,14 @@ const viewIcons = {
   kanban: LayoutGrid,
   table: Table,
   calendar: Calendar,
-  dashboard: BarChart3,
-  timeline: Clock,
-  map: Map
+  dashboard: BarChart3
 };
+
 const viewLabels = {
   kanban: 'Quadro',
   table: 'Tabela',
   calendar: 'Calendário',
-  dashboard: 'Painel',
-  timeline: 'Cronograma',
-  map: 'Mapa'
+  dashboard: 'Painel'
 };
 export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => void }) => {
   const {
