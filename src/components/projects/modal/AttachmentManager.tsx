@@ -60,6 +60,7 @@ export const AttachmentManager = ({
         };
         
         actions.updateCard(updatedCard);
+        actions.addActivity(card.id, 'attachment', `anexou "${attachment.name}"`);
       };
       reader.readAsDataURL(file);
     });
@@ -83,6 +84,7 @@ export const AttachmentManager = ({
       };
       
       actions.updateCard(updatedCard);
+      actions.addActivity(card.id, 'attachment', `anexou link "${attachment.name}"`);
       setLinkUrl("");
       setLinkName("");
       setIsAddingLink(false);
@@ -90,11 +92,16 @@ export const AttachmentManager = ({
   };
 
   const handleRemoveAttachment = (attachmentId: string) => {
+    const attachment = card.attachments?.find(a => a.id === attachmentId);
     const updatedCard = {
       ...card,
       attachments: (card.attachments || []).filter(a => a.id !== attachmentId)
     };
     actions.updateCard(updatedCard);
+    
+    if (attachment) {
+      actions.addActivity(card.id, 'attachment', `removeu anexo "${attachment.name}"`);
+    }
   };
 
   const getFileIcon = (type: string) => {

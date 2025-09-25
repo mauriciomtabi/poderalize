@@ -734,7 +734,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
       id: generateId(),
       type,
       description,
-      authorId: currentUser.id,
+      author: currentUser.id,
       authorName: currentUser.name,
       createdAt: new Date().toISOString(),
       metadata

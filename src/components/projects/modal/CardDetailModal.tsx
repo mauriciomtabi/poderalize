@@ -151,7 +151,17 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
 
   // Sidebar action handlers
   const handleMembersChange = (members: Member[]) => {
+    const addedMembers = members.filter(m => !latestCard.assignees.some(la => la.id === m.id));
+    const removedMembers = latestCard.assignees.filter(la => !members.some(m => m.id === la.id));
+    
     actions.updateCard({ ...latestCard, assignees: members });
+    
+    addedMembers.forEach(member => {
+      actions.addActivity(latestCard.id, 'assign', `atribuiu ${member.name}`);
+    });
+    removedMembers.forEach(member => {
+      actions.addActivity(latestCard.id, 'assign', `removeu ${member.name}`);
+    });
   };
 
   const handleLabelsChange = (labels: ProjectLabel[]) => {
@@ -160,6 +170,12 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
 
   const handleDueDateChange = (dueDate?: string) => {
     actions.updateCard({ ...latestCard, dueDate });
+    
+    if (dueDate && dueDate !== latestCard.dueDate) {
+      actions.addActivity(latestCard.id, 'due_date', `definiu data de vencimento para ${new Date(dueDate).toLocaleDateString('pt-BR')}`);
+    } else if (!dueDate && latestCard.dueDate) {
+      actions.addActivity(latestCard.id, 'due_date', 'removeu a data de vencimento');
+    }
   };
 
   const handleDuplicate = () => {

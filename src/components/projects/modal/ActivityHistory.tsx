@@ -40,6 +40,12 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
         return '📅';
       case 'complete':
         return '✅';
+      case 'attachment':
+        return '📎';
+      case 'checklist':
+        return '☑️';
+      case 'archive':
+        return '📦';
       default:
         return '📝';
     }
@@ -50,7 +56,7 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
     : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
       <div className="flex items-center gap-2">
         <Activity className="h-4 w-4" />
         <h3 className="font-medium">Atividades</h3>
