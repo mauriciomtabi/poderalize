@@ -21,10 +21,7 @@ const viewLabels = {
   dashboard: 'Painel'
 };
 export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => void }) => {
-  const {
-    state,
-    actions
-  } = useProjects();
+  const { state, actions } = useProjects();
   const handleViewChange = (view: ViewType) => {
     actions.setCurrentView(view);
   };
