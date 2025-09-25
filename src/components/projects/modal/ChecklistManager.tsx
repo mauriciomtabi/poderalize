@@ -97,6 +97,21 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
       ...card,
       checklists: updatedChecklists
     });
+    
+    // Add activity for checklist completion
+    const checklistItem = card.checklists
+      .find(cl => cl.id === checklistId)?.items
+      .find(item => item.id === itemId);
+    
+    if (checklistItem) {
+      actions.addActivity(
+        card.id, 
+        'checklist', 
+        checklistItem.completed 
+          ? `desmarcou "${checklistItem.text}"` 
+          : `completou "${checklistItem.text}"`
+      );
+    }
   };
 
   const handleDeleteItem = (checklistId: string, itemId: string) => {

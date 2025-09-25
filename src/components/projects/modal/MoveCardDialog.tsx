@@ -59,7 +59,9 @@ export const MoveCardDialog = ({
           
           <ScrollArea className="max-h-60">
             <div className="space-y-2">
-              {availableLists.map((list) => (
+              {availableLists
+                .filter(list => !list.archived)
+                .map((list) => (
                 <button
                   key={list.id}
                   onClick={() => setSelectedListId(list.id)}
@@ -90,7 +92,7 @@ export const MoveCardDialog = ({
                     {list.cards?.length || 0} cartões
                   </p>
                 </button>
-              ))}
+                ))}
             </div>
           </ScrollArea>
         </div>

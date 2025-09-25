@@ -833,6 +833,34 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
         if (card.description !== currentCard.description) {
           addActivity(card.id, 'update', 'alterou a descrição');
         }
+        if (card.dueDate !== currentCard.dueDate) {
+          if (card.dueDate) {
+            addActivity(card.id, 'due_date', `definiu data de vencimento para ${new Date(card.dueDate).toLocaleDateString('pt-BR')}`);
+          } else {
+            addActivity(card.id, 'due_date', 'removeu a data de vencimento');
+          }
+        }
+        // Check assignee changes
+        const addedMembers = card.assignees.filter(m => !currentCard.assignees.some(cm => cm.id === m.id));
+        const removedMembers = currentCard.assignees.filter(cm => !card.assignees.some(m => m.id === cm.id));
+        
+        addedMembers.forEach(member => {
+          addActivity(card.id, 'assign', `atribuiu ${member.name}`);
+        });
+        removedMembers.forEach(member => {
+          addActivity(card.id, 'assign', `removeu ${member.name}`);
+        });
+        
+        // Check label changes
+        const addedLabels = card.labels.filter(l => !currentCard.labels.some(cl => cl.id === l.id));
+        const removedLabels = currentCard.labels.filter(cl => !card.labels.some(l => l.id === cl.id));
+        
+        addedLabels.forEach(label => {
+          addActivity(card.id, 'update', `adicionou etiqueta "${label.name}"`);
+        });
+        removedLabels.forEach(label => {
+          addActivity(card.id, 'update', `removeu etiqueta "${label.name}"`);
+        });
       }
       
       dispatch({ type: 'UPDATE_CARD', payload: card });
@@ -855,6 +883,16 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     },
     
     moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => {
+      // Add activity for card move
+      if (sourceListId !== destListId) {
+        const sourceList = state.currentBoard?.lists.find(l => l.id === sourceListId);
+        const destList = state.currentBoard?.lists.find(l => l.id === destListId);
+        
+        if (sourceList && destList) {
+          addActivity(cardId, 'move', `moveu de "${sourceList.title}" para "${destList.title}"`);
+        }
+      }
+      
       dispatch({ type: 'MOVE_CARD', payload: { cardId, sourceListId, destListId, newPosition } });
     },
     
@@ -867,6 +905,8 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     },
 
     archiveCard: (cardId: string) => {
+      addActivity(cardId, 'archive', 'arquivou este cartão');
+      
       const card = state.currentBoard?.lists
         .flatMap(l => l.cards)
         .find(c => c.id === cardId);
