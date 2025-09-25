@@ -65,6 +65,12 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
   const availableMembers = state.currentBoard?.members || [];
   const availableLabels = state.currentBoard?.labels || [];
 
+  // Sync local state when card prop changes
+  useEffect(() => {
+    setTitle(card.title);
+    setDescription(card.description || '');
+  }, [card.title, card.description, card.id]);
+
   const completedTasks = card.checklists.reduce((acc, checklist) => 
     acc + checklist.items.filter(item => item.completed).length, 0
   );
@@ -88,6 +94,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
 
   const handleSaveTitle = () => {
     if (title.trim() && title !== card.title) {
+      // Optimistic update - update locally first
       actions.updateCard({ ...card, title: title.trim() });
     } else {
       setTitle(card.title);
@@ -97,6 +104,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
 
   const handleSaveDescription = () => {
     if (description !== (card.description || '')) {
+      // Optimistic update - update locally first
       actions.updateCard({ ...card, description: description.trim() });
     }
     setIsEditingDescription(false);
@@ -177,6 +185,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
       items: []
     };
     
+    // Optimistic update
     const updatedCard = {
       ...card,
       checklists: [...card.checklists, newChecklist]

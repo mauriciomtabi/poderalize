@@ -34,13 +34,12 @@ export const KanbanView = () => {
   const [showListActionsDialog, setShowListActionsDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the right when lists change
+  // Reset scroll to left when component mounts
   useEffect(() => {
-    if (scrollContainerRef.current && state.currentBoard?.lists) {
-      const scrollContainer = scrollContainerRef.current;
-      scrollContainer.scrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = 0;
     }
-  }, [state.currentBoard?.lists.length]);
+  }, []);
 
   const onDragStart = (start: any) => {
     actions.setDraggedItem({ 
