@@ -3,6 +3,42 @@ import { ProjectsState, ProjectBoard, ProjectList, ProjectCard, ViewType, Filter
 import { generateId } from '@/hooks/useUuid';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useToast } from '@/hooks/use-toast';
+import { isAfter, isToday, startOfDay } from 'date-fns';
+
+// Utility function to get status label in Portuguese
+const getStatusLabel = (status: CardStatus): string => {
+  const statusLabels = {
+    'todo': 'A fazer',
+    'in-progress': 'Em andamento', 
+    'review': 'Em revisão',
+    'blocked': 'Bloqueado',
+    'done': 'Concluído'
+  };
+  return statusLabels[status];
+};
+
+// Utility function to get automatic status based on due date
+const getAutoStatus = (card: ProjectCard): CardStatus => {
+  if (!card.dueDate) return card.status;
+  
+  const today = startOfDay(new Date());
+  const dueDate = startOfDay(new Date(card.dueDate));
+  
+  // If card is done, keep it done
+  if (card.status === 'done') return card.status;
+  
+  // If overdue and not done
+  if (isAfter(today, dueDate)) {
+    return 'blocked'; // Mark as blocked when overdue
+  }
+  
+  // If due today and not in-progress or review
+  if (isToday(dueDate) && card.status === 'todo') {
+    return 'in-progress'; // Auto-start when due today
+  }
+  
+  return card.status;
+};
 
 // Initial data with Trello-like structure
 const initialLabels = [
@@ -821,12 +857,20 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     },
     
     updateCard: (card: ProjectCard) => {
+      // Auto-update status based on due date
+      const updatedCard = { ...card, status: getAutoStatus(card) };
+      
       // Log activity for updates
       const currentCard = state.currentBoard?.lists
         .flatMap(l => l.cards)
         .find(c => c.id === card.id);
       
       if (currentCard) {
+        // Log automatic status change
+        if (updatedCard.status !== card.status) {
+          addActivity(card.id, 'update', `status alterado automaticamente para ${getStatusLabel(updatedCard.status)} baseado na data de vencimento`);
+        }
+        
         if (card.title !== currentCard.title) {
           addActivity(card.id, 'update', 'alterou o título');
         }
@@ -863,7 +907,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
         });
       }
       
-      dispatch({ type: 'UPDATE_CARD', payload: card });
+      dispatch({ type: 'UPDATE_CARD', payload: updatedCard });
     },
     
     deleteCard: (cardId: string) => {
@@ -1028,6 +1072,27 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     
     addActivity: addActivity
   };
+
+  // Auto-update card statuses when component mounts or daily
+  useEffect(() => {
+    if (state.currentBoard) {
+      const updatedCards: ProjectCard[] = [];
+      
+      state.currentBoard.lists.forEach(list => {
+        list.cards.forEach(card => {
+          const autoStatus = getAutoStatus(card);
+          if (autoStatus !== card.status && !card.archived) {
+            updatedCards.push({ ...card, status: autoStatus });
+          }
+        });
+      });
+      
+      // Update cards with auto status changes
+      updatedCards.forEach(card => {
+        dispatch({ type: 'UPDATE_CARD', payload: card });
+      });
+    }
+  }, [state.currentBoard?.id]); // Only run when board changes
 
   return (
     <ProjectsContext.Provider value={{ state, actions }}>
