@@ -93,7 +93,24 @@ const sampleCards = [
     }],
     attachments: [],
     comments: [],
-    activities: [],
+    activities: [
+      {
+        id: generateId(),
+        type: 'create' as const,
+        description: 'criou este cartão',
+        author: initialMembers[2].id,
+        authorName: initialMembers[2].name,
+        createdAt: '2024-09-22T14:00:00Z'
+      },
+      {
+        id: generateId(),
+        type: 'assign' as const,
+        description: 'atribuiu este cartão a si mesmo',
+        author: initialMembers[2].id,
+        authorName: initialMembers[2].name,
+        createdAt: '2024-09-22T14:05:00Z'
+      }
+    ],
     position: 0,
     listId: 'in-progress',
     createdBy: initialMembers[2].id,
