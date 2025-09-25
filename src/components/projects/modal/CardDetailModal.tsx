@@ -105,7 +105,6 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
 
   const handleSaveTitle = () => {
     if (title.trim() && title !== latestCard.title) {
-      // Use latestCard for updates
       actions.updateCard({ ...latestCard, title: title.trim() });
     } else {
       setTitle(latestCard.title);
@@ -115,7 +114,6 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
 
   const handleSaveDescription = () => {
     if (description !== (latestCard.description || '')) {
-      // Use latestCard for updates
       actions.updateCard({ ...latestCard, description: description.trim() });
     }
     setIsEditingDescription(false);
@@ -196,7 +194,6 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
       items: []
     };
     
-    // Use latestCard for updates
     const updatedCard = {
       ...latestCard,
       checklists: [...latestCard.checklists, newChecklist]
@@ -207,112 +204,113 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-        <div className="flex h-full">
-          {/* Main Content */}
-          <div className="flex-1 p-6">
-            {/* Header with title */}
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex-1">
-                {isEditingTitle ? (
-                  <Input
-                    ref={titleInputRef}
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onBlur={handleSaveTitle}
-                    onKeyDown={(e) => handleKeyDown(e, handleSaveTitle)}
-                    className="text-lg font-semibold border-none p-0 h-auto focus-visible:ring-0"
-                  />
-                ) : (
-                  <h2 
-                    className="text-lg font-semibold cursor-pointer hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
-                    onClick={() => setIsEditingTitle(true)}
-                  >
-                    {latestCard.title}
-                  </h2>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+        <div className="flex h-full min-h-[70vh]">
+          {/* Main Content with ScrollArea */}
+          <div className="flex-1">
+            <ScrollArea className="h-[80vh] p-6">
+              <div className="space-y-6">
+                {/* Header with title */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 mr-4">
+                    {isEditingTitle ? (
+                      <Input
+                        ref={titleInputRef}
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        onBlur={handleSaveTitle}
+                        onKeyDown={(e) => handleKeyDown(e, handleSaveTitle)}
+                        className="text-lg font-semibold border-none p-0 h-auto focus-visible:ring-0"
+                      />
+                    ) : (
+                      <h2 
+                        className="text-lg font-semibold cursor-pointer hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                        onClick={() => setIsEditingTitle(true)}
+                      >
+                        {latestCard.title}
+                      </h2>
+                    )}
+                    <p className="text-sm text-muted-foreground mt-1">
+                      na lista <span className="font-medium">{state.currentBoard?.lists.find(l => l.id === latestCard.listId)?.title}</span>
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={onClose} className="flex-shrink-0">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Labels */}
+                {latestCard.labels.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Etiquetas</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {latestCard.labels.map(label => (
+                        <Badge key={label.id} style={{ backgroundColor: label.color }} className="text-white">
+                          {label.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 )}
-                <p className="text-sm text-muted-foreground mt-1">
-                  na lista <span className="font-medium">{state.currentBoard?.lists.find(l => l.id === latestCard.listId)?.title}</span>
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
 
-            {/* Labels */}
-            {latestCard.labels.length > 0 && (
-              <div className="mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {latestCard.labels.map(label => (
-                    <Badge key={label.id} style={{ backgroundColor: label.color }} className="text-white">
-                      {label.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Edit2 className="h-4 w-4" />
-                <h3 className="font-medium">Descrição</h3>
-              </div>
-              {isEditingDescription ? (
-                <Textarea
-                  ref={descriptionRef}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  onBlur={handleSaveDescription}
-                  onKeyDown={(e) => handleKeyDown(e, handleSaveDescription)}
-                  placeholder="Adicione uma descrição mais detalhada..."
-                  className="min-h-[100px] resize-none"
-                />
-              ) : (
-                <div 
-                  className={cn(
-                    "min-h-[60px] p-2 rounded border border-transparent cursor-pointer hover:border-border hover:bg-muted/50 transition-colors",
-                    !card.description && "text-muted-foreground"
+                {/* Description */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Edit2 className="h-4 w-4" />
+                    <h3 className="font-medium">Descrição</h3>
+                  </div>
+                  {isEditingDescription ? (
+                    <Textarea
+                      ref={descriptionRef}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      onBlur={handleSaveDescription}
+                      onKeyDown={(e) => handleKeyDown(e, handleSaveDescription)}
+                      placeholder="Adicione uma descrição mais detalhada..."
+                      className="min-h-[100px] resize-none"
+                    />
+                  ) : (
+                    <div 
+                      className={cn(
+                        "min-h-[60px] p-2 rounded border border-transparent cursor-pointer hover:border-border hover:bg-muted/50 transition-colors",
+                        !latestCard.description && "text-muted-foreground"
+                      )}
+                      onClick={() => setIsEditingDescription(true)}
+                    >
+                      {latestCard.description || "Adicione uma descrição mais detalhada..."}
+                    </div>
                   )}
-                  onClick={() => setIsEditingDescription(true)}
-                >
-                  {latestCard.description || "Adicione uma descrição mais detalhada..."}
                 </div>
-              )}
-            </div>
 
-            {/* Progress */}
-            {totalTasks > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckSquare className="h-4 w-4" />
-                  <h3 className="font-medium">Progresso</h3>
-                  <span className="text-sm text-muted-foreground">
-                    {completedTasks}/{totalTasks} tarefas
-                  </span>
-                </div>
-                <Progress value={progress} className="h-2" />
+                {/* Progress */}
+                {totalTasks > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckSquare className="h-4 w-4" />
+                      <h3 className="font-medium">Progresso</h3>
+                      <span className="text-sm text-muted-foreground">
+                        {completedTasks}/{totalTasks} tarefas
+                      </span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                )}
+
+                {/* Checklists */}
+                <ChecklistManager card={latestCard} />
+
+                {/* Comments */}
+                <CommentsSection card={latestCard} />
+
+                {/* Activity */}
+                <ActivityHistory card={latestCard} />
               </div>
-            )}
-
-            {/* Checklists */}
-            <ChecklistManager card={latestCard} />
-
-            <Separator className="my-6" />
-
-            {/* Comments */}
-            <CommentsSection card={latestCard} />
-
-            <Separator className="my-6" />
-
-            {/* Activity */}
-            <ActivityHistory card={latestCard} />
+            </ScrollArea>
           </div>
 
           {/* Sidebar */}
-          <div className="w-80 border-l bg-muted/30 p-4">
-            <h3 className="font-medium mb-4">Adicionar ao cartão</h3>
+          <div className="w-64 border-l bg-muted/30 p-4 space-y-4 flex-shrink-0">
+            <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
             
             <div className="space-y-2 mb-6">
               <Button 
@@ -362,7 +360,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
               </Button>
             </div>
 
-            <h3 className="font-medium mb-4">Ações</h3>
+            <h3 className="text-sm font-medium">Ações</h3>
             
             <div className="space-y-2">
               <Button 
@@ -406,7 +404,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             {/* Current assignees */}
             {latestCard.assignees.length > 0 && (
               <div className="mt-6">
-                <h4 className="font-medium mb-2">Membros</h4>
+                <h4 className="text-sm font-medium mb-2">Membros</h4>
                 <div className="flex flex-wrap gap-2">
                   {latestCard.assignees.map(member => (
                     <div key={member.id} className="flex items-center gap-2 bg-background rounded p-2">
@@ -426,7 +424,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             {/* Due date */}
             {latestCard.dueDate && (
               <div className="mt-4">
-                <h4 className="font-medium mb-2">Data de vencimento</h4>
+                <h4 className="text-sm font-medium mb-2">Data de vencimento</h4>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4" />
                   <span>
@@ -489,7 +487,6 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
           isOpen={showMoveDialog}
           onClose={() => setShowMoveDialog(false)}
           currentListId={latestCard.listId}
-          availableLists={state.currentBoard?.lists || []}
           onMove={handleMoveCard}
         />
 

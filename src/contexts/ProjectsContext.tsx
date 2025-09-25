@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { ProjectsState, ProjectBoard, ProjectList, ProjectCard, ViewType, FilterState, Priority, CardStatus } from '@/types/projects';
 import { generateId } from '@/hooks/useUuid';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -208,6 +208,7 @@ type ProjectsAction =
   | { type: 'MOVE_CARD'; payload: { cardId: string; sourceListId: string; destListId: string; newPosition: number } }
   | { type: 'DUPLICATE_CARD'; payload: string }
   | { type: 'ARCHIVE_CARD'; payload: string }
+  | { type: 'ADD_CARD_ACTIVITY'; payload: { cardId: string; activity: any } }
   
   // Label actions
   | { type: 'ADD_LABEL'; payload: { name: string; color: string; description?: string } }
@@ -585,6 +586,29 @@ const projectsReducer = (state: ProjectsState, action: ProjectsAction): Projects
       };
     }
     
+    case 'ADD_CARD_ACTIVITY': {
+      if (!state.currentBoard) return state;
+
+      return {
+        ...state,
+        currentBoard: {
+          ...state.currentBoard,
+          lists: state.currentBoard.lists.map(list => ({
+            ...list,
+            cards: list.cards.map(card => 
+              card.id === action.payload.cardId
+                ? {
+                    ...card,
+                    activities: [action.payload.activity, ...(card.activities || [])],
+                    updatedAt: new Date().toISOString()
+                  }
+                : card
+            )
+          }))
+        }
+      };
+    }
+
     case 'DELETE_LABEL': {
       if (!state.currentBoard) return state;
       return {
@@ -683,6 +707,27 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [state.currentBoard]);
 
+  // Activity logging helper
+  const addActivity = useCallback((cardId: string, type: string, description: string, metadata?: any) => {
+    const currentUser = actions.getCurrentUser();
+    if (!currentUser) return;
+
+    const activity = {
+      id: generateId(),
+      type,
+      description,
+      authorId: currentUser.id,
+      authorName: currentUser.name,
+      createdAt: new Date().toISOString(),
+      metadata
+    };
+
+    dispatch({ 
+      type: 'ADD_CARD_ACTIVITY', 
+      payload: { cardId, activity } 
+    });
+  }, []);
+
   const actions = {
     setCurrentView: (view: ViewType) => {
       dispatch({ type: 'SET_CURRENT_VIEW', payload: view });
@@ -758,6 +803,20 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     },
     
     updateCard: (card: ProjectCard) => {
+      // Log activity for updates
+      const currentCard = state.currentBoard?.lists
+        .flatMap(l => l.cards)
+        .find(c => c.id === card.id);
+      
+      if (currentCard) {
+        if (card.title !== currentCard.title) {
+          addActivity(card.id, 'update', 'alterou o título');
+        }
+        if (card.description !== currentCard.description) {
+          addActivity(card.id, 'update', 'alterou a descrição');
+        }
+      }
+      
       dispatch({ type: 'UPDATE_CARD', payload: card });
     },
     
@@ -907,7 +966,9 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
     getCurrentUser: () => {
       // This would normally come from auth context
       return state.currentBoard?.members[0] || null;
-    }
+    },
+    
+    addActivity: addActivity
   };
 
   return (
