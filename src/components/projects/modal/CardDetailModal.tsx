@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,16 +65,27 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
   const availableMembers = state.currentBoard?.members || [];
   const availableLabels = state.currentBoard?.labels || [];
 
-  // Sync local state when card prop changes
-  useEffect(() => {
-    setTitle(card.title);
-    setDescription(card.description || '');
-  }, [card.title, card.description, card.id]);
+  // Get the latest card data from global state to eliminate delays
+  const latestCard = useMemo(() => {
+    if (!state.currentBoard) return card;
+    
+    for (const list of state.currentBoard.lists) {
+      const foundCard = list.cards.find(c => c.id === card.id);
+      if (foundCard) return foundCard;
+    }
+    return card;
+  }, [state.currentBoard, card.id, card]);
 
-  const completedTasks = card.checklists.reduce((acc, checklist) => 
+  // Sync local state when latestCard changes
+  useEffect(() => {
+    setTitle(latestCard.title);
+    setDescription(latestCard.description || '');
+  }, [latestCard.title, latestCard.description, latestCard.id]);
+
+  const completedTasks = latestCard.checklists.reduce((acc, checklist) => 
     acc + checklist.items.filter(item => item.completed).length, 0
   );
-  const totalTasks = card.checklists.reduce((acc, checklist) => 
+  const totalTasks = latestCard.checklists.reduce((acc, checklist) => 
     acc + checklist.items.length, 0
   );
   const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
@@ -93,19 +104,19 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
   }, [isEditingDescription]);
 
   const handleSaveTitle = () => {
-    if (title.trim() && title !== card.title) {
-      // Optimistic update - update locally first
-      actions.updateCard({ ...card, title: title.trim() });
+    if (title.trim() && title !== latestCard.title) {
+      // Use latestCard for updates
+      actions.updateCard({ ...latestCard, title: title.trim() });
     } else {
-      setTitle(card.title);
+      setTitle(latestCard.title);
     }
     setIsEditingTitle(false);
   };
 
   const handleSaveDescription = () => {
-    if (description !== (card.description || '')) {
-      // Optimistic update - update locally first
-      actions.updateCard({ ...card, description: description.trim() });
+    if (description !== (latestCard.description || '')) {
+      // Use latestCard for updates
+      actions.updateCard({ ...latestCard, description: description.trim() });
     }
     setIsEditingDescription(false);
   };
@@ -117,63 +128,63 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
     } else if (e.key === 'Escape') {
       setIsEditingTitle(false);
       setIsEditingDescription(false);
-      setTitle(card.title);
-      setDescription(card.description || '');
+      setTitle(latestCard.title);
+      setDescription(latestCard.description || '');
     }
   };
 
   const toggleLabel = (labelId: string) => {
-    const hasLabel = card.labels.some(l => l.id === labelId);
+    const hasLabel = latestCard.labels.some(l => l.id === labelId);
     const newLabels = hasLabel 
-      ? card.labels.filter(l => l.id !== labelId)
-      : [...card.labels, availableLabels.find(l => l.id === labelId)!];
+      ? latestCard.labels.filter(l => l.id !== labelId)
+      : [...latestCard.labels, availableLabels.find(l => l.id === labelId)!];
     
-    actions.updateCard({ ...card, labels: newLabels });
+    actions.updateCard({ ...latestCard, labels: newLabels });
   };
 
   const toggleMember = (memberId: string) => {
-    const hasMember = card.assignees.some(m => m.id === memberId);
+    const hasMember = latestCard.assignees.some(m => m.id === memberId);
     const newAssignees = hasMember
-      ? card.assignees.filter(m => m.id !== memberId)
-      : [...card.assignees, availableMembers.find(m => m.id === memberId)!];
+      ? latestCard.assignees.filter(m => m.id !== memberId)
+      : [...latestCard.assignees, availableMembers.find(m => m.id === memberId)!];
     
-    actions.updateCard({ ...card, assignees: newAssignees });
+    actions.updateCard({ ...latestCard, assignees: newAssignees });
   };
 
   // Sidebar action handlers
   const handleMembersChange = (members: Member[]) => {
-    actions.updateCard({ ...card, assignees: members });
+    actions.updateCard({ ...latestCard, assignees: members });
   };
 
   const handleLabelsChange = (labels: ProjectLabel[]) => {
-    actions.updateCard({ ...card, labels });
+    actions.updateCard({ ...latestCard, labels });
   };
 
   const handleDueDateChange = (dueDate?: string) => {
-    actions.updateCard({ ...card, dueDate });
+    actions.updateCard({ ...latestCard, dueDate });
   };
 
   const handleDuplicate = () => {
-    actions.duplicateCard(card.id);
+    actions.duplicateCard(latestCard.id);
     onClose();
   };
 
   const handleArchive = () => {
-    actions.archiveCard(card.id);
+    actions.archiveCard(latestCard.id);
     onClose();
   };
 
   const handleDelete = () => {
-    actions.deleteCard(card.id);
+    actions.deleteCard(latestCard.id);
     onClose();
   };
 
   const handleMoveCard = (destListId: string) => {
-    const currentList = state.currentBoard?.lists.find(l => l.id === card.listId);
+    const currentList = state.currentBoard?.lists.find(l => l.id === latestCard.listId);
     if (currentList) {
       const destList = state.currentBoard?.lists.find(l => l.id === destListId);
       if (destList) {
-        actions.moveCard(card.id, card.listId, destListId, destList.cards.length);
+        actions.moveCard(latestCard.id, latestCard.listId, destListId, destList.cards.length);
       }
     }
   };
@@ -185,10 +196,10 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
       items: []
     };
     
-    // Optimistic update
+    // Use latestCard for updates
     const updatedCard = {
-      ...card,
-      checklists: [...card.checklists, newChecklist]
+      ...latestCard,
+      checklists: [...latestCard.checklists, newChecklist]
     };
     
     actions.updateCard(updatedCard);
@@ -217,11 +228,11 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
                     className="text-lg font-semibold cursor-pointer hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
                     onClick={() => setIsEditingTitle(true)}
                   >
-                    {card.title}
+                    {latestCard.title}
                   </h2>
                 )}
                 <p className="text-sm text-muted-foreground mt-1">
-                  na lista <span className="font-medium">{state.currentBoard?.lists.find(l => l.id === card.listId)?.title}</span>
+                  na lista <span className="font-medium">{state.currentBoard?.lists.find(l => l.id === latestCard.listId)?.title}</span>
                 </p>
               </div>
               <Button variant="ghost" size="sm" onClick={onClose}>
@@ -230,10 +241,10 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             </div>
 
             {/* Labels */}
-            {card.labels.length > 0 && (
+            {latestCard.labels.length > 0 && (
               <div className="mb-4">
                 <div className="flex flex-wrap gap-2">
-                  {card.labels.map(label => (
+                  {latestCard.labels.map(label => (
                     <Badge key={label.id} style={{ backgroundColor: label.color }} className="text-white">
                       {label.name}
                     </Badge>
@@ -266,7 +277,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
                   )}
                   onClick={() => setIsEditingDescription(true)}
                 >
-                  {card.description || "Adicione uma descrição mais detalhada..."}
+                  {latestCard.description || "Adicione uma descrição mais detalhada..."}
                 </div>
               )}
             </div>
@@ -286,17 +297,17 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             )}
 
             {/* Checklists */}
-            <ChecklistManager card={card} />
+            <ChecklistManager card={latestCard} />
 
             <Separator className="my-6" />
 
             {/* Comments */}
-            <CommentsSection card={card} />
+            <CommentsSection card={latestCard} />
 
             <Separator className="my-6" />
 
             {/* Activity */}
-            <ActivityHistory card={card} />
+            <ActivityHistory card={latestCard} />
           </div>
 
           {/* Sidebar */}
@@ -393,11 +404,11 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             </div>
 
             {/* Current assignees */}
-            {card.assignees.length > 0 && (
+            {latestCard.assignees.length > 0 && (
               <div className="mt-6">
                 <h4 className="font-medium mb-2">Membros</h4>
                 <div className="flex flex-wrap gap-2">
-                  {card.assignees.map(member => (
+                  {latestCard.assignees.map(member => (
                     <div key={member.id} className="flex items-center gap-2 bg-background rounded p-2">
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={member.avatar} />
@@ -413,13 +424,13 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             )}
 
             {/* Due date */}
-            {card.dueDate && (
+            {latestCard.dueDate && (
               <div className="mt-4">
                 <h4 className="font-medium mb-2">Data de vencimento</h4>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {new Date(card.dueDate).toLocaleDateString('pt-BR', {
+                    {new Date(latestCard.dueDate).toLocaleDateString('pt-BR', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric'
@@ -436,7 +447,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
           isOpen={showMemberPicker}
           onClose={() => setShowMemberPicker(false)}
           availableMembers={availableMembers}
-          selectedMembers={card.assignees}
+          selectedMembers={latestCard.assignees}
           onMembersChange={handleMembersChange}
         />
 
@@ -444,14 +455,14 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
           isOpen={showLabelPicker}
           onClose={() => setShowLabelPicker(false)}
           availableLabels={availableLabels}
-          selectedLabels={card.labels}
+          selectedLabels={latestCard.labels}
           onLabelsChange={handleLabelsChange}
         />
 
         <DueDatePicker
           isOpen={showDueDatePicker}
           onClose={() => setShowDueDatePicker(false)}
-          currentDate={card.dueDate}
+          currentDate={latestCard.dueDate}
           onDateChange={handleDueDateChange}
         />
 
@@ -477,7 +488,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
         <MoveCardDialog
           isOpen={showMoveDialog}
           onClose={() => setShowMoveDialog(false)}
-          currentListId={card.listId}
+          currentListId={latestCard.listId}
           availableLists={state.currentBoard?.lists || []}
           onMove={handleMoveCard}
         />
@@ -485,7 +496,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
         <AttachmentManager
           isOpen={showAttachmentManager}
           onClose={() => setShowAttachmentManager(false)}
-          card={card}
+          card={latestCard}
         />
       </DialogContent>
     </Dialog>

@@ -405,38 +405,67 @@ const projectsReducer = (state: ProjectsState, action: ProjectsAction): Projects
       
       if (!sourceList || !destList || !card) return state;
       
-      const newSourceCards = sourceList.cards.filter(c => c.id !== cardId);
-      const newDestCards = [...destList.cards];
-      
       if (sourceListId === destListId) {
-        // Moving within the same list
-        newDestCards.splice(card.position, 1);
-        newDestCards.splice(newPosition, 0, { ...card, position: newPosition });
+        // Moving within the same list - fix the logic
+        const cards = [...sourceList.cards];
+        const currentIndex = cards.findIndex(c => c.id === cardId);
+        
+        if (currentIndex === -1) return state;
+        
+        // Remove card from current position
+        const [movedCard] = cards.splice(currentIndex, 1);
+        // Insert at new position
+        cards.splice(newPosition, 0, { ...movedCard, position: newPosition });
+        
+        // Update all positions in the list
+        cards.forEach((c, index) => {
+          c.position = index;
+        });
+        
+        return {
+          ...state,
+          currentBoard: {
+            ...state.currentBoard,
+            lists: state.currentBoard.lists.map(list =>
+              list.id === sourceListId
+                ? { ...list, cards }
+                : list
+            )
+          }
+        };
       } else {
         // Moving between lists
+        const newSourceCards = sourceList.cards.filter(c => c.id !== cardId);
+        const newDestCards = [...destList.cards];
+        
+        // Insert card at new position in destination list
         newDestCards.splice(newPosition, 0, { ...card, listId: destListId, position: newPosition });
+        
+        // Update positions for both lists
+        newSourceCards.forEach((c, index) => {
+          c.position = index;
+        });
+        
+        newDestCards.forEach((c, index) => {
+          c.position = index;
+        });
+        
+        return {
+          ...state,
+          currentBoard: {
+            ...state.currentBoard,
+            lists: state.currentBoard.lists.map(list => {
+              if (list.id === sourceListId) {
+                return { ...list, cards: newSourceCards };
+              }
+              if (list.id === destListId) {
+                return { ...list, cards: newDestCards };
+              }
+              return list;
+            })
+          }
+        };
       }
-      
-      // Update positions
-      newDestCards.forEach((c, index) => {
-        c.position = index;
-      });
-      
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list => {
-            if (list.id === sourceListId) {
-              return { ...list, cards: newSourceCards };
-            }
-            if (list.id === destListId) {
-              return { ...list, cards: newDestCards };
-            }
-            return list;
-          })
-        }
-      };
     }
 
     case 'DELETE_CARD': {
