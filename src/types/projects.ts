@@ -54,7 +54,7 @@ export interface Comment {
 
 export interface Activity {
   id: string;
-  type: 'create' | 'update' | 'move' | 'comment' | 'assign' | 'due_date' | 'complete';
+  type: 'create' | 'update' | 'move' | 'archive' | 'restore' | 'comment' | 'assign' | 'due_date' | 'complete' | 'checklist' | 'attachment';
   description: string;
   author: string;
   authorName: string;

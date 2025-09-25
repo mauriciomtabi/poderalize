@@ -34,6 +34,8 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { MemberPicker } from "./MemberPicker";
 import { LabelPicker } from "./LabelPicker";
 import { DueDatePicker } from "./DueDatePicker";
+import { MoveCardDialog } from "./MoveCardDialog";
+import { AttachmentManager } from "./AttachmentManager";
 import { cn } from "@/lib/utils";
 
 interface CardDetailModalProps {
@@ -55,6 +57,8 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
   const [showMemberPicker, setShowMemberPicker] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [showAttachmentManager, setShowAttachmentManager] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false);
 
@@ -154,6 +158,31 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
   const handleDelete = () => {
     actions.deleteCard(card.id);
     onClose();
+  };
+
+  const handleMoveCard = (destListId: string) => {
+    const currentList = state.currentBoard?.lists.find(l => l.id === card.listId);
+    if (currentList) {
+      const destList = state.currentBoard?.lists.find(l => l.id === destListId);
+      if (destList) {
+        actions.moveCard(card.id, card.listId, destListId, destList.cards.length);
+      }
+    }
+  };
+
+  const handleAddChecklist = () => {
+    const newChecklist = {
+      id: `checklist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title: "Lista de verificação",
+      items: []
+    };
+    
+    const updatedCard = {
+      ...card,
+      checklists: [...card.checklists, newChecklist]
+    };
+    
+    actions.updateCard(updatedCard);
   };
 
   return (
@@ -284,7 +313,12 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
                 <Tag className="h-4 w-4 mr-2" />
                 Etiquetas
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={handleAddChecklist}
+              >
                 <CheckSquare className="h-4 w-4 mr-2" />
                 Lista de verificação
               </Button>
@@ -297,7 +331,12 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
                 <Calendar className="h-4 w-4 mr-2" />
                 Data de vencimento
               </Button>
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={() => setShowAttachmentManager(true)}
+              >
                 <Paperclip className="h-4 w-4 mr-2" />
                 Anexo
               </Button>
@@ -306,7 +345,12 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
             <h3 className="font-medium mb-4">Ações</h3>
             
             <div className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start" size="sm">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start" 
+                size="sm"
+                onClick={() => setShowMoveDialog(true)}
+              >
                 <Move className="h-4 w-4 mr-2" />
                 Mover
               </Button>
@@ -419,6 +463,20 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
           title="Arquivar Cartão"
           description="Tem certeza de que deseja arquivar este cartão?"
           confirmText="Arquivar"
+        />
+
+        <MoveCardDialog
+          isOpen={showMoveDialog}
+          onClose={() => setShowMoveDialog(false)}
+          currentListId={card.listId}
+          availableLists={state.currentBoard?.lists || []}
+          onMove={handleMoveCard}
+        />
+
+        <AttachmentManager
+          isOpen={showAttachmentManager}
+          onClose={() => setShowAttachmentManager(false)}
+          card={card}
         />
       </DialogContent>
     </Dialog>

@@ -307,15 +307,22 @@ export const ProjectsFilters = () => {
               </label>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="show-archived"
-                checked={state.filters.archived}
-                onCheckedChange={(checked) => actions.setFilters({ archived: !!checked })}
-              />
-              <label htmlFor="show-archived" className="text-sm cursor-pointer">
-                Mostrar arquivados
-              </label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="show-archived"
+                  checked={state.filters.archived}
+                  onCheckedChange={(checked) => actions.setFilters({ archived: !!checked })}
+                />
+                <label htmlFor="show-archived" className="text-sm cursor-pointer">
+                  Mostrar arquivados
+                </label>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                {state.currentBoard?.lists
+                  .flatMap(l => l.cards)
+                  .filter(c => c.archived).length || 0}
+              </Badge>
             </div>
           </div>
         </ScrollArea>
