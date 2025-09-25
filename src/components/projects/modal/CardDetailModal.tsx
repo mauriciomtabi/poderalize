@@ -327,134 +327,138 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
           </div>
 
           {/* Sidebar */}
-          <div className="w-64 border-l bg-muted/30 p-4 space-y-4 flex-shrink-0">
-            <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
-            
-            <div className="space-y-2 mb-6">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={() => setShowMemberPicker(true)}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Membros
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={() => setShowLabelPicker(true)}
-              >
-                <Tag className="h-4 w-4 mr-2" />
-                Etiquetas
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={handleAddChecklist}
-              >
-                <CheckSquare className="h-4 w-4 mr-2" />
-                Lista de verificação
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={() => setShowDueDatePicker(true)}
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Data de vencimento
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={() => setShowAttachmentManager(true)}
-              >
-                <Paperclip className="h-4 w-4 mr-2" />
-                Anexo
-              </Button>
-            </div>
+          <div className="w-64 border-l bg-muted/30 flex-shrink-0">
+            <ScrollArea className="h-[80vh] p-4">
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
+                
+                <div className="space-y-2 mb-6">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => setShowMemberPicker(true)}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Membros
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => setShowLabelPicker(true)}
+                  >
+                    <Tag className="h-4 w-4 mr-2" />
+                    Etiquetas
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={handleAddChecklist}
+                  >
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                    Lista de verificação
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => setShowDueDatePicker(true)}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Data de vencimento
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => setShowAttachmentManager(true)}
+                  >
+                    <Paperclip className="h-4 w-4 mr-2" />
+                    Anexo
+                  </Button>
+                </div>
 
-            <h3 className="text-sm font-medium">Ações</h3>
-            
-            <div className="space-y-2">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={() => setShowMoveDialog(true)}
-              >
-                <Move className="h-4 w-4 mr-2" />
-                Mover
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={handleDuplicate}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copiar
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={() => setShowArchiveConfirmation(true)}
-              >
-                <Archive className="h-4 w-4 mr-2" />
-                Arquivar
-              </Button>
-              <Button 
-                variant="destructive" 
-                className="w-full justify-start" 
-                size="sm"
-                onClick={() => setShowDeleteConfirmation(true)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </Button>
-            </div>
+                <h3 className="text-sm font-medium">Ações</h3>
+                
+                <div className="space-y-2 mb-6">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => setShowMoveDialog(true)}
+                  >
+                    <Move className="h-4 w-4 mr-2" />
+                    Mover
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={handleDuplicate}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => setShowArchiveConfirmation(true)}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Arquivar
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full justify-start" 
+                    size="sm"
+                    onClick={() => setShowDeleteConfirmation(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </Button>
+                </div>
 
-            {/* Current assignees */}
-            {latestCard.assignees.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-sm font-medium mb-2">Membros</h4>
-                <div className="flex flex-wrap gap-2">
-                  {latestCard.assignees.map(member => (
-                    <div key={member.id} className="flex items-center gap-2 bg-background rounded p-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={member.avatar} />
-                        <AvatarFallback className="text-xs">
-                          {member.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{member.name}</span>
+                {/* Current assignees */}
+                {latestCard.assignees.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Membros</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {latestCard.assignees.map(member => (
+                        <div key={member.id} className="flex items-center gap-2 bg-background rounded p-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback className="text-xs">
+                              {member.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{member.name}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
+                )}
 
-            {/* Due date */}
-            {latestCard.dueDate && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Data de vencimento</h4>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    {new Date(latestCard.dueDate).toLocaleDateString('pt-BR', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </span>
-                </div>
+                {/* Due date */}
+                {latestCard.dueDate && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Data de vencimento</h4>
+                    <div className="flex items-center gap-2 text-sm bg-background rounded p-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {new Date(latestCard.dueDate).toLocaleDateString('pt-BR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </ScrollArea>
           </div>
         </div>
 
