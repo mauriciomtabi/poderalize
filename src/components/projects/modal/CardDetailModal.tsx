@@ -487,6 +487,7 @@ export const CardDetailModal = ({ card, isOpen, onClose }: CardDetailModalProps)
           isOpen={showMoveDialog}
           onClose={() => setShowMoveDialog(false)}
           currentListId={latestCard.listId}
+          availableLists={state.currentBoard?.lists || []}
           onMove={handleMoveCard}
         />
 
