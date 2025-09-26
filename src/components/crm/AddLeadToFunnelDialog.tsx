@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -65,6 +65,17 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
   const { state, updateFunnel } = useCRM();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("existing");
+  const newScrollRef = useRef<HTMLDivElement | null>(null);
+  const existingScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        newScrollRef.current?.scrollTo({ top: 0 });
+        existingScrollRef.current?.scrollTo({ top: 0 });
+      }, 0);
+    }
+  }, [open]);
 
   const filteredExistingLeads = existingLeads.filter(lead =>
     lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,7 +175,17 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
           <DialogTitle>Adicionar Lead ao Funil</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="flex-1 min-h-0 flex flex-col">
+        <Tabs 
+          value={selectedTab}
+          onValueChange={(val) => {
+            setSelectedTab(val);
+            setTimeout(() => {
+              if (val === 'new') newScrollRef.current?.scrollTo({ top: 0 });
+              if (val === 'existing') existingScrollRef.current?.scrollTo({ top: 0 });
+            }, 0);
+          }} 
+          className="flex-1 min-h-0 flex flex-col"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="existing" className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
@@ -189,7 +210,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             </div>
 
             {/* Leads List */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <div ref={existingScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2">
               {filteredExistingLeads.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead disponível"}
@@ -230,7 +251,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
           </TabsContent>
 
           <TabsContent value="new" className="flex-1 min-h-0 mt-6 overflow-hidden">
-            <div className="h-full overflow-y-auto pr-2">
+            <div ref={newScrollRef} className="h-full overflow-y-auto pr-2">
               <LeadForm onSubmit={handleCreateNewLead} />
             </div>
           </TabsContent>
