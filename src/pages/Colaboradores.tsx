@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Dialog, 
   DialogContent, 
@@ -32,12 +33,16 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X } from "lucide-react";
+import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
+import { useUserRoles } from "@/hooks/useUserRoles";
 import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/types/colaboradores";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const Colaboradores = () => {
   const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador } = useColaboradores();
+  const { pendingUsers, loading: loadingPendingUsers, approveUser, rejectUser } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null);
@@ -148,6 +153,23 @@ const Colaboradores = () => {
     }
   };
 
+  const handleApproveUser = async (userId: string, userEmail: string, userName: string) => {
+    try {
+      await approveUser(userId);
+      // Create colaborador entry
+      if (userName && userEmail) {
+        await addColaborador({
+          nome: userName,
+          email: userEmail,
+          funcao: "Colaborador",
+          status: "ativo"
+        });
+      }
+    } catch (error) {
+      console.error('Error approving user:', error);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
@@ -178,92 +200,113 @@ const Colaboradores = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-        {/* Header com busca e botão de adicionar */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-            <Input
-              placeholder="Buscar colaboradores..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
+      <Tabs defaultValue="colaboradores" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="colaboradores" className="flex items-center gap-2">
+            <Users size={16} />
+            Colaboradores Ativos
+            <Badge variant="secondary" className="ml-2">
+              {colaboradores.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="pendentes" className="flex items-center gap-2">
+            <Clock size={16} />
+            Usuários Pendentes
+            {pendingUsers.length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {pendingUsers.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="colaboradores" className="space-y-6">
+          {/* Header com busca e botão de adicionar */}
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <Input
+                placeholder="Buscar colaboradores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="btn-primary">
+                  <Plus size={16} className="mr-2" />
+                  Novo Colaborador
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Adicionar Novo Colaborador</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="nome">Nome Completo *</Label>
+                    <Input
+                      id="nome"
+                      value={novoColaborador.nome}
+                      onChange={(e) => setNovoColaborador({...novoColaborador, nome: e.target.value})}
+                      placeholder="Ex: Maria Silva"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">E-mail *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={novoColaborador.email}
+                      onChange={(e) => setNovoColaborador({...novoColaborador, email: e.target.value})}
+                      placeholder="Ex: maria@poderalize.com"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      value={novoColaborador.telefone}
+                      onChange={(e) => setNovoColaborador({...novoColaborador, telefone: e.target.value})}
+                      placeholder="Ex: (11) 99999-9999"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="funcao">Função *</Label>
+                    <Input
+                      id="funcao"
+                      value={novoColaborador.funcao}
+                      onChange={(e) => setNovoColaborador({...novoColaborador, funcao: e.target.value})}
+                      placeholder="Ex: Designer Sênior"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="departamento">Departamento</Label>
+                    <Select onValueChange={(value) => setNovoColaborador({...novoColaborador, departamento: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o departamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DEPARTAMENTOS_DISPONIVEIS.map(dept => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleAddColaborador} className="btn-primary">
+                    Adicionar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="btn-primary">
-                <Plus size={16} className="mr-2" />
-                Novo Colaborador
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Adicionar Novo Colaborador</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="nome">Nome Completo *</Label>
-                  <Input
-                    id="nome"
-                    value={novoColaborador.nome}
-                    onChange={(e) => setNovoColaborador({...novoColaborador, nome: e.target.value})}
-                    placeholder="Ex: Maria Silva"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">E-mail *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={novoColaborador.email}
-                    onChange={(e) => setNovoColaborador({...novoColaborador, email: e.target.value})}
-                    placeholder="Ex: maria@poderalize.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="telefone">Telefone</Label>
-                  <Input
-                    id="telefone"
-                    value={novoColaborador.telefone}
-                    onChange={(e) => setNovoColaborador({...novoColaborador, telefone: e.target.value})}
-                    placeholder="Ex: (11) 99999-9999"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="funcao">Função *</Label>
-                  <Input
-                    id="funcao"
-                    value={novoColaborador.funcao}
-                    onChange={(e) => setNovoColaborador({...novoColaborador, funcao: e.target.value})}
-                    placeholder="Ex: Designer Sênior"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="departamento">Departamento</Label>
-                  <Select onValueChange={(value) => setNovoColaborador({...novoColaborador, departamento: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o departamento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DEPARTAMENTOS_DISPONIVEIS.map(dept => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleAddColaborador} className="btn-primary">
-                  Adicionar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
 
         {/* Grid de colaboradores */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -319,17 +362,108 @@ const Colaboradores = () => {
           ))}
         </div>
 
-        {filteredColaboradores.length === 0 && (
-          <div className="text-center py-12">
-            <Users size={48} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground">
-              Nenhum colaborador encontrado
-            </h3>
-            <p className="text-muted-foreground">
-              {searchTerm ? "Tente buscar com outros termos" : "Adicione o primeiro colaborador"}
-            </p>
-          </div>
-        )}
+          {filteredColaboradores.length === 0 && (
+            <div className="text-center py-12">
+              <Users size={48} className="mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold text-muted-foreground">
+                Nenhum colaborador encontrado
+              </h3>
+              <p className="text-muted-foreground">
+                {searchTerm ? "Tente buscar com outros termos" : "Adicione o primeiro colaborador"}
+              </p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="pendentes" className="space-y-6">
+          {loadingPendingUsers ? (
+            <div className="flex justify-center items-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <>
+              {pendingUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <Clock size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    Nenhum usuário pendente
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Todos os usuários foram aprovados ou não há novos cadastros
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pendingUsers.map((userRole) => (
+                    <Card key={userRole.id} className="card-interactive">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="w-12 h-12">
+                              <AvatarFallback className="bg-yellow-500 text-white font-semibold">
+                                {(userRole as any).profiles?.full_name 
+                                  ? getInitials((userRole as any).profiles.full_name) 
+                                  : '?'
+                                }
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-lg">
+                                {(userRole as any).profiles?.full_name || 'Nome não informado'}
+                              </CardTitle>
+                              <p className="text-sm text-muted-foreground">Aguardando aprovação</p>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                            Pendente
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Mail size={14} className="text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              {/* Assuming user email is available somehow */}
+                              Email do usuário
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Cadastrado em: {format(new Date(userRole.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          </div>
+                          <div className="flex space-x-2 pt-2">
+                            <Button 
+                              size="sm" 
+                              className="btn-primary flex-1"
+                              onClick={() => handleApproveUser(
+                                userRole.user_id, 
+                                'email@example.com', 
+                                (userRole as any).profiles?.full_name || 'Colaborador'
+                              )}
+                            >
+                              <UserCheck size={14} className="mr-2" />
+                              Aprovar
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive" 
+                              className="flex-1"
+                              onClick={() => rejectUser(userRole.user_id)}
+                            >
+                              <UserX size={14} className="mr-2" />
+                              Rejeitar
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
 
         {/* Modal de Detalhes do Colaborador */}
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
@@ -521,8 +655,8 @@ const Colaboradores = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    );
-  };
+    </div>
+  );
+};
 
   export default Colaboradores;
