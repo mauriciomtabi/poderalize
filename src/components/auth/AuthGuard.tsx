@@ -1,46 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import type { UserRole, PagePermission } from '@/types/auth';
+import type { UserRole } from '@/types/auth';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   requiredRole?: UserRole;
   allowPending?: boolean;
-  requiredPage?: PagePermission;
 }
 
 export const AuthGuard: React.FC<AuthGuardProps> = ({ 
   children, 
   requiredRole,
-  allowPending = false,
-  requiredPage
+  allowPending = false 
 }) => {
   const { user, loading } = useAuthContext();
-  const { hasPagePermission } = useUserPermissions();
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const location = useLocation();
 
-  useEffect(() => {
-    const checkPermission = async () => {
-      if (!user || loading) return;
-
-      if (requiredPage && user.role !== 'admin') {
-        const permission = await hasPagePermission(requiredPage);
-        setHasPermission(permission);
-      } else {
-        setHasPermission(true);
-      }
-    };
-
-    checkPermission();
-  }, [user, loading, requiredPage, hasPagePermission]);
-
-  if (loading || (requiredPage && hasPermission === null)) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" text="Verificando autenticação..." />
@@ -102,29 +81,6 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
           <p className="text-muted-foreground">
             Você não tem permissão para acessar esta página.
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Check page permission
-  if (requiredPage && hasPermission === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center p-8 max-w-md mx-auto">
-          <div className="p-4 bg-red-100 dark:bg-red-900/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <span className="text-2xl">🚫</span>
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Acesso Negado</h2>
-          <p className="text-muted-foreground mb-4">
-            Você não tem permissão para acessar esta página.
-          </p>
-          <Button 
-            variant="outline" 
-            onClick={() => window.history.back()}
-          >
-            Voltar
-          </Button>
         </div>
       </div>
     );
