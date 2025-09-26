@@ -115,16 +115,15 @@ export const useUserRoles = () => {
 
   const rejectUser = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
+      const { error } = await supabase.rpc('remove_user_completely', {
+        _user_id: userId
+      });
 
       if (error) throw error;
 
       toast({
         title: "Usuário rejeitado",
-        description: "Usuário foi rejeitado"
+        description: "Usuário foi rejeitado e removido completamente do sistema"
       });
 
       fetchPendingUsers();
@@ -138,6 +137,31 @@ export const useUserRoles = () => {
     }
   };
 
+  const removeUser = async (userId: string) => {
+    try {
+      const { error } = await supabase.rpc('remove_user_completely', {
+        _user_id: userId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário removido",
+        description: "Usuário foi removido completamente do sistema"
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error removing user:', error);
+      toast({
+        title: "Erro", 
+        description: "Erro ao remover usuário",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchPendingUsers();
   }, [isAdmin]);
@@ -147,6 +171,7 @@ export const useUserRoles = () => {
     loading,
     approveUser,
     rejectUser,
+    removeUser,
     refetch: fetchPendingUsers
   };
 };

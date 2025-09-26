@@ -10,6 +10,28 @@ export interface UserRoleData {
   updated_at: string;
 }
 
+export type PagePermission = 
+  | 'dashboard'
+  | 'projetos'
+  | 'crm'
+  | 'leads'
+  | 'vendas'
+  | 'colaboradores'
+  | 'acompanhamento'
+  | 'relatorios'
+  | 'configuracoes';
+
+export interface UserPermission {
+  id: string;
+  user_id: string;
+  page: PagePermission;
+  granted: boolean;
+  granted_by?: string;
+  granted_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuthUser {
   id: string;
   email?: string;

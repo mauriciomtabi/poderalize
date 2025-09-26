@@ -33,21 +33,27 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX } from "lucide-react";
+import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, Shield, Settings } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { UserPermissionsDialog } from "@/components/admin/UserPermissionsDialog";
 import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/types/colaboradores";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const Colaboradores = () => {
   const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador } = useColaboradores();
-  const { pendingUsers, loading: loadingPendingUsers, approveUser, rejectUser } = useUserRoles();
+  const { pendingUsers, loading: loadingPendingUsers, approveUser, rejectUser, removeUser } = useUserRoles();
+  const { allUsers, loading: loadingPermissions } = useUserPermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [colaboradorToDelete, setColaboradorToDelete] = useState<string | null>(null);
+  const [userToRemove, setUserToRemove] = useState<any>(null);
+  const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<any>(null);
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [novoColaborador, setNovoColaborador] = useState({
     nome: "",
@@ -153,6 +159,13 @@ const Colaboradores = () => {
     }
   };
 
+  const handleRemoveUser = async (user: any) => {
+    const success = await removeUser(user.user_id);
+    if (success) {
+      setUserToRemove(null);
+    }
+  };
+
   const handleApproveUser = async (userId: string, userEmail: string, userName: string) => {
     try {
       await approveUser(userId, userEmail, userName);
@@ -161,6 +174,11 @@ const Colaboradores = () => {
     } catch (error) {
       console.error('Error approving user:', error);
     }
+  };
+
+  const handleOpenPermissions = (user: any) => {
+    setSelectedUserForPermissions(user);
+    setIsPermissionsDialogOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -194,12 +212,19 @@ const Colaboradores = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <Tabs defaultValue="colaboradores" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="colaboradores" className="flex items-center gap-2">
             <Users size={16} />
             Colaboradores Ativos
             <Badge variant="secondary" className="ml-2">
               {colaboradores.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="usuarios" className="flex items-center gap-2">
+            <Shield size={16} />
+            Usuários Aprovados
+            <Badge variant="secondary" className="ml-2">
+              {allUsers.length}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="pendentes" className="flex items-center gap-2">
@@ -368,6 +393,93 @@ const Colaboradores = () => {
           )}
         </TabsContent>
 
+        <TabsContent value="usuarios" className="space-y-6">
+          {loadingPermissions ? (
+            <div className="flex justify-center items-center h-64">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <>
+              {allUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <Shield size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    Nenhum usuário aprovado
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Ainda não há usuários aprovados no sistema
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allUsers.map((user) => (
+                    <Card key={user.id} className="card-interactive">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="w-12 h-12">
+                              <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                                {user.profile?.full_name 
+                                  ? getInitials(user.profile.full_name) 
+                                  : '?'
+                                }
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-lg">
+                                {user.profile?.full_name || 'Nome não informado'}
+                              </CardTitle>
+                              <p className="text-sm text-muted-foreground">Colaborador</p>
+                            </div>
+                          </div>
+                          <Badge variant="default" className="bg-green-500">
+                            Ativo
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Mail size={14} className="text-muted-foreground" />
+                            <span className="text-muted-foreground">
+                              {user.profile?.email || 'Email não informado'}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Aprovado em: {format(new Date(user.assigned_at || user.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Permissões: {user.permissions?.filter((p: any) => p.granted).length || 0} de 9
+                          </div>
+                          <div className="flex space-x-2 pt-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => handleOpenPermissions(user)}
+                            >
+                              <Settings size={14} className="mr-2" />
+                              Permissões
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive" 
+                              onClick={() => setUserToRemove(user)}
+                            >
+                              <UserX size={14} className="mr-2" />
+                              Remover
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
         <TabsContent value="pendentes" className="space-y-6">
           {loadingPendingUsers ? (
             <div className="flex justify-center items-center h-64">
@@ -456,6 +568,47 @@ const Colaboradores = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de Permissões */}
+      <UserPermissionsDialog
+        user={selectedUserForPermissions}
+        open={isPermissionsDialogOpen}
+        onOpenChange={setIsPermissionsDialogOpen}
+      />
+
+      {/* Dialog de Confirmação de Remoção de Usuário */}
+      <AlertDialog open={!!userToRemove} onOpenChange={() => setUserToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover <strong>{userToRemove?.profile?.full_name}</strong> do sistema?
+              <br/><br/>
+              <span className="text-destructive font-medium">
+                ⚠️ Esta ação é irreversível e removerá TODOS os dados do usuário, incluindo:
+              </span>
+              <ul className="list-disc list-inside mt-2 text-sm text-muted-foreground">
+                <li>Perfil e informações pessoais</li>
+                <li>Permissões de acesso</li>
+                <li>Dados de colaboradores</li>
+                <li>Atletas e avaliações</li>
+                <li>Transações financeiras</li>
+                <li>Metas e categorias</li>
+                <li>Todos os outros dados relacionados</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => userToRemove && handleRemoveUser(userToRemove)}
+            >
+              Remover Completamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
         {/* Modal de Detalhes do Colaborador */}
         <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>

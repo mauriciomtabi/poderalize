@@ -48,16 +48,48 @@ const App = () => (
                     <Layout />
                   </AuthGuard>
                 }>
-                  <Route index element={<Dashboard />} />
-                  <Route path="projetos" element={<Projetos />} />
-                  <Route path="crm" element={<CRM />} />
-                  <Route path="leads" element={<Leads />} />
-                  <Route path="vendas" element={<Vendas />} />
-                  <Route path="acompanhamento" element={<Acompanhamento />} />
-                  <Route path="relatorios" element={<Relatorios />} />
-                  <Route path="configuracoes" element={<Configuracoes />} />
+                  <Route index element={
+                    <AuthGuard requiredPage="dashboard">
+                      <Dashboard />
+                    </AuthGuard>
+                  } />
+                  <Route path="projetos" element={
+                    <AuthGuard requiredPage="projetos">
+                      <Projetos />
+                    </AuthGuard>
+                  } />
+                  <Route path="crm" element={
+                    <AuthGuard requiredPage="crm">
+                      <CRM />
+                    </AuthGuard>
+                  } />
+                  <Route path="leads" element={
+                    <AuthGuard requiredPage="leads">
+                      <Leads />
+                    </AuthGuard>
+                  } />
+                  <Route path="vendas" element={
+                    <AuthGuard requiredPage="vendas">
+                      <Vendas />
+                    </AuthGuard>
+                  } />
+                  <Route path="acompanhamento" element={
+                    <AuthGuard requiredPage="acompanhamento">
+                      <Acompanhamento />
+                    </AuthGuard>
+                  } />
+                  <Route path="relatorios" element={
+                    <AuthGuard requiredPage="relatorios">
+                      <Relatorios />
+                    </AuthGuard>
+                  } />
+                  <Route path="configuracoes" element={
+                    <AuthGuard requiredPage="configuracoes">
+                      <Configuracoes />
+                    </AuthGuard>
+                  } />
                   <Route path="colaboradores" element={
-                    <AuthGuard requiredRole="admin">
+                    <AuthGuard requiredRole="admin" requiredPage="colaboradores">
                       <Colaboradores />
                     </AuthGuard>
                   } />

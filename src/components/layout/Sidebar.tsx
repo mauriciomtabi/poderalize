@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSidebarContext } from "./Layout";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { 
   Home, 
   Users, 
@@ -11,25 +13,56 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
-  PieChart
+  PieChart,
+  Users2,
+  TrendingUp,
+  Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/poderalize-logo.png";
+import type { PagePermission } from "@/types/auth";
 
-const menuItems = [
-  { icon: Home, label: "Dashboard", href: "/" },
-  { icon: Users, label: "Colaboradores", href: "/colaboradores" },
-  { icon: Kanban, label: "Projetos", href: "/projetos" },
-  { icon: PieChart, label: "CRM", href: "/crm" },
-  { icon: Target, label: "Leads", href: "/leads" },
-  { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
-  { icon: Settings, label: "Configurações", href: "/configuracoes" },
+const allMenuItems = [
+  { icon: Home, label: "Dashboard", href: "/", page: "dashboard" as PagePermission },
+  { icon: Kanban, label: "Projetos", href: "/projetos", page: "projetos" as PagePermission },
+  { icon: PieChart, label: "CRM", href: "/crm", page: "crm" as PagePermission },
+  { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
+  { icon: TrendingUp, label: "Vendas", href: "/vendas", page: "vendas" as PagePermission },
+  { icon: Users, label: "Colaboradores", href: "/colaboradores", page: "colaboradores" as PagePermission },
+  { icon: Activity, label: "Acompanhamento", href: "/acompanhamento", page: "acompanhamento" as PagePermission },
+  { icon: BarChart3, label: "Relatórios", href: "/relatorios", page: "relatorios" as PagePermission },
+  { icon: Settings, label: "Configurações", href: "/configuracoes", page: "configuracoes" as PagePermission },
 ];
 
 export const Sidebar = () => {
   const { collapsed, setCollapsed } = useSidebarContext();
+  const { isAdmin } = useAuthContext();
+  const { hasPagePermission } = useUserPermissions();
+  const [visibleMenuItems, setVisibleMenuItems] = useState(allMenuItems);
   const location = useLocation();
+
+  useEffect(() => {
+    const filterMenuItems = async () => {
+      if (isAdmin) {
+        // Admins veem tudo
+        setVisibleMenuItems(allMenuItems);
+        return;
+      }
+
+      // Para colaboradores, verificar permissões
+      const allowedItems = [];
+      for (const item of allMenuItems) {
+        const hasPermission = await hasPagePermission(item.page);
+        if (hasPermission) {
+          allowedItems.push(item);
+        }
+      }
+      setVisibleMenuItems(allowedItems);
+    };
+
+    filterMenuItems();
+  }, [isAdmin, hasPagePermission]);
 
   return (
     <div className={cn(
@@ -80,7 +113,7 @@ export const Sidebar = () => {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = location.pathname === item.href;
           return (
             <Link

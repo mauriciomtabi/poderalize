@@ -777,6 +777,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_permissions: {
+        Row: {
+          created_at: string
+          granted: boolean
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          page: Database["public"]["Enums"]["page_permission"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted?: boolean
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          page: Database["public"]["Enums"]["page_permission"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          page?: Database["public"]["Enums"]["page_permission"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -819,8 +852,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      remove_user_completely: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      user_has_page_permission: {
+        Args: {
+          _page: Database["public"]["Enums"]["page_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      page_permission:
+        | "dashboard"
+        | "projetos"
+        | "crm"
+        | "leads"
+        | "vendas"
+        | "colaboradores"
+        | "acompanhamento"
+        | "relatorios"
+        | "configuracoes"
       user_role: "admin" | "colaborador" | "pending"
     }
     CompositeTypes: {
@@ -949,6 +1003,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      page_permission: [
+        "dashboard",
+        "projetos",
+        "crm",
+        "leads",
+        "vendas",
+        "colaboradores",
+        "acompanhamento",
+        "relatorios",
+        "configuracoes",
+      ],
       user_role: ["admin", "colaborador", "pending"],
     },
   },
