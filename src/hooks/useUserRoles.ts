@@ -15,19 +15,38 @@ export const useUserRoles = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Primeiro buscar os user_roles pendentes
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('role', 'pending');
 
-      if (error) throw error;
-      setPendingUsers(data || []);
+      if (rolesError) throw rolesError;
+
+      if (!userRoles || userRoles.length === 0) {
+        setPendingUsers([]);
+        return;
+      }
+
+      // Buscar os perfis correspondentes
+      const userIds = userRoles.map(role => role.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combinar os dados
+      const usersWithProfiles = userRoles.map(role => {
+        const profile = profiles?.find(p => p.user_id === role.user_id);
+        return {
+          ...role,
+          profiles: profile || null
+        };
+      });
+
+      setPendingUsers(usersWithProfiles);
     } catch (error) {
       console.error('Error fetching pending users:', error);
       toast({
