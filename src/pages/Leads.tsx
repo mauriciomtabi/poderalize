@@ -31,17 +31,6 @@ const Leads = () => {
   // Estado de busca
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Show loading if not authenticated
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-muted-foreground">Você precisa estar logado para acessar os leads</p>
-        </div>
-      </div>
-    );
-  }
-
   // Estado do novo lead
   const [novoLead, setNovoLead] = useState<CreateLeadData>({
     nome: '',
@@ -250,6 +239,17 @@ const Leads = () => {
     lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.fonte.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Show loading if not authenticated
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-muted-foreground">Você precisa estar logado para acessar os leads</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state
   if (isLoading) {
