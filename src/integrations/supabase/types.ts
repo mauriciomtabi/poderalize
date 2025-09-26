@@ -589,6 +589,312 @@ export type Database = {
         }
         Relationships: []
       }
+      follow_ups: {
+        Row: {
+          created_at: string
+          data_agendada: string
+          id: string
+          lead_id: string
+          lead_nome: string
+          observacoes: string | null
+          status: Database["public"]["Enums"]["follow_up_status"] | null
+          template_mensagem: string | null
+          tipo: Database["public"]["Enums"]["follow_up_type"]
+          updated_at: string
+          user_id: string
+          vendedor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_agendada: string
+          id?: string
+          lead_id: string
+          lead_nome: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["follow_up_status"] | null
+          template_mensagem?: string | null
+          tipo: Database["public"]["Enums"]["follow_up_type"]
+          updated_at?: string
+          user_id: string
+          vendedor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_agendada?: string
+          id?: string
+          lead_id?: string
+          lead_nome?: string
+          observacoes?: string | null
+          status?: Database["public"]["Enums"]["follow_up_status"] | null
+          template_mensagem?: string | null
+          tipo?: Database["public"]["Enums"]["follow_up_type"]
+          updated_at?: string
+          user_id?: string
+          vendedor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_ups_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_stages: {
+        Row: {
+          color: string
+          created_at: string
+          funnel_id: string
+          id: string
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          funnel_id: string
+          id?: string
+          position: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_stages_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnels: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lead_interactions: {
+        Row: {
+          created_at: string
+          created_by_user: string | null
+          description: string
+          id: string
+          interaction_date: string
+          interaction_type: string
+          lead_id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user?: string | null
+          description: string
+          id?: string
+          interaction_date?: string
+          interaction_type: string
+          lead_id: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user?: string | null
+          description?: string
+          id?: string
+          interaction_date?: string
+          interaction_type?: string
+          lead_id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_interactions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          anuncio_origem: string | null
+          created_at: string
+          data_contato: string
+          dores_identificadas: string[] | null
+          email: string
+          empresa: string
+          equipe_atual: string | null
+          etapa_funil: Database["public"]["Enums"]["funnel_stage_type"] | null
+          etapa_jornada: string | null
+          facebook: string | null
+          faturamento_atual: number | null
+          faturamento_desejado: number | null
+          fonte: string
+          gatilhos_funcionais: string[] | null
+          id: string
+          indicador_potencial: string | null
+          instagram: string | null
+          necessidade_oculta: string[] | null
+          nivel_consciencia: string | null
+          nome: string
+          observacoes: string | null
+          oferta_atrativa: string | null
+          outras_redes_sociais: string | null
+          pontuacao: number | null
+          probabilidade: number | null
+          produto_interesse: string
+          site: string | null
+          status_advanced:
+            | Database["public"]["Enums"]["lead_status_advanced"]
+            | null
+          status_simple:
+            | Database["public"]["Enums"]["lead_status_simple"]
+            | null
+          telefone: string | null
+          tipo_discurso: Database["public"]["Enums"]["tipo_discurso"] | null
+          trava_emocional:
+            | Database["public"]["Enums"]["trava_emocional_type"]
+            | null
+          ultima_interacao: string | null
+          updated_at: string
+          user_id: string
+          valor: number | null
+          vendedor_id: string | null
+          vendedor_nome: string | null
+        }
+        Insert: {
+          anuncio_origem?: string | null
+          created_at?: string
+          data_contato?: string
+          dores_identificadas?: string[] | null
+          email: string
+          empresa: string
+          equipe_atual?: string | null
+          etapa_funil?: Database["public"]["Enums"]["funnel_stage_type"] | null
+          etapa_jornada?: string | null
+          facebook?: string | null
+          faturamento_atual?: number | null
+          faturamento_desejado?: number | null
+          fonte: string
+          gatilhos_funcionais?: string[] | null
+          id?: string
+          indicador_potencial?: string | null
+          instagram?: string | null
+          necessidade_oculta?: string[] | null
+          nivel_consciencia?: string | null
+          nome: string
+          observacoes?: string | null
+          oferta_atrativa?: string | null
+          outras_redes_sociais?: string | null
+          pontuacao?: number | null
+          probabilidade?: number | null
+          produto_interesse?: string
+          site?: string | null
+          status_advanced?:
+            | Database["public"]["Enums"]["lead_status_advanced"]
+            | null
+          status_simple?:
+            | Database["public"]["Enums"]["lead_status_simple"]
+            | null
+          telefone?: string | null
+          tipo_discurso?: Database["public"]["Enums"]["tipo_discurso"] | null
+          trava_emocional?:
+            | Database["public"]["Enums"]["trava_emocional_type"]
+            | null
+          ultima_interacao?: string | null
+          updated_at?: string
+          user_id: string
+          valor?: number | null
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Update: {
+          anuncio_origem?: string | null
+          created_at?: string
+          data_contato?: string
+          dores_identificadas?: string[] | null
+          email?: string
+          empresa?: string
+          equipe_atual?: string | null
+          etapa_funil?: Database["public"]["Enums"]["funnel_stage_type"] | null
+          etapa_jornada?: string | null
+          facebook?: string | null
+          faturamento_atual?: number | null
+          faturamento_desejado?: number | null
+          fonte?: string
+          gatilhos_funcionais?: string[] | null
+          id?: string
+          indicador_potencial?: string | null
+          instagram?: string | null
+          necessidade_oculta?: string[] | null
+          nivel_consciencia?: string | null
+          nome?: string
+          observacoes?: string | null
+          oferta_atrativa?: string | null
+          outras_redes_sociais?: string | null
+          pontuacao?: number | null
+          probabilidade?: number | null
+          produto_interesse?: string
+          site?: string | null
+          status_advanced?:
+            | Database["public"]["Enums"]["lead_status_advanced"]
+            | null
+          status_simple?:
+            | Database["public"]["Enums"]["lead_status_simple"]
+            | null
+          telefone?: string | null
+          tipo_discurso?: Database["public"]["Enums"]["tipo_discurso"] | null
+          trava_emocional?:
+            | Database["public"]["Enums"]["trava_emocional_type"]
+            | null
+          ultima_interacao?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number | null
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Relationships: []
+      }
       metas: {
         Row: {
           ativo: boolean
@@ -777,6 +1083,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_permissions: {
+        Row: {
+          created_at: string
+          granted: boolean
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          page: Database["public"]["Enums"]["page_permission"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted?: boolean
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          page: Database["public"]["Enums"]["page_permission"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          page?: Database["public"]["Enums"]["page_permission"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -819,8 +1158,52 @@ export type Database = {
         }
         Returns: boolean
       }
+      remove_user_completely: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      user_has_page_permission: {
+        Args: {
+          _page: Database["public"]["Enums"]["page_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      follow_up_status: "pendente" | "concluido" | "reagendado"
+      follow_up_type: "ligacao" | "whatsapp" | "email" | "reuniao"
+      funnel_stage_type:
+        | "descoberta"
+        | "consideracao"
+        | "decisao"
+        | "fechamento"
+        | "fidelizacao"
+      lead_status_advanced: "frio" | "morno" | "quente"
+      lead_status_simple:
+        | "novo"
+        | "qualificado"
+        | "proposta"
+        | "negociacao"
+        | "fechado"
+        | "perdido"
+      page_permission:
+        | "dashboard"
+        | "projetos"
+        | "crm"
+        | "leads"
+        | "vendas"
+        | "colaboradores"
+        | "acompanhamento"
+        | "relatorios"
+        | "configuracoes"
+      tipo_discurso: "tecnico" | "emocional" | "inspirador"
+      trava_emocional_type:
+        | "inseguranca_financeira"
+        | "medo_dar_errado"
+        | "falta_apoio"
+        | "falta_tempo"
+        | "desconfianca"
       user_role: "admin" | "colaborador" | "pending"
     }
     CompositeTypes: {
@@ -949,6 +1332,43 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      follow_up_status: ["pendente", "concluido", "reagendado"],
+      follow_up_type: ["ligacao", "whatsapp", "email", "reuniao"],
+      funnel_stage_type: [
+        "descoberta",
+        "consideracao",
+        "decisao",
+        "fechamento",
+        "fidelizacao",
+      ],
+      lead_status_advanced: ["frio", "morno", "quente"],
+      lead_status_simple: [
+        "novo",
+        "qualificado",
+        "proposta",
+        "negociacao",
+        "fechado",
+        "perdido",
+      ],
+      page_permission: [
+        "dashboard",
+        "projetos",
+        "crm",
+        "leads",
+        "vendas",
+        "colaboradores",
+        "acompanhamento",
+        "relatorios",
+        "configuracoes",
+      ],
+      tipo_discurso: ["tecnico", "emocional", "inspirador"],
+      trava_emocional_type: [
+        "inseguranca_financeira",
+        "medo_dar_errado",
+        "falta_apoio",
+        "falta_tempo",
+        "desconfianca",
+      ],
       user_role: ["admin", "colaborador", "pending"],
     },
   },
