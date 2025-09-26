@@ -83,15 +83,22 @@ export const UserPermissionsDialog = ({ user, open, onOpenChange }: UserPermissi
   const { updateUserPermission } = useUserPermissions();
   const [updatingPermissions, setUpdatingPermissions] = useState<Record<string, boolean>>({});
 
+  // Guard against null user
+  if (!user) {
+    return null;
+  }
+
   const getInitials = (name: string) => {
     return name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
   };
 
   const hasPermission = (page: PagePermission): boolean => {
-    return user.permissions?.some((p: any) => p.page === page && p.granted) || false;
+    return user?.permissions?.some((p: any) => p.page === page && p.granted) || false;
   };
 
   const handlePermissionToggle = async (page: PagePermission, granted: boolean) => {
+    if (!user?.user_id) return;
+    
     setUpdatingPermissions(prev => ({ ...prev, [page]: true }));
     
     try {
@@ -108,12 +115,12 @@ export const UserPermissionsDialog = ({ user, open, onOpenChange }: UserPermissi
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="w-10 h-10">
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {getInitials(user.profile?.full_name)}
+                {getInitials(user?.profile?.full_name || '')}
               </AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-semibold">{user.profile?.full_name || 'Usuário'}</div>
-              <div className="text-sm text-muted-foreground">{user.profile?.email}</div>
+              <div className="font-semibold">{user?.profile?.full_name || 'Usuário'}</div>
+              <div className="text-sm text-muted-foreground">{user?.profile?.email}</div>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -122,7 +129,7 @@ export const UserPermissionsDialog = ({ user, open, onOpenChange }: UserPermissi
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium">Permissões de Acesso</h4>
             <Badge variant="secondary">
-              {user.permissions?.filter((p: any) => p.granted).length || 0} de {Object.keys(PAGE_CONFIGS).length}
+              {user?.permissions?.filter((p: any) => p.granted).length || 0} de {Object.keys(PAGE_CONFIGS).length}
             </Badge>
           </div>
 

@@ -412,7 +412,7 @@ const Colaboradores = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {allUsers.map((user) => (
+                  {allUsers.filter(user => user && user.profile).map((user) => (
                     <Card key={user.id} className="card-interactive">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
