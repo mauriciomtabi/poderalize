@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Colaborador, ColaboradorFormData } from '@/types/colaboradores';
+import { Colaborador, ColaboradorFormData, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from '@/types/colaboradores';
 import { useToast } from './use-toast';
+import { z } from 'zod';
+
+// Zod schema for validation
+const colaboradorSchema = z.object({
+  nome: z.string().trim().min(1, "Nome é obrigatório"),
+  email: z.string().trim().email("Email inválido"),
+  funcao: z.string().trim().min(1, "Função é obrigatória"),
+  telefone: z.string().trim().optional(),
+  departamento: z.enum(['RH', 'TI', 'Vendas', 'Marketing', 'Financeiro', 'Operações'] as const).nullable().optional(),
+  status: z.enum(['ativo', 'inativo', 'afastado'] as const).optional()
+});
 
 export function useColaboradores() {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
@@ -32,36 +43,31 @@ export function useColaboradores() {
 
   const addColaborador = async (formData: ColaboradorFormData) => {
     try {
-      console.log('Tentando adicionar colaborador:', formData);
-      
-      // Validação básica
-      if (!formData.nome?.trim()) {
-        throw new Error('Nome é obrigatório');
-      }
-      if (!formData.email?.trim()) {
-        throw new Error('Email é obrigatório');
-      }
-      if (!formData.funcao?.trim()) {
-        throw new Error('Função é obrigatória');
-      }
+      // Validação com Zod
+      const validatedData = colaboradorSchema.parse({
+        nome: formData.nome?.trim(),
+        email: formData.email?.trim(),
+        funcao: formData.funcao?.trim(),
+        telefone: formData.telefone?.trim() || undefined,
+        departamento: formData.departamento && DEPARTAMENTOS_DISPONIVEIS.includes(formData.departamento as any) 
+          ? formData.departamento : null,
+        status: formData.status && STATUS_DISPONIVEIS.includes(formData.status as any) 
+          ? formData.status : 'ativo'
+      });
 
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('Usuário não autenticado');
 
-      console.log('User data:', userData.user.id);
-
-      // Preparar dados limpos para inserção
+      // Preparar dados para inserção
       const insertData = {
-        nome: formData.nome.trim(),
-        email: formData.email.trim(),
-        funcao: formData.funcao.trim(),
-        telefone: formData.telefone?.trim() || null,
-        departamento: formData.departamento?.trim() || null,
-        status: formData.status || 'ativo',
+        nome: validatedData.nome,
+        email: validatedData.email,
+        funcao: validatedData.funcao,
+        telefone: validatedData.telefone || null,
+        departamento: validatedData.departamento,
+        status: validatedData.status || 'ativo',
         user_id: userData.user.id
       };
-
-      console.log('Dados para inserção:', insertData);
 
       const { data, error } = await supabase
         .from('colaboradores')
@@ -71,10 +77,9 @@ export function useColaboradores() {
 
       if (error) {
         console.error('Erro do Supabase:', error);
-        throw error;
+        throw new Error(`Erro na base de dados: ${error.message}`);
       }
       
-      console.log('Colaborador inserido com sucesso:', data);
       setColaboradores(prev => [...prev, data]);
       toast({
         title: "Sucesso",
@@ -83,7 +88,14 @@ export function useColaboradores() {
       return data;
     } catch (error) {
       console.error('Erro ao adicionar colaborador:', error);
-      const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
+      let errorMessage = 'Erro desconhecido';
+      
+      if (error instanceof z.ZodError) {
+        errorMessage = error.issues.map(e => e.message).join(', ');
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro",
         description: `Erro ao adicionar colaborador: ${errorMessage}`,
@@ -95,18 +107,55 @@ export function useColaboradores() {
 
   const updateColaborador = async (id: string, formData: Partial<ColaboradorFormData>) => {
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('Usuário não autenticado');
+
+      // Normalizar e validar dados parciais
+      const normalizedData: any = {};
+      
+      if (formData.nome !== undefined) {
+        normalizedData.nome = formData.nome?.trim() || null;
+      }
+      if (formData.email !== undefined) {
+        normalizedData.email = formData.email?.trim() || null;
+      }
+      if (formData.funcao !== undefined) {
+        normalizedData.funcao = formData.funcao?.trim() || null;
+      }
+      if (formData.telefone !== undefined) {
+        normalizedData.telefone = formData.telefone?.trim() || null;
+      }
+      if (formData.departamento !== undefined) {
+        normalizedData.departamento = formData.departamento && DEPARTAMENTOS_DISPONIVEIS.includes(formData.departamento as any) 
+          ? formData.departamento : null;
+      }
+      if (formData.status !== undefined) {
+        normalizedData.status = formData.status && STATUS_DISPONIVEIS.includes(formData.status as any) 
+          ? formData.status : 'ativo';
+      }
+
       const { data, error } = await supabase
         .from('colaboradores')
-        .update(formData)
+        .update({
+          ...normalizedData,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
+        .eq('user_id', userData.user.id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro do Supabase:', error);
+        throw new Error(`Erro na base de dados: ${error.message}`);
+      }
       
       setColaboradores(prev => 
-        prev.map(col => col.id === id ? data : col)
+        prev.map(colaborador => 
+          colaborador.id === id ? data : colaborador
+        )
       );
+      
       toast({
         title: "Sucesso",
         description: "Colaborador atualizado com sucesso"
@@ -114,9 +163,15 @@ export function useColaboradores() {
       return data;
     } catch (error) {
       console.error('Erro ao atualizar colaborador:', error);
+      let errorMessage = 'Erro desconhecido';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro",
-        description: "Erro ao atualizar colaborador",
+        description: `Erro ao atualizar colaborador: ${errorMessage}`,
         variant: "destructive"
       });
       throw error;

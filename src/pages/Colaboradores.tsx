@@ -129,7 +129,9 @@ const Colaboradores = () => {
       email: colaborador.email,
       telefone: colaborador.telefone || "",
       funcao: colaborador.funcao,
-      departamento: colaborador.departamento || "",
+      // Normalizar departamento - se não estiver na lista válida, usar string vazia
+      departamento: colaborador.departamento && DEPARTAMENTOS_DISPONIVEIS.includes(colaborador.departamento as any) 
+        ? colaborador.departamento : "",
       status: colaborador.status
     });
     setIsEditing(false);
@@ -635,11 +637,9 @@ const Colaboradores = () => {
                           <SelectValue placeholder="Selecione o departamento" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Criativo">Criativo</SelectItem>
-                          <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-                          <SelectItem value="Atendimento">Atendimento</SelectItem>
-                          <SelectItem value="Marketing">Marketing</SelectItem>
-                          <SelectItem value="Financeiro">Financeiro</SelectItem>
+                          {DEPARTAMENTOS_DISPONIVEIS.map(dept => (
+                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     ) : (
