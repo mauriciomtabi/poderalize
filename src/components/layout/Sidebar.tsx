@@ -10,7 +10,8 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
-  Target
+  Target,
+  PieChart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const menuItems = [
   { icon: Home, label: "Dashboard", href: "/" },
   { icon: Users, label: "Colaboradores", href: "/colaboradores" },
   { icon: Kanban, label: "Projetos", href: "/projetos" },
+  { icon: PieChart, label: "CRM", href: "/crm" },
   { icon: Target, label: "Leads", href: "/leads" },
   { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
   { icon: Settings, label: "Configurações", href: "/configuracoes" },

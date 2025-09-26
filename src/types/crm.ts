@@ -106,3 +106,46 @@ export interface RecomendacaoIA {
   prioridade: 'baixa' | 'media' | 'alta';
   sugestao: string;
 }
+
+export interface FunnelStage {
+  id: string;
+  title: string;
+  color: string;
+  position: number;
+  leads: LeadAdvanced[];
+}
+
+export interface CustomFunnel {
+  id: string;
+  name: string;
+  description?: string;
+  stages: FunnelStage[];
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+}
+
+export interface CRMFilters {
+  search: string;
+  dateRange: { start: string; end: string } | null;
+  leadSource: string[];
+  responsible: string[];
+  funnel: string | null;
+}
+
+export interface CRMMetrics {
+  totalLeads: number;
+  conversionRate: number;
+  averageCycleTime: number;
+  predictedRevenue: number;
+}
+
+export interface CRMState {
+  currentFunnel: CustomFunnel | null;
+  funnels: CustomFunnel[];
+  filters: CRMFilters;
+  metrics: CRMMetrics;
+  selectedLead: LeadAdvanced | null;
+  isLoading: boolean;
+  draggedLead: LeadAdvanced | null;
+}

@@ -8,6 +8,7 @@ import { AppProvider } from "@/contexts/AppContext";
 import Dashboard from "./pages/Dashboard";
 import Colaboradores from "./pages/Colaboradores";
 import Projetos from "./pages/Projetos";
+import CRM from "./pages/CRM";
 import Leads from "./pages/Leads";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/colaboradores" element={<Colaboradores />} />
               <Route path="/projetos" element={<Projetos />} />
+              <Route path="/crm" element={<CRM />} />
               <Route path="/leads" element={<Leads />} />
               <Route path="/acompanhamento" element={<Acompanhamento />} />
               <Route path="/vendas" element={<Vendas />} />
