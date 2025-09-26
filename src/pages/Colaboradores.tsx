@@ -33,7 +33,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw } from "lucide-react";
+import { Plus, Search, Mail, Phone, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useApprovedUsers } from "@/hooks/useApprovedUsers";
@@ -106,8 +106,7 @@ const Colaboradores = () => {
 
     try {
       await addColaborador({
-        ...novoColaborador,
-        data_contratacao: new Date().toISOString().split('T')[0]
+        ...novoColaborador
       });
       
       setNovoColaborador({
@@ -148,6 +147,21 @@ const Colaboradores = () => {
     }
 
     try {
+      // Se for um colaborador virtual (vindo de profiles), cria no banco antes de atualizar
+      if (selectedColaborador.id.startsWith('virtual-')) {
+        const created = await addColaborador({
+          nome: editingColaborador.nome,
+          email: editingColaborador.email,
+          telefone: editingColaborador.telefone || undefined,
+          funcao: editingColaborador.funcao,
+          departamento: editingColaborador.departamento || undefined,
+          status: editingColaborador.status || 'ativo'
+        });
+        setSelectedColaborador(created);
+        setIsEditing(false);
+        return;
+      }
+
       const updated = await updateColaborador(selectedColaborador.id, editingColaborador);
       setSelectedColaborador(updated);
       setIsEditing(false);
@@ -191,8 +205,7 @@ const Colaboradores = () => {
         telefone: "",
         funcao: "A definir",
         departamento: "",
-        status: "ativo",
-        data_contratacao: new Date().toISOString().split('T')[0]
+        status: "ativo"
       });
       
       toast({
@@ -634,13 +647,6 @@ const Colaboradores = () => {
                     )}
                   </div>
                   
-                  <div>
-                    <Label className="text-sm font-semibold text-muted-foreground flex items-center space-x-2">
-                      <Calendar size={14} />
-                      <span>Data de Contratação</span>
-                    </Label>
-                    <p className="mt-1 text-sm">{selectedColaborador.data_contratacao ? formatDate(selectedColaborador.data_contratacao) : "Não informado"}</p>
-                  </div>
                 </div>
 
                 <div className="flex justify-between pt-4 border-t">
