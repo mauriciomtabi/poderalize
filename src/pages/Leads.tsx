@@ -727,10 +727,418 @@ const Leads = () => {
           </DialogHeader>
           
           {selectedLead && (
-            <div className="space-y-6">
-              <div className="text-center text-muted-foreground">
-                <p>Modal de visualização/edição será implementado na próxima versão</p>
-                <p>Lead: {selectedLead.nome} - {selectedLead.empresa}</p>
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Dados Básicos */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">DADOS BÁSICOS</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Nome</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedLead?.nome || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, nome: e.target.value} : null)}
+                        placeholder="Nome do contato"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.nome}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Empresa</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedLead?.empresa || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, empresa: e.target.value} : null)}
+                        placeholder="Nome da empresa"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.empresa}</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>E-mail</Label>
+                    {isEditing ? (
+                      <Input
+                        type="email"
+                        value={editedLead?.email || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, email: e.target.value} : null)}
+                        placeholder="email@empresa.com"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.email}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Telefone</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedLead?.telefone || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, telefone: e.target.value} : null)}
+                        placeholder="(11) 99999-9999"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.telefone || 'Não informado'}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label>Fonte</Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editedLead?.fonte || ''}
+                        onValueChange={(value) => setEditedLead(prev => prev ? {...prev, fonte: value} : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Como nos conheceu?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['Website', 'Instagram', 'Facebook', 'LinkedIn', 'Google Ads', 'Indicação', 'WhatsApp', 'E-mail marketing', 'Evento', 'Outro'].map((fonte) => (
+                            <SelectItem key={fonte} value={fonte}>
+                              {fonte}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.fonte}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Valor (R$)</Label>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        value={editedLead?.valor || 0}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, valor: Number(e.target.value)} : null)}
+                        placeholder="50000"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">R$ {selectedLead.valor?.toLocaleString('pt-BR') || '0'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Probabilidade (%)</Label>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={editedLead?.probabilidade || 0}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, probabilidade: Number(e.target.value)} : null)}
+                        placeholder="50"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.probabilidade || 0}%</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Produto de Interesse</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editedLead?.produto_interesse || ''}
+                      onChange={(e) => setEditedLead(prev => prev ? {...prev, produto_interesse: e.target.value} : null)}
+                      placeholder="Produto ou serviço de interesse"
+                    />
+                  ) : (
+                    <p className="p-2 bg-muted rounded-md">{selectedLead.produto_interesse || 'Não especificado'}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Presença Digital */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">PRESENÇA DIGITAL</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Site</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedLead?.site || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, site: e.target.value} : null)}
+                        placeholder="www.empresa.com.br"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.site || 'Não informado'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Instagram</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedLead?.instagram || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, instagram: e.target.value} : null)}
+                        placeholder="@empresa"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.instagram || 'Não informado'}</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Facebook</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedLead?.facebook || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, facebook: e.target.value} : null)}
+                        placeholder="facebook.com/empresa"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.facebook || 'Não informado'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Outras Redes Sociais</Label>
+                    {isEditing ? (
+                      <Input
+                        value={editedLead?.outras_redes_sociais || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, outras_redes_sociais: e.target.value} : null)}
+                        placeholder="LinkedIn, TikTok, YouTube..."
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.outras_redes_sociais || 'Não informado'}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Faturamento */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">FATURAMENTO</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Faturamento Mensal Atual</Label>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        value={editedLead?.faturamento_atual || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, faturamento_atual: Number(e.target.value)} : null)}
+                        placeholder="50000"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">
+                        {selectedLead.faturamento_atual ? `R$ ${Number(selectedLead.faturamento_atual).toLocaleString('pt-BR')}` : 'Não informado'}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Faturamento Mensal Desejado</Label>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        value={editedLead?.faturamento_desejado || ''}
+                        onChange={(e) => setEditedLead(prev => prev ? {...prev, faturamento_desejado: Number(e.target.value)} : null)}
+                        placeholder="100000"
+                      />
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">
+                        {selectedLead.faturamento_desejado ? `R$ ${Number(selectedLead.faturamento_desejado).toLocaleString('pt-BR')}` : 'Não informado'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Comportamento e Potencial */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">COMPORTAMENTO E POTENCIAL</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Dores Identificadas</Label>
+                    {isEditing ? (
+                      <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                        {['Falta de clientes', 'Baixo faturamento', 'Dificuldade para vender', 'Sem estratégia de marketing', 'Equipe desmotivada', 'Processos desorganizados', 'Concorrência acirrada', 'Falta de diferenciação'].map((dor) => (
+                          <label key={dor} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editedLead?.dores_identificadas?.includes(dor) || false}
+                              onChange={(e) => {
+                                const dores = editedLead?.dores_identificadas || [];
+                                if (e.target.checked) {
+                                  setEditedLead(prev => prev ? {...prev, dores_identificadas: [...dores, dor]} : null);
+                                } else {
+                                  setEditedLead(prev => prev ? {...prev, dores_identificadas: dores.filter(d => d !== dor)} : null);
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <span className="text-sm">{dor}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-2 bg-muted rounded-md min-h-[100px]">
+                        {selectedLead.dores_identificadas && selectedLead.dores_identificadas.length > 0 ? (
+                          <ul className="list-disc list-inside space-y-1">
+                            {selectedLead.dores_identificadas.map((dor, index) => (
+                              <li key={index} className="text-sm">{dor}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-muted-foreground">Nenhuma dor identificada</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label>Nível de Consciência</Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editedLead?.nivel_consciencia || ''}
+                        onValueChange={(value) => setEditedLead(prev => prev ? {...prev, nivel_consciencia: value} : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha uma opção" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['Muito baixo', 'Baixo', 'Médio', 'Alto', 'Muito alto'].map((nivel) => (
+                            <SelectItem key={nivel} value={nivel}>
+                              {nivel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.nivel_consciencia || 'Não informado'}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Etapa da Jornada</Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editedLead?.etapa_jornada || ''}
+                        onValueChange={(value) => setEditedLead(prev => prev ? {...prev, etapa_jornada: value} : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha uma opção" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['Descoberta', 'Consideração', 'Decisão', 'Pós-venda'].map((etapa) => (
+                            <SelectItem key={etapa} value={etapa}>
+                              {etapa}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.etapa_jornada || 'Não informado'}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label>Indicador de Potencial</Label>
+                    {isEditing ? (
+                      <Select 
+                        value={editedLead?.indicador_potencial || ''}
+                        onValueChange={(value) => setEditedLead(prev => prev ? {...prev, indicador_potencial: value} : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha uma opção" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['Baixo', 'Médio', 'Alto', 'Muito Alto'].map((indicador) => (
+                            <SelectItem key={indicador} value={indicador}>
+                              {indicador}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="p-2 bg-muted rounded-md">{selectedLead.indicador_potencial || 'Não informado'}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Equipe Atual</Label>
+                  {isEditing ? (
+                    <Input
+                      value={editedLead?.equipe_atual || ''}
+                      onChange={(e) => setEditedLead(prev => prev ? {...prev, equipe_atual: e.target.value} : null)}
+                      placeholder="Exemplo: 3 colaboradores fixos e 2 freelancers"
+                    />
+                  ) : (
+                    <p className="p-2 bg-muted rounded-md">{selectedLead.equipe_atual || 'Não informado'}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Observações */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">OBSERVAÇÕES</h3>
+                <div>
+                  <Label>Observações Gerais</Label>
+                  {isEditing ? (
+                    <Textarea
+                      value={editedLead?.observacoes || ''}
+                      onChange={(e) => setEditedLead(prev => prev ? {...prev, observacoes: e.target.value} : null)}
+                      placeholder="Detalhes sobre o lead..."
+                      rows={4}
+                    />
+                  ) : (
+                    <div className="p-2 bg-muted rounded-md min-h-[100px]">
+                      {selectedLead.observacoes ? (
+                        <p className="whitespace-pre-wrap">{selectedLead.observacoes}</p>
+                      ) : (
+                        <p className="text-muted-foreground">Nenhuma observação</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Informações do Sistema */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">INFORMAÇÕES DO SISTEMA</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Data de Contato</Label>
+                    <p className="p-2 bg-muted rounded-md">
+                      {selectedLead.data_contato ? new Date(selectedLead.data_contato).toLocaleDateString('pt-BR') : 'Não informado'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Última Interação</Label>
+                    <p className="p-2 bg-muted rounded-md">
+                      {selectedLead.ultima_interacao ? new Date(selectedLead.ultima_interacao).toLocaleString('pt-BR') : 'Não informado'}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Pontuação</Label>
+                    <p className="p-2 bg-muted rounded-md">{selectedLead.pontuacao || 0} pontos</p>
+                  </div>
+                  <div>
+                    <Label>Status</Label>
+                    <p className="p-2 bg-muted rounded-md">
+                      <Badge variant={
+                        selectedLead.status_simple === 'novo' ? 'default' :
+                        selectedLead.status_simple === 'qualificado' ? 'secondary' :
+                        selectedLead.status_simple === 'proposta' ? 'outline' :
+                        selectedLead.status_simple === 'negociacao' ? 'secondary' :
+                        selectedLead.status_simple === 'fechado' ? 'default' :
+                        'outline'
+                      }>
+                        {selectedLead.status_simple || 'novo'}
+                      </Badge>
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
