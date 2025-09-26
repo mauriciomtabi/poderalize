@@ -120,6 +120,7 @@ export function useColaboradores() {
 
   const syncApprovedUsers = async () => {
     try {
+      console.log('Iniciando sincronização de usuários aprovados...');
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('Usuário não autenticado');
 
@@ -130,7 +131,12 @@ export function useColaboradores() {
         .eq('role', 'colaborador');
 
       if (rolesError) throw rolesError;
-      if (!approvedUsers || approvedUsers.length === 0) return;
+      if (!approvedUsers || approvedUsers.length === 0) {
+        console.log('Nenhum usuário aprovado encontrado');
+        return;
+      }
+
+      console.log('Usuários aprovados encontrados:', approvedUsers);
 
       // Buscar perfis dos usuários aprovados
       const userIds = approvedUsers.map(u => u.user_id);
@@ -140,7 +146,12 @@ export function useColaboradores() {
         .in('user_id', userIds);
 
       if (profilesError) throw profilesError;
-      if (!profiles || profiles.length === 0) return;
+      if (!profiles || profiles.length === 0) {
+        console.log('Nenhum perfil encontrado para usuários aprovados');
+        return;
+      }
+
+      console.log('Perfis encontrados:', profiles);
 
       // Buscar colaboradores existentes
       const { data: existingColaboradores, error: colaboradoresError } = await supabase
@@ -150,26 +161,39 @@ export function useColaboradores() {
       if (colaboradoresError) throw colaboradoresError;
 
       const existingEmails = new Set(existingColaboradores?.map(c => c.email) || []);
+      console.log('Emails de colaboradores existentes:', Array.from(existingEmails));
 
       // Filtrar usuários que não estão na tabela colaboradores
       const profilesToAdd = profiles.filter(profile => 
         profile.email && !existingEmails.has(profile.email)
       );
 
+      console.log('Perfis para adicionar:', profilesToAdd);
+
       // Adicionar colaboradores faltantes
       for (const profile of profilesToAdd) {
         if (profile.email) {
-          await supabase
+          console.log('Adicionando colaborador:', profile);
+          const { data, error } = await supabase
             .from('colaboradores')
             .insert([{
-              user_id: userData.user.id,
+              user_id: userData.user.id, // Admin que gerencia os colaboradores
               nome: profile.full_name || 'Nome não informado',
               email: profile.email,
               funcao: 'A definir',
               departamento: '',
               status: 'ativo',
               data_contratacao: new Date().toISOString().split('T')[0]
-            }]);
+            }])
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Erro ao inserir colaborador:', error);
+            throw error;
+          }
+          
+          console.log('Colaborador inserido com sucesso:', data);
         }
       }
 
@@ -178,10 +202,20 @@ export function useColaboradores() {
           title: "Colaboradores sincronizados",
           description: `${profilesToAdd.length} colaboradores foram adicionados à lista`
         });
-        fetchColaboradores();
+        await fetchColaboradores();
+      } else {
+        toast({
+          title: "Sincronização concluída",
+          description: "Todos os usuários aprovados já estão na lista de colaboradores"
+        });
       }
     } catch (error) {
       console.error('Erro ao sincronizar usuários aprovados:', error);
+      toast({
+        title: "Erro na sincronização",
+        description: "Erro ao sincronizar usuários aprovados",
+        variant: "destructive"
+      });
     }
   };
 

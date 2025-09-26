@@ -33,7 +33,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX } from "lucide-react";
+import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +42,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const Colaboradores = () => {
-  const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador } = useColaboradores();
+  const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador, syncApprovedUsers } = useColaboradores();
   const { pendingUsers, loading: loadingPendingUsers, approveUser, rejectUser } = useUserRoles();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
@@ -242,13 +242,23 @@ const Colaboradores = () => {
               />
             </div>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="btn-primary">
-                  <Plus size={16} className="mr-2" />
-                  Novo Colaborador
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={syncApprovedUsers}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw size={16} />
+                Sincronizar Usuários
+              </Button>
+              
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-primary">
+                    <Plus size={16} className="mr-2" />
+                    Novo Colaborador
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                   <DialogTitle>Adicionar Novo Colaborador</DialogTitle>
@@ -315,6 +325,7 @@ const Colaboradores = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
         {/* Grid de colaboradores */}
