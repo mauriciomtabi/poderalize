@@ -32,7 +32,7 @@ export const useUserRoles = () => {
       const userIds = userRoles.map(role => role.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, avatar_url')
+        .select('user_id, full_name, avatar_url, email')
         .in('user_id', userIds);
 
       if (profilesError) throw profilesError;

@@ -424,8 +424,7 @@ const Colaboradores = () => {
                           <div className="flex items-center space-x-2 text-sm">
                             <Mail size={14} className="text-muted-foreground" />
                             <span className="text-muted-foreground">
-                              {/* Assuming user email is available somehow */}
-                              Email do usuário
+                              {(userRole as any).profiles?.email || 'Email não informado'}
                             </span>
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -437,7 +436,7 @@ const Colaboradores = () => {
                               className="btn-primary flex-1"
                               onClick={() => handleApproveUser(
                                 userRole.user_id, 
-                                'email@example.com', 
+                                (userRole as any).profiles?.email || 'email@exemplo.com', 
                                 (userRole as any).profiles?.full_name || 'Colaborador'
                               )}
                             >
