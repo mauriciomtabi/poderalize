@@ -211,19 +211,21 @@ export const CRMFilters = () => {
         <div className="space-y-2">
           <Label>Funil Específico</Label>
           <Select
-            value={state.filters.funnel || ""}
-            onValueChange={(value) => setFilters({ funnel: value || null })}
+            value={state.filters.funnel || "all"}
+            onValueChange={(value) => setFilters({ funnel: value === "all" ? null : value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Todos os funis" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os funis</SelectItem>
-              {state.funnels.map((funnel) => (
-                <SelectItem key={funnel.id} value={funnel.id}>
-                  {funnel.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">Todos os funis</SelectItem>
+              {state.funnels
+                .filter(funnel => funnel.id && funnel.id.trim())
+                .map((funnel) => (
+                  <SelectItem key={funnel.id} value={funnel.id}>
+                    {funnel.name}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
