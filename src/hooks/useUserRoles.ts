@@ -59,22 +59,47 @@ export const useUserRoles = () => {
     }
   };
 
-  const approveUser = async (userId: string, role: UserRole = 'colaborador') => {
+  const approveUser = async (userId: string, email: string, name: string, role: UserRole = 'colaborador') => {
     try {
+      // Get current admin info
+      const currentUser = await supabase.auth.getUser();
+      const adminId = currentUser.data.user?.id;
+      
+      // Update user role
       const { error } = await supabase
         .from('user_roles')
         .update({ 
           role,
-          assigned_by: (await supabase.auth.getUser()).data.user?.id,
+          assigned_by: adminId,
           assigned_at: new Date().toISOString()
         })
         .eq('user_id', userId);
 
       if (error) throw error;
 
+      // Send approval notification email
+      try {
+        const { error: emailError } = await supabase.functions.invoke('notify-approval', {
+          body: { 
+            email, 
+            name, 
+            appUrl: window.location.origin,
+            adminName: 'administrador'
+          }
+        });
+
+        if (emailError) {
+          console.error('Error sending approval email:', emailError);
+          // Don't fail the approval if email fails
+        }
+      } catch (emailError) {
+        console.error('Error calling notify-approval function:', emailError);
+        // Don't fail the approval if email fails
+      }
+
       toast({
         title: "Usuário aprovado!",
-        description: "Usuário foi aprovado com sucesso"
+        description: "Usuário foi aprovado e receberá um email para definir sua senha"
       });
 
       fetchPendingUsers();

@@ -155,16 +155,9 @@ const Colaboradores = () => {
 
   const handleApproveUser = async (userId: string, userEmail: string, userName: string) => {
     try {
-      await approveUser(userId);
-      // Create colaborador entry
-      if (userName && userEmail) {
-        await addColaborador({
-          nome: userName,
-          email: userEmail,
-          funcao: "Colaborador",
-          status: "ativo"
-        });
-      }
+      await approveUser(userId, userEmail, userName);
+      // Note: Not automatically creating a colaborador entry anymore
+      // The admin can manually add them later if needed
     } catch (error) {
       console.error('Error approving user:', error);
     }
