@@ -36,6 +36,7 @@ import {
 import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useToast } from "@/hooks/use-toast";
 import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/types/colaboradores";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -43,6 +44,7 @@ import { ptBR } from 'date-fns/locale';
 const Colaboradores = () => {
   const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador } = useColaboradores();
   const { pendingUsers, loading: loadingPendingUsers, approveUser, rejectUser } = useUserRoles();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null);
@@ -156,8 +158,22 @@ const Colaboradores = () => {
   const handleApproveUser = async (userId: string, userEmail: string, userName: string) => {
     try {
       await approveUser(userId, userEmail, userName);
-      // Note: Not automatically creating a colaborador entry anymore
-      // The admin can manually add them later if needed
+      
+      // Automatically create colaborador entry for approved user
+      await addColaborador({
+        nome: userName,
+        email: userEmail,
+        telefone: "",
+        funcao: "A definir",
+        departamento: "",
+        status: "ativo",
+        data_contratacao: new Date().toISOString().split('T')[0]
+      });
+      
+      toast({
+        title: "Usuário aprovado e adicionado",
+        description: "Usuário foi aprovado e adicionado à lista de colaboradores"
+      });
     } catch (error) {
       console.error('Error approving user:', error);
     }

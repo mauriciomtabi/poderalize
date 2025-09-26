@@ -118,8 +118,77 @@ export function useColaboradores() {
     }
   };
 
+  const syncApprovedUsers = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('Usuário não autenticado');
+
+      // Buscar usuários aprovados
+      const { data: approvedUsers, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'colaborador');
+
+      if (rolesError) throw rolesError;
+      if (!approvedUsers || approvedUsers.length === 0) return;
+
+      // Buscar perfis dos usuários aprovados
+      const userIds = approvedUsers.map(u => u.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds);
+
+      if (profilesError) throw profilesError;
+      if (!profiles || profiles.length === 0) return;
+
+      // Buscar colaboradores existentes
+      const { data: existingColaboradores, error: colaboradoresError } = await supabase
+        .from('colaboradores')
+        .select('email');
+
+      if (colaboradoresError) throw colaboradoresError;
+
+      const existingEmails = new Set(existingColaboradores?.map(c => c.email) || []);
+
+      // Filtrar usuários que não estão na tabela colaboradores
+      const profilesToAdd = profiles.filter(profile => 
+        profile.email && !existingEmails.has(profile.email)
+      );
+
+      // Adicionar colaboradores faltantes
+      for (const profile of profilesToAdd) {
+        if (profile.email) {
+          await supabase
+            .from('colaboradores')
+            .insert([{
+              user_id: userData.user.id,
+              nome: profile.full_name || 'Nome não informado',
+              email: profile.email,
+              funcao: 'A definir',
+              departamento: '',
+              status: 'ativo',
+              data_contratacao: new Date().toISOString().split('T')[0]
+            }]);
+        }
+      }
+
+      if (profilesToAdd.length > 0) {
+        toast({
+          title: "Colaboradores sincronizados",
+          description: `${profilesToAdd.length} colaboradores foram adicionados à lista`
+        });
+        fetchColaboradores();
+      }
+    } catch (error) {
+      console.error('Erro ao sincronizar usuários aprovados:', error);
+    }
+  };
+
   useEffect(() => {
     fetchColaboradores();
+    // Sincronizar usuários aprovados na primeira carga
+    setTimeout(() => syncApprovedUsers(), 1000);
   }, []);
 
   return {
@@ -128,6 +197,7 @@ export function useColaboradores() {
     addColaborador,
     updateColaborador,
     deleteColaborador,
-    refetch: fetchColaboradores
+    refetch: fetchColaboradores,
+    syncApprovedUsers
   };
 }
