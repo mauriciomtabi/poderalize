@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,21 @@ import { Lead, LeadStatus } from "@/types/crm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const Leads = () => {
-  const [leads, setLeads] = useState<Lead[]>([
+  // Função para carregar dados do localStorage
+  const loadLeadsFromStorage = (): Lead[] => {
+    try {
+      const savedLeads = localStorage.getItem('leads-page-data');
+      if (savedLeads) {
+        return JSON.parse(savedLeads);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar leads do localStorage:', error);
+    }
+    return initialLeads;
+  };
+
+  // Dados iniciais (fallback caso não tenha no localStorage)
+  const initialLeads: Lead[] = [
     {
       id: "1",
       nome: "Carlos Mendes",
@@ -48,53 +62,41 @@ const Leads = () => {
       nivelConsciencia: "Consciente do problema",
       etapaJornada: "Consideração",
       indicadorPotencial: "Lead com médio potencial (interessado, mas travado)",
-      equipeAtual: "5 colaboradores fixos"
+      equipeAtual: "5 colaboradores"
     },
     {
       id: "2",
-      nome: "Fernanda Lima",
-      empresa: "StartupXYZ",
-      email: "fernanda@startupxyz.com",
+      nome: "Ana Silva",
+      empresa: "Inovare Marketing",
+      email: "ana@inovare.com.br",
       telefone: "11 88888-2222",
       fonte: "LinkedIn",
       status: "qualificado",
-      valor: 75000,
+      valor: 35000,
       probabilidade: 60,
       dataContato: "2024-09-18",
-      observacoes: "Precisa de estratégia digital completa",
-      facebook: "facebook.com/startupxyz",
-      outrasRedesSociais: "LinkedIn, TikTok",
-      faturamentoAtual: 45000,
+      observacoes: "Precisa de estratégia digital urgente",
+      facebook: "facebook.com/inovare",
+      outrasRedesSociais: "TikTok, YouTube",
       faturamentoDesejado: 100000,
       doresIdentificadas: ["Falta de estratégia digital", "Concorrência forte"],
       nivelConsciencia: "Consciente da solução",
       etapaJornada: "Decisão",
       indicadorPotencial: "Lead com alto potencial (com verba, decisão e clareza)",
-      equipeAtual: "3 colaboradores fixos e 2 freelancers"
-    },
-    {
-      id: "3",
-      nome: "Roberto Santos",
-      empresa: "Indústria ABC",
-      email: "roberto@industriaabc.com",
-      telefone: "11 77777-3333",
-      fonte: "Indicação",
-      status: "proposta",
-      valor: 120000,
-      probabilidade: 80,
-      dataContato: "2024-09-15",
-      observacoes: "Aguardando aprovação da diretoria",
-      site: "www.industriaabc.com.br",
-      faturamentoAtual: 200000,
-      faturamentoDesejado: 350000,
-      doresIdentificadas: ["Marca não reconhecida", "Processos desorganizados"],
-      nivelConsciencia: "Totalmente consciente (pronto para comprar)",
-      etapaJornada: "Decisão",
-      indicadorPotencial: "Lead com alto potencial (com verba, decisão e clareza)",
-      equipeAtual: "15 colaboradores"
-    },
-  ]);
+      equipeAtual: "8 colaboradores"
+    }
+  ];
 
+  const [leads, setLeads] = useState<Lead[]>(loadLeadsFromStorage);
+
+  // Salvar leads no localStorage sempre que a lista mudar
+  useEffect(() => {
+    try {
+      localStorage.setItem('leads-page-data', JSON.stringify(leads));
+    } catch (error) {
+      console.error('Erro ao salvar leads no localStorage:', error);
+    }
+  }, [leads]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);

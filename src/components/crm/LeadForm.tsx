@@ -4,30 +4,43 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
 import { LeadAdvanced } from "@/types/crm";
-import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-
-const leadSchema = z.object({
-  nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
-  empresa: z.string().trim().min(1, "Empresa é obrigatória").max(100, "Empresa deve ter no máximo 100 caracteres"),
-  email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres"),
-  telefone: z.string().trim().max(20, "Telefone deve ter no máximo 20 caracteres"),
-  fonte: z.string().trim().min(1, "Fonte é obrigatória"),
-  valor: z.number().min(0, "Valor deve ser positivo").max(9999999, "Valor muito alto"),
-  observacoes: z.string().max(1000, "Observações devem ter no máximo 1000 caracteres").optional()
-});
 
 interface LeadFormProps {
   onSubmit: (leadData: Partial<LeadAdvanced>) => void;
   initialData?: Partial<LeadAdvanced>;
 }
 
+// Lead data for shared storage
+export interface LeadData {
+  id: string;
+  nome: string;
+  empresa: string;
+  email: string;
+  telefone: string;
+  fonte: string;
+  valor: number;
+  observacoes: string;
+  site?: string;
+  instagram?: string;
+  facebook?: string;
+  outrasRedesSociais?: string;
+  faturamentoAtual?: number;
+  faturamentoDesejado?: number;
+  doresIdentificadas: string[];
+  nivelConsciencia?: string;
+  etapaJornada?: string;
+  indicadorPotencial?: string;
+  equipeAtual?: string;
+  status: string;
+  probabilidade: number;
+  dataContato: string;
+}
+
 export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [novoLead, setNovoLead] = useState({
     nome: initialData?.nome || "",
     empresa: initialData?.empresa || "",
     email: initialData?.email || "",
@@ -52,17 +65,18 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
     etapaJornada: "",
     indicadorPotencial: "",
     equipeAtual: "",
-    
-    // CRM específico
-    travaEmocional: "inseguranca_financeira" as const,
-    tipoDiscurso: "tecnico" as const,
-    necessidadeOculta: ["Aumentar vendas"],
-    produtoInteresse: "Consultoria",
-    ofertaAtrativa: "Análise gratuita",
-    gatilhosFuncionais: ["ROI garantido"]
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  // Função para salvar lead também na página de Leads
+  const saveToLeadsPage = (leadData: LeadData) => {
+    try {
+      const existingLeads = JSON.parse(localStorage.getItem('leads-page-data') || '[]');
+      const updatedLeads = [...existingLeads, leadData];
+      localStorage.setItem('leads-page-data', JSON.stringify(updatedLeads));
+    } catch (error) {
+      console.error('Erro ao salvar lead:', error);
+    }
+  };
 
   const fonteOptions = [
     "Website", "LinkedIn", "Facebook", "Instagram", "Google Ads", 
@@ -91,125 +105,74 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
     "Lead com baixo potencial (curioso, mas distante do perfil ideal)"
   ];
 
-  const travaEmocionalOptions = [
-    { value: "inseguranca_financeira", label: "Insegurança Financeira" },
-    { value: "medo_dar_errado", label: "Medo de dar errado" },
-    { value: "falta_apoio", label: "Falta de apoio" },
-    { value: "falta_tempo", label: "Falta de tempo" },
-    { value: "desconfianca", label: "Desconfiança" }
-  ];
-
-  const tipoDiscursoOptions = [
-    { value: "tecnico", label: "Técnico" },
-    { value: "emocional", label: "Emocional" },
-    { value: "inspirador", label: "Inspirador" }
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-
-    // Validate basic fields
-    try {
-      const basicData = {
-        nome: formData.nome,
-        empresa: formData.empresa,
-        email: formData.email,
-        telefone: formData.telefone,
-        fonte: formData.fonte,
-        valor: parseFloat(formData.valor) || 0,
-        observacoes: formData.observacoes
-      };
-
-      leadSchema.parse(basicData);
-
-      const leadData: Partial<LeadAdvanced> = {
-        ...basicData,
-        travaEmocional: formData.travaEmocional,
-        tipoDiscurso: formData.tipoDiscurso,
-        necessidadeOculta: formData.necessidadeOculta,
-        produtoInteresse: formData.produtoInteresse,
-        ofertaAtrativa: formData.ofertaAtrativa,
-        gatilhosFuncionais: formData.gatilhosFuncionais
-      };
-
-      onSubmit(leadData);
+  const handleAddLead = () => {
+    if (!novoLead.nome || !novoLead.empresa || !novoLead.email) {
       toast({
-        title: "Lead criado",
-        description: "Lead adicionado ao funil com sucesso!",
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
       });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            newErrors[err.path[0].toString()] = err.message;
-          }
-        });
-        setErrors(newErrors);
-      }
+      return;
     }
-  };
 
-  const addDor = (dor: string) => {
-    if (!formData.doresIdentificadas.includes(dor)) {
-      setFormData({
-        ...formData,
-        doresIdentificadas: [...formData.doresIdentificadas, dor]
-      });
-    }
-  };
+    // Criar lead para a página de Leads
+    const newLeadForLeadsPage: LeadData = {
+      id: Math.random().toString(36).substr(2, 9),
+      ...novoLead,
+      valor: parseFloat(novoLead.valor) || 0,
+      faturamentoAtual: parseFloat(novoLead.faturamentoAtual) || undefined,
+      faturamentoDesejado: parseFloat(novoLead.faturamentoDesejado) || undefined,
+      status: "novo",
+      probabilidade: 25,
+      dataContato: new Date().toISOString().split('T')[0]
+    };
 
-  const removeDor = (dor: string) => {
-    setFormData({
-      ...formData,
-      doresIdentificadas: formData.doresIdentificadas.filter(d => d !== dor)
+    // Criar lead para o CRM
+    const leadDataForCRM: Partial<LeadAdvanced> = {
+      nome: novoLead.nome,
+      empresa: novoLead.empresa,
+      email: novoLead.email,
+      telefone: novoLead.telefone,
+      fonte: novoLead.fonte,
+      valor: parseFloat(novoLead.valor) || 0,
+      observacoes: novoLead.observacoes,
+    };
+
+    // Salvar na página de Leads
+    saveToLeadsPage(newLeadForLeadsPage);
+
+    // Submeter para o CRM
+    onSubmit(leadDataForCRM);
+    
+    toast({
+      title: "Lead criado",
+      description: "Lead adicionado ao funil e salvo com sucesso!",
     });
   };
 
-  const addNecessidadeOculta = (necessidade: string) => {
-    if (necessidade.trim() && !formData.necessidadeOculta.includes(necessidade.trim())) {
-      setFormData({
-        ...formData,
-        necessidadeOculta: [...formData.necessidadeOculta, necessidade.trim()]
-      });
-    }
-  };
-
-  const removeNecessidadeOculta = (necessidade: string) => {
-    setFormData({
-      ...formData,
-      necessidadeOculta: formData.necessidadeOculta.filter(n => n !== necessidade)
-    });
-  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       {/* Dados Básicos */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-primary">Dados Básicos</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="nome">Nome *</Label>
             <Input
               id="nome"
-              value={formData.nome}
-              onChange={(e) => setFormData({...formData, nome: e.target.value})}
+              value={novoLead.nome}
+              onChange={(e) => setNovoLead({...novoLead, nome: e.target.value})}
               placeholder="Nome do contato"
-              className={errors.nome ? "border-red-500" : ""}
             />
-            {errors.nome && <p className="text-sm text-red-500 mt-1">{errors.nome}</p>}
           </div>
           <div>
             <Label htmlFor="empresa">Empresa *</Label>
             <Input
               id="empresa"
-              value={formData.empresa}
-              onChange={(e) => setFormData({...formData, empresa: e.target.value})}
+              value={novoLead.empresa}
+              onChange={(e) => setNovoLead({...novoLead, empresa: e.target.value})}
               placeholder="Nome da empresa"
-              className={errors.empresa ? "border-red-500" : ""}
             />
-            {errors.empresa && <p className="text-sm text-red-500 mt-1">{errors.empresa}</p>}
           </div>
         </div>
         
@@ -222,168 +185,243 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
               </div>
               <Input
                 id="telefone"
-                value={formData.telefone}
-                onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                value={novoLead.telefone}
+                onChange={(e) => setNovoLead({...novoLead, telefone: e.target.value})}
                 placeholder="11 99999-9999"
                 className="rounded-l-none"
               />
             </div>
-            {errors.telefone && <p className="text-sm text-red-500 mt-1">{errors.telefone}</p>}
           </div>
           <div>
             <Label htmlFor="email">E-mail *</Label>
             <Input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              value={novoLead.email}
+              onChange={(e) => setNovoLead({...novoLead, email: e.target.value})}
               placeholder="email@empresa.com"
-              className={errors.email ? "border-red-500" : ""}
             />
-            {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Presença Digital */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-primary">PRESENÇA DIGITAL</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="site">Site</Label>
+            <Input
+              id="site"
+              value={novoLead.site}
+              onChange={(e) => setNovoLead({...novoLead, site: e.target.value})}
+              placeholder="www.empresa.com.br"
+            />
+          </div>
+          <div>
+            <Label htmlFor="instagram">Instagram</Label>
+            <Input
+              id="instagram"
+              value={novoLead.instagram}
+              onChange={(e) => setNovoLead({...novoLead, instagram: e.target.value})}
+              placeholder="@empresa"
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="facebook">Facebook</Label>
+            <Input
+              id="facebook"
+              value={novoLead.facebook}
+              onChange={(e) => setNovoLead({...novoLead, facebook: e.target.value})}
+              placeholder="facebook.com/empresa"
+            />
+          </div>
+          <div>
+            <Label htmlFor="outrasRedesSociais">Outras Redes Sociais (LinkedIn, TikTok, etc.)</Label>
+            <Input
+              id="outrasRedesSociais"
+              value={novoLead.outrasRedesSociais}
+              onChange={(e) => setNovoLead({...novoLead, outrasRedesSociais: e.target.value})}
+              placeholder="LinkedIn, TikTok, YouTube..."
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Faturamento */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-primary">FATURAMENTO</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="faturamentoAtual">Faturamento Mensal Atual</Label>
+            <Input
+              id="faturamentoAtual"
+              type="number"
+              value={novoLead.faturamentoAtual}
+              onChange={(e) => setNovoLead({...novoLead, faturamentoAtual: e.target.value})}
+              placeholder="50000"
+            />
+          </div>
+          <div>
+            <Label htmlFor="faturamentoDesejado">Faturamento Mensal Desejado</Label>
+            <Input
+              id="faturamentoDesejado"
+              type="number"
+              value={novoLead.faturamentoDesejado}
+              onChange={(e) => setNovoLead({...novoLead, faturamentoDesejado: e.target.value})}
+              placeholder="100000"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Comportamento e Potencial */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-primary">COMPORTAMENTO E POTENCIAL</h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Dores identificadas</Label>
+            <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+              {doresOptions.map((dor) => (
+                <label key={dor} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={novoLead.doresIdentificadas.includes(dor)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setNovoLead({
+                          ...novoLead,
+                          doresIdentificadas: [...novoLead.doresIdentificadas, dor]
+                        });
+                      } else {
+                        setNovoLead({
+                          ...novoLead,
+                          doresIdentificadas: novoLead.doresIdentificadas.filter(d => d !== dor)
+                        });
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  <span className="text-sm">{dor}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="nivelConsciencia">Nível de consciência sobre marketing e vendas</Label>
+            <Select onValueChange={(value) => setNovoLead({...novoLead, nivelConsciencia: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Escolha uma opção" />
+              </SelectTrigger>
+              <SelectContent>
+                {nivelConscienciaOptions.map((opcao) => (
+                  <SelectItem key={opcao} value={opcao}>
+                    {opcao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="fonte">Fonte do Lead *</Label>
-            <Select value={formData.fonte} onValueChange={(value) => setFormData({...formData, fonte: value})}>
-              <SelectTrigger className={errors.fonte ? "border-red-500" : ""}>
-                <SelectValue placeholder="Selecione a fonte" />
+            <Label htmlFor="etapaJornada">Etapa da Jornada Poderalize</Label>
+            <Select onValueChange={(value) => setNovoLead({...novoLead, etapaJornada: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Escolha uma opção" />
+              </SelectTrigger>
+              <SelectContent>
+                {etapaJornadaOptions.map((etapa) => (
+                  <SelectItem key={etapa} value={etapa}>
+                    {etapa}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="fonte">Fonte do Lead</Label>
+            <Select onValueChange={(value) => setNovoLead({...novoLead, fonte: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Como nos conheceu?" />
               </SelectTrigger>
               <SelectContent>
                 {fonteOptions.map((fonte) => (
-                  <SelectItem key={fonte} value={fonte}>{fonte}</SelectItem>
+                  <SelectItem key={fonte} value={fonte}>
+                    {fonte}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.fonte && <p className="text-sm text-red-500 mt-1">{errors.fonte}</p>}
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="valor">Valor Estimado (R$)</Label>
+            <Label htmlFor="indicadorPotencial">Indicador de Potencial</Label>
+            <Select onValueChange={(value) => setNovoLead({...novoLead, indicadorPotencial: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Escolha uma opção" />
+              </SelectTrigger>
+              <SelectContent>
+                {indicadorPotencialOptions.map((indicador) => (
+                  <SelectItem key={indicador} value={indicador}>
+                    {indicador}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="equipeAtual">Equipe atual / Nº de colaboradores</Label>
             <Input
-              id="valor"
-              type="number"
-              value={formData.valor}
-              onChange={(e) => setFormData({...formData, valor: e.target.value})}
-              placeholder="50000"
-              min="0"
-              className={errors.valor ? "border-red-500" : ""}
+              id="equipeAtual"
+              value={novoLead.equipeAtual}
+              onChange={(e) => setNovoLead({...novoLead, equipeAtual: e.target.value})}
+              placeholder="Exemplo: 3 colaboradores fixos e 2 freelancers"
             />
-            {errors.valor && <p className="text-sm text-red-500 mt-1">{errors.valor}</p>}
           </div>
         </div>
       </div>
 
-      {/* Análise Comportamental */}
+      {/* Campos Finais */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-primary">Análise Comportamental</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Trava Emocional</Label>
-            <Select 
-              value={formData.travaEmocional} 
-              onValueChange={(value: any) => setFormData({...formData, travaEmocional: value})}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {travaEmocionalOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Tipo de Discurso</Label>
-            <Select 
-              value={formData.tipoDiscurso} 
-              onValueChange={(value: any) => setFormData({...formData, tipoDiscurso: value})}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {tipoDiscursoOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Produto de Interesse</Label>
-            <Input
-              value={formData.produtoInteresse}
-              onChange={(e) => setFormData({...formData, produtoInteresse: e.target.value})}
-              placeholder="Consultoria, Mentoria, etc."
-            />
-          </div>
-          <div>
-            <Label>Oferta Atrativa</Label>
-            <Input
-              value={formData.ofertaAtrativa}
-              onChange={(e) => setFormData({...formData, ofertaAtrativa: e.target.value})}
-              placeholder="Diagnóstico gratuito, desconto, etc."
-            />
-          </div>
+        <div>
+          <Label htmlFor="valor">Valor Estimado do Projeto (R$)</Label>
+          <Input
+            id="valor"
+            type="number"
+            value={novoLead.valor}
+            onChange={(e) => setNovoLead({...novoLead, valor: e.target.value})}
+            placeholder="50000"
+          />
         </div>
 
         <div>
-          <Label>Necessidades Ocultas</Label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {formData.necessidadeOculta.map((necessidade) => (
-              <Badge key={necessidade} variant="secondary" className="cursor-pointer">
-                {necessidade}
-                <X 
-                  className="h-3 w-3 ml-1" 
-                  onClick={() => removeNecessidadeOculta(necessidade)}
-                />
-              </Badge>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Digite uma necessidade e pressione Enter"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addNecessidadeOculta(e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-          </div>
+          <Label htmlFor="observacoes">Observações</Label>
+          <Textarea
+            id="observacoes"
+            value={novoLead.observacoes}
+            onChange={(e) => setNovoLead({...novoLead, observacoes: e.target.value})}
+            placeholder="Detalhes sobre o lead..."
+            rows={4}
+          />
         </div>
       </div>
 
-      {/* Observações */}
-      <div>
-        <Label htmlFor="observacoes">Observações</Label>
-        <Textarea
-          id="observacoes"
-          value={formData.observacoes}
-          onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-          placeholder="Observações adicionais sobre o lead..."
-          rows={3}
-          maxLength={1000}
-          className={errors.observacoes ? "border-red-500" : ""}
-        />
-        {errors.observacoes && <p className="text-sm text-red-500 mt-1">{errors.observacoes}</p>}
-      </div>
-
-      <div className="flex justify-end">
-        <Button type="submit" className="btn-primary">
-          Adicionar Lead ao Funil
+      <div className="flex justify-end gap-2">
+        <Button type="button" onClick={handleAddLead} className="btn-primary">
+          Adicionar
         </Button>
       </div>
-    </form>
+    </div>
   );
 };
