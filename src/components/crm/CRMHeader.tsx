@@ -94,7 +94,7 @@ export const CRMHeader = () => {
                 <SelectValue placeholder="Selecionar funil" />
               </SelectTrigger>
               <SelectContent>
-                {state.funnels.map((funnel) => (
+                {state.funnels.filter(funnel => funnel.id && funnel.id.trim()).map((funnel) => (
                   <SelectItem key={funnel.id} value={funnel.id}>
                     <div className="flex items-center gap-2">
                       <span>{funnel.name}</span>
