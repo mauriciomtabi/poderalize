@@ -70,12 +70,19 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         newScrollRef.current?.scrollTo({ top: 0 });
         existingScrollRef.current?.scrollTo({ top: 0 });
-      }, 0);
+      });
     }
   }, [open]);
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (selectedTab === 'new') newScrollRef.current?.scrollTo({ top: 0 });
+      if (selectedTab === 'existing') existingScrollRef.current?.scrollTo({ top: 0 });
+    });
+  }, [selectedTab]);
 
   const filteredExistingLeads = existingLeads.filter(lead =>
     lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -177,13 +184,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
 
         <Tabs 
           value={selectedTab}
-          onValueChange={(val) => {
-            setSelectedTab(val);
-            setTimeout(() => {
-              if (val === 'new') newScrollRef.current?.scrollTo({ top: 0 });
-              if (val === 'existing') existingScrollRef.current?.scrollTo({ top: 0 });
-            }, 0);
-          }} 
+          onValueChange={setSelectedTab}
           className="flex-1 min-h-0 flex flex-col"
         >
           <TabsList className="grid w-full grid-cols-2">
@@ -197,7 +198,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="existing" className="flex-1 min-h-0 flex flex-col mt-6 overflow-hidden">
+          <TabsContent value="existing" className="flex-1 min-h-0 flex flex-col mt-2 overflow-hidden">
             {/* Search */}
             <div className="relative mb-4 flex-shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -250,8 +251,8 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             </div>
           </TabsContent>
 
-          <TabsContent value="new" className="flex-1 min-h-0 mt-6 overflow-hidden">
-            <div ref={newScrollRef} className="h-full overflow-y-auto pr-2">
+          <TabsContent value="new" className="flex-1 min-h-0 mt-2 overflow-hidden">
+            <div ref={newScrollRef} className="overflow-y-auto pr-2">
               <LeadForm onSubmit={handleCreateNewLead} />
             </div>
           </TabsContent>
