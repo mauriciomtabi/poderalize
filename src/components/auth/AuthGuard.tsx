@@ -2,6 +2,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import type { UserRole } from '@/types/auth';
 
 interface AuthGuardProps {
@@ -42,9 +44,26 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
           <p className="text-muted-foreground mb-4">
             Sua conta foi criada com sucesso! Aguarde a aprovação do administrador para acessar o sistema.
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-6">
             Você receberá um e-mail quando sua conta for aprovada.
           </p>
+          <div className="flex gap-3 justify-center">
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+            >
+              Tentar novamente
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/auth';
+              }}
+            >
+              Sair
+            </Button>
+          </div>
         </div>
       </div>
     );
