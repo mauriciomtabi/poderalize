@@ -47,6 +47,8 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
     telefone: initialData?.telefone || "",
     fonte: initialData?.fonte || "",
     valor: initialData?.valor?.toString() || "",
+    probabilidade: "25",
+    produtoInteresse: "",
     observacoes: initialData?.observacoes || "",
     
     // Presença Digital
@@ -84,32 +86,38 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
   ];
 
   const doresOptions = [
-    "Baixa visibilidade online", "Poucas vendas", "Dificuldade para gerar leads",
-    "Marca não reconhecida", "Concorrência forte", "Falta de estratégia digital",
-    "Equipe sem capacitação", "Processos desorganizados"
+    "Falta de leads qualificados",
+    "Baixo ROI em marketing",
+    "Concorrência acirrada", 
+    "Falta de presença digital",
+    "Equipe sem capacitação",
+    "Processos desorganizados",
+    "Dificuldade em reter clientes",
+    "Margem de lucro baixa"
   ];
 
   const nivelConscienciaOptions = [
-    "Inconsciente (não sabe que tem um problema)",
+    "Inconsciente",
     "Consciente do problema",
     "Consciente da solução",
-    "Consciente do produto/serviço",
-    "Totalmente consciente (pronto para comprar)"
+    "Consciente do produto",
+    "Pronto para comprar"
   ];
 
   const etapaJornadaOptions = ["Descoberta", "Consideração", "Decisão", "Fidelização"];
 
   const indicadorPotencialOptions = [
-    "Lead com alto potencial (com verba, decisão e clareza)",
-    "Lead com médio potencial (interessado, mas travado)",
-    "Lead com baixo potencial (curioso, mas distante do perfil ideal)"
+    "Alto",
+    "Médio-Alto", 
+    "Médio",
+    "Baixo"
   ];
 
   const handleAddLead = () => {
-    if (!novoLead.nome || !novoLead.empresa || !novoLead.email) {
+    if (!novoLead.nome || !novoLead.empresa || !novoLead.email || !novoLead.produtoInteresse) {
       toast({
         title: "Erro",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios (Nome, Empresa, Email e Produto de Interesse)",
         variant: "destructive"
       });
       return;
@@ -155,6 +163,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
     <div className="space-y-6">
       {/* Dados Básicos */}
       <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-primary">DADOS BÁSICOS</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="nome">Nome *</Label>
@@ -178,6 +187,16 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
         
         <div className="grid grid-cols-2 gap-4">
           <div>
+            <Label htmlFor="email">E-mail *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={novoLead.email}
+              onChange={(e) => setNovoLead({...novoLead, email: e.target.value})}
+              placeholder="email@empresa.com"
+            />
+          </div>
+          <div>
             <Label htmlFor="telefone">Telefone</Label>
             <div className="flex">
               <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-muted">
@@ -192,14 +211,56 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
               />
             </div>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="email">E-mail *</Label>
+            <Label htmlFor="fonte">Fonte</Label>
+            <Select onValueChange={(value) => setNovoLead({...novoLead, fonte: value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Como nos conheceu?" />
+              </SelectTrigger>
+              <SelectContent>
+                {fonteOptions.map((fonte) => (
+                  <SelectItem key={fonte} value={fonte}>
+                    {fonte}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="valor">Valor (R$)</Label>
             <Input
-              id="email"
-              type="email"
-              value={novoLead.email}
-              onChange={(e) => setNovoLead({...novoLead, email: e.target.value})}
-              placeholder="email@empresa.com"
+              id="valor"
+              type="number"
+              value={novoLead.valor}
+              onChange={(e) => setNovoLead({...novoLead, valor: e.target.value})}
+              placeholder="50000"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="probabilidade">Probabilidade (%)</Label>
+            <Input
+              id="probabilidade"
+              type="number"
+              min="0"
+              max="100"
+              value={novoLead.probabilidade}
+              onChange={(e) => setNovoLead({...novoLead, probabilidade: e.target.value})}
+              placeholder="25"
+            />
+          </div>
+          <div>
+            <Label htmlFor="produtoInteresse">Produto de Interesse *</Label>
+            <Input
+              id="produtoInteresse"
+              value={novoLead.produtoInteresse}
+              onChange={(e) => setNovoLead({...novoLead, produtoInteresse: e.target.value})}
+              placeholder="Qual produto/serviço tem interesse"
             />
           </div>
         </div>
@@ -313,7 +374,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
           </div>
           
           <div>
-            <Label htmlFor="nivelConsciencia">Nível de consciência sobre marketing e vendas</Label>
+            <Label htmlFor="nivelConsciencia">Nível de Consciência</Label>
             <Select onValueChange={(value) => setNovoLead({...novoLead, nivelConsciencia: value})}>
               <SelectTrigger>
                 <SelectValue placeholder="Escolha uma opção" />
@@ -331,7 +392,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="etapaJornada">Etapa da Jornada Poderalize</Label>
+            <Label htmlFor="etapaJornada">Etapa da Jornada</Label>
             <Select onValueChange={(value) => setNovoLead({...novoLead, etapaJornada: value})}>
               <SelectTrigger>
                 <SelectValue placeholder="Escolha uma opção" />
@@ -347,23 +408,17 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
           </div>
           
           <div>
-            <Label htmlFor="fonte">Fonte do Lead</Label>
-            <Select onValueChange={(value) => setNovoLead({...novoLead, fonte: value})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Como nos conheceu?" />
-              </SelectTrigger>
-              <SelectContent>
-                {fonteOptions.map((fonte) => (
-                  <SelectItem key={fonte} value={fonte}>
-                    {fonte}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="equipeAtual">Equipe Atual</Label>
+            <Input
+              id="equipeAtual"
+              value={novoLead.equipeAtual}
+              onChange={(e) => setNovoLead({...novoLead, equipeAtual: e.target.value})}
+              placeholder="Exemplo: 3 colaboradores fixos e 2 freelancers"
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="indicadorPotencial">Indicador de Potencial</Label>
             <Select onValueChange={(value) => setNovoLead({...novoLead, indicadorPotencial: value})}>
@@ -379,34 +434,14 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
               </SelectContent>
             </Select>
           </div>
-          
-          <div>
-            <Label htmlFor="equipeAtual">Equipe atual / Nº de colaboradores</Label>
-            <Input
-              id="equipeAtual"
-              value={novoLead.equipeAtual}
-              onChange={(e) => setNovoLead({...novoLead, equipeAtual: e.target.value})}
-              placeholder="Exemplo: 3 colaboradores fixos e 2 freelancers"
-            />
-          </div>
         </div>
       </div>
 
-      {/* Campos Finais */}
+      {/* Observações */}
       <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-primary">OBSERVAÇÕES</h3>
         <div>
-          <Label htmlFor="valor">Valor Estimado do Projeto (R$)</Label>
-          <Input
-            id="valor"
-            type="number"
-            value={novoLead.valor}
-            onChange={(e) => setNovoLead({...novoLead, valor: e.target.value})}
-            placeholder="50000"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="observacoes">Observações</Label>
+          <Label htmlFor="observacoes">Observações Gerais</Label>
           <Textarea
             id="observacoes"
             value={novoLead.observacoes}
