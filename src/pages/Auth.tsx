@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { Eye, EyeOff, Users } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, Shield, Users } from 'lucide-react';
+import logo from "@/assets/poderalize-logo.png";
 
 export const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -43,151 +44,221 @@ export const Auth = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-primary-light/20">
         <LoadingSpinner size="lg" text="Carregando..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <Users className="w-8 h-8 text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary-light to-primary-dark relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-md mx-4">
+        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+          <CardHeader className="text-center pb-8">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-light rounded-full blur-lg opacity-30 scale-110"></div>
+                <img 
+                  src={logo} 
+                  alt="Poderalize" 
+                  className="w-20 h-20 rounded-full relative z-10 shadow-lg border-4 border-white"
+                />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl">Sistema Poderalize</CardTitle>
-          <CardDescription>
-            {isLogin ? 'Entre com sua conta' : 'Cadastre-se no sistema'}
-          </CardDescription>
-        </CardHeader>
 
-        <CardContent>
-          <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(value) => setIsLogin(value === 'login')}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Cadastrar</TabsTrigger>
-            </TabsList>
+            {/* Brand */}
+            <div className="space-y-2">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+                Poderalize
+              </CardTitle>
+              <CardDescription className="text-lg text-muted-foreground">
+                Sistema de Gestão Inteligente
+              </CardDescription>
+            </div>
 
-            <TabsContent value="login">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <div className="relative">
+            {/* Features */}
+            <div className="flex justify-center gap-6 mt-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4 text-primary" />
+                <span>CRM</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span>IA</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Shield className="w-4 h-4 text-primary" />
+                <span>Seguro</span>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(value) => setIsLogin(value === 'login')}>
+              <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+                <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  Entrar
+                </TabsTrigger>
+                <TabsTrigger value="register" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+                  Cadastrar
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="login" className="mt-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">E-mail</Label>
                     <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="h-11 border-2 focus:border-primary"
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
                   </div>
-                </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="h-11 border-2 focus:border-primary pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? <LoadingSpinner size="sm" /> : 'Entrar'}
-                </Button>
-              </form>
-            </TabsContent>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11 bg-gradient-to-r from-primary to-primary-light hover:from-primary-dark hover:to-primary text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <LoadingSpinner size="sm" /> : 'Entrar no Sistema'}
+                  </Button>
+                </form>
+              </TabsContent>
 
-            <TabsContent value="register">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Nome Completo</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Seu nome completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="registerEmail">E-mail</Label>
-                  <Input
-                    id="registerEmail"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="registerPassword">Senha</Label>
-                  <div className="relative">
+              <TabsContent value="register" className="mt-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm font-medium">Nome Completo</Label>
                     <Input
-                      id="registerPassword"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      id="fullName"
+                      type="text"
+                      placeholder="Seu nome completo"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
                       required
-                      minLength={6}
+                      className="h-11 border-2 focus:border-primary"
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
                   </div>
-                </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? <LoadingSpinner size="sm" /> : 'Cadastrar'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="registerEmail" className="text-sm font-medium">E-mail</Label>
+                    <Input
+                      id="registerEmail"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="h-11 border-2 focus:border-primary"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="registerPassword" className="text-sm font-medium">Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="registerPassword"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Mínimo 6 caracteres"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        className="h-11 border-2 focus:border-primary pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
 
-        <CardFooter className="text-center text-sm text-muted-foreground">
-          {isLogin ? (
-            <p>Após o cadastro, aguarde a aprovação do administrador para acessar o sistema.</p>
-          ) : (
-            <p>Já tem uma conta? Clique em "Login" acima.</p>
-          )}
-        </CardFooter>
-      </Card>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11 bg-gradient-to-r from-primary to-primary-light hover:from-primary-dark hover:to-primary text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <LoadingSpinner size="sm" /> : 'Criar Conta'}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+
+          <CardFooter className="text-center">
+            <div className="w-full space-y-3">
+              <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent"></div>
+              <p className="text-sm text-muted-foreground">
+                {isLogin ? (
+                  <>
+                    Novo no sistema? Clique em{" "}
+                    <span className="text-primary font-medium cursor-pointer hover:underline"
+                          onClick={() => setIsLogin(false)}>
+                      "Cadastrar"
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Após o cadastro, aguarde a{" "}
+                    <span className="text-primary font-medium">aprovação do administrador</span>{" "}
+                    para acessar o sistema
+                  </>
+                )}
+              </p>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };
