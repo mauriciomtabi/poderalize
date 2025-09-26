@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCRM } from "@/contexts/CRMContext";
 import { CreateFunnelDialog } from "./CreateFunnelDialog";
 import { CRMFilters } from "./CRMFilters";
+import { CRMSettings } from "./CRMSettings";
 
 export const CRMHeader = () => {
   const { state, setCurrentFunnel, setFilters } = useCRM();
   const [showCreateFunnel, setShowCreateFunnel] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleFunnelChange = (funnelId: string) => {
     const funnel = state.funnels.find(f => f.id === funnelId);
@@ -141,7 +143,11 @@ export const CRMHeader = () => {
             Novo Funil
           </Button>
 
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowSettings(true)}
+          >
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -158,6 +164,12 @@ export const CRMHeader = () => {
       <CreateFunnelDialog
         open={showCreateFunnel}
         onOpenChange={setShowCreateFunnel}
+      />
+
+      {/* Settings Dialog */}
+      <CRMSettings
+        open={showSettings}
+        onOpenChange={setShowSettings}
       />
     </div>
   );

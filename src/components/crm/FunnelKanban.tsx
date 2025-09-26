@@ -1,10 +1,13 @@
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CustomFunnel } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
 import { LeadCard } from "./LeadCard";
-import { TrendingUp, Users } from "lucide-react";
+import { AddLeadToFunnelDialog } from "./AddLeadToFunnelDialog";
+import { TrendingUp, Users, Plus } from "lucide-react";
+import { useState } from "react";
 
 interface FunnelKanbanProps {
   funnel: CustomFunnel;
@@ -12,6 +15,10 @@ interface FunnelKanbanProps {
 
 export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
   const { moveLead } = useCRM();
+  const [addLeadDialog, setAddLeadDialog] = useState<{ open: boolean; stageId: string }>({
+    open: false,
+    stageId: ""
+  });
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -32,6 +39,10 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
     if (previousStage.leads.length === 0) return 0;
     
     return Math.round((currentStage.leads.length / previousStage.leads.length) * 100);
+  };
+
+  const handleAddLead = (stageId: string) => {
+    setAddLeadDialog({ open: true, stageId });
   };
 
   return (
@@ -69,17 +80,29 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                   </div>
                   
                   {/* Stage Metrics */}
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      <span>{stage.leads.length} leads</span>
-                    </div>
-                    {index > 0 && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3" />
-                        <span>{calculateConversionRate(index)}%</span>
+                        <Users className="h-3 w-3" />
+                        <span>{stage.leads.length} leads</span>
                       </div>
-                    )}
+                      {index > 0 && (
+                        <div className="flex items-center gap-1">
+                          <TrendingUp className="h-3 w-3" />
+                          <span>{calculateConversionRate(index)}%</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Add Lead Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddLead(stage.id)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 
@@ -120,8 +143,17 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                       {provided.placeholder}
                       
                       {stage.leads.length === 0 && (
-                        <div className="flex items-center justify-center h-32 text-muted-foreground text-sm border-2 border-dashed border-muted rounded-lg">
-                          Arraste leads para cá
+                        <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-sm border-2 border-dashed border-muted rounded-lg">
+                          <p className="mb-2">Nenhum lead ainda</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddLead(stage.id)}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Adicionar Lead
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -132,6 +164,13 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
           ))}
         </div>
       </DragDropContext>
+
+      {/* Add Lead Dialog */}
+      <AddLeadToFunnelDialog
+        open={addLeadDialog.open}
+        onOpenChange={(open) => setAddLeadDialog({ ...addLeadDialog, open })}
+        stageId={addLeadDialog.stageId}
+      />
     </div>
   );
 };
