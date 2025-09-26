@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import {
 import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useApprovedUsers } from "@/hooks/useApprovedUsers";
 import { useToast } from "@/hooks/use-toast";
 import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/types/colaboradores";
 import { format } from 'date-fns';
@@ -68,7 +69,31 @@ const Colaboradores = () => {
     status: ""
   });
 
-  const filteredColaboradores = colaboradores.filter(colaborador =>
+  const { profiles: approvedProfiles } = useApprovedUsers();
+
+  const allActiveColaboradores: Colaborador[] = useMemo(() => {
+    const existingByEmail = new Set(colaboradores.map(c => c.email));
+    const nowIso = new Date().toISOString();
+    const virtuals: Colaborador[] = (approvedProfiles || [])
+      .filter(p => p.email && !existingByEmail.has(p.email))
+      .map(p => ({
+        id: `virtual-${p.user_id}`,
+        user_id: p.user_id,
+        nome: (p.full_name || p.email || 'Colaborador') as string,
+        email: (p.email || '') as string,
+        funcao: 'A definir',
+        telefone: null,
+        departamento: null,
+        status: 'ativo',
+        data_contratacao: nowIso.split('T')[0],
+        avatar_url: null,
+        created_at: nowIso,
+        updated_at: nowIso,
+      }));
+    return [...colaboradores, ...virtuals].sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [colaboradores, approvedProfiles]);
+
+  const filteredColaboradores = allActiveColaboradores.filter(colaborador =>
     colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     colaborador.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     colaborador.funcao.toLowerCase().includes(searchTerm.toLowerCase())
@@ -210,14 +235,14 @@ const Colaboradores = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <Tabs defaultValue="colaboradores" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="colaboradores" className="flex items-center gap-2">
-            <Users size={16} />
-            Colaboradores Ativos
-            <Badge variant="secondary" className="ml-2">
-              {colaboradores.length}
-            </Badge>
-          </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="colaboradores" className="flex items-center gap-2">
+              <Users size={16} />
+              Colaboradores Ativos
+              <Badge variant="secondary" className="ml-2">
+                {allActiveColaboradores.length}
+              </Badge>
+            </TabsTrigger>
           <TabsTrigger value="pendentes" className="flex items-center gap-2">
             <Clock size={16} />
             Usuários Pendentes
