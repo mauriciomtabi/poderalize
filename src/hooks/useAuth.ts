@@ -49,14 +49,18 @@ export const useAuth = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', authUser.id)
-        .single();
+        .maybeSingle();
 
       // Fetch user role
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', authUser.id)
-        .single();
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Error fetching user role:', roleError);
+      }
 
       const userData: AuthUser = {
         id: authUser.id,
