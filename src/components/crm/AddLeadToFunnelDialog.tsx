@@ -159,7 +159,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Adicionar Lead ao Funil</DialogTitle>
         </DialogHeader>
@@ -176,9 +176,9 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="existing" className="flex-1 flex flex-col mt-6">
+          <TabsContent value="existing" className="flex-1 flex flex-col mt-6 overflow-hidden">
             {/* Search */}
-            <div className="relative mb-4">
+            <div className="relative mb-4 flex-shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Buscar leads existentes..."
@@ -189,7 +189,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             </div>
 
             {/* Leads List */}
-            <div className="flex-1 overflow-y-auto space-y-3">
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
               {filteredExistingLeads.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead disponível"}
@@ -229,8 +229,10 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             </div>
           </TabsContent>
 
-          <TabsContent value="new" className="flex-1 overflow-y-auto mt-6">
-            <LeadForm onSubmit={handleCreateNewLead} />
+          <TabsContent value="new" className="flex-1 mt-6 overflow-hidden">
+            <div className="h-full overflow-y-auto pr-2">
+              <LeadForm onSubmit={handleCreateNewLead} />
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
