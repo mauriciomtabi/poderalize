@@ -89,15 +89,15 @@ export const Auth = () => {
             <div className="flex justify-center gap-6 mt-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4 text-primary" />
-                <span>CRM</span>
+                <span>Vendas</span>
               </div>
               <div className="flex items-center gap-1">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span>IA</span>
+                <span>Inteligente</span>
               </div>
               <div className="flex items-center gap-1">
                 <Shield className="w-4 h-4 text-primary" />
-                <span>Seguro</span>
+                <span>Confiável</span>
               </div>
             </div>
           </CardHeader>
