@@ -20,7 +20,6 @@ export interface ColaboradorFormData {
   telefone?: string;
   departamento?: string;
   status?: string;
-  data_contratacao?: string;
 }
 
 export const DEPARTAMENTOS_DISPONIVEIS = [

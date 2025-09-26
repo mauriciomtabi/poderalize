@@ -32,20 +32,49 @@ export function useColaboradores() {
 
   const addColaborador = async (formData: ColaboradorFormData) => {
     try {
+      console.log('Tentando adicionar colaborador:', formData);
+      
+      // Validação básica
+      if (!formData.nome?.trim()) {
+        throw new Error('Nome é obrigatório');
+      }
+      if (!formData.email?.trim()) {
+        throw new Error('Email é obrigatório');
+      }
+      if (!formData.funcao?.trim()) {
+        throw new Error('Função é obrigatória');
+      }
+
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('Usuário não autenticado');
 
+      console.log('User data:', userData.user.id);
+
+      // Preparar dados limpos para inserção
+      const insertData = {
+        nome: formData.nome.trim(),
+        email: formData.email.trim(),
+        funcao: formData.funcao.trim(),
+        telefone: formData.telefone?.trim() || null,
+        departamento: formData.departamento?.trim() || null,
+        status: formData.status || 'ativo',
+        user_id: userData.user.id
+      };
+
+      console.log('Dados para inserção:', insertData);
+
       const { data, error } = await supabase
         .from('colaboradores')
-        .insert([{
-          ...formData,
-          user_id: userData.user.id
-        }])
+        .insert([insertData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro do Supabase:', error);
+        throw error;
+      }
       
+      console.log('Colaborador inserido com sucesso:', data);
       setColaboradores(prev => [...prev, data]);
       toast({
         title: "Sucesso",
@@ -54,9 +83,10 @@ export function useColaboradores() {
       return data;
     } catch (error) {
       console.error('Erro ao adicionar colaborador:', error);
+      const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
       toast({
         title: "Erro",
-        description: "Erro ao adicionar colaborador",
+        description: `Erro ao adicionar colaborador: ${errorMessage}`,
         variant: "destructive"
       });
       throw error;
@@ -181,9 +211,8 @@ export function useColaboradores() {
               nome: profile.full_name || 'Nome não informado',
               email: profile.email,
               funcao: 'A definir',
-              departamento: '',
-              status: 'ativo',
-              data_contratacao: new Date().toISOString().split('T')[0]
+              departamento: null,
+              status: 'ativo'
             }])
             .select()
             .single();

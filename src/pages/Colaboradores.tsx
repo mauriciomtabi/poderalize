@@ -85,7 +85,6 @@ const Colaboradores = () => {
         telefone: null,
         departamento: null,
         status: 'ativo',
-        data_contratacao: nowIso.split('T')[0],
         avatar_url: null,
         created_at: nowIso,
         updated_at: nowIso,
@@ -147,8 +146,20 @@ const Colaboradores = () => {
     }
 
     try {
-      // Se for um colaborador virtual (vindo de profiles), cria no banco antes de atualizar
+      // Se for um colaborador virtual (vindo de profiles), verifica se já existe no banco
       if (selectedColaborador.id.startsWith('virtual-')) {
+        // Primeiro verifica se já existe um colaborador com esse email
+        const existingColaborador = colaboradores.find(c => c.email === editingColaborador.email);
+        
+        if (existingColaborador) {
+          // Se já existe, apenas atualiza
+          const updated = await updateColaborador(existingColaborador.id, editingColaborador);
+          setSelectedColaborador(updated);
+          setIsEditing(false);
+          return;
+        }
+
+        // Se não existe, cria novo
         const created = await addColaborador({
           nome: editingColaborador.nome,
           email: editingColaborador.email,
@@ -166,7 +177,7 @@ const Colaboradores = () => {
       setSelectedColaborador(updated);
       setIsEditing(false);
     } catch (error) {
-      // Error handling is done in the hook
+      console.error('Erro ao salvar colaborador:', error);
     }
   };
 
