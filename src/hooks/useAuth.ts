@@ -51,23 +51,30 @@ export const useAuth = () => {
         .eq('user_id', authUser.id)
         .maybeSingle();
 
-      // Fetch user role
-      const { data: roleData, error: roleError } = await supabase
+      // Fetch user roles (may have multiple rows)
+      const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', authUser.id)
-        .maybeSingle();
+        .eq('user_id', authUser.id);
 
-      if (roleError) {
-        console.error('Error fetching user role:', roleError);
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
       }
+
+      const rolePriority: UserRole[] = ['admin', 'colaborador', 'pending'];
+      const resolvedRole: UserRole = rolesData?.reduce<UserRole>((acc, row) => {
+        if (!acc) return row.role as UserRole;
+        const accPri = rolePriority.indexOf(acc);
+        const rowPri = rolePriority.indexOf(row.role as UserRole);
+        return rowPri < accPri ? (row.role as UserRole) : acc;
+      }, 'pending') || 'pending';
 
       const userData: AuthUser = {
         id: authUser.id,
         email: authUser.email,
         full_name: profile?.full_name,
         avatar_url: profile?.avatar_url,
-        role: roleData?.role || 'pending'
+        role: resolvedRole
       };
 
       setUser(userData);
