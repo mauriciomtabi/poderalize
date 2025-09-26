@@ -22,8 +22,7 @@ import {
 
 const Configuracoes = () => {
   return (
-    <Layout title="Configurações">
-      <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
         {/* Header Section */}
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-gradient-primary rounded-xl">
@@ -297,8 +296,7 @@ const Configuracoes = () => {
           </CardContent>
         </Card>
       </div>
-    </Layout>
-  );
-};
+    );
+  };
 
-export default Configuracoes;
+  export default Configuracoes;

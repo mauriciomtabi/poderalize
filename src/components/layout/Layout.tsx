@@ -1,11 +1,7 @@
 import { ReactNode, createContext, useContext, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-
-interface LayoutProps {
-  children: ReactNode;
-  title: string;
-}
 
 interface SidebarContextType {
   collapsed: boolean;
@@ -22,8 +18,27 @@ export const useSidebarContext = () => {
   return context;
 };
 
-export const Layout = ({ children, title }: LayoutProps) => {
+// Page titles mapping
+const getPageTitle = (pathname: string): string => {
+  const titles: Record<string, string> = {
+    '/': 'Dashboard',
+    '/projetos': 'Projetos',
+    '/crm': 'CRM',
+    '/leads': 'Leads',
+    '/vendas': 'Vendas',
+    '/acompanhamento': 'Acompanhamento',
+    '/relatorios': 'Relatórios',
+    '/configuracoes': 'Configurações',
+    '/colaboradores': 'Colaboradores'
+  };
+  
+  return titles[pathname] || 'Sistema Poderalize';
+};
+
+export const Layout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+  const title = getPageTitle(location.pathname);
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
@@ -32,7 +47,7 @@ export const Layout = ({ children, title }: LayoutProps) => {
         <div className={`flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
           <Header title={title} />
           <main className="flex-1 p-6 overflow-auto">
-            {children}
+            <Outlet />
           </main>
         </div>
       </div>

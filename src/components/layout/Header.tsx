@@ -1,4 +1,4 @@
-import { Bell, Search, User, Moon, Sun } from "lucide-react";
+import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +10,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface HeaderProps {
   title: string;
 }
 
 export const Header = ({ title }: HeaderProps) => {
+  const { user, signOut } = useAuthContext();
+
+  const handleSignOut = () => {
+    signOut();
+  };
+
   return (
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
@@ -51,7 +58,10 @@ export const Header = ({ title }: HeaderProps) => {
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <User size={16} className="text-primary-foreground" />
                 </div>
-                <span className="font-medium">Admin</span>
+                <span className="font-medium">{user?.full_name || user?.email || 'Usuário'}</span>
+                <Badge variant="outline" className="text-xs">
+                  {user?.role === 'admin' ? 'Admin' : user?.role === 'colaborador' ? 'Colaborador' : 'Pendente'}
+                </Badge>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -61,7 +71,8 @@ export const Header = ({ title }: HeaderProps) => {
               <DropdownMenuItem>Configurações</DropdownMenuItem>
               <DropdownMenuItem>Ajuda</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                <LogOut size={16} className="mr-2" />
                 Sair
               </DropdownMenuItem>
             </DropdownMenuContent>

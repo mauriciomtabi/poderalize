@@ -170,17 +170,14 @@ const Colaboradores = () => {
 
   if (loading) {
     return (
-      <Layout title="Colaboradores">
-        <div className="flex justify-center items-center h-64">
-          <LoadingSpinner />
-        </div>
-      </Layout>
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner />
+      </div>
     );
   }
 
   return (
-    <Layout title="Colaboradores">
-      <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
         {/* Header com busca e botão de adicionar */}
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div className="relative flex-1 max-w-md">
@@ -525,8 +522,7 @@ const Colaboradores = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </Layout>
-  );
-};
+    );
+  };
 
-export default Colaboradores;
+  export default Colaboradores;

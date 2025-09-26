@@ -110,8 +110,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <Layout title="Dashboard Poderalize">
-      <div className="space-y-8">
+    <div className="space-y-8">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-primary via-primary/90 to-secondary text-primary-foreground p-6 rounded-lg">
           <h1 className="text-2xl font-bold mb-2">
@@ -200,8 +199,7 @@ const Dashboard = () => {
           />
         </div>
       </div>
-    </Layout>
-  );
-};
+    );
+  };
 
-export default Dashboard;
+  export default Dashboard;

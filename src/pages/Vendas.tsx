@@ -146,8 +146,7 @@ const Vendas = () => {
   ];
 
   return (
-    <Layout title="Gestão de Vendas">
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header com Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -356,8 +355,7 @@ const Vendas = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
-  );
-};
+    );
+  };
 
-export default Vendas;
+  export default Vendas;

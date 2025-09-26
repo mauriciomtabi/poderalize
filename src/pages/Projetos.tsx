@@ -10,16 +10,14 @@ const Projetos = () => {
 
   return (
     <ProjectsProvider>
-      <Layout title="Gestão de Projetos">
-        <div className="h-full flex flex-col animate-fade-in">
-          <ErrorBoundary>
-            <ProjectsHeader onToggleFilters={() => setShowFilters(!showFilters)} />
-            <div className="flex-1 min-h-0 min-w-0">
-              <ProjectsContent showFilters={showFilters} />
-            </div>
-          </ErrorBoundary>
-        </div>
-      </Layout>
+      <div className="h-full flex flex-col animate-fade-in">
+        <ErrorBoundary>
+          <ProjectsHeader onToggleFilters={() => setShowFilters(!showFilters)} />
+          <div className="flex-1 min-h-0 min-w-0">
+            <ProjectsContent showFilters={showFilters} />
+          </div>
+        </ErrorBoundary>
+      </div>
     </ProjectsProvider>
   );
 };

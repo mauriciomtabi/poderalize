@@ -286,8 +286,7 @@ const Leads = () => {
   };
 
   return (
-    <Layout title="Gestão de Leads">
-      <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
         {/* Métricas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
@@ -1069,8 +1068,7 @@ const Leads = () => {
           </div>
         )}
       </div>
-    </Layout>
-  );
-};
+    );
+  };
 
-export default Leads;
+  export default Leads;

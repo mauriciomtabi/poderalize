@@ -1,0 +1,108 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuthContext } from '@/contexts/AuthContext';
+import type { UserRole, UserRoleData } from '@/types/auth';
+
+export const useUserRoles = () => {
+  const [pendingUsers, setPendingUsers] = useState<UserRoleData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const { isAdmin } = useAuthContext();
+
+  const fetchPendingUsers = async () => {
+    if (!isAdmin) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select(`
+          *,
+          profiles:user_id (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('role', 'pending');
+
+      if (error) throw error;
+      setPendingUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar usuários pendentes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const approveUser = async (userId: string, role: UserRole = 'colaborador') => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ 
+          role,
+          assigned_by: (await supabase.auth.getUser()).data.user?.id,
+          assigned_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário aprovado!",
+        description: "Usuário foi aprovado com sucesso"
+      });
+
+      fetchPendingUsers();
+    } catch (error) {
+      console.error('Error approving user:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao aprovar usuário",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const rejectUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário rejeitado",
+        description: "Usuário foi rejeitado"
+      });
+
+      fetchPendingUsers();
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+      toast({
+        title: "Erro", 
+        description: "Erro ao rejeitar usuário",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingUsers();
+  }, [isAdmin]);
+
+  return {
+    pendingUsers,
+    loading,
+    approveUser,
+    rejectUser,
+    refetch: fetchPendingUsers
+  };
+};

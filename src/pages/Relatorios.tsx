@@ -49,8 +49,7 @@ const Relatorios = () => {
   ];
 
   return (
-    <Layout title="Relatórios">
-      <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -396,8 +395,7 @@ const Relatorios = () => {
           </CardContent>
         </Card>
       </div>
-    </Layout>
-  );
-};
+    );
+  };
 
-export default Relatorios;
+  export default Relatorios;
