@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   Dialog, 
   DialogContent, 
@@ -32,53 +33,11 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Plus, Search, Mail, Phone, Calendar, Trash2, Users, Building, UserCheck, Edit3, Save, X } from "lucide-react";
-import { toast } from "sonner";
-
-interface Colaborador {
-  id: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  funcao: string;
-  departamento: string;
-  status: "ativo" | "inativo";
-  dataContratacao: string;
-}
+import { useColaboradores } from "@/hooks/useColaboradores";
+import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/types/colaboradores";
 
 const Colaboradores = () => {
-  const [colaboradores, setColaboradores] = useState<Colaborador[]>([
-    {
-      id: "1",
-      nome: "Maria Silva",
-      email: "maria@poderalize.com",
-      telefone: "(11) 99999-9999",
-      funcao: "Designer Sênior",
-      departamento: "Criativo",
-      status: "ativo",
-      dataContratacao: "2023-01-15"
-    },
-    {
-      id: "2",
-      nome: "João Santos",
-      email: "joao@poderalize.com",
-      telefone: "(11) 88888-8888",
-      funcao: "Desenvolvedor Front-end",
-      departamento: "Tecnologia",
-      status: "ativo",
-      dataContratacao: "2023-03-20"
-    },
-    {
-      id: "3",
-      nome: "Ana Costa",
-      email: "ana@poderalize.com",
-      telefone: "(11) 77777-7777",
-      funcao: "Account Manager",
-      departamento: "Atendimento",
-      status: "ativo",
-      dataContratacao: "2022-11-10"
-    },
-  ]);
-
+  const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador } = useColaboradores();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null);
@@ -91,6 +50,7 @@ const Colaboradores = () => {
     telefone: "",
     funcao: "",
     departamento: "",
+    status: "ativo"
   });
   const [editingColaborador, setEditingColaborador] = useState({
     nome: "",
@@ -98,6 +58,7 @@ const Colaboradores = () => {
     telefone: "",
     funcao: "",
     departamento: "",
+    status: ""
   });
 
   const filteredColaboradores = colaboradores.filter(colaborador =>
@@ -106,29 +67,29 @@ const Colaboradores = () => {
     colaborador.funcao.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddColaborador = () => {
+  const handleAddColaborador = async () => {
     if (!novoColaborador.nome || !novoColaborador.email || !novoColaborador.funcao) {
-      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
-    const newColaborador: Colaborador = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...novoColaborador,
-      status: "ativo",
-      dataContratacao: new Date().toISOString().split('T')[0]
-    };
-
-    setColaboradores([...colaboradores, newColaborador]);
-    setNovoColaborador({
-      nome: "",
-      email: "",
-      telefone: "",
-      funcao: "",
-      departamento: "",
-    });
-    setIsDialogOpen(false);
-    toast.success("Colaborador adicionado com sucesso!");
+    try {
+      await addColaborador({
+        ...novoColaborador,
+        data_contratacao: new Date().toISOString().split('T')[0]
+      });
+      
+      setNovoColaborador({
+        nome: "",
+        email: "",
+        telefone: "",
+        funcao: "",
+        departamento: "",
+        status: "ativo"
+      });
+      setIsDialogOpen(false);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
   };
 
   const handleCardClick = (colaborador: Colaborador) => {
@@ -136,9 +97,10 @@ const Colaboradores = () => {
     setEditingColaborador({
       nome: colaborador.nome,
       email: colaborador.email,
-      telefone: colaborador.telefone,
+      telefone: colaborador.telefone || "",
       funcao: colaborador.funcao,
-      departamento: colaborador.departamento,
+      departamento: colaborador.departamento || "",
+      status: colaborador.status
     });
     setIsEditing(false);
     setIsDetailsOpen(true);
@@ -148,22 +110,18 @@ const Colaboradores = () => {
     setIsEditing(true);
   };
 
-  const handleSaveColaborador = () => {
-    if (!editingColaborador.nome || !editingColaborador.email || !editingColaborador.funcao) {
-      toast.error("Preencha todos os campos obrigatórios");
+  const handleSaveColaborador = async () => {
+    if (!editingColaborador.nome || !editingColaborador.email || !editingColaborador.funcao || !selectedColaborador) {
       return;
     }
 
-    const updatedColaboradores = colaboradores.map(c =>
-      c.id === selectedColaborador?.id
-        ? { ...c, ...editingColaborador }
-        : c
-    );
-
-    setColaboradores(updatedColaboradores);
-    setSelectedColaborador({ ...selectedColaborador!, ...editingColaborador });
-    setIsEditing(false);
-    toast.success("Colaborador atualizado com sucesso!");
+    try {
+      const updated = await updateColaborador(selectedColaborador.id, editingColaborador);
+      setSelectedColaborador(updated);
+      setIsEditing(false);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
   };
 
   const handleCancelEdit = () => {
@@ -171,18 +129,23 @@ const Colaboradores = () => {
       setEditingColaborador({
         nome: selectedColaborador.nome,
         email: selectedColaborador.email,
-        telefone: selectedColaborador.telefone,
+        telefone: selectedColaborador.telefone || "",
         funcao: selectedColaborador.funcao,
-        departamento: selectedColaborador.departamento,
+        departamento: selectedColaborador.departamento || "",
+        status: selectedColaborador.status
       });
     }
     setIsEditing(false);
   };
 
-  const handleDeleteColaborador = (id: string) => {
-    setColaboradores(colaboradores.filter(c => c.id !== id));
-    setColaboradorToDelete(null);
-    toast.success("Colaborador removido com sucesso!");
+  const handleDeleteColaborador = async (id: string) => {
+    try {
+      await deleteColaborador(id);
+      setColaboradorToDelete(null);
+      setIsDetailsOpen(false);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -195,14 +158,25 @@ const Colaboradores = () => {
 
   const getBadgeColor = (departamento: string) => {
     const colors = {
-      "Criativo": "bg-purple-500",
-      "Tecnologia": "bg-blue-500",
-      "Atendimento": "bg-green-500",
+      "RH": "bg-purple-500",
+      "TI": "bg-blue-500", 
+      "Vendas": "bg-green-500",
       "Marketing": "bg-orange-500",
-      "Financeiro": "bg-red-500"
+      "Financeiro": "bg-red-500",
+      "Operações": "bg-yellow-500"
     };
     return colors[departamento as keyof typeof colors] || "bg-gray-500";
   };
+
+  if (loading) {
+    return (
+      <Layout title="Colaboradores">
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Colaboradores">
@@ -275,11 +249,9 @@ const Colaboradores = () => {
                       <SelectValue placeholder="Selecione o departamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Criativo">Criativo</SelectItem>
-                      <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-                      <SelectItem value="Atendimento">Atendimento</SelectItem>
-                      <SelectItem value="Marketing">Marketing</SelectItem>
-                      <SelectItem value="Financeiro">Financeiro</SelectItem>
+                      {DEPARTAMENTOS_DISPONIVEIS.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -328,12 +300,12 @@ const Colaboradores = () => {
                     <Mail size={14} className="text-muted-foreground" />
                     <span className="text-muted-foreground">{colaborador.email}</span>
                   </div>
-                  {colaborador.telefone && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Phone size={14} className="text-muted-foreground" />
-                      <span className="text-muted-foreground">{colaborador.telefone}</span>
-                    </div>
-                  )}
+                   {colaborador.telefone && (
+                     <div className="flex items-center space-x-2 text-sm">
+                       <Phone size={14} className="text-muted-foreground" />
+                       <span className="text-muted-foreground">{colaborador.telefone}</span>
+                     </div>
+                   )}
                    {colaborador.departamento && (
                      <div>
                        <Badge 
@@ -492,7 +464,7 @@ const Colaboradores = () => {
                       <Calendar size={14} />
                       <span>Data de Contratação</span>
                     </Label>
-                    <p className="mt-1 text-sm">{formatDate(selectedColaborador.dataContratacao)}</p>
+                    <p className="mt-1 text-sm">{selectedColaborador.data_contratacao ? formatDate(selectedColaborador.data_contratacao) : "Não informado"}</p>
                   </div>
                 </div>
 

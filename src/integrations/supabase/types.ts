@@ -445,6 +445,51 @@ export type Database = {
         }
         Relationships: []
       }
+      colaboradores: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          data_contratacao: string | null
+          departamento: string | null
+          email: string
+          funcao: string
+          id: string
+          nome: string
+          status: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          data_contratacao?: string | null
+          departamento?: string | null
+          email: string
+          funcao: string
+          id?: string
+          nome: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          data_contratacao?: string | null
+          departamento?: string | null
+          email?: string
+          funcao?: string
+          id?: string
+          nome?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contas_bancarias: {
         Row: {
           ativa: boolean
