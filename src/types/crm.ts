@@ -123,6 +123,7 @@ export interface LeadInteraction {
   description: string;
   interactionDate: string;
   createdByUser?: string;
+  createdByUserName?: string;
   metadata?: Record<string, any>;
   createdAt: string;
 }

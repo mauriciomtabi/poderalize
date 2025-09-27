@@ -116,6 +116,11 @@ export const InteractionHistory = ({ interactions, loading }: InteractionHistory
                             locale: ptBR 
                           })}
                         </span>
+                        {interaction.createdByUserName && (
+                          <Badge variant="secondary" className="text-xs">
+                            {interaction.createdByUserName}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-foreground leading-relaxed">
                         {interaction.description}

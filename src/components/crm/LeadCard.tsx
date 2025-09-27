@@ -3,9 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LeadAdvanced } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
-import { Building2, Mail, Phone, DollarSign, Calendar } from "lucide-react";
+import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NegotiationTemperature } from "@/types/crm";
 interface LeadCardProps {
   lead: LeadAdvanced;
 }
@@ -29,6 +30,28 @@ export const LeadCard = ({
   };
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const getTemperatureColor = (temperature: NegotiationTemperature) => {
+    const colors = {
+      'muito_fraca': 'text-blue-600',
+      'fraca': 'text-cyan-600', 
+      'mediana': 'text-yellow-600',
+      'forte': 'text-orange-600',
+      'muito_forte': 'text-red-600'
+    };
+    return colors[temperature];
+  };
+
+  const getTemperatureLabel = (temperature: NegotiationTemperature) => {
+    const labels = {
+      'muito_fraca': 'Muito Fraca',
+      'fraca': 'Fraca',
+      'mediana': 'Mediana',
+      'forte': 'Forte',
+      'muito_forte': 'Muito Forte'
+    };
+    return labels[temperature];
   };
   const handleClick = () => {
     setSelectedLead(lead);
@@ -67,7 +90,7 @@ export const LeadCard = ({
         </div>
       </div>
 
-      {/* Value and Probability */}
+      {/* Value and Temperature */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1 text-sm">
           <DollarSign className="h-3 w-3 text-green-600" />
@@ -76,6 +99,15 @@ export const LeadCard = ({
           </span>
         </div>
         
+        {/* Negotiation Temperature */}
+        {lead.temperaturaNegociacao && (
+          <div className="flex items-center gap-1 text-xs">
+            <Thermometer className={`h-3 w-3 ${getTemperatureColor(lead.temperaturaNegociacao)}`} />
+            <span className={`font-medium ${getTemperatureColor(lead.temperaturaNegociacao)}`}>
+              {getTemperatureLabel(lead.temperaturaNegociacao)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Last Contact */}

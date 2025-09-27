@@ -30,6 +30,20 @@ export const useLeadInteractions = () => {
         return;
       }
 
+      // Get unique user IDs to fetch user names
+      const userIds = [...new Set((data || []).map(item => item.created_by_user).filter(Boolean))];
+      
+      // Fetch user profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+
+      const userNamesMap = (profiles || []).reduce((acc, profile) => {
+        acc[profile.user_id] = profile.full_name || 'Usuário desconhecido';
+        return acc;
+      }, {} as Record<string, string>);
+
       const formattedInteractions: LeadInteraction[] = (data || []).map(item => ({
         id: item.id,
         leadId: item.lead_id,
@@ -38,6 +52,7 @@ export const useLeadInteractions = () => {
         description: item.description,
         interactionDate: item.interaction_date,
         createdByUser: item.created_by_user,
+        createdByUserName: item.created_by_user ? userNamesMap[item.created_by_user] : 'Usuário desconhecido',
         metadata: (item.metadata as Record<string, any>) || {},
         createdAt: item.created_at
       }));
