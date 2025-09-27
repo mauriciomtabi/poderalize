@@ -1,6 +1,6 @@
 import { useCRM } from "@/contexts/CRMContext";
 import { FunnelKanban } from "./FunnelKanban";
-import { LeadDetailPanel } from "./LeadDetailPanel";
+import { LeadDetailModal } from "./LeadDetailModal";
 import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 
@@ -22,18 +22,16 @@ export const CRMContent = () => {
   }
 
   return (
-    <div className="flex h-full gap-6">
-      {/* Main Kanban View */}
-      <div className="flex-1 min-w-0">
+    <>
+      {/* Main Kanban View - Full Width */}
+      <div className="h-full">
         <FunnelKanban funnel={currentFunnel} />
       </div>
 
-      {/* Lead Detail Panel */}
+      {/* Lead Detail Modal */}
       {selectedLead && (
-        <div className="w-96 flex-shrink-0">
-          <LeadDetailPanel lead={selectedLead} />
-        </div>
+        <LeadDetailModal lead={selectedLead} />
       )}
-    </div>
+    </>
   );
 };
