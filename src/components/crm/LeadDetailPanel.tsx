@@ -39,7 +39,7 @@ interface LeadDetailPanelProps {
 }
 
 export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
-  const { setSelectedLead, state } = useCRM();
+  const { setSelectedLead, currentFunnel } = useCRM();
   const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false);
   const [negotiationData, setNegotiationData] = useState({
     valor: lead.valor,
@@ -81,7 +81,7 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
     return labels[tipo as keyof typeof labels] || tipo;
   };
 
-  const currentStage = state.currentFunnel?.stages.find(stage => 
+  const currentStage = currentFunnel?.stages.find(stage => 
     stage.leads.some(l => l.id === lead.id)
   );
 

@@ -87,7 +87,7 @@ interface CRMContextType {
   
   // Actions
   setCurrentFunnel: (funnel: CustomFunnel | null) => void;
-  createFunnel: (funnel: Omit<CustomFunnel, 'id' | 'createdAt'>) => void;
+  createFunnel: (funnel: { name: string; description?: string; stages: { title: string; color: string; position: number }[] }) => Promise<void>;
   updateFunnel: (id: string, updates: Partial<CustomFunnel>) => void;
   deleteFunnel: (id: string) => void;
   setLeads: (leads: LeadAdvanced[]) => void;
@@ -204,7 +204,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     dispatch({ type: 'SET_CURRENT_FUNNEL', payload: funnel });
   }, []);
 
-  const createFunnel = useCallback(async (funnelData: Omit<CustomFunnel, 'id' | 'createdAt'>) => {
+  const createFunnel = useCallback(async (funnelData: { name: string; description?: string; stages: { title: string; color: string; position: number }[] }) => {
     try {
       await funnelHooks.createFunnel({
         name: funnelData.name,
@@ -245,30 +245,39 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     dispatch({ type: 'SET_LEADS', payload: leads });
   }, []);
 
-  const addLead = useCallback(async (leadData: Omit<LeadAdvanced, 'id'>) => {
+  const addLead = useCallback(async (leadData: Omit<LeadAdvanced, 'id'>, stageId?: string) => {
     try {
-      await leadHooks.addLead({
+      // Map LeadAdvanced fields to database structure
+      const payload: any = {
         nome: leadData.nome,
         empresa: leadData.empresa,
         email: leadData.email,
         telefone: leadData.telefone,
         fonte: leadData.fonte,
-        produto_interesse: leadData.produtoInteresse,
-        observacoes: leadData.observacoes,
+        status: leadData.status,
+        etapa_funil: leadData.etapaFunil,
         valor: leadData.valor,
         probabilidade: leadData.probabilidade,
+        data_contato: leadData.dataContato,
+        observacoes: leadData.observacoes,
         trava_emocional: leadData.travaEmocional,
         tipo_discurso: leadData.tipoDiscurso,
         necessidade_oculta: leadData.necessidadeOculta,
         anuncio_origem: leadData.anuncioOrigem,
+        produto_interesse: leadData.produtoInteresse,
         oferta_atrativa: leadData.ofertaAtrativa,
         gatilhos_funcionais: leadData.gatilhosFuncionais,
         pontuacao: leadData.pontuacao,
         vendedor_id: leadData.vendedorId,
         vendedor_nome: leadData.vendedorNome,
-        funnel_id: state.currentFunnel?.id,
-        funnel_stage_id: stageId // Pass the stage ID for funnel association
-      });
+      };
+
+      if (state.currentFunnel && stageId) {
+        payload.funnel_id = state.currentFunnel.id;
+        payload.funnel_stage_id = stageId;
+      }
+
+      await leadHooks.addLead(payload);
     } catch (error) {
       console.error('Error adding lead:', error);
     }
@@ -339,6 +348,31 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const value: CRMContextType = {
     ...state,
+    leads: leadHooks.leads.map(lead => ({
+      id: lead.id,
+      nome: lead.nome,
+      empresa: lead.empresa,
+      email: lead.email,
+      telefone: lead.telefone,
+      fonte: lead.fonte,
+      status: (lead.status_advanced || 'frio') as 'frio' | 'morno' | 'quente',
+      etapaFunil: lead.etapa_funil as 'descoberta' | 'consideracao' | 'decisao' | 'fechamento' | 'fidelizacao',
+      valor: lead.valor,
+      probabilidade: lead.probabilidade,
+      dataContato: lead.data_contato,
+      observacoes: lead.observacoes,
+      travaEmocional: lead.trava_emocional as 'inseguranca_financeira' | 'medo_dar_errado' | 'falta_apoio' | 'falta_tempo' | 'desconfianca',
+      tipoDiscurso: lead.tipo_discurso as 'tecnico' | 'emocional' | 'inspirador',
+      necessidadeOculta: lead.necessidade_oculta || [],
+      anuncioOrigem: lead.anuncio_origem,
+      produtoInteresse: lead.produto_interesse,
+      ofertaAtrativa: lead.oferta_atrativa,
+      gatilhosFuncionais: lead.gatilhos_funcionais || [],
+      pontuacao: lead.pontuacao,
+      ultimaInteracao: lead.ultima_interacao || '',
+      vendedorId: lead.vendedor_id,
+      vendedorNome: lead.vendedor_nome,
+    })),
     setCurrentFunnel,
     createFunnel,
     updateFunnel,

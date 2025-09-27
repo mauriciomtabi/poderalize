@@ -13,7 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 
 export const CRMFilters = () => {
-  const { state, setFilters } = useCRM();
+  const { filters, funnels, setFilters } = useCRM();
   const [dateRange, setDateRange] = useState<{ start: Date | undefined; end: Date | undefined }>({
     start: undefined,
     end: undefined
@@ -40,30 +40,30 @@ export const CRMFilters = () => {
   const responsibles = ['Maria Santos', 'Carlos Lima', 'Ana Silva', 'Pedro Costa'];
 
   const addSourceFilter = (source: string) => {
-    if (!state.filters.leadSource.includes(source)) {
+    if (!filters.leadSource.includes(source)) {
       setFilters({
-        leadSource: [...state.filters.leadSource, source]
+        leadSource: [...filters.leadSource, source]
       });
     }
   };
 
   const removeSourceFilter = (source: string) => {
     setFilters({
-      leadSource: state.filters.leadSource.filter(s => s !== source)
+      leadSource: filters.leadSource.filter(s => s !== source)
     });
   };
 
   const addResponsibleFilter = (responsible: string) => {
-    if (!state.filters.responsible.includes(responsible)) {
+    if (!filters.responsible.includes(responsible)) {
       setFilters({
-        responsible: [...state.filters.responsible, responsible]
+        responsible: [...filters.responsible, responsible]
       });
     }
   };
 
   const removeResponsibleFilter = (responsible: string) => {
     setFilters({
-      responsible: state.filters.responsible.filter(r => r !== responsible)
+      responsible: filters.responsible.filter(r => r !== responsible)
     });
   };
 
@@ -152,7 +152,7 @@ export const CRMFilters = () => {
             </SelectTrigger>
             <SelectContent>
               {leadSources
-                .filter(source => !state.filters.leadSource.includes(source))
+                .filter(source => !filters.leadSource.includes(source))
                 .map((source) => (
                   <SelectItem key={source} value={source}>
                     {source}
@@ -161,7 +161,7 @@ export const CRMFilters = () => {
             </SelectContent>
           </Select>
           <div className="flex flex-wrap gap-1 mt-2">
-            {state.filters.leadSource.map((source) => (
+            {filters.leadSource.map((source) => (
               <Badge
                 key={source}
                 variant="secondary"
@@ -184,7 +184,7 @@ export const CRMFilters = () => {
             </SelectTrigger>
             <SelectContent>
               {responsibles
-                .filter(responsible => !state.filters.responsible.includes(responsible))
+                .filter(responsible => !filters.responsible.includes(responsible))
                 .map((responsible) => (
                   <SelectItem key={responsible} value={responsible}>
                     {responsible}
@@ -193,7 +193,7 @@ export const CRMFilters = () => {
             </SelectContent>
           </Select>
           <div className="flex flex-wrap gap-1 mt-2">
-            {state.filters.responsible.map((responsible) => (
+            {filters.responsible.map((responsible) => (
               <Badge
                 key={responsible}
                 variant="secondary"
@@ -211,7 +211,7 @@ export const CRMFilters = () => {
         <div className="space-y-2">
           <Label>Funil Específico</Label>
           <Select
-            value={state.filters.funnel || "all"}
+            value={filters.funnel || "all"}
             onValueChange={(value) => setFilters({ funnel: value === "all" ? null : value })}
           >
             <SelectTrigger>
@@ -219,7 +219,7 @@ export const CRMFilters = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os funis</SelectItem>
-              {state.funnels
+              {funnels
                 .filter(funnel => funnel.id && funnel.id.trim())
                 .map((funnel) => (
                   <SelectItem key={funnel.id} value={funnel.id}>

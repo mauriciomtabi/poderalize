@@ -27,7 +27,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
     
     if (source.droppableId === destination.droppableId) return;
 
-    moveLead(draggableId, source.droppableId, destination.droppableId);
+    moveLead(draggableId, destination.droppableId);
   };
 
   const calculateConversionRate = (currentStageIndex: number) => {

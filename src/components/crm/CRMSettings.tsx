@@ -16,12 +16,12 @@ interface CRMSettingsProps {
 }
 
 export const CRMSettings = ({ open, onOpenChange }: CRMSettingsProps) => {
-  const { state, deleteFunnel, updateFunnel } = useCRM();
+  const { currentFunnel, funnels, deleteFunnel, updateFunnel } = useCRM();
   const [funnelToDelete, setFunnelToDelete] = useState<string | null>(null);
   const [funnelToArchive, setFunnelToArchive] = useState<string | null>(null);
 
   const handleDeleteFunnel = (funnelId: string) => {
-    if (state.funnels.length <= 1) {
+    if (funnels.length <= 1) {
       // Don't allow deleting the last funnel
       return;
     }
@@ -42,8 +42,8 @@ export const CRMSettings = ({ open, onOpenChange }: CRMSettingsProps) => {
     return funnel.stages.reduce((total: number, stage: any) => total + stage.leads.length, 0);
   };
 
-  const getActiveFunnels = () => state.funnels.filter(f => f.isActive);
-  const getArchivedFunnels = () => state.funnels.filter(f => !f.isActive);
+  const getActiveFunnels = () => funnels.filter(f => f.isActive);
+  const getArchivedFunnels = () => funnels.filter(f => !f.isActive);
 
   return (
     <>
@@ -73,7 +73,7 @@ export const CRMSettings = ({ open, onOpenChange }: CRMSettingsProps) => {
                           <Badge variant="secondary" className="bg-green-100 text-green-800">
                             Ativo
                           </Badge>
-                          {state.currentFunnel?.id === funnel.id && (
+                          {currentFunnel?.id === funnel.id && (
                             <Badge className="bg-primary text-primary-foreground">
                               Atual
                             </Badge>
@@ -138,7 +138,7 @@ export const CRMSettings = ({ open, onOpenChange }: CRMSettingsProps) => {
                           variant="outline"
                           size="sm"
                           onClick={() => setFunnelToDelete(funnel.id)}
-                          disabled={state.funnels.length <= 1}
+                          disabled={funnels.length <= 1}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
@@ -210,7 +210,7 @@ export const CRMSettings = ({ open, onOpenChange }: CRMSettingsProps) => {
                               variant="outline"
                               size="sm"
                               onClick={() => setFunnelToDelete(funnel.id)}
-                              disabled={state.funnels.length <= 1}
+                              disabled={funnels.length <= 1}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />

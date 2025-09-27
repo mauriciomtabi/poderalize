@@ -148,4 +148,5 @@ export interface CRMState {
   selectedLead: LeadAdvanced | null;
   isLoading: boolean;
   draggedLead: LeadAdvanced | null;
+  leads: LeadAdvanced[];
 }

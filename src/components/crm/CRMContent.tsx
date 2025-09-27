@@ -5,9 +5,9 @@ import { Card } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 
 export const CRMContent = () => {
-  const { state } = useCRM();
+  const { currentFunnel, selectedLead } = useCRM();
 
-  if (!state.currentFunnel) {
+  if (!currentFunnel) {
     return (
       <div className="flex items-center justify-center h-64">
         <Card className="p-8 text-center">
@@ -25,13 +25,13 @@ export const CRMContent = () => {
     <div className="flex h-full gap-6">
       {/* Main Kanban View */}
       <div className="flex-1 min-w-0">
-        <FunnelKanban funnel={state.currentFunnel} />
+        <FunnelKanban funnel={currentFunnel} />
       </div>
 
       {/* Lead Detail Panel */}
-      {state.selectedLead && (
+      {selectedLead && (
         <div className="w-96 flex-shrink-0">
-          <LeadDetailPanel lead={state.selectedLead} />
+          <LeadDetailPanel lead={selectedLead} />
         </div>
       )}
     </div>

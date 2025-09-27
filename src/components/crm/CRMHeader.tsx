@@ -11,13 +11,13 @@ import { CRMFilters } from "./CRMFilters";
 import { CRMSettings } from "./CRMSettings";
 
 export const CRMHeader = () => {
-  const { state, setCurrentFunnel, setFilters } = useCRM();
+  const { currentFunnel, funnels, metrics, filters, setCurrentFunnel, setFilters } = useCRM();
   const [showCreateFunnel, setShowCreateFunnel] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   const handleFunnelChange = (funnelId: string) => {
-    const funnel = state.funnels.find(f => f.id === funnelId);
+    const funnel = funnels.find(f => f.id === funnelId);
     if (funnel) {
       setCurrentFunnel(funnel);
     }
@@ -27,31 +27,31 @@ export const CRMHeader = () => {
     setFilters({ search: value });
   };
 
-  const metrics = [
+  const metricsData = [
     {
       title: "Total de Leads",
-      value: state.metrics.totalLeads,
+      value: metrics.totalLeads,
       icon: Zap,
       color: "text-blue-600",
       bgColor: "bg-blue-50"
     },
     {
       title: "Taxa de Conversão",
-      value: `${state.metrics.conversionRate}%`,
+      value: `${metrics.conversionRate}%`,
       icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-50"
     },
     {
       title: "Ciclo Médio",
-      value: `${state.metrics.averageCycleTime} dias`,
+      value: `${metrics.averageCycleTime} dias`,
       icon: Clock,
       color: "text-orange-600",
       bgColor: "bg-orange-50"
     },
     {
       title: "Receita Prevista",
-      value: `R$ ${state.metrics.predictedRevenue.toLocaleString()}`,
+      value: `R$ ${metrics.predictedRevenue.toLocaleString()}`,
       icon: DollarSign,
       color: "text-purple-600",
       bgColor: "bg-purple-50"
@@ -62,7 +62,7 @@ export const CRMHeader = () => {
     <div className="space-y-6">
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric, index) => (
+        {metricsData.map((metric, index) => (
           <Card key={index} className="p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -87,14 +87,14 @@ export const CRMHeader = () => {
           {/* Funnel Selector */}
           <div className="min-w-[200px]">
             <Select
-              value={state.currentFunnel?.id || ""}
+              value={currentFunnel?.id || ""}
               onValueChange={handleFunnelChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar funil" />
               </SelectTrigger>
               <SelectContent>
-                {state.funnels.filter(funnel => funnel.id && funnel.id.trim()).map((funnel) => (
+                {funnels.filter(funnel => funnel.id && funnel.id.trim()).map((funnel) => (
                   <SelectItem key={funnel.id} value={funnel.id}>
                     <div className="flex items-center gap-2">
                       <span>{funnel.name}</span>
@@ -115,7 +115,7 @@ export const CRMHeader = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Buscar leads..."
-              value={state.filters.search}
+              value={filters.search}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10"
             />
