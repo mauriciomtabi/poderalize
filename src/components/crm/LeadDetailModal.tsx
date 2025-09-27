@@ -21,19 +21,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-
 interface LeadDetailModalProps {
   lead: LeadAdvanced;
 }
-
-export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
+export const LeadDetailModal = ({
+  lead
+}: LeadDetailModalProps) => {
   const {
     selectedLead,
     setSelectedLead,
     currentFunnel,
     updateLead
   } = useCRM();
-
   const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false);
   const [isInteractionHistoryOpen, setIsInteractionHistoryOpen] = useState(true);
   const [negotiationData, setNegotiationData] = useState({
@@ -63,11 +62,9 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
       loadFollowUps(lead.id);
     }
   }, [lead.id, loadInteractions, loadFollowUps]);
-
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
-
   const getTravaEmocionalLabel = (trava: string) => {
     const labels = {
       'inseguranca_financeira': 'Insegurança Financeira',
@@ -78,7 +75,6 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
     };
     return labels[trava as keyof typeof labels] || trava;
   };
-
   const getTipoDiscursoLabel = (tipo: string) => {
     const labels = {
       'tecnico': 'Técnico',
@@ -87,16 +83,13 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
     };
     return labels[tipo as keyof typeof labels] || tipo;
   };
-
   const currentStage = currentFunnel?.stages.find(stage => stage.leads.some(l => l.id === lead.id));
-
   const handleNegotiationUpdate = (field: string, value: string | number) => {
     setNegotiationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleSaveNegotiation = async () => {
     try {
       await updateLead(lead.id, {
@@ -112,14 +105,11 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
       toast.error("Erro ao salvar dados da negociação");
     }
   };
-
   const handleRefreshData = () => {
     refreshInteractions();
     refreshFollowUps();
   };
-
-  return (
-    <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
+  return <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0">
         {/* Header */}
         <DialogHeader className="p-6 pb-4">
@@ -162,23 +152,13 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                   {/* Temperature and Value in same row */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <TemperatureSelector 
-                        value={negotiationData.temperaturaNegociacao} 
-                        onChange={temp => handleNegotiationUpdate('temperaturaNegociacao', temp)} 
-                      />
+                      <TemperatureSelector value={negotiationData.temperaturaNegociacao} onChange={temp => handleNegotiationUpdate('temperaturaNegociacao', temp)} />
                     </div>
                     <div>
                       <Label htmlFor="valor" className="text-sm font-medium">Valor da Negociação</Label>
                       <div className="mt-1 relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="valor" 
-                          type="number" 
-                          placeholder="0,00" 
-                          value={negotiationData.valor} 
-                          onChange={e => handleNegotiationUpdate('valor', parseFloat(e.target.value) || 0)} 
-                          className="pl-10" 
-                        />
+                        <Input id="valor" type="number" placeholder="0,00" value={negotiationData.valor} onChange={e => handleNegotiationUpdate('valor', parseFloat(e.target.value) || 0)} className="pl-10" />
                       </div>
                     </div>
                   </div>
@@ -186,13 +166,7 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                   {/* Produto de Interesse */}
                   <div>
                     <Label htmlFor="produto" className="text-sm font-medium">Produto de Interesse</Label>
-                    <Input 
-                      id="produto" 
-                      placeholder="Digite o produto de interesse..." 
-                      value={negotiationData.produtoInteresse} 
-                      onChange={e => handleNegotiationUpdate('produtoInteresse', e.target.value)} 
-                      className="mt-1" 
-                    />
+                    <Input id="produto" placeholder="Digite o produto de interesse..." value={negotiationData.produtoInteresse} onChange={e => handleNegotiationUpdate('produtoInteresse', e.target.value)} className="mt-1" />
                   </div>
 
                   {/* Dor Atual */}
@@ -201,14 +175,7 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                       <AlertTriangle className="h-4 w-4" />
                       Dor Atual do Cliente
                     </Label>
-                    <Textarea 
-                      id="dor" 
-                      placeholder="Descreva a principal dor ou problema do cliente..." 
-                      value={negotiationData.dorAtual} 
-                      onChange={e => handleNegotiationUpdate('dorAtual', e.target.value)} 
-                      className="mt-1" 
-                      rows={2} 
-                    />
+                    <Textarea id="dor" placeholder="Descreva a principal dor ou problema do cliente..." value={negotiationData.dorAtual} onChange={e => handleNegotiationUpdate('dorAtual', e.target.value)} className="mt-1" rows={2} />
                   </div>
 
                   {/* Oportunidade Identificada */}
@@ -217,14 +184,7 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                       <Lightbulb className="h-4 w-4" />
                       Oportunidade Identificada
                     </Label>
-                    <Textarea 
-                      id="oportunidade" 
-                      placeholder="Descreva a oportunidade identificada..." 
-                      value={negotiationData.oportunidadeIdentificada} 
-                      onChange={e => handleNegotiationUpdate('oportunidadeIdentificada', e.target.value)} 
-                      className="mt-1" 
-                      rows={2} 
-                    />
+                    <Textarea id="oportunidade" placeholder="Descreva a oportunidade identificada..." value={negotiationData.oportunidadeIdentificada} onChange={e => handleNegotiationUpdate('oportunidadeIdentificada', e.target.value)} className="mt-1" rows={2} />
                   </div>
 
                   {/* Action Buttons */}
@@ -287,16 +247,14 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
               </Collapsible>
 
               {/* Follow-ups Scheduled */}
-              {followUps.length > 0 && (
-                <div className="bg-muted/50 p-4 rounded-lg">
+              {followUps.length > 0 && <div className="bg-muted/50 p-4 rounded-lg">
                   <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     Follow-ups Agendados
                     <Badge variant="secondary">{followUps.length}</Badge>
                   </h5>
                   <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {followUps.slice(0, 3).map(followUp => (
-                      <div key={followUp.id} className="bg-background/50 p-3 rounded-lg border">
+                    {followUps.slice(0, 3).map(followUp => <div key={followUp.id} className="bg-background/50 p-3 rounded-lg border">
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-xs">
                             {followUp.tipo}
@@ -308,18 +266,14 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                         <div className="text-sm">
                           <p className="font-medium">
                             {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", {
-                              locale: ptBR
-                            })}
+                        locale: ptBR
+                      })}
                           </p>
-                          {followUp.observacoes && (
-                            <p className="text-muted-foreground mt-1 text-xs">{followUp.observacoes}</p>
-                          )}
+                          {followUp.observacoes && <p className="text-muted-foreground mt-1 text-xs">{followUp.observacoes}</p>}
                         </div>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
-                </div>
-              )}
+                </div>}
 
               {/* Additional Details - Collapsible */}
               <Collapsible open={isContactDetailsOpen} onOpenChange={setIsContactDetailsOpen}>
@@ -327,7 +281,7 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                   <Button variant="ghost" className="w-full justify-between p-0 h-auto">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span className="font-medium">Análise Comportamental</span>
+                      
                     </div>
                     {isContactDetailsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
@@ -346,10 +300,9 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                         <span className="font-medium">{lead.pontuacao}/100</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all" 
-                          style={{ width: `${lead.pontuacao}%` }} 
-                        />
+                        <div className="bg-primary h-2 rounded-full transition-all" style={{
+                        width: `${lead.pontuacao}%`
+                      }} />
                       </div>
                     </div>
                   </div>
@@ -381,11 +334,15 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Data de Contato:</span>
-                        <span>{format(new Date(lead.dataContato), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        <span>{format(new Date(lead.dataContato), "dd/MM/yyyy", {
+                          locale: ptBR
+                        })}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Última Interação:</span>
-                        <span>{format(new Date(lead.ultimaInteracao), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        <span>{format(new Date(lead.ultimaInteracao), "dd/MM/yyyy", {
+                          locale: ptBR
+                        })}</span>
                       </div>
                     </div>
                   </div>
@@ -395,6 +352,5 @@ export const LeadDetailModal = ({ lead }: LeadDetailModalProps) => {
           </div>
         </ScrollArea>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
