@@ -16,39 +16,22 @@ import { TemperatureSelector } from "./TemperatureSelector";
 import { InteractionForm } from "./InteractionForm";
 import { InteractionHistory } from "./InteractionHistory";
 import { ScheduleFollowUpDialog } from "./ScheduleFollowUpDialog";
-import { 
-  X, 
-  Building2, 
-  Mail, 
-  Phone, 
-  Globe, 
-  DollarSign, 
-  Calendar,
-  Target,
-  TrendingUp,
-  User,
-  MessageCircle,
-  Edit,
-  Star,
-  ChevronDown,
-  ChevronRight,
-  Save,
-  Lightbulb,
-  AlertTriangle,
-  Thermometer,
-  Clock
-} from "lucide-react";
+import { X, Building2, Mail, Phone, Globe, DollarSign, Calendar, Target, TrendingUp, User, MessageCircle, Edit, Star, ChevronDown, ChevronRight, Save, Lightbulb, AlertTriangle, Thermometer, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-
 interface LeadDetailPanelProps {
   lead: LeadAdvanced;
 }
-
-export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
-  const { setSelectedLead, currentFunnel, updateLead } = useCRM();
+export const LeadDetailPanel = ({
+  lead
+}: LeadDetailPanelProps) => {
+  const {
+    setSelectedLead,
+    currentFunnel,
+    updateLead
+  } = useCRM();
   const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false);
   const [isInteractionHistoryOpen, setIsInteractionHistoryOpen] = useState(false);
   const [negotiationData, setNegotiationData] = useState({
@@ -60,8 +43,16 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
   });
 
   // Hooks for interactions and follow-ups
-  const { interactions, loadInteractions, refreshInteractions } = useLeadInteractions();
-  const { followUps, loadFollowUps, refreshFollowUps } = useFollowUps();
+  const {
+    interactions,
+    loadInteractions,
+    refreshInteractions
+  } = useLeadInteractions();
+  const {
+    followUps,
+    loadFollowUps,
+    refreshFollowUps
+  } = useFollowUps();
 
   // Load data when lead changes
   useEffect(() => {
@@ -70,20 +61,21 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
       loadFollowUps(lead.id);
     }
   }, [lead.id, loadInteractions, loadFollowUps]);
-
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'quente': return 'bg-red-100 text-red-800 border-red-200';
-      case 'morno': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'frio': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'quente':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'morno':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'frio':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-
   const getTravaEmocionalLabel = (trava: string) => {
     const labels = {
       'inseguranca_financeira': 'Insegurança Financeira',
@@ -94,7 +86,6 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
     };
     return labels[trava as keyof typeof labels] || trava;
   };
-
   const getTipoDiscursoLabel = (tipo: string) => {
     const labels = {
       'tecnico': 'Técnico',
@@ -103,18 +94,13 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
     };
     return labels[tipo as keyof typeof labels] || tipo;
   };
-
-  const currentStage = currentFunnel?.stages.find(stage => 
-    stage.leads.some(l => l.id === lead.id)
-  );
-
+  const currentStage = currentFunnel?.stages.find(stage => stage.leads.some(l => l.id === lead.id));
   const handleNegotiationUpdate = (field: string, value: string | number) => {
     setNegotiationData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const handleSaveNegotiation = async () => {
     try {
       await updateLead(lead.id, {
@@ -124,21 +110,17 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
         observacoes: negotiationData.oportunidadeIdentificada,
         temperaturaNegociacao: negotiationData.temperaturaNegociacao
       });
-      
       toast.success("Dados da negociação salvos com sucesso!");
     } catch (error) {
       console.error('Error saving negotiation data:', error);
       toast.error("Erro ao salvar dados da negociação");
     }
   };
-
   const handleRefreshData = () => {
     refreshInteractions();
     refreshFollowUps();
   };
-
-  return (
-    <Card className="h-full flex flex-col">
+  return <Card className="h-full flex flex-col">
       {/* Header */}
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between mb-4">
@@ -156,19 +138,13 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
               </div>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedLead(null)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setSelectedLead(null)}>
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         <div className="flex items-center gap-2 mb-4">
-          <Badge className={getStatusColor(lead.status)}>
-            {lead.status}
-          </Badge>
+          
           <Badge variant="outline" className="text-xs">
             {currentStage?.title || lead.etapaFunil}
           </Badge>
@@ -199,10 +175,7 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
 
                 {/* Temperatura da Negociação */}
                 <div>
-                  <TemperatureSelector
-                    value={negotiationData.temperaturaNegociacao}
-                    onChange={(temp) => handleNegotiationUpdate('temperaturaNegociacao', temp)}
-                  />
+                  <TemperatureSelector value={negotiationData.temperaturaNegociacao} onChange={temp => handleNegotiationUpdate('temperaturaNegociacao', temp)} />
                 </div>
 
                 {/* Valor */}
@@ -210,27 +183,14 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                   <Label htmlFor="valor" className="text-sm font-medium">Valor da Negociação</Label>
                   <div className="mt-1 relative">
                     <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="valor"
-                      type="number"
-                      placeholder="0,00"
-                      value={negotiationData.valor}
-                      onChange={(e) => handleNegotiationUpdate('valor', parseFloat(e.target.value) || 0)}
-                      className="pl-10"
-                    />
+                    <Input id="valor" type="number" placeholder="0,00" value={negotiationData.valor} onChange={e => handleNegotiationUpdate('valor', parseFloat(e.target.value) || 0)} className="pl-10" />
                   </div>
                 </div>
 
                 {/* Produto de Interesse */}
                 <div>
                   <Label htmlFor="produto" className="text-sm font-medium">Produto de Interesse</Label>
-                  <Input
-                    id="produto"
-                    placeholder="Digite o produto de interesse..."
-                    value={negotiationData.produtoInteresse}
-                    onChange={(e) => handleNegotiationUpdate('produtoInteresse', e.target.value)}
-                    className="mt-1"
-                  />
+                  <Input id="produto" placeholder="Digite o produto de interesse..." value={negotiationData.produtoInteresse} onChange={e => handleNegotiationUpdate('produtoInteresse', e.target.value)} className="mt-1" />
                 </div>
 
                 {/* Dor Atual */}
@@ -239,14 +199,7 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                     <AlertTriangle className="h-4 w-4" />
                     Dor Atual do Cliente
                   </Label>
-                  <Textarea
-                    id="dor"
-                    placeholder="Descreva a principal dor ou problema do cliente..."
-                    value={negotiationData.dorAtual}
-                    onChange={(e) => handleNegotiationUpdate('dorAtual', e.target.value)}
-                    className="mt-1"
-                    rows={3}
-                  />
+                  <Textarea id="dor" placeholder="Descreva a principal dor ou problema do cliente..." value={negotiationData.dorAtual} onChange={e => handleNegotiationUpdate('dorAtual', e.target.value)} className="mt-1" rows={3} />
                 </div>
 
                 {/* Oportunidade Identificada */}
@@ -255,14 +208,7 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                     <Lightbulb className="h-4 w-4" />
                     Oportunidade Identificada
                   </Label>
-                  <Textarea
-                    id="oportunidade"
-                    placeholder="Descreva a oportunidade identificada..."
-                    value={negotiationData.oportunidadeIdentificada}
-                    onChange={(e) => handleNegotiationUpdate('oportunidadeIdentificada', e.target.value)}
-                    className="mt-1"
-                    rows={3}
-                  />
+                  <Textarea id="oportunidade" placeholder="Descreva a oportunidade identificada..." value={negotiationData.oportunidadeIdentificada} onChange={e => handleNegotiationUpdate('oportunidadeIdentificada', e.target.value)} className="mt-1" rows={3} />
                 </div>
 
                 {/* Botões de Ação */}
@@ -271,16 +217,8 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                     <Save className="h-4 w-4 mr-2" />
                     Salvar Alterações
                   </Button>
-                  <InteractionForm 
-                    leadId={lead.id} 
-                    leadName={lead.nome}
-                    onSuccess={handleRefreshData}
-                  />
-                  <ScheduleFollowUpDialog
-                    leadId={lead.id}
-                    leadName={lead.nome}
-                    onSuccess={handleRefreshData}
-                  />
+                  <InteractionForm leadId={lead.id} leadName={lead.nome} onSuccess={handleRefreshData} />
+                  <ScheduleFollowUpDialog leadId={lead.id} leadName={lead.nome} onSuccess={handleRefreshData} />
                 </div>
               </div>
             </div>
@@ -298,11 +236,7 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                       {interactions.length}
                     </Badge>
                   </div>
-                  {isInteractionHistoryOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
+                  {isInteractionHistoryOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
               
@@ -314,8 +248,7 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
             <Separator />
 
             {/* Follow-ups Agendados */}
-            {followUps.length > 0 && (
-              <>
+            {followUps.length > 0 && <>
                 <div>
                   <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -323,41 +256,31 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                     <Badge variant="secondary">{followUps.length}</Badge>
                   </h5>
                   <div className="space-y-2">
-                    {followUps.slice(0, 3).map((followUp) => (
-                      <div key={followUp.id} className="bg-muted/50 p-3 rounded-lg">
+                    {followUps.slice(0, 3).map(followUp => <div key={followUp.id} className="bg-muted/50 p-3 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-xs">
                             {followUp.tipo}
                           </Badge>
-                          <Badge 
-                            variant={followUp.status === 'concluido' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
+                          <Badge variant={followUp.status === 'concluido' ? 'default' : 'secondary'} className="text-xs">
                             {followUp.status}
                           </Badge>
                         </div>
                         <div className="text-sm">
                           <p className="font-medium">
-                            {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", { 
-                              locale: ptBR 
-                            })}
+                            {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", {
+                        locale: ptBR
+                      })}
                           </p>
-                          {followUp.observacoes && (
-                            <p className="text-muted-foreground mt-1">{followUp.observacoes}</p>
-                          )}
+                          {followUp.observacoes && <p className="text-muted-foreground mt-1">{followUp.observacoes}</p>}
                         </div>
-                      </div>
-                    ))}
-                    {followUps.length > 3 && (
-                      <p className="text-sm text-muted-foreground text-center">
+                      </div>)}
+                    {followUps.length > 3 && <p className="text-sm text-muted-foreground text-center">
                         +{followUps.length - 3} follow-ups adicionais
-                      </p>
-                    )}
+                      </p>}
                   </div>
                 </div>
                 <Separator />
-              </>
-            )}
+              </>}
 
             {/* Detalhes do Cadastro - Recolhível */}
             <Collapsible open={isContactDetailsOpen} onOpenChange={setIsContactDetailsOpen}>
@@ -367,11 +290,7 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                     <User className="h-4 w-4" />
                     <span className="font-medium">Detalhes do Cadastro</span>
                   </div>
-                  {isContactDetailsOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
+                  {isContactDetailsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </Button>
               </CollapsibleTrigger>
               
@@ -410,10 +329,9 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                       <span className="font-medium">{lead.pontuacao}/100</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all"
-                        style={{ width: `${lead.pontuacao}%` }}
-                      />
+                      <div className="bg-primary h-2 rounded-full transition-all" style={{
+                      width: `${lead.pontuacao}%`
+                    }} />
                     </div>
                   </div>
                 </div>
@@ -447,11 +365,9 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                     Necessidades Ocultas
                   </h5>
                   <div className="flex flex-wrap gap-2">
-                    {lead.necessidadeOculta?.map((necessidade, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
+                    {lead.necessidadeOculta?.map((necessidade, index) => <Badge key={index} variant="secondary" className="text-xs">
                         {necessidade}
-                      </Badge>
-                    ))}
+                      </Badge>)}
                   </div>
                 </div>
 
@@ -464,11 +380,15 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                   <div className="space-y-2 text-sm bg-muted/50 p-3 rounded-lg">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Data de Contato:</span>
-                      <span>{format(new Date(lead.dataContato), "dd/MM/yyyy", { locale: ptBR })}</span>
+                      <span>{format(new Date(lead.dataContato), "dd/MM/yyyy", {
+                        locale: ptBR
+                      })}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Última Interação:</span>
-                      <span>{format(new Date(lead.ultimaInteracao), "dd/MM/yyyy", { locale: ptBR })}</span>
+                      <span>{format(new Date(lead.ultimaInteracao), "dd/MM/yyyy", {
+                        locale: ptBR
+                      })}</span>
                     </div>
                   </div>
                 </div>
@@ -490,6 +410,5 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
           </div>
         </ScrollArea>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
