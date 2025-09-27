@@ -14,11 +14,12 @@ import { TemperatureSelector } from "./TemperatureSelector";
 import { InteractionForm } from "./InteractionForm";
 import { InteractionHistory } from "./InteractionHistory";
 import { ScheduleFollowUpDialog } from "./ScheduleFollowUpDialog";
-import { Building2, Mail, Phone, Globe, DollarSign, Calendar, TrendingUp, Clock, Save, Lightbulb, AlertTriangle, Star } from "lucide-react";
+import { Building2, Mail, Phone, Globe, DollarSign, Calendar, TrendingUp, Clock, Save, Lightbulb, AlertTriangle, Star, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 interface LeadDetailModalProps {
   lead: LeadAdvanced;
 }
@@ -105,6 +106,26 @@ export const LeadDetailModal = ({
   const handleRefreshData = () => {
     refreshInteractions();
     refreshFollowUps();
+  };
+
+  const handleCompleteFollowUp = async (followUpId: string) => {
+    try {
+      // Atualizar o status do follow-up para concluído
+      const { error } = await supabase
+        .from('follow_ups')
+        .update({ status: 'concluido' })
+        .eq('id', followUpId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Follow-up marcado como concluído!");
+      refreshFollowUps(); // Atualizar a lista de follow-ups
+    } catch (error) {
+      console.error('Error completing follow-up:', error);
+      toast.error("Erro ao marcar follow-up como concluído");
+    }
   };
   return <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
       <DialogContent className="max-w-5xl h-[85vh] p-0 flex flex-col">
@@ -253,27 +274,48 @@ export const LeadDetailModal = ({
                   </div>
                 </div>
 
-                {/* Follow-ups Scheduled */}
-                {followUps.length > 0 && (
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Follow-ups Agendados
-                      <Badge variant="secondary">{followUps.length}</Badge>
-                    </h5>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {followUps.slice(0, 5).map(followUp => (
-                        <div key={followUp.id} className="bg-background/50 p-3 rounded-lg border">
+              {/* Follow-ups Scheduled */}
+              {followUps.length > 0 && (
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Follow-ups Agendados
+                    <Badge variant="secondary">{followUps.length}</Badge>
+                  </h5>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {followUps.slice(0, 5).map(followUp => {
+                      const isOverdue = new Date(followUp.dataAgendada) < new Date() && followUp.status !== 'concluido';
+                      return (
+                        <div key={followUp.id} className={`bg-background/50 p-3 rounded-lg border ${isOverdue ? 'border-destructive/50 bg-destructive/5' : ''}`}>
                           <div className="flex items-center justify-between mb-2">
-                            <Badge variant="outline" className="text-xs">
-                              {followUp.tipo}
-                            </Badge>
-                            <Badge variant={followUp.status === 'concluido' ? 'default' : 'secondary'} className="text-xs">
-                              {followUp.status}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {followUp.tipo}
+                              </Badge>
+                              {isOverdue && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Atrasado
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={followUp.status === 'concluido' ? 'default' : 'secondary'} className="text-xs">
+                                {followUp.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                              </Badge>
+                              {followUp.status !== 'concluido' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleCompleteFollowUp(followUp.id)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
                           <div className="text-sm">
-                            <p className="font-medium">
+                            <p className={`font-medium ${isOverdue ? 'text-destructive' : ''}`}>
                               {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                             </p>
                             {followUp.observacoes && (
@@ -281,10 +323,11 @@ export const LeadDetailModal = ({
                             )}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                )}
+                </div>
+              )}
               </div>
             </div>
           </div>
