@@ -330,6 +330,9 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       await leadHooks.addLead(payload);
       
+      // Refresh leads data to ensure synchronization
+      await leadHooks.refreshLeads();
+      
       // Refresh funnel leads if in a funnel context
       if (state.currentFunnel) {
         await funnelLeadHooks.refreshFunnelLeads();
