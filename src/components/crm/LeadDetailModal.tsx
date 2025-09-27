@@ -14,7 +14,7 @@ import { TemperatureSelector } from "./TemperatureSelector";
 import { InteractionForm } from "./InteractionForm";
 import { InteractionHistory } from "./InteractionHistory";
 import { ScheduleFollowUpDialog } from "./ScheduleFollowUpDialog";
-import { Building2, Mail, Phone, Globe, DollarSign, Calendar, TrendingUp, Clock, Save, Lightbulb, AlertTriangle, Star, Check } from "lucide-react";
+import { Building2, Mail, Phone, Globe, DollarSign, Calendar, TrendingUp, Clock, Save, Lightbulb, AlertTriangle, Star, Check, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
@@ -40,6 +40,8 @@ export const LeadDetailModal = ({
     oportunidadeIdentificada: lead.observacoes || '',
     temperaturaNegociacao: lead.temperaturaNegociacao || 'mediana' as NegotiationTemperature
   });
+  
+  const [selectedFollowUp, setSelectedFollowUp] = useState<any>(null);
 
   // Hooks for interactions and follow-ups
   const {
@@ -302,24 +304,34 @@ export const LeadDetailModal = ({
                               <Badge variant={followUp.status === 'concluido' ? 'default' : 'secondary'} className="text-xs">
                                 {followUp.status === 'concluido' ? 'Concluído' : 'Pendente'}
                               </Badge>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setSelectedFollowUp(followUp)}
+                                className="h-6 w-6 p-0"
+                                title="Visualizar detalhes"
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
                               {followUp.status !== 'concluido' && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => handleCompleteFollowUp(followUp.id)}
                                   className="h-6 w-6 p-0"
+                                  title="Marcar como concluído"
                                 >
                                   <Check className="h-3 w-3" />
                                 </Button>
                               )}
                             </div>
                           </div>
-                          <div className="text-sm">
+                          <div className="text-sm cursor-pointer" onClick={() => setSelectedFollowUp(followUp)}>
                             <p className={`font-medium ${isOverdue ? 'text-destructive' : ''}`}>
                               {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                             </p>
                             {followUp.observacoes && (
-                              <p className="text-muted-foreground mt-1 text-xs">{followUp.observacoes}</p>
+                              <p className="text-muted-foreground mt-1 text-xs truncate">{followUp.observacoes}</p>
                             )}
                           </div>
                         </div>
@@ -333,5 +345,76 @@ export const LeadDetailModal = ({
           </div>
         </ScrollArea>
       </DialogContent>
+      
+      {/* Follow-up Detail Modal */}
+      {selectedFollowUp && (
+        <Dialog open={!!selectedFollowUp} onOpenChange={() => setSelectedFollowUp(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Detalhes do Follow-up</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Tipo</Label>
+                <p className="text-sm">{selectedFollowUp.tipo}</p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Data e Hora</Label>
+                <p className="text-sm font-medium">
+                  {format(new Date(selectedFollowUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </p>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                <Badge variant={selectedFollowUp.status === 'concluido' ? 'default' : 'secondary'} className="text-xs">
+                  {selectedFollowUp.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                </Badge>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Lead</Label>
+                <p className="text-sm">{selectedFollowUp.leadNome}</p>
+              </div>
+              
+              {selectedFollowUp.observacoes && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Observações</Label>
+                  <p className="text-sm">{selectedFollowUp.observacoes}</p>
+                </div>
+              )}
+              
+              {selectedFollowUp.templateMensagem && (
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Template de Mensagem</Label>
+                  <p className="text-sm bg-muted/50 p-2 rounded">{selectedFollowUp.templateMensagem}</p>
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-2 pt-4">
+                {selectedFollowUp.status !== 'concluido' && (
+                  <Button
+                    onClick={() => {
+                      handleCompleteFollowUp(selectedFollowUp.id);
+                      setSelectedFollowUp(null);
+                    }}
+                    size="sm"
+                  >
+                    Marcar como Concluído
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedFollowUp(null)}
+                  size="sm"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>;
 };
