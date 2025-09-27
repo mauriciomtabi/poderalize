@@ -173,7 +173,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
           </TabsContent>
 
           <TabsContent value="new" className="flex-1 min-h-0 mt-2 overflow-hidden">
-            <div ref={newScrollRef} className="overflow-y-auto pr-2">
+            <div ref={newScrollRef} className="h-full overflow-y-auto pr-2">
               <LeadForm onSubmit={handleCreateNewLead} />
             </div>
           </TabsContent>
