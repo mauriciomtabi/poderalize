@@ -91,7 +91,7 @@ interface CRMContextType {
   updateFunnel: (id: string, updates: Partial<CustomFunnel>) => void;
   deleteFunnel: (id: string) => void;
   setLeads: (leads: LeadAdvanced[]) => void;
-  addLead: (lead: Omit<LeadAdvanced, 'id'>) => void;
+  addLead: (lead: Omit<LeadAdvanced, 'id'>, stageId?: string) => Promise<void>;
   updateLead: (id: string, updates: Partial<LeadAdvanced>) => void;
   deleteLead: (id: string) => void;
   moveLead: (leadId: string, newStageId: string) => void;
@@ -199,6 +199,55 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [leadHooks.leads]);
 
+  // Inject leads from funnelLeadHooks into current funnel stages
+  useEffect(() => {
+    if (state.currentFunnel && funnelLeadHooks.funnelLeads && leadHooks.leads.length > 0) {
+      const currentFunnelWithLeads = { ...state.currentFunnel };
+      
+      // For each stage, populate leads from funnelLeadHooks
+      currentFunnelWithLeads.stages = currentFunnelWithLeads.stages.map(stage => {
+        const stageLeads = funnelLeadHooks.funnelLeads[stage.id] || [];
+        
+        // Convert Lead[] to LeadAdvanced[] using full lead data
+        const leadsAdvanced: LeadAdvanced[] = stageLeads.map(lead => {
+          const fullLead = leadHooks.leads.find(l => l.id === lead.id);
+          return {
+            id: lead.id,
+            nome: lead.nome,
+            empresa: lead.empresa,
+            email: lead.email,
+            telefone: lead.telefone || '',
+            fonte: lead.fonte,
+            status: (fullLead?.status_advanced || 'morno') as 'frio' | 'morno' | 'quente',
+            etapaFunil: (fullLead?.etapa_funil || 'descoberta') as 'descoberta' | 'consideracao' | 'decisao' | 'fechamento' | 'fidelizacao',
+            valor: lead.valor || 0,
+            probabilidade: lead.probabilidade || 0,
+            dataContato: fullLead?.data_contato || new Date().toISOString(),
+            observacoes: lead.observacoes || '',
+            travaEmocional: (fullLead?.trava_emocional || 'inseguranca_financeira') as 'inseguranca_financeira' | 'medo_dar_errado' | 'falta_apoio' | 'falta_tempo' | 'desconfianca',
+            tipoDiscurso: (fullLead?.tipo_discurso || 'tecnico') as 'tecnico' | 'emocional' | 'inspirador',
+            necessidadeOculta: fullLead?.necessidade_oculta || [],
+            anuncioOrigem: fullLead?.anuncio_origem || '',
+            produtoInteresse: fullLead?.produto_interesse || '',
+            ofertaAtrativa: fullLead?.oferta_atrativa || '',
+            gatilhosFuncionais: fullLead?.gatilhos_funcionais || [],
+            pontuacao: fullLead?.pontuacao || 0,
+            ultimaInteracao: fullLead?.ultima_interacao ? new Date(fullLead.ultima_interacao).toISOString() : new Date().toISOString(),
+            vendedorId: fullLead?.vendedor_id || '',
+            vendedorNome: fullLead?.vendedor_nome || ''
+          };
+        });
+
+        return {
+          ...stage,
+          leads: leadsAdvanced
+        };
+      });
+
+      dispatch({ type: 'SET_CURRENT_FUNNEL', payload: currentFunnelWithLeads });
+    }
+  }, [state.currentFunnel?.id, funnelLeadHooks.funnelLeads, leadHooks.leads]);
+
   // Funnel actions
   const setCurrentFunnel = useCallback((funnel: CustomFunnel | null) => {
     dispatch({ type: 'SET_CURRENT_FUNNEL', payload: funnel });
@@ -278,10 +327,15 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       await leadHooks.addLead(payload);
+      
+      // Refresh funnel leads if in a funnel context
+      if (state.currentFunnel) {
+        await funnelLeadHooks.refreshFunnelLeads();
+      }
     } catch (error) {
       console.error('Error adding lead:', error);
     }
-  }, [leadHooks, state.currentFunnel]);
+  }, [leadHooks, funnelLeadHooks, state.currentFunnel]);
 
   const updateLead = useCallback(async (id: string, updates: Partial<LeadAdvanced>) => {
     try {
@@ -324,6 +378,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const moveLead = useCallback(async (leadId: string, newStageId: string) => {
     if (state.currentFunnel) {
       await funnelLeadHooks.moveLeadToStage(leadId, newStageId, state.currentFunnel.id);
+      await funnelLeadHooks.refreshFunnelLeads();
     }
   }, [funnelLeadHooks, state.currentFunnel]);
 

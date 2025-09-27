@@ -86,11 +86,10 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
     try {
       // Create the lead with funnel association
       const newLeadData = {
-        ...leadData,
-        etapaFunil: stageId // This will be used as funnel_stage_id in the addLead function
+        ...leadData
       } as Omit<LeadAdvanced, 'id'>;
 
-      await addLead(newLeadData);
+      await addLead(newLeadData, stageId);
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating new lead:', error);
