@@ -792,6 +792,9 @@ export type Database = {
             | Database["public"]["Enums"]["lead_status_simple"]
             | null
           telefone: string | null
+          temperatura_negociacao:
+            | Database["public"]["Enums"]["negotiation_temperature"]
+            | null
           tipo_discurso: Database["public"]["Enums"]["tipo_discurso"] | null
           trava_emocional:
             | Database["public"]["Enums"]["trava_emocional_type"]
@@ -840,6 +843,9 @@ export type Database = {
             | Database["public"]["Enums"]["lead_status_simple"]
             | null
           telefone?: string | null
+          temperatura_negociacao?:
+            | Database["public"]["Enums"]["negotiation_temperature"]
+            | null
           tipo_discurso?: Database["public"]["Enums"]["tipo_discurso"] | null
           trava_emocional?:
             | Database["public"]["Enums"]["trava_emocional_type"]
@@ -888,6 +894,9 @@ export type Database = {
             | Database["public"]["Enums"]["lead_status_simple"]
             | null
           telefone?: string | null
+          temperatura_negociacao?:
+            | Database["public"]["Enums"]["negotiation_temperature"]
+            | null
           tipo_discurso?: Database["public"]["Enums"]["tipo_discurso"] | null
           trava_emocional?:
             | Database["public"]["Enums"]["trava_emocional_type"]
@@ -1208,6 +1217,12 @@ export type Database = {
         | "negociacao"
         | "fechado"
         | "perdido"
+      negotiation_temperature:
+        | "muito_fraca"
+        | "fraca"
+        | "mediana"
+        | "forte"
+        | "muito_forte"
       page_permission:
         | "dashboard"
         | "projetos"
@@ -1370,6 +1385,13 @@ export const Constants = {
         "negociacao",
         "fechado",
         "perdido",
+      ],
+      negotiation_temperature: [
+        "muito_fraca",
+        "fraca",
+        "mediana",
+        "forte",
+        "muito_forte",
       ],
       page_permission: [
         "dashboard",

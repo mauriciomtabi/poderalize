@@ -8,8 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { LeadAdvanced } from "@/types/crm";
+import { LeadAdvanced, NegotiationTemperature } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
+import { useLeadInteractions } from "@/hooks/useLeadInteractions";
+import { useFollowUps } from "@/hooks/useFollowUps";
+import { TemperatureSelector } from "./TemperatureSelector";
+import { InteractionForm } from "./InteractionForm";
+import { InteractionHistory } from "./InteractionHistory";
+import { ScheduleFollowUpDialog } from "./ScheduleFollowUpDialog";
 import { 
   X, 
   Building2, 
@@ -28,25 +34,42 @@ import {
   ChevronRight,
   Save,
   Lightbulb,
-  AlertTriangle
+  AlertTriangle,
+  Thermometer,
+  Clock
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface LeadDetailPanelProps {
   lead: LeadAdvanced;
 }
 
 export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
-  const { setSelectedLead, currentFunnel } = useCRM();
+  const { setSelectedLead, currentFunnel, updateLead } = useCRM();
   const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false);
+  const [isInteractionHistoryOpen, setIsInteractionHistoryOpen] = useState(false);
   const [negotiationData, setNegotiationData] = useState({
     valor: lead.valor,
     produtoInteresse: lead.produtoInteresse,
     dorAtual: lead.necessidadeOculta?.[0] || '',
-    oportunidadeIdentificada: lead.observacoes || ''
+    oportunidadeIdentificada: lead.observacoes || '',
+    temperaturaNegociacao: lead.temperaturaNegociacao || 'mediana' as NegotiationTemperature
   });
+
+  // Hooks for interactions and follow-ups
+  const { interactions, loadInteractions, refreshInteractions } = useLeadInteractions();
+  const { followUps, loadFollowUps, refreshFollowUps } = useFollowUps();
+
+  // Load data when lead changes
+  useEffect(() => {
+    if (lead.id) {
+      loadInteractions(lead.id);
+      loadFollowUps(lead.id);
+    }
+  }, [lead.id, loadInteractions, loadFollowUps]);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -92,9 +115,26 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
     }));
   };
 
-  const handleSaveNegotiation = () => {
-    // Aqui você pode implementar a lógica para salvar as informações
-    console.log('Salvando dados da negociação:', negotiationData);
+  const handleSaveNegotiation = async () => {
+    try {
+      await updateLead(lead.id, {
+        valor: negotiationData.valor,
+        produtoInteresse: negotiationData.produtoInteresse,
+        necessidadeOculta: [negotiationData.dorAtual],
+        observacoes: negotiationData.oportunidadeIdentificada,
+        temperaturaNegociacao: negotiationData.temperaturaNegociacao
+      });
+      
+      toast.success("Dados da negociação salvos com sucesso!");
+    } catch (error) {
+      console.error('Error saving negotiation data:', error);
+      toast.error("Erro ao salvar dados da negociação");
+    }
+  };
+
+  const handleRefreshData = () => {
+    refreshInteractions();
+    refreshFollowUps();
   };
 
   return (
@@ -155,6 +195,14 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                       {currentStage?.title || 'Não definido'}
                     </Badge>
                   </div>
+                </div>
+
+                {/* Temperatura da Negociação */}
+                <div>
+                  <TemperatureSelector
+                    value={negotiationData.temperaturaNegociacao}
+                    onChange={(temp) => handleNegotiationUpdate('temperaturaNegociacao', temp)}
+                  />
                 </div>
 
                 {/* Valor */}
@@ -223,15 +271,93 @@ export const LeadDetailPanel = ({ lead }: LeadDetailPanelProps) => {
                     <Save className="h-4 w-4 mr-2" />
                     Salvar Alterações
                   </Button>
-                  <Button size="sm" variant="outline">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Contatar
-                  </Button>
+                  <InteractionForm 
+                    leadId={lead.id} 
+                    leadName={lead.nome}
+                    onSuccess={handleRefreshData}
+                  />
+                  <ScheduleFollowUpDialog
+                    leadId={lead.id}
+                    leadName={lead.nome}
+                    onSuccess={handleRefreshData}
+                  />
                 </div>
               </div>
             </div>
 
             <Separator />
+
+            {/* Histórico de Interações */}
+            <Collapsible open={isInteractionHistoryOpen} onOpenChange={setIsInteractionHistoryOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">Histórico de Interações</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {interactions.length}
+                    </Badge>
+                  </div>
+                  {isInteractionHistoryOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="mt-4">
+                <InteractionHistory interactions={interactions} />
+              </CollapsibleContent>
+            </Collapsible>
+
+            <Separator />
+
+            {/* Follow-ups Agendados */}
+            {followUps.length > 0 && (
+              <>
+                <div>
+                  <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Follow-ups Agendados
+                    <Badge variant="secondary">{followUps.length}</Badge>
+                  </h5>
+                  <div className="space-y-2">
+                    {followUps.slice(0, 3).map((followUp) => (
+                      <div key={followUp.id} className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            {followUp.tipo}
+                          </Badge>
+                          <Badge 
+                            variant={followUp.status === 'concluido' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {followUp.status}
+                          </Badge>
+                        </div>
+                        <div className="text-sm">
+                          <p className="font-medium">
+                            {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", { 
+                              locale: ptBR 
+                            })}
+                          </p>
+                          {followUp.observacoes && (
+                            <p className="text-muted-foreground mt-1">{followUp.observacoes}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {followUps.length > 3 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        +{followUps.length - 3} follow-ups adicionais
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Detalhes do Cadastro - Recolhível */}
             <Collapsible open={isContactDetailsOpen} onOpenChange={setIsContactDetailsOpen}>

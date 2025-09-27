@@ -1,5 +1,19 @@
 export type LeadStatus = 'novo' | 'qualificado' | 'proposta' | 'negociacao' | 'fechado' | 'perdido';
 
+export type NegotiationTemperature = 'muito_fraca' | 'fraca' | 'mediana' | 'forte' | 'muito_forte';
+
+export type InteractionType = 
+  | 'ligacao'
+  | 'whatsapp' 
+  | 'email_enviado'
+  | 'email_recebido'
+  | 'reuniao'
+  | 'proposta_enviada'
+  | 'negociacao'
+  | 'fechamento'
+  | 'contato_inicial'
+  | 'follow_up';
+
 export interface Lead {
   id: string;
   nome: string;
@@ -63,6 +77,9 @@ export interface LeadAdvanced {
   // Vendedor responsável
   vendedorId: string;
   vendedorNome: string;
+  
+  // Temperatura da negociação
+  temperaturaNegociacao?: NegotiationTemperature;
 }
 
 export interface SalesMetrics {
@@ -96,6 +113,26 @@ export interface FunnelStep {
   conversao: number;
   tempoMedio: number;
   receita: number;
+}
+
+export interface LeadInteraction {
+  id: string;
+  leadId: string;
+  userId: string;
+  interactionType: InteractionType;
+  description: string;
+  interactionDate: string;
+  createdByUser?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface CreateInteractionData {
+  leadId: string;
+  interactionType: InteractionType;
+  description: string;
+  interactionDate?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface RecomendacaoIA {
