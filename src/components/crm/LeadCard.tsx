@@ -3,10 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LeadAdvanced } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
-import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer } from "lucide-react";
+import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NegotiationTemperature } from "@/types/crm";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 interface LeadCardProps {
   lead: LeadAdvanced;
 }
@@ -16,6 +19,35 @@ export const LeadCard = ({
   const {
     setSelectedLead
   } = useCRM();
+  const { user } = useAuth();
+  const [hasPendingFollowUp, setHasPendingFollowUp] = useState(false);
+
+  useEffect(() => {
+    const checkPendingFollowUps = async () => {
+      if (!user || !lead.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('follow_ups')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('lead_id', lead.id)
+          .eq('status', 'pendente')
+          .limit(1);
+
+        if (error) {
+          console.error('Error checking follow-ups:', error);
+          return;
+        }
+
+        setHasPendingFollowUp((data || []).length > 0);
+      } catch (error) {
+        console.error('Error checking follow-ups:', error);
+      }
+    };
+
+    checkPendingFollowUps();
+  }, [user, lead.id]);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'quente':
@@ -76,6 +108,12 @@ export const LeadCard = ({
           </div>
         </div>
         
+        {/* Follow-up Indicator */}
+        {hasPendingFollowUp && (
+          <div className="flex items-center" title="Follow-up pendente">
+            <Bell className="h-4 w-4 text-orange-500 animate-pulse" />
+          </div>
+        )}
       </div>
 
       {/* Contact Info */}
