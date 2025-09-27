@@ -1,139 +1,45 @@
-import React, { createContext, useContext, useReducer, ReactNode, useCallback } from 'react';
-import { CRMState, CustomFunnel, FunnelStage, LeadAdvanced, CRMFilters, CRMMetrics } from '@/types/crm';
-import { generateId } from '@/hooks/useUuid';
-import { useToast } from '@/hooks/use-toast';
+import React, { createContext, useContext, useReducer, useCallback, ReactNode, useEffect } from 'react';
+import { FunnelStage, CustomFunnel, CRMState, CRMFilters, CRMMetrics, LeadAdvanced } from '@/types/crm';
+import { useFunnels } from '@/hooks/useFunnels';
+import { useLeads } from '@/hooks/useLeads';
+import { useFunnelLeads } from '@/hooks/useFunnelLeads';
 
-// Initial sample data
-const sampleLeads: LeadAdvanced[] = [
-  {
-    id: generateId(),
-    nome: 'João Silva',
-    empresa: 'TechCorp',
-    email: 'joao@techcorp.com',
-    telefone: '(11) 9999-9999',
-    fonte: 'Website',
-    status: 'quente',
-    etapaFunil: 'descoberta',
-    valor: 50000,
-    probabilidade: 75,
-    dataContato: '2024-01-15',
-    observacoes: 'Interessado em consultoria estratégica',
-    travaEmocional: 'inseguranca_financeira',
-    tipoDiscurso: 'tecnico',
-    necessidadeOculta: ['Aumentar vendas', 'Reduzir custos'],
-    anuncioOrigem: 'Google Ads - Consultoria',
-    produtoInteresse: 'Consultoria Estratégica',
-    ofertaAtrativa: 'Diagnóstico gratuito',
-    gatilhosFuncionais: ['ROI garantido', 'Resultados em 30 dias'],
-    pontuacao: 85,
-    ultimaInteracao: '2024-01-20',
-    vendedorId: 'vendedor-1',
-    vendedorNome: 'Maria Santos'
-  },
-  {
-    id: generateId(),
-    nome: 'Ana Costa',
-    empresa: 'StartupInc',
-    email: 'ana@startup.com',
-    telefone: '(11) 8888-8888',
-    fonte: 'LinkedIn',
-    status: 'morno',
-    etapaFunil: 'consideracao',
-    valor: 25000,
-    probabilidade: 50,
-    dataContato: '2024-01-10',
-    observacoes: 'Precisa de aprovação da diretoria',
-    travaEmocional: 'falta_apoio',
-    tipoDiscurso: 'emocional',
-    necessidadeOculta: ['Escalar negócio'],
-    produtoInteresse: 'Mentoria Executiva',
-    ofertaAtrativa: 'Plano de crescimento personalizado',
-    gatilhosFuncionais: ['Cases de sucesso', 'Garantia de resultado'],
-    pontuacao: 65,
-    ultimaInteracao: '2024-01-18',
-    vendedorId: 'vendedor-2',
-    vendedorNome: 'Carlos Lima'
-  }
-];
+// Initial state - now using real data from hooks
+const initialFilters: CRMFilters = {
+  search: '',
+  dateRange: null,
+  leadSource: [],
+  responsible: [],
+  funnel: null
+};
 
-const initialStages: FunnelStage[] = [
-  {
-    id: 'descoberta',
-    title: 'Descoberta',
-    color: 'hsl(220 70% 50%)',
-    position: 0,
-    leads: [sampleLeads[0]]
-  },
-  {
-    id: 'qualificacao',
-    title: 'Qualificação',
-    color: 'hsl(45 100% 50%)',
-    position: 1,
-    leads: []
-  },
-  {
-    id: 'proposta',
-    title: 'Proposta',
-    color: 'hsl(30 100% 50%)',
-    position: 2,
-    leads: [sampleLeads[1]]
-  },
-  {
-    id: 'fechamento',
-    title: 'Fechamento',
-    color: 'hsl(120 60% 50%)',
-    position: 3,
-    leads: []
-  }
-];
-
-const defaultFunnel: CustomFunnel = {
-  id: generateId(),
-  name: 'Funil de Vendas Principal',
-  description: 'Processo principal de qualificação e conversão de leads',
-  stages: initialStages,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  isActive: true
+const initialMetrics: CRMMetrics = {
+  totalLeads: 0,
+  conversionRate: 0,
+  averageCycleTime: 0,
+  predictedRevenue: 0
 };
 
 const initialState: CRMState = {
-  currentFunnel: defaultFunnel,
-  funnels: [defaultFunnel],
-  filters: {
-    search: '',
-    dateRange: null,
-    leadSource: [],
-    responsible: [],
-    funnel: null
-  },
-  metrics: {
-    totalLeads: 2,
-    conversionRate: 25,
-    averageCycleTime: 30,
-    predictedRevenue: 75000
-  },
+  currentFunnel: null,
+  funnels: [],
+  leads: [], // Add leads array to initial state
+  filters: initialFilters,
+  metrics: initialMetrics,
   selectedLead: null,
-  isLoading: false,
+  isLoading: true,
   draggedLead: null
 };
 
 // Actions
 type CRMAction =
-  | { type: 'SET_CURRENT_FUNNEL'; payload: CustomFunnel }
+  | { type: 'SET_CURRENT_FUNNEL'; payload: CustomFunnel | null }
+  | { type: 'SET_FUNNELS'; payload: CustomFunnel[] }
   | { type: 'SET_FILTERS'; payload: Partial<CRMFilters> }
   | { type: 'SET_SELECTED_LEAD'; payload: LeadAdvanced | null }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_DRAGGED_LEAD'; payload: LeadAdvanced | null }
-  | { type: 'CREATE_FUNNEL'; payload: { name: string; description?: string; stages: Omit<FunnelStage, 'id' | 'leads'>[] } }
-  | { type: 'UPDATE_FUNNEL'; payload: { funnelId: string; updates: Partial<CustomFunnel> } }
-  | { type: 'DELETE_FUNNEL'; payload: string }
-  | { type: 'ADD_STAGE'; payload: { funnelId: string; stage: Omit<FunnelStage, 'id' | 'leads'> } }
-  | { type: 'UPDATE_STAGE'; payload: { funnelId: string; stageId: string; updates: Partial<FunnelStage> } }
-  | { type: 'DELETE_STAGE'; payload: { funnelId: string; stageId: string } }
-  | { type: 'MOVE_LEAD'; payload: { leadId: string; fromStageId: string; toStageId: string; funnelId: string } }
-  | { type: 'UPDATE_LEAD'; payload: LeadAdvanced }
-  | { type: 'DELETE_LEAD'; payload: string }
+  | { type: 'SET_LEADS'; payload: LeadAdvanced[] }
   | { type: 'UPDATE_METRICS'; payload: Partial<CRMMetrics> };
 
 // Reducer
@@ -141,6 +47,9 @@ const crmReducer = (state: CRMState, action: CRMAction): CRMState => {
   switch (action.type) {
     case 'SET_CURRENT_FUNNEL':
       return { ...state, currentFunnel: action.payload };
+
+    case 'SET_FUNNELS':
+      return { ...state, funnels: action.payload };
 
     case 'SET_FILTERS':
       return { ...state, filters: { ...state.filters, ...action.payload } };
@@ -154,130 +63,47 @@ const crmReducer = (state: CRMState, action: CRMAction): CRMState => {
     case 'SET_DRAGGED_LEAD':
       return { ...state, draggedLead: action.payload };
 
-    case 'CREATE_FUNNEL': {
-      const newFunnel: CustomFunnel = {
-        id: generateId(),
-        name: action.payload.name,
-        description: action.payload.description,
-        stages: action.payload.stages.map((stage, index) => ({
-          ...stage,
-          id: generateId(),
-          position: index,
-          leads: []
-        })),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isActive: true
-      };
-
-      return {
-        ...state,
-        funnels: [...state.funnels, newFunnel],
-        currentFunnel: newFunnel
-      };
-    }
-
-    case 'UPDATE_FUNNEL':
-      return {
-        ...state,
-        funnels: state.funnels.map(funnel =>
-          funnel.id === action.payload.funnelId
-            ? { ...funnel, ...action.payload.updates, updatedAt: new Date().toISOString() }
-            : funnel
-        ),
-        currentFunnel: state.currentFunnel?.id === action.payload.funnelId
-          ? { ...state.currentFunnel, ...action.payload.updates, updatedAt: new Date().toISOString() }
-          : state.currentFunnel
-      };
-
-    case 'DELETE_FUNNEL':
-      const updatedFunnels = state.funnels.filter(f => f.id !== action.payload);
-      return {
-        ...state,
-        funnels: updatedFunnels,
-        currentFunnel: state.currentFunnel?.id === action.payload 
-          ? (updatedFunnels[0] || null)
-          : state.currentFunnel
-      };
-
-    case 'MOVE_LEAD': {
-      const { leadId, fromStageId, toStageId, funnelId } = action.payload;
-      
-      return {
-        ...state,
-        funnels: state.funnels.map(funnel => {
-          if (funnel.id !== funnelId) return funnel;
-          
-          const lead = funnel.stages
-            .find(stage => stage.id === fromStageId)
-            ?.leads.find(l => l.id === leadId);
-          
-          if (!lead) return funnel;
-          
-          return {
-            ...funnel,
-            stages: funnel.stages.map(stage => {
-              if (stage.id === fromStageId) {
-                return {
-                  ...stage,
-                  leads: stage.leads.filter(l => l.id !== leadId)
-                };
-              }
-              if (stage.id === toStageId) {
-                return {
-                  ...stage,
-                  leads: [...stage.leads, { ...lead, etapaFunil: stage.id as any }]
-                };
-              }
-              return stage;
-            })
-          };
-        }),
-        currentFunnel: state.currentFunnel?.id === funnelId
-          ? state.funnels.find(f => f.id === funnelId) || state.currentFunnel
-          : state.currentFunnel
-      };
-    }
-
-    case 'UPDATE_LEAD':
-      return {
-        ...state,
-        funnels: state.funnels.map(funnel => ({
-          ...funnel,
-          stages: funnel.stages.map(stage => ({
-            ...stage,
-            leads: stage.leads.map(lead =>
-              lead.id === action.payload.id ? action.payload : lead
-            )
-          }))
-        })),
-        selectedLead: state.selectedLead?.id === action.payload.id 
-          ? action.payload 
-          : state.selectedLead
-      };
+    case 'SET_LEADS':
+      return { ...state, leads: action.payload };
 
     case 'UPDATE_METRICS':
-      return {
-        ...state,
-        metrics: { ...state.metrics, ...action.payload }
-      };
+      return { ...state, metrics: { ...state.metrics, ...action.payload } };
 
     default:
       return state;
   }
 };
 
-// Context
 interface CRMContextType {
-  state: CRMState;
-  setCurrentFunnel: (funnel: CustomFunnel) => void;
-  setFilters: (filters: Partial<CRMFilters>) => void;
+  // State properties (for backward compatibility)
+  currentFunnel: CustomFunnel | null;
+  funnels: CustomFunnel[];
+  filters: CRMFilters;
+  metrics: CRMMetrics;
+  selectedLead: LeadAdvanced | null;
+  isLoading: boolean;
+  draggedLead: LeadAdvanced | null;
+  leads: LeadAdvanced[];
+  
+  // Actions
+  setCurrentFunnel: (funnel: CustomFunnel | null) => void;
+  createFunnel: (funnel: Omit<CustomFunnel, 'id' | 'createdAt'>) => void;
+  updateFunnel: (id: string, updates: Partial<CustomFunnel>) => void;
+  deleteFunnel: (id: string) => void;
+  setLeads: (leads: LeadAdvanced[]) => void;
+  addLead: (lead: Omit<LeadAdvanced, 'id'>) => void;
+  updateLead: (id: string, updates: Partial<LeadAdvanced>) => void;
+  deleteLead: (id: string) => void;
+  moveLead: (leadId: string, newStageId: string) => void;
   setSelectedLead: (lead: LeadAdvanced | null) => void;
-  createFunnel: (data: { name: string; description?: string; stages: Omit<FunnelStage, 'id' | 'leads'>[] }) => void;
-  updateFunnel: (funnelId: string, updates: Partial<CustomFunnel>) => void;
-  deleteFunnel: (funnelId: string) => void;
-  moveLead: (leadId: string, fromStageId: string, toStageId: string) => void;
-  updateLead: (lead: LeadAdvanced) => void;
+  setFilters: (filters: Partial<CRMFilters>) => void;
+  updateMetrics: (metrics: Partial<CRMMetrics>) => void;
+  setLoading: (loading: boolean) => void;
+  
+  // Real data hooks integration
+  funnelHooks: ReturnType<typeof useFunnels>;
+  leadHooks: ReturnType<typeof useLeads>;
+  funnelLeadHooks: ReturnType<typeof useFunnelLeads>;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
@@ -290,74 +116,245 @@ export const useCRM = (): CRMContextType => {
   return context;
 };
 
-interface CRMProviderProps {
-  children: ReactNode;
-}
-
-export const CRMProvider: React.FC<CRMProviderProps> = ({ children }) => {
+export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(crmReducer, initialState);
-  const { toast } = useToast();
+  
+  // Real data hooks
+  const funnelHooks = useFunnels();
+  const leadHooks = useLeads();
+  const funnelLeadHooks = useFunnelLeads(state.currentFunnel?.id);
 
-  const setCurrentFunnel = useCallback((funnel: CustomFunnel) => {
+  // Sync real data with state
+  useEffect(() => {
+    if (funnelHooks.funnels.length > 0) {
+      // Convert Supabase funnel format to CRM format
+      const convertedFunnels: CustomFunnel[] = funnelHooks.funnels.map(funnel => ({
+        id: funnel.id,
+        name: funnel.name,
+        description: funnel.description || '',
+        isActive: funnel.is_active || true,
+        createdAt: funnel.created_at,
+        updatedAt: funnel.updated_at,
+        stages: funnel.stages?.map(stage => ({
+          id: stage.id,
+          title: stage.title,
+          color: stage.color,
+          position: stage.position,
+          leads: [] // Leads are loaded separately via funnelLeadHooks
+        })) || []
+      }));
+
+      dispatch({ type: 'SET_FUNNELS', payload: convertedFunnels });
+      
+      // Set current funnel if none selected
+      if (!state.currentFunnel && convertedFunnels.length > 0) {
+        dispatch({ type: 'SET_CURRENT_FUNNEL', payload: convertedFunnels[0] });
+      }
+    }
+    
+    // Set loading state based on hooks
+    dispatch({ type: 'SET_LOADING', payload: funnelHooks.isLoading });
+  }, [funnelHooks.funnels, funnelHooks.isLoading, state.currentFunnel]);
+
+  useEffect(() => {
+    if (leadHooks.leads.length >= 0) {
+      // Convert leads to LeadAdvanced format
+      const convertedLeads: LeadAdvanced[] = leadHooks.leads.map(lead => ({
+        id: lead.id,
+        nome: lead.nome,
+        empresa: lead.empresa,
+        email: lead.email,
+        telefone: lead.telefone || '',
+        fonte: lead.fonte,
+        status: 'morno', // Default status for CRM context
+        etapaFunil: lead.etapa_funil || 'descoberta',
+        valor: lead.valor || 0,
+        probabilidade: lead.probabilidade || 0,
+        dataContato: lead.data_contato || new Date().toISOString(),
+        observacoes: lead.observacoes,
+        travaEmocional: lead.trava_emocional || 'inseguranca_financeira',
+        tipoDiscurso: lead.tipo_discurso || 'tecnico',
+        necessidadeOculta: lead.necessidade_oculta || [],
+        anuncioOrigem: lead.anuncio_origem || '',
+        produtoInteresse: lead.produto_interesse || '',
+        ofertaAtrativa: lead.oferta_atrativa || '',
+        gatilhosFuncionais: lead.gatilhos_funcionais || [],
+        pontuacao: lead.pontuacao || 0,
+        ultimaInteracao: lead.ultima_interacao ? new Date(lead.ultima_interacao).toISOString() : new Date().toISOString(),
+        vendedorId: lead.vendedor_id || '',
+        vendedorNome: lead.vendedor_nome || ''
+      }));
+
+      dispatch({ type: 'SET_LEADS', payload: convertedLeads });
+      
+      // Update metrics
+      const metrics: CRMMetrics = {
+        totalLeads: convertedLeads.length,
+        conversionRate: convertedLeads.length > 0 ? (convertedLeads.filter(l => l.status === 'quente').length / convertedLeads.length) * 100 : 0,
+        averageCycleTime: 30, // Default value
+        predictedRevenue: convertedLeads.reduce((sum, lead) => sum + (lead.valor * (lead.probabilidade / 100)), 0)
+      };
+      
+      dispatch({ type: 'UPDATE_METRICS', payload: metrics });
+    }
+  }, [leadHooks.leads]);
+
+  // Funnel actions
+  const setCurrentFunnel = useCallback((funnel: CustomFunnel | null) => {
     dispatch({ type: 'SET_CURRENT_FUNNEL', payload: funnel });
   }, []);
 
-  const setFilters = useCallback((filters: Partial<CRMFilters>) => {
-    dispatch({ type: 'SET_FILTERS', payload: filters });
+  const createFunnel = useCallback(async (funnelData: Omit<CustomFunnel, 'id' | 'createdAt'>) => {
+    try {
+      await funnelHooks.createFunnel({
+        name: funnelData.name,
+        description: funnelData.description,
+        stages: funnelData.stages.map(stage => ({
+          title: stage.title,
+          color: stage.color,
+          position: stage.position
+        }))
+      });
+    } catch (error) {
+      console.error('Error creating funnel:', error);
+    }
+  }, [funnelHooks]);
+
+  const updateFunnel = useCallback(async (id: string, updates: Partial<CustomFunnel>) => {
+    try {
+      await funnelHooks.updateFunnel(id, {
+        name: updates.name,
+        description: updates.description,
+        is_active: updates.isActive
+      });
+    } catch (error) {
+      console.error('Error updating funnel:', error);
+    }
+  }, [funnelHooks]);
+
+  const deleteFunnel = useCallback(async (id: string) => {
+    try {
+      await funnelHooks.deleteFunnel(id);
+    } catch (error) {
+      console.error('Error deleting funnel:', error);
+    }
+  }, [funnelHooks]);
+
+  // Lead actions
+  const setLeads = useCallback((leads: LeadAdvanced[]) => {
+    dispatch({ type: 'SET_LEADS', payload: leads });
   }, []);
+
+  const addLead = useCallback(async (leadData: Omit<LeadAdvanced, 'id'>) => {
+    try {
+      await leadHooks.addLead({
+        nome: leadData.nome,
+        empresa: leadData.empresa,
+        email: leadData.email,
+        telefone: leadData.telefone,
+        fonte: leadData.fonte,
+        produto_interesse: leadData.produtoInteresse,
+        observacoes: leadData.observacoes,
+        valor: leadData.valor,
+        probabilidade: leadData.probabilidade,
+        trava_emocional: leadData.travaEmocional,
+        tipo_discurso: leadData.tipoDiscurso,
+        necessidade_oculta: leadData.necessidadeOculta,
+        anuncio_origem: leadData.anuncioOrigem,
+        oferta_atrativa: leadData.ofertaAtrativa,
+        gatilhos_funcionais: leadData.gatilhosFuncionais,
+        pontuacao: leadData.pontuacao,
+        vendedor_id: leadData.vendedorId,
+        vendedor_nome: leadData.vendedorNome,
+        funnel_id: state.currentFunnel?.id,
+        funnel_stage_id: stageId // Pass the stage ID for funnel association
+      });
+    } catch (error) {
+      console.error('Error adding lead:', error);
+    }
+  }, [leadHooks, state.currentFunnel]);
+
+  const updateLead = useCallback(async (id: string, updates: Partial<LeadAdvanced>) => {
+    try {
+      const updateData: any = {};
+      
+      // Map LeadAdvanced fields to database fields
+      if (updates.nome) updateData.nome = updates.nome;
+      if (updates.empresa) updateData.empresa = updates.empresa;
+      if (updates.email) updateData.email = updates.email;
+      if (updates.telefone) updateData.telefone = updates.telefone;
+      if (updates.fonte) updateData.fonte = updates.fonte;
+      if (updates.valor !== undefined) updateData.valor = updates.valor;
+      if (updates.probabilidade !== undefined) updateData.probabilidade = updates.probabilidade;
+      if (updates.observacoes) updateData.observacoes = updates.observacoes;
+      if (updates.travaEmocional) updateData.trava_emocional = updates.travaEmocional;
+      if (updates.tipoDiscurso) updateData.tipo_discurso = updates.tipoDiscurso;
+      if (updates.necessidadeOculta) updateData.necessidade_oculta = updates.necessidadeOculta;
+      if (updates.anuncioOrigem) updateData.anuncio_origem = updates.anuncioOrigem;
+      if (updates.produtoInteresse) updateData.produto_interesse = updates.produtoInteresse;
+      if (updates.ofertaAtrativa) updateData.oferta_atrativa = updates.ofertaAtrativa;
+      if (updates.gatilhosFuncionais) updateData.gatilhos_funcionais = updates.gatilhosFuncionais;
+      if (updates.pontuacao !== undefined) updateData.pontuacao = updates.pontuacao;
+      if (updates.vendedorId) updateData.vendedor_id = updates.vendedorId;
+      if (updates.vendedorNome) updateData.vendedor_nome = updates.vendedorNome;
+
+      await leadHooks.updateLead(id, updateData);
+    } catch (error) {
+      console.error('Error updating lead:', error);
+    }
+  }, [leadHooks]);
+
+  const deleteLead = useCallback(async (id: string) => {
+    try {
+      await leadHooks.deleteLead(id);
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+    }
+  }, [leadHooks]);
+
+  const moveLead = useCallback(async (leadId: string, newStageId: string) => {
+    if (state.currentFunnel) {
+      await funnelLeadHooks.moveLeadToStage(leadId, newStageId, state.currentFunnel.id);
+    }
+  }, [funnelLeadHooks, state.currentFunnel]);
 
   const setSelectedLead = useCallback((lead: LeadAdvanced | null) => {
     dispatch({ type: 'SET_SELECTED_LEAD', payload: lead });
   }, []);
 
-  const createFunnel = useCallback((data: { name: string; description?: string; stages: Omit<FunnelStage, 'id' | 'leads'>[] }) => {
-    dispatch({ type: 'CREATE_FUNNEL', payload: data });
-    toast({
-      title: "Funil criado",
-      description: `O funil "${data.name}" foi criado com sucesso.`,
-    });
-  }, [toast]);
-
-  const updateFunnel = useCallback((funnelId: string, updates: Partial<CustomFunnel>) => {
-    dispatch({ type: 'UPDATE_FUNNEL', payload: { funnelId, updates } });
+  // Filter actions
+  const setFilters = useCallback((filters: Partial<CRMFilters>) => {
+    dispatch({ type: 'SET_FILTERS', payload: filters });
   }, []);
 
-  const deleteFunnel = useCallback((funnelId: string) => {
-    dispatch({ type: 'DELETE_FUNNEL', payload: funnelId });
-    toast({
-      title: "Funil excluído",
-      description: "O funil foi excluído com sucesso.",
-    });
-  }, [toast]);
+  // Metrics actions
+  const updateMetrics = useCallback((metrics: Partial<CRMMetrics>) => {
+    dispatch({ type: 'UPDATE_METRICS', payload: metrics });
+  }, []);
 
-  const moveLead = useCallback((leadId: string, fromStageId: string, toStageId: string) => {
-    if (!state.currentFunnel) return;
-    
-    dispatch({ 
-      type: 'MOVE_LEAD', 
-      payload: { 
-        leadId, 
-        fromStageId, 
-        toStageId, 
-        funnelId: state.currentFunnel.id 
-      } 
-    });
-  }, [state.currentFunnel]);
-
-  const updateLead = useCallback((lead: LeadAdvanced) => {
-    dispatch({ type: 'UPDATE_LEAD', payload: lead });
+  // Loading
+  const setLoading = useCallback((loading: boolean) => {
+    dispatch({ type: 'SET_LOADING', payload: loading });
   }, []);
 
   const value: CRMContextType = {
-    state,
+    ...state,
     setCurrentFunnel,
-    setFilters,
-    setSelectedLead,
     createFunnel,
     updateFunnel,
     deleteFunnel,
+    setLeads,
+    addLead,
+    updateLead,
+    deleteLead,
     moveLead,
-    updateLead
+    setSelectedLead,
+    setFilters,
+    updateMetrics,
+    setLoading,
+    funnelHooks,
+    leadHooks,
+    funnelLeadHooks,
   };
 
   return (

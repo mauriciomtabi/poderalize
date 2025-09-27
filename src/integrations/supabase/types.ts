@@ -769,6 +769,8 @@ export type Database = {
           faturamento_atual: number | null
           faturamento_desejado: number | null
           fonte: string
+          funnel_id: string | null
+          funnel_stage_id: string | null
           gatilhos_funcionais: string[] | null
           id: string
           indicador_potencial: string | null
@@ -815,6 +817,8 @@ export type Database = {
           faturamento_atual?: number | null
           faturamento_desejado?: number | null
           fonte: string
+          funnel_id?: string | null
+          funnel_stage_id?: string | null
           gatilhos_funcionais?: string[] | null
           id?: string
           indicador_potencial?: string | null
@@ -861,6 +865,8 @@ export type Database = {
           faturamento_atual?: number | null
           faturamento_desejado?: number | null
           fonte?: string
+          funnel_id?: string | null
+          funnel_stage_id?: string | null
           gatilhos_funcionais?: string[] | null
           id?: string
           indicador_potencial?: string | null
@@ -893,7 +899,22 @@ export type Database = {
           vendedor_id?: string | null
           vendedor_nome?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_funnel_stage_id_fkey"
+            columns: ["funnel_stage_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       metas: {
         Row: {

@@ -10,7 +10,6 @@ import { Search, Plus, UserPlus } from "lucide-react";
 import { useCRM } from "@/contexts/CRMContext";
 import { LeadForm } from "./LeadForm";
 import { Lead, LeadAdvanced } from "@/types/crm";
-import { generateId } from "@/hooks/useUuid";
 
 interface AddLeadToFunnelDialogProps {
   open: boolean;
@@ -18,55 +17,29 @@ interface AddLeadToFunnelDialogProps {
   stageId: string;
 }
 
-// Mock data for existing leads (in a real app, this would come from a service)
-const existingLeads: Lead[] = [
-  {
-    id: "lead-1",
-    nome: "Carlos Mendes",
-    empresa: "Tech Solutions",
-    email: "carlos@techsolutions.com",
-    telefone: "11 99999-1111",
-    fonte: "Website",
-    status: "novo",
-    valor: 50000,
-    probabilidade: 25,
-    dataContato: "2024-09-20",
-    observacoes: "Interessado em rebranding completo"
-  },
-  {
-    id: "lead-2",
-    nome: "Fernanda Lima",
-    empresa: "StartupXYZ",
-    email: "fernanda@startupxyz.com",
-    telefone: "11 88888-2222",
-    fonte: "LinkedIn",
-    status: "qualificado",
-    valor: 75000,
-    probabilidade: 60,
-    dataContato: "2024-09-18",
-    observacoes: "Precisa de estratégia digital completa"
-  },
-  {
-    id: "lead-3",
-    nome: "Roberto Santos",
-    empresa: "Indústria ABC",
-    email: "roberto@industriaabc.com",
-    telefone: "11 77777-3333",
-    fonte: "Indicação",
-    status: "proposta",
-    valor: 120000,
-    probabilidade: 80,
-    dataContato: "2024-09-15",
-    observacoes: "Aguardando aprovação da diretoria"
-  }
-];
-
 export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadToFunnelDialogProps) => {
-  const { state, updateFunnel } = useCRM();
+  const { addLead, currentFunnel, funnelLeadHooks, leadHooks } = useCRM();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTab, setSelectedTab] = useState("existing");
+  const [unassignedLeads, setUnassignedLeads] = useState<Lead[]>([]);
   const newScrollRef = useRef<HTMLDivElement | null>(null);
   const existingScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Load unassigned leads when dialog opens
+  useEffect(() => {
+    if (open) {
+      const loadUnassignedLeads = async () => {
+        try {
+          const leads = await funnelLeadHooks.getUnassignedLeads();
+          setUnassignedLeads(leads);
+        } catch (error) {
+          console.error('Error loading unassigned leads:', error);
+          setUnassignedLeads([]);
+        }
+      };
+      loadUnassignedLeads();
+    }
+  }, [open, funnelLeadHooks]);
 
   useEffect(() => {
     if (open) {
@@ -84,7 +57,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
     });
   }, [selectedTab]);
 
-  const filteredExistingLeads = existingLeads.filter(lead =>
+  const filteredExistingLeads = unassignedLeads.filter(lead =>
     lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -94,85 +67,34 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const convertLeadToAdvanced = (lead: Lead): LeadAdvanced => {
-    return {
-      ...lead,
-      status: 'morno' as const,
-      etapaFunil: stageId as any,
-      travaEmocional: 'inseguranca_financeira',
-      tipoDiscurso: 'tecnico',
-      necessidadeOculta: ['Aumentar vendas'],
-      produtoInteresse: 'Consultoria',
-      ofertaAtrativa: 'Análise gratuita',
-      gatilhosFuncionais: ['ROI garantido'],
-      pontuacao: 70,
-      ultimaInteracao: new Date().toISOString().split('T')[0],
-      vendedorId: 'vendedor-1',
-      vendedorNome: 'Vendedor Principal'
-    };
+  const handleAddExistingLead = async (lead: Lead) => {
+    if (!currentFunnel) return;
+
+    try {
+      const success = await funnelLeadHooks.addLeadToFunnel(lead.id, currentFunnel.id, stageId);
+      if (success) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error('Error adding existing lead to funnel:', error);
+    }
   };
 
-  const handleAddExistingLead = (lead: Lead) => {
-    if (!state.currentFunnel) return;
+  const handleCreateNewLead = async (leadData: Partial<LeadAdvanced>) => {
+    if (!currentFunnel) return;
 
-    const advancedLead = convertLeadToAdvanced(lead);
-    
-    // Find the target stage and add the lead
-    const updatedStages = state.currentFunnel.stages.map(stage => {
-      if (stage.id === stageId) {
-        return {
-          ...stage,
-          leads: [...stage.leads, advancedLead]
-        };
-      }
-      return stage;
-    });
+    try {
+      // Create the lead with funnel association
+      const newLeadData = {
+        ...leadData,
+        etapaFunil: stageId // This will be used as funnel_stage_id in the addLead function
+      } as Omit<LeadAdvanced, 'id'>;
 
-    updateFunnel(state.currentFunnel.id, { stages: updatedStages });
-    onOpenChange(false);
-  };
-
-  const handleCreateNewLead = (leadData: Partial<LeadAdvanced>) => {
-    if (!state.currentFunnel) return;
-
-    const newLead: LeadAdvanced = {
-      id: generateId(),
-      nome: leadData.nome || '',
-      empresa: leadData.empresa || '',
-      email: leadData.email || '',
-      telefone: leadData.telefone || '',
-      fonte: leadData.fonte || 'CRM',
-      status: 'morno',
-      etapaFunil: stageId as any,
-      valor: leadData.valor || 0,
-      probabilidade: 50,
-      dataContato: new Date().toISOString().split('T')[0],
-      observacoes: leadData.observacoes,
-      travaEmocional: leadData.travaEmocional || 'inseguranca_financeira',
-      tipoDiscurso: leadData.tipoDiscurso || 'tecnico',
-      necessidadeOculta: leadData.necessidadeOculta || ['Aumentar vendas'],
-      produtoInteresse: leadData.produtoInteresse || 'Consultoria',
-      ofertaAtrativa: leadData.ofertaAtrativa || 'Análise gratuita',
-      gatilhosFuncionais: leadData.gatilhosFuncionais || ['ROI garantido'],
-      pontuacao: 70,
-      ultimaInteracao: new Date().toISOString().split('T')[0],
-      vendedorId: 'vendedor-1',
-      vendedorNome: 'Vendedor Principal'
-    };
-
-    // Find the target stage and add the lead
-    const updatedStages = state.currentFunnel.stages.map(stage => {
-      if (stage.id === stageId) {
-        return {
-          ...stage,
-          leads: [...stage.leads, newLead]
-        };
-      }
-      return stage;
-    });
-
-    updateFunnel(state.currentFunnel.id, { stages: updatedStages });
-    onOpenChange(false);
+      await addLead(newLeadData);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating new lead:', error);
+    }
   };
 
   return (
@@ -214,7 +136,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             <div ref={existingScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2">
               {filteredExistingLeads.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead disponível"}
+                  {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead disponível fora de funis"}
                 </div>
               ) : (
                 filteredExistingLeads.map((lead) => (
@@ -238,7 +160,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
                       </div>
                       <div className="text-right">
                         <div className="font-medium text-green-600">
-                          R$ {lead.valor.toLocaleString()}
+                          R$ {(lead.valor || 0).toLocaleString()}
                         </div>
                         <Badge variant="outline" className="text-xs">
                           {lead.fonte}

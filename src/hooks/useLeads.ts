@@ -55,6 +55,10 @@ const leadSchema = z.object({
   // Vendedor responsável
   vendedor_id: z.string().optional(),
   vendedor_nome: z.string().trim().optional(),
+
+  // Funnel relationship (novos campos)
+  funnel_id: z.string().uuid().optional(),
+  funnel_stage_id: z.string().uuid().optional(),
 });
 
 export interface Lead {
