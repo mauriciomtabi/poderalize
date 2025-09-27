@@ -107,9 +107,9 @@ export const LeadDetailModal = ({
     refreshFollowUps();
   };
   return <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
-      <DialogContent className="max-w-5xl max-h-[90vh] p-0">
+      <DialogContent className="max-w-5xl h-[85vh] p-0 flex flex-col">
         {/* Header with Action Buttons */}
-        <DialogHeader className="p-6 pb-4">
+        <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <div className="flex items-start gap-4 mb-4">
             <Avatar className="h-14 w-14">
               <AvatarFallback className="text-lg font-medium">
@@ -143,147 +143,149 @@ export const LeadDetailModal = ({
         </DialogHeader>
 
         {/* Content with two-column layout */}
-        <ScrollArea className="flex-1 px-6 pb-6">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Left Column - Negotiation and Contact Info */}
-            <div className="space-y-6">
-              {/* Negotiation Status */}
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <h4 className="font-semibold text-foreground">Negociação</h4>
-                </div>
-                
-                <div className="space-y-4">
-                  {/* Temperature and Value */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <TemperatureSelector value={negotiationData.temperaturaNegociacao} onChange={temp => handleNegotiationUpdate('temperaturaNegociacao', temp)} />
-                    </div>
-                    <div>
-                      <Label htmlFor="valor" className="text-sm font-medium">Valor</Label>
-                      <div className="mt-1 relative">
-                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="valor" type="number" placeholder="0,00" value={negotiationData.valor} onChange={e => handleNegotiationUpdate('valor', parseFloat(e.target.value) || 0)} className="pl-10" />
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="px-6 pb-6">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column - Negotiation and Contact Info */}
+              <div className="space-y-6">
+                {/* Negotiation Status */}
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold text-foreground">Negociação</h4>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {/* Temperature and Value */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <TemperatureSelector value={negotiationData.temperaturaNegociacao} onChange={temp => handleNegotiationUpdate('temperaturaNegociacao', temp)} />
+                      </div>
+                      <div>
+                        <Label htmlFor="valor" className="text-sm font-medium">Valor</Label>
+                        <div className="mt-1 relative">
+                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input id="valor" type="number" placeholder="0,00" value={negotiationData.valor} onChange={e => handleNegotiationUpdate('valor', parseFloat(e.target.value) || 0)} className="pl-10" />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Produto de Interesse */}
-                  <div>
-                    <Label htmlFor="produto" className="text-sm font-medium">Produto de Interesse</Label>
-                    <Input id="produto" placeholder="Digite o produto de interesse..." value={negotiationData.produtoInteresse} onChange={e => handleNegotiationUpdate('produtoInteresse', e.target.value)} className="mt-1" />
-                  </div>
+                    {/* Produto de Interesse */}
+                    <div>
+                      <Label htmlFor="produto" className="text-sm font-medium">Produto de Interesse</Label>
+                      <Input id="produto" placeholder="Digite o produto de interesse..." value={negotiationData.produtoInteresse} onChange={e => handleNegotiationUpdate('produtoInteresse', e.target.value)} className="mt-1" />
+                    </div>
 
-                  {/* Dor Atual */}
-                  <div>
-                    <Label htmlFor="dor" className="text-sm font-medium flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      Dor Atual do Cliente
-                    </Label>
-                    <Textarea id="dor" placeholder="Descreva a principal dor ou problema do cliente..." value={negotiationData.dorAtual} onChange={e => handleNegotiationUpdate('dorAtual', e.target.value)} className="mt-1" rows={3} />
-                  </div>
+                    {/* Dor Atual */}
+                    <div>
+                      <Label htmlFor="dor" className="text-sm font-medium flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        Dor Atual do Cliente
+                      </Label>
+                      <Textarea id="dor" placeholder="Descreva a principal dor ou problema do cliente..." value={negotiationData.dorAtual} onChange={e => handleNegotiationUpdate('dorAtual', e.target.value)} className="mt-1" rows={3} />
+                    </div>
 
-                  {/* Oportunidade Identificada */}
-                  <div>
-                    <Label htmlFor="oportunidade" className="text-sm font-medium flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4" />
-                      Oportunidade Identificada
-                    </Label>
-                    <Textarea id="oportunidade" placeholder="Descreva a oportunidade identificada..." value={negotiationData.oportunidadeIdentificada} onChange={e => handleNegotiationUpdate('oportunidadeIdentificada', e.target.value)} className="mt-1" rows={3} />
+                    {/* Oportunidade Identificada */}
+                    <div>
+                      <Label htmlFor="oportunidade" className="text-sm font-medium flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4" />
+                        Oportunidade Identificada
+                      </Label>
+                      <Textarea id="oportunidade" placeholder="Descreva a oportunidade identificada..." value={negotiationData.oportunidadeIdentificada} onChange={e => handleNegotiationUpdate('oportunidadeIdentificada', e.target.value)} className="mt-1" rows={3} />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Contact Information */}
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Contato
-                </h5>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                {/* Contact Information */}
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
                     <Mail className="h-4 w-4" />
-                    <span>{lead.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <span>{lead.telefone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Globe className="h-4 w-4" />
-                    <span>{lead.fonte}</span>
+                    Contato
+                  </h5>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-4 w-4" />
+                      <span>{lead.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="h-4 w-4" />
+                      <span>{lead.telefone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Globe className="h-4 w-4" />
+                      <span>{lead.fonte}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Timeline */}
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Timeline
-                </h5>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Data de Contato:</span>
-                    <span>{format(new Date(lead.dataContato), "dd/MM/yyyy", { locale: ptBR })}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Última Interação:</span>
-                    <span>{format(new Date(lead.ultimaInteracao), "dd/MM/yyyy", { locale: ptBR })}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Interaction History */}
-            <div className="space-y-6">
-              {/* Interaction History */}
-              <div className="bg-muted/50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="h-4 w-4" />
-                  <span className="font-medium">Histórico de Interações</span>
-                  <Badge variant="secondary" className="ml-2">
-                    {interactions.length}
-                  </Badge>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  <InteractionHistory interactions={interactions} />
-                </div>
-              </div>
-
-              {/* Follow-ups Scheduled */}
-              {followUps.length > 0 && (
+                {/* Timeline */}
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Follow-ups Agendados
-                    <Badge variant="secondary">{followUps.length}</Badge>
+                    Timeline
                   </h5>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {followUps.slice(0, 5).map(followUp => (
-                      <div key={followUp.id} className="bg-background/50 p-3 rounded-lg border">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            {followUp.tipo}
-                          </Badge>
-                          <Badge variant={followUp.status === 'concluido' ? 'default' : 'secondary'} className="text-xs">
-                            {followUp.status}
-                          </Badge>
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-medium">
-                            {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </p>
-                          {followUp.observacoes && (
-                            <p className="text-muted-foreground mt-1 text-xs">{followUp.observacoes}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Data de Contato:</span>
+                      <span>{format(new Date(lead.dataContato), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Última Interação:</span>
+                      <span>{format(new Date(lead.ultimaInteracao), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Right Column - Interaction History */}
+              <div className="space-y-6">
+                {/* Interaction History */}
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">Histórico de Interações</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {interactions.length}
+                    </Badge>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    <InteractionHistory interactions={interactions} />
+                  </div>
+                </div>
+
+                {/* Follow-ups Scheduled */}
+                {followUps.length > 0 && (
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h5 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Follow-ups Agendados
+                      <Badge variant="secondary">{followUps.length}</Badge>
+                    </h5>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {followUps.slice(0, 5).map(followUp => (
+                        <div key={followUp.id} className="bg-background/50 p-3 rounded-lg border">
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge variant="outline" className="text-xs">
+                              {followUp.tipo}
+                            </Badge>
+                            <Badge variant={followUp.status === 'concluido' ? 'default' : 'secondary'} className="text-xs">
+                              {followUp.status}
+                            </Badge>
+                          </div>
+                          <div className="text-sm">
+                            <p className="font-medium">
+                              {format(new Date(followUp.dataAgendada), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </p>
+                            {followUp.observacoes && (
+                              <p className="text-muted-foreground mt-1 text-xs">{followUp.observacoes}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </ScrollArea>
