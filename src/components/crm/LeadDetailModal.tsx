@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -352,6 +352,9 @@ export const LeadDetailModal = ({
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Detalhes do Follow-up</DialogTitle>
+              <DialogDescription>
+                Informações completas do follow-up agendado
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>

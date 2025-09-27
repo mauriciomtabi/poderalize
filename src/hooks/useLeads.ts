@@ -55,6 +55,9 @@ const leadSchema = z.object({
   // Vendedor responsável
   vendedor_id: z.string().optional(),
   vendedor_nome: z.string().trim().optional(),
+  
+  // Temperatura da negociação
+  temperatura_negociacao: z.enum(['muito_fraca', 'fraca', 'mediana', 'forte', 'muito_forte']).optional(),
 
   // Funnel relationship (novos campos)
   funnel_id: z.string().uuid().optional(),
@@ -112,6 +115,9 @@ export interface Lead {
   // Vendedor responsável
   vendedor_id?: string;
   vendedor_nome?: string;
+  
+  // Temperatura da negociação
+  temperatura_negociacao?: 'muito_fraca' | 'fraca' | 'mediana' | 'forte' | 'muito_forte';
   
   created_at: string;
   updated_at: string;

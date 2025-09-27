@@ -21,6 +21,7 @@ export const LeadCard = ({
   } = useCRM();
   const { user } = useAuth();
   const [hasPendingFollowUp, setHasPendingFollowUp] = useState(false);
+  const [followUpState, setFollowUpState] = useState<'overdue' | 'today' | 'scheduled' | null>(null);
 
   useEffect(() => {
     const checkPendingFollowUps = async () => {
@@ -29,18 +30,51 @@ export const LeadCard = ({
       try {
         const { data, error } = await supabase
           .from('follow_ups')
-          .select('id')
+          .select('data_agendada')
           .eq('user_id', user.id)
           .eq('lead_id', lead.id)
-          .eq('status', 'pendente')
-          .limit(1);
+          .eq('status', 'pendente');
 
         if (error) {
           console.error('Error checking follow-ups:', error);
           return;
         }
 
-        setHasPendingFollowUp((data || []).length > 0);
+        if (!data || data.length === 0) {
+          setHasPendingFollowUp(false);
+          return;
+        }
+
+        // Pegar o follow-up mais próximo
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // Encontrar o follow-up mais próximo
+        const nextFollowUp = data.reduce((closest, current) => {
+          const currentDate = new Date(current.data_agendada);
+          const closestDate = new Date(closest.data_agendada);
+          
+          return Math.abs(currentDate.getTime() - now.getTime()) < Math.abs(closestDate.getTime() - now.getTime()) 
+            ? current 
+            : closest;
+        });
+
+        const followUpDate = new Date(nextFollowUp.data_agendada);
+        const followUpDay = new Date(followUpDate.getFullYear(), followUpDate.getMonth(), followUpDate.getDate());
+        
+        // Determinar o estado do follow-up
+        if (followUpDate < now) {
+          // Atrasado - vermelho
+          setFollowUpState('overdue');
+        } else if (followUpDay.getTime() === today.getTime()) {
+          // Hoje - piscando
+          setFollowUpState('today');
+        } else {
+          // Agendado para o futuro - azul
+          setFollowUpState('scheduled');
+        }
+        
+        setHasPendingFollowUp(true);
       } catch (error) {
         console.error('Error checking follow-ups:', error);
       }
@@ -109,9 +143,17 @@ export const LeadCard = ({
         </div>
         
         {/* Follow-up Indicator */}
-        {hasPendingFollowUp && (
-          <div className="flex items-center" title="Follow-up pendente">
-            <Bell className="h-4 w-4 text-orange-500 animate-pulse" />
+        {hasPendingFollowUp && followUpState && (
+          <div className="flex items-center" title={
+            followUpState === 'overdue' ? 'Follow-up atrasado' :
+            followUpState === 'today' ? 'Follow-up hoje' :
+            'Follow-up agendado'
+          }>
+            <Bell className={`h-4 w-4 ${
+              followUpState === 'overdue' ? 'text-red-500' :
+              followUpState === 'today' ? 'text-orange-500 animate-pulse' :
+              'text-blue-500'
+            }`} />
           </div>
         )}
       </div>

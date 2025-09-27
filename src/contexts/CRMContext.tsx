@@ -182,7 +182,8 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         pontuacao: lead.pontuacao || 0,
         ultimaInteracao: lead.ultima_interacao ? new Date(lead.ultima_interacao).toISOString() : new Date().toISOString(),
         vendedorId: lead.vendedor_id || '',
-        vendedorNome: lead.vendedor_nome || ''
+        vendedorNome: lead.vendedor_nome || '',
+        temperaturaNegociacao: lead.temperatura_negociacao
       }));
 
       dispatch({ type: 'SET_LEADS', payload: convertedLeads });
@@ -234,7 +235,8 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             pontuacao: fullLead?.pontuacao || 0,
             ultimaInteracao: fullLead?.ultima_interacao ? new Date(fullLead.ultima_interacao).toISOString() : new Date().toISOString(),
             vendedorId: fullLead?.vendedor_id || '',
-            vendedorNome: fullLead?.vendedor_nome || ''
+            vendedorNome: fullLead?.vendedor_nome || '',
+            temperaturaNegociacao: fullLead?.temperatura_negociacao
           };
         });
 
@@ -427,6 +429,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ultimaInteracao: lead.ultima_interacao || '',
       vendedorId: lead.vendedor_id,
       vendedorNome: lead.vendedor_nome,
+      temperaturaNegociacao: lead.temperatura_negociacao,
     })),
     setCurrentFunnel,
     createFunnel,
