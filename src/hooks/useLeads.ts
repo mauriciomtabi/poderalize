@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 // Lead validation schema
 const leadSchema = z.object({
+  // Dados básicos
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   empresa: z.string().trim().min(1, "Empresa é obrigatória").max(100, "Empresa deve ter no máximo 100 caracteres"),
   email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres"),
@@ -16,7 +17,44 @@ const leadSchema = z.object({
   etapa_funil: z.enum(['descoberta', 'consideracao', 'decisao', 'fechamento', 'fidelizacao']).optional(),
   valor: z.number().min(0, "Valor deve ser positivo").optional(),
   probabilidade: z.number().min(0, "Probabilidade deve ser entre 0 e 100").max(100, "Probabilidade deve ser entre 0 e 100").optional(),
+  data_contato: z.string().optional(),
   observacoes: z.string().trim().max(1000, "Observações devem ter no máximo 1000 caracteres").optional(),
+  
+  // Presença Digital
+  site: z.string().trim().optional(),
+  instagram: z.string().trim().optional(),
+  facebook: z.string().trim().optional(),
+  outras_redes_sociais: z.string().trim().optional(),
+  
+  // Faturamento
+  faturamento_atual: z.number().min(0).optional(),
+  faturamento_desejado: z.number().min(0).optional(),
+  
+  // Comportamento e Potencial
+  dores_identificadas: z.array(z.string()).optional(),
+  nivel_consciencia: z.string().optional(),
+  etapa_jornada: z.string().optional(),
+  indicador_potencial: z.string().optional(),
+  equipe_atual: z.string().optional(),
+  
+  // Mindset Comercial Poderalize
+  trava_emocional: z.enum(['inseguranca_financeira', 'medo_dar_errado', 'falta_apoio', 'falta_tempo', 'desconfianca']).optional(),
+  tipo_discurso: z.enum(['tecnico', 'emocional', 'inspirador']).optional(),
+  necessidade_oculta: z.array(z.string()).optional(),
+  
+  // Atração e Conversão
+  anuncio_origem: z.string().trim().optional(),
+  produto_interesse: z.string().trim().min(1, "Produto de interesse é obrigatório"),
+  oferta_atrativa: z.string().trim().optional(),
+  gatilhos_funcionais: z.array(z.string()).optional(),
+  
+  // Lead Scoring
+  pontuacao: z.number().min(0).optional(),
+  ultima_interacao: z.string().optional(),
+  
+  // Vendedor responsável
+  vendedor_id: z.string().optional(),
+  vendedor_nome: z.string().trim().optional(),
 });
 
 export interface Lead {
@@ -177,10 +215,14 @@ export function useLeads() {
     }
 
     try {
-      // Validate only provided fields
+      console.log('Dados recebidos para atualização:', leadData);
+      
+      // Filter out undefined and null, but keep empty arrays and empty strings as valid values
       const providedData = Object.fromEntries(
-        Object.entries(leadData).filter(([, value]) => value !== undefined && value !== null && value !== '')
+        Object.entries(leadData).filter(([, value]) => value !== undefined && value !== null)
       );
+
+      console.log('Dados filtrados para atualização:', providedData);
 
       if (Object.keys(providedData).length === 0) {
         toast.error('Nenhum dado fornecido para atualização');
@@ -189,6 +231,7 @@ export function useLeads() {
 
       // Validate the provided data
       const validatedData = leadSchema.partial().parse(providedData);
+      console.log('Dados validados:', validatedData);
 
       const { data, error } = await supabase
         .from('leads')
