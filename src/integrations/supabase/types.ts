@@ -1023,6 +1023,522 @@ export type Database = {
         }
         Relationships: []
       }
+      project_activities: {
+        Row: {
+          author: string
+          author_name: string
+          card_id: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          type: string
+        }
+        Insert: {
+          author: string
+          author_name: string
+          card_id: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          type: string
+        }
+        Update: {
+          author?: string
+          author_name?: string
+          card_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activities_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "project_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_attachments: {
+        Row: {
+          card_id: string
+          id: string
+          name: string
+          size: number
+          type: string
+          uploaded_at: string
+          uploaded_by: string
+          url: string
+        }
+        Insert: {
+          card_id: string
+          id?: string
+          name: string
+          size: number
+          type: string
+          uploaded_at?: string
+          uploaded_by: string
+          url: string
+        }
+        Update: {
+          card_id?: string
+          id?: string
+          name?: string
+          size?: number
+          type?: string
+          uploaded_at?: string
+          uploaded_by?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_attachments_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "project_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_boards: {
+        Row: {
+          background: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          settings: Json
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          background?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          settings?: Json
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          background?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          settings?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_card_assignees: {
+        Row: {
+          card_id: string
+          created_at: string
+          id: string
+          member_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          id?: string
+          member_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_card_assignees_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "project_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_card_assignees_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "project_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_card_labels: {
+        Row: {
+          card_id: string
+          created_at: string
+          id: string
+          label_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          id?: string
+          label_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          id?: string
+          label_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_card_labels_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "project_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_card_labels_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "project_labels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_cards: {
+        Row: {
+          actual_hours: number | null
+          archived: boolean
+          cover: string | null
+          created_at: string
+          created_by: string
+          custom_fields: Json | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          list_id: string
+          location: Json | null
+          position: number
+          priority: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          watching: boolean
+        }
+        Insert: {
+          actual_hours?: number | null
+          archived?: boolean
+          cover?: string | null
+          created_at?: string
+          created_by: string
+          custom_fields?: Json | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          list_id: string
+          location?: Json | null
+          position?: number
+          priority?: string
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          watching?: boolean
+        }
+        Update: {
+          actual_hours?: number | null
+          archived?: boolean
+          cover?: string | null
+          created_at?: string
+          created_by?: string
+          custom_fields?: Json | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          list_id?: string
+          location?: Json | null
+          position?: number
+          priority?: string
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          watching?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_cards_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "project_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_checklist_items: {
+        Row: {
+          assignee: string | null
+          checklist_id: string
+          completed: boolean
+          created_at: string
+          due_date: string | null
+          id: string
+          position: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          assignee?: string | null
+          checklist_id: string
+          completed?: boolean
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          position?: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          assignee?: string | null
+          checklist_id?: string
+          completed?: boolean
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          position?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "project_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_checklists: {
+        Row: {
+          card_id: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_checklists_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "project_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_comments: {
+        Row: {
+          author: string
+          author_name: string
+          card_id: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          mentions: string[] | null
+          text: string
+        }
+        Insert: {
+          author: string
+          author_name: string
+          card_id: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          mentions?: string[] | null
+          text: string
+        }
+        Update: {
+          author?: string
+          author_name?: string
+          card_id?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          mentions?: string[] | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_comments_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "project_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_labels: {
+        Row: {
+          board_id: string
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          board_id: string
+          color: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          board_id?: string
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_labels_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_lists: {
+        Row: {
+          archived: boolean
+          board_id: string
+          color: string
+          created_at: string
+          id: string
+          position: number
+          rules: Json | null
+          subscribed: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          board_id: string
+          color?: string
+          created_at?: string
+          id?: string
+          position?: number
+          rules?: Json | null
+          subscribed?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          board_id?: string
+          color?: string
+          created_at?: string
+          id?: string
+          position?: number
+          rules?: Json | null
+          subscribed?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_lists_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_members: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          avatar: string | null
+          board_id: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          avatar?: string | null
+          board_id: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          avatar?: string | null
+          board_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transacoes: {
         Row: {
           categoria: string

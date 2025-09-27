@@ -1,703 +1,128 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ProjectsState, ProjectBoard, ProjectList, ProjectCard, ViewType, FilterState, Priority, CardStatus } from '@/types/projects';
-import { generateId } from '@/hooks/useUuid';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useToast } from '@/hooks/use-toast';
-import { isAfter, isToday, startOfDay } from 'date-fns';
+import { useProjectBoards, ProjectBoard as DBProjectBoard } from '@/hooks/useProjectBoards';
+import { useProjectLists, ProjectList as DBProjectList } from '@/hooks/useProjectLists';
+import { useProjectCards, ProjectCard as DBProjectCard } from '@/hooks/useProjectCards';
+import { useProjectLabels, ProjectLabel } from '@/hooks/useProjectLabels';
+import { useProjectMembers, ProjectMember } from '@/hooks/useProjectMembers';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
-// Utility function to get status label in Portuguese
-const getStatusLabel = (status: CardStatus): string => {
-  const statusLabels = {
-    'todo': 'A fazer',
-    'in-progress': 'Em andamento', 
-    'review': 'Em revisão',
-    'blocked': 'Bloqueado',
-    'done': 'Concluído'
+// Transform Supabase data to match our types
+const transformDBBoard = (dbBoard: DBProjectBoard, lists: ProjectList[], labels: any[], members: any[]): ProjectBoard => {
+  return {
+    id: dbBoard.id,
+    title: dbBoard.title,
+    description: dbBoard.description,
+    status: dbBoard.status as any,
+    lists: lists,
+    members: members,
+    labels: labels,
+    cardColor: 'default',
+    settings: dbBoard.settings || {
+      visibility: 'private',
+      allowComments: true,
+      allowVoting: false,
+      cardAging: false,
+      calendarFeed: false
+    },
+    createdBy: dbBoard.user_id,
+    createdAt: dbBoard.created_at,
+    updatedAt: dbBoard.updated_at,
+    background: dbBoard.background
   };
-  return statusLabels[status];
 };
 
-// Utility function to get automatic status based on due date
-const getAutoStatus = (card: ProjectCard): CardStatus => {
-  if (!card.dueDate) return card.status;
-  
-  const today = startOfDay(new Date());
-  const dueDate = startOfDay(new Date(card.dueDate));
-  
-  // If card is done, keep it done
-  if (card.status === 'done') return card.status;
-  
-  // If overdue and not done
-  if (isAfter(today, dueDate)) {
-    return 'blocked'; // Mark as blocked when overdue
-  }
-  
-  // If due today and not in-progress or review
-  if (isToday(dueDate) && card.status === 'todo') {
-    return 'in-progress'; // Auto-start when due today
-  }
-  
-  return card.status;
+const transformDBList = (dbList: DBProjectList, cards: ProjectCard[]): ProjectList => {
+  return {
+    id: dbList.id,
+    title: dbList.title,
+    color: dbList.color,
+    position: dbList.position,
+    cards: cards,
+    archived: dbList.archived,
+    subscribed: dbList.subscribed,
+    rules: dbList.rules || []
+  };
 };
 
-// Initial data with Trello-like structure
-const initialLabels = [
-  { id: generateId(), name: 'Bug', color: '#ef4444', description: 'Correção de bugs' },
-  { id: generateId(), name: 'Feature', color: '#3b82f6', description: 'Nova funcionalidade' },
-  { id: generateId(), name: 'Urgent', color: '#f59e0b', description: 'Prioridade urgente' },
-  { id: generateId(), name: 'Design', color: '#8b5cf6', description: 'Trabalho de design' },
-  { id: generateId(), name: 'Review', color: '#10b981', description: 'Precisa de revisão' },
-];
-
-const initialMembers = [
-  { id: generateId(), name: 'Maria Silva', email: 'maria@empresa.com', role: 'owner' as const },
-  { id: generateId(), name: 'João Santos', email: 'joao@empresa.com', role: 'admin' as const },
-  { id: generateId(), name: 'Ana Costa', email: 'ana@empresa.com', role: 'member' as const },
-  { id: generateId(), name: 'Pedro Lima', email: 'pedro@empresa.com', role: 'member' as const },
-];
-
-const sampleCards = [
-  {
-    id: generateId(),
-    title: 'Implementar sistema de login',
-    description: 'Criar tela de login com autenticação via JWT e integração com o backend',
-    status: 'todo' as CardStatus,
-    priority: 'high' as Priority,
-    labels: [initialLabels[1], initialLabels[3]], // Feature, Urgent
-    assignees: [initialMembers[0], initialMembers[2]],
-    dueDate: '2024-10-15',
-    startDate: '2024-10-01',
-    estimatedHours: 16,
-    checklists: [{
-      id: generateId(),
-      title: 'Tarefas de desenvolvimento',
-      items: [
-        { id: generateId(), text: 'Criar componente de login', completed: true },
-        { id: generateId(), text: 'Implementar validação de formulário', completed: true },
-        { id: generateId(), text: 'Integrar com API', completed: false },
-        { id: generateId(), text: 'Testes unitários', completed: false },
-        { id: generateId(), text: 'Testes de integração', completed: false },
-      ]
-    }],
-    attachments: [],
-    comments: [
-      {
-        id: generateId(),
-        text: 'Lembrar de implementar autenticação de dois fatores',
-        author: initialMembers[1].id,
-        authorName: initialMembers[1].name,
-        createdAt: '2024-09-25T10:30:00Z',
-        mentions: [initialMembers[0].id]
-      }
-    ],
-        activities: [
-          {
-            id: generateId(),
-            type: 'create' as const,
-            description: 'criou este cartão',
-            author: initialMembers[0].id,
-            authorName: initialMembers[0].name,
-            createdAt: '2024-09-20T09:00:00Z'
-          }
-        ],
-    position: 0,
-    listId: 'todo',
-    createdBy: initialMembers[0].id,
-    createdAt: '2024-09-20T09:00:00Z',
-    updatedAt: '2024-09-25T10:30:00Z',
-    archived: false,
-    watching: true
-  },
-  {
-    id: generateId(),
-    title: 'Design da página inicial',
-    description: 'Criar mockups e protótipos da nova página inicial',
-    status: 'in-progress' as CardStatus,
-    priority: 'medium' as Priority,
-    labels: [initialLabels[3]], // Design
-    assignees: [initialMembers[2]],
-    dueDate: '2024-10-10',
-    checklists: [{
-      id: generateId(),
-      title: 'Etapas do design',
-      items: [
-        { id: generateId(), text: 'Pesquisa de referências', completed: true },
-        { id: generateId(), text: 'Wireframes', completed: true },
-        { id: generateId(), text: 'Mockups alta fidelidade', completed: false },
-        { id: generateId(), text: 'Protótipo interativo', completed: false }
-      ]
-    }],
+const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
+  return {
+    id: dbCard.id,
+    title: dbCard.title,
+    description: dbCard.description,
+    status: dbCard.status as CardStatus,
+    priority: dbCard.priority as Priority,
+    labels: [],
+    assignees: [],
+    dueDate: dbCard.due_date,
+    startDate: dbCard.start_date,
+    estimatedHours: dbCard.estimated_hours,
+    actualHours: dbCard.actual_hours,
+    checklists: [],
     attachments: [],
     comments: [],
-    activities: [
-      {
-        id: generateId(),
-        type: 'create' as const,
-        description: 'criou este cartão',
-        author: initialMembers[2].id,
-        authorName: initialMembers[2].name,
-        createdAt: '2024-09-22T14:00:00Z'
-      },
-      {
-        id: generateId(),
-        type: 'assign' as const,
-        description: 'atribuiu este cartão a si mesmo',
-        author: initialMembers[2].id,
-        authorName: initialMembers[2].name,
-        createdAt: '2024-09-22T14:05:00Z'
-      }
-    ],
-    position: 0,
-    listId: 'in-progress',
-    createdBy: initialMembers[2].id,
-    createdAt: '2024-09-22T14:00:00Z',
-    updatedAt: '2024-09-24T16:20:00Z',
-    archived: false,
-    watching: false
-  }
-];
+    activities: [],
+    position: dbCard.position,
+    listId: dbCard.list_id,
+    createdBy: dbCard.created_by,
+    createdAt: dbCard.created_at,
+    updatedAt: dbCard.updated_at,
+    cover: dbCard.cover,
+    location: dbCard.location,
+    customFields: dbCard.custom_fields,
+    archived: dbCard.archived,
+    watching: dbCard.watching
+  };
+};
 
-const initialBoard: ProjectBoard = {
-  id: generateId(),
-  title: 'Desenvolvimento do Sistema CRM',
-  description: 'Projeto principal de desenvolvimento do sistema CRM da empresa',
-  status: 'active',
-  lists: [
-    {
-      id: 'todo',
-      title: 'Backlog',
-      color: 'hsl(25 95% 53%)',
-      position: 0,
-      cards: [sampleCards[0]],
-      archived: false,
-      subscribed: true
-    },
-    {
-      id: 'in-progress',
-      title: 'Em Andamento',
-      color: 'hsl(25 95% 53%)',
-      position: 1,
-      cards: [sampleCards[1]],
-      archived: false,
-      subscribed: true
-    },
-    {
-      id: 'review',
-      title: 'Revisão',
-      color: 'hsl(25 95% 53%)',
-      position: 2,
-      cards: [],
-      archived: false,
-      subscribed: true
-    },
-    {
-      id: 'done',
-      title: 'Concluído',
-      color: 'hsl(25 95% 53%)',
-      position: 3,
-      cards: [],
-      archived: false,
-      subscribed: true
-    }
-  ],
-  members: initialMembers,
-  labels: initialLabels,
-  cardColor: 'default',
-  settings: {
-    visibility: 'team',
-    allowComments: true,
-    allowVoting: false,
-    cardAging: true,
-    calendarFeed: true
-  },
-  createdBy: initialMembers[0].id,
-  createdAt: '2024-09-01T00:00:00Z',
-  updatedAt: '2024-09-25T10:30:00Z'
+const transformDBLabel = (dbLabel: ProjectLabel) => {
+  return {
+    id: dbLabel.id,
+    name: dbLabel.name,
+    color: dbLabel.color,
+    description: dbLabel.description
+  };
+};
+
+const transformDBMember = (dbMember: ProjectMember) => {
+  return {
+    id: dbMember.id,
+    name: dbMember.name,
+    email: dbMember.email,
+    avatar: dbMember.avatar,
+    role: dbMember.role as any
+  };
+};
+
+const initialFilters: FilterState = {
+  search: '',
+  members: [],
+  labels: [],
+  dueDate: null,
+  cardStatus: [],
+  priority: [],
+  showMyCards: false,
+  archived: false
 };
 
 const initialState: ProjectsState = {
-  currentBoard: initialBoard,
-  boards: [initialBoard],
+  currentBoard: null,
+  boards: [],
   currentView: 'kanban',
-  filters: {
-    search: '',
-    members: [],
-    labels: [],
-    dueDate: null,
-    cardStatus: [],
-    priority: [],
-    showMyCards: false,
-    archived: false
-  },
+  filters: initialFilters,
   draggedItem: null,
-  isLoading: false,
+  isLoading: true,
   selectedCard: null,
   calendarDate: new Date()
 };
 
-// Actions
-type ProjectsAction =
-  | { type: 'SET_CURRENT_VIEW'; payload: ViewType }
-  | { type: 'SET_FILTERS'; payload: Partial<FilterState> }
-  | { type: 'RESET_FILTERS' }
-  | { type: 'SET_SELECTED_CARD'; payload: ProjectCard | null }
-  | { type: 'SET_DRAGGED_ITEM'; payload: { type: 'card' | 'list'; id: string } | null }
-  | { type: 'SET_LOADING'; payload: boolean }
-  
-  // Board actions
-  | { type: 'SET_CURRENT_BOARD'; payload: ProjectBoard }
-  | { type: 'UPDATE_BOARD'; payload: Partial<ProjectBoard> }
-  | { type: 'SET_CARD_COLOR'; payload: string }
-  
-  // List actions
-  | { type: 'ADD_LIST'; payload: { title: string; color: string } }
-  | { type: 'UPDATE_LIST'; payload: { listId: string; updates: Partial<ProjectList> } }
-  | { type: 'DELETE_LIST'; payload: string }
-  | { type: 'MOVE_LIST'; payload: { listId: string; newPosition: number } }
-  | { type: 'ARCHIVE_LIST'; payload: string }
-  
-  // Card actions
-  | { type: 'ADD_CARD'; payload: { listId: string; card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt'> } }
-  | { type: 'UPDATE_CARD'; payload: ProjectCard }
-  | { type: 'DELETE_CARD'; payload: string }
-  | { type: 'MOVE_CARD'; payload: { cardId: string; sourceListId: string; destListId: string; newPosition: number } }
-  | { type: 'DUPLICATE_CARD'; payload: string }
-  | { type: 'ARCHIVE_CARD'; payload: string }
-  | { type: 'ADD_CARD_ACTIVITY'; payload: { cardId: string; activity: any } }
-  
-  // Label actions
-  | { type: 'ADD_LABEL'; payload: { name: string; color: string; description?: string } }
-  | { type: 'UPDATE_LABEL'; payload: { labelId: string; updates: Partial<{ name: string; color: string; description: string }> } }
-  | { type: 'DELETE_LABEL'; payload: string };
-
-// Reducer
-const projectsReducer = (state: ProjectsState, action: ProjectsAction): ProjectsState => {
-  switch (action.type) {
-    case 'SET_CURRENT_VIEW':
-      return { ...state, currentView: action.payload };
-    
-    case 'SET_FILTERS':
-      return { ...state, filters: { ...state.filters, ...action.payload } };
-    
-    case 'RESET_FILTERS':
-      return { 
-        ...state, 
-        filters: {
-          search: '',
-          members: [],
-          labels: [],
-          dueDate: null,
-          cardStatus: [],
-          priority: [],
-          showMyCards: false,
-          archived: false
-        }
-      };
-    
-    case 'SET_SELECTED_CARD':
-      return { ...state, selectedCard: action.payload };
-    
-    case 'SET_DRAGGED_ITEM':
-      return { ...state, draggedItem: action.payload };
-    
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
-    
-    case 'SET_CURRENT_BOARD':
-      return { ...state, currentBoard: action.payload };
-    
-    case 'UPDATE_BOARD':
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: { ...state.currentBoard, ...action.payload }
-      };
-
-    case 'SET_CARD_COLOR':
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: { ...state.currentBoard, cardColor: action.payload }
-      };
-    
-    case 'ADD_LIST': {
-      if (!state.currentBoard) return state;
-      const newList: ProjectList = {
-        id: generateId(),
-        title: action.payload.title,
-        color: action.payload.color,
-        position: state.currentBoard.lists.length,
-        cards: [],
-        archived: false,
-        subscribed: true
-      };
-      
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: [...state.currentBoard.lists, newList]
-        }
-      };
-    }
-    
-    case 'UPDATE_LIST':
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list =>
-            list.id === action.payload.listId
-              ? { ...list, ...action.payload.updates }
-              : list
-          )
-        }
-      };
-    
-    case 'ADD_CARD': {
-      if (!state.currentBoard) return state;
-      const targetList = state.currentBoard.lists.find(l => l.id === action.payload.listId);
-      if (!targetList) return state;
-      
-      const newCard: ProjectCard = {
-        ...action.payload.card,
-        id: generateId(),
-        position: targetList.cards.length,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        activities: [
-          {
-            id: generateId(),
-            type: 'create',
-            description: 'criou este cartão',
-            author: action.payload.card.createdBy,
-            authorName: state.currentBoard.members.find(m => m.id === action.payload.card.createdBy)?.name || 'Usuário',
-            createdAt: new Date().toISOString()
-          }
-        ]
-      };
-      
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list =>
-            list.id === action.payload.listId
-              ? { ...list, cards: [...list.cards, newCard] }
-              : list
-          )
-        }
-      };
-    }
-    
-    case 'UPDATE_CARD':
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list => ({
-            ...list,
-            cards: list.cards.map(card =>
-              card.id === action.payload.id
-                ? { ...action.payload, updatedAt: new Date().toISOString() }
-                : card
-            )
-          }))
-        }
-      };
-    
-    case 'DELETE_LIST':
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.filter(list => list.id !== action.payload)
-        }
-      };
-    
-    case 'MOVE_LIST': {
-      if (!state.currentBoard) return state;
-      const { listId, newPosition } = action.payload;
-      
-      const lists = [...state.currentBoard.lists];
-      const listIndex = lists.findIndex(l => l.id === listId);
-      
-      if (listIndex === -1) return state;
-      
-      const [movedList] = lists.splice(listIndex, 1);
-      lists.splice(newPosition, 0, movedList);
-      
-      // Update positions
-      lists.forEach((list, index) => {
-        list.position = index;
-      });
-      
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists
-        }
-      };
-    }
-    
-    case 'ARCHIVE_LIST':
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list =>
-            list.id === action.payload
-              ? { ...list, archived: true }
-              : list
-          )
-        }
-      };
-
-    case 'MOVE_CARD': {
-      if (!state.currentBoard) return state;
-      const { cardId, sourceListId, destListId, newPosition } = action.payload;
-      
-      const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
-      const destList = state.currentBoard.lists.find(l => l.id === destListId);
-      const card = sourceList?.cards.find(c => c.id === cardId);
-      
-      if (!sourceList || !destList || !card) return state;
-      
-      if (sourceListId === destListId) {
-        // Moving within the same list - fix the logic
-        const cards = [...sourceList.cards];
-        const currentIndex = cards.findIndex(c => c.id === cardId);
-        
-        if (currentIndex === -1) return state;
-        
-        // Remove card from current position
-        const [movedCard] = cards.splice(currentIndex, 1);
-        // Insert at new position
-        cards.splice(newPosition, 0, { ...movedCard, position: newPosition });
-        
-        // Update all positions in the list
-        cards.forEach((c, index) => {
-          c.position = index;
-        });
-        
-        return {
-          ...state,
-          currentBoard: {
-            ...state.currentBoard,
-            lists: state.currentBoard.lists.map(list =>
-              list.id === sourceListId
-                ? { ...list, cards }
-                : list
-            )
-          }
-        };
-      } else {
-        // Moving between lists
-        const newSourceCards = sourceList.cards.filter(c => c.id !== cardId);
-        const newDestCards = [...destList.cards];
-        
-        // Insert card at new position in destination list
-        newDestCards.splice(newPosition, 0, { ...card, listId: destListId, position: newPosition });
-        
-        // Update positions for both lists
-        newSourceCards.forEach((c, index) => {
-          c.position = index;
-        });
-        
-        newDestCards.forEach((c, index) => {
-          c.position = index;
-        });
-        
-        return {
-          ...state,
-          currentBoard: {
-            ...state.currentBoard,
-            lists: state.currentBoard.lists.map(list => {
-              if (list.id === sourceListId) {
-                return { ...list, cards: newSourceCards };
-              }
-              if (list.id === destListId) {
-                return { ...list, cards: newDestCards };
-              }
-              return list;
-            })
-          }
-        };
-      }
-    }
-
-    case 'DELETE_CARD': {
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list => ({
-            ...list,
-            cards: list.cards.filter(card => card.id !== action.payload)
-          }))
-        }
-      };
-    }
-
-    case 'DUPLICATE_CARD': {
-      if (!state.currentBoard) return state;
-      const sourceCard = state.currentBoard.lists
-        .flatMap(l => l.cards)
-        .find(c => c.id === action.payload);
-      
-      if (!sourceCard) return state;
-      
-      const sourceList = state.currentBoard.lists.find(l => l.id === sourceCard.listId);
-      if (!sourceList) return state;
-      
-      const duplicatedCard: ProjectCard = {
-        ...sourceCard,
-        id: generateId(),
-        title: `${sourceCard.title} (cópia)`,
-        position: sourceList.cards.length,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        activities: [
-          {
-            id: generateId(),
-            type: 'create',
-            description: 'duplicou este cartão',
-            author: sourceCard.createdBy,
-            authorName: state.currentBoard.members.find(m => m.id === sourceCard.createdBy)?.name || 'Usuário',
-            createdAt: new Date().toISOString()
-          }
-        ]
-      };
-      
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list =>
-            list.id === sourceCard.listId
-              ? { ...list, cards: [...list.cards, duplicatedCard] }
-              : list
-          )
-        }
-      };
-    }
-
-    case 'ARCHIVE_CARD': {
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list => ({
-            ...list,
-            cards: list.cards.map(card =>
-              card.id === action.payload
-                ? { ...card, archived: true, updatedAt: new Date().toISOString() }
-                : card
-            )
-          }))
-        }
-      };
-    }
-    
-    case 'ADD_LABEL': {
-      if (!state.currentBoard) return state;
-      const newLabel = {
-        id: `label-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        ...action.payload
-      };
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          labels: [...state.currentBoard.labels, newLabel]
-        }
-      };
-    }
-    
-    case 'UPDATE_LABEL': {
-      if (!state.currentBoard) return state;
-      const { labelId, updates } = action.payload;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          labels: state.currentBoard.labels.map(label =>
-            label.id === labelId
-              ? { ...label, ...updates }
-              : label
-          ),
-          lists: state.currentBoard.lists.map(list => ({
-            ...list,
-            cards: list.cards.map(card => ({
-              ...card,
-              labels: card.labels.map(cardLabel =>
-                cardLabel.id === labelId
-                  ? { ...cardLabel, ...updates }
-                  : cardLabel
-              )
-            }))
-          }))
-        }
-      };
-    }
-    
-    case 'ADD_CARD_ACTIVITY': {
-      if (!state.currentBoard) return state;
-
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          lists: state.currentBoard.lists.map(list => ({
-            ...list,
-            cards: list.cards.map(card => 
-              card.id === action.payload.cardId
-                ? {
-                    ...card,
-                    activities: [action.payload.activity, ...(card.activities || [])],
-                    updatedAt: new Date().toISOString()
-                  }
-                : card
-            )
-          }))
-        }
-      };
-    }
-
-    case 'DELETE_LABEL': {
-      if (!state.currentBoard) return state;
-      return {
-        ...state,
-        currentBoard: {
-          ...state.currentBoard,
-          labels: state.currentBoard.labels.filter(label => label.id !== action.payload),
-          lists: state.currentBoard.lists.map(list => ({
-            ...list,
-            cards: list.cards.map(card => ({
-              ...card,
-              labels: card.labels.filter(label => label.id !== action.payload)
-            }))
-          }))
-        }
-      };
-    }
-    
-    default:
-      return state;
-  }
-};
-
-// Context
 interface ProjectsContextType {
   state: ProjectsState;
   actions: {
+    // View actions
     setCurrentView: (view: ViewType) => void;
     setFilters: (filters: Partial<FilterState>) => void;
     resetFilters: () => void;
@@ -705,408 +130,494 @@ interface ProjectsContextType {
     setDraggedItem: (item: { type: 'card' | 'list'; id: string } | null) => void;
     
     // Board actions
-    updateBoard: (updates: Partial<ProjectBoard>) => void;
-    setCardColor: (color: string) => void;
+    setCurrentBoard: (board: ProjectBoard | null) => void;
+    createBoard: (title: string, description?: string) => Promise<boolean>;
+    updateBoard: (updates: Partial<ProjectBoard>) => Promise<boolean>;
+    deleteBoard: (boardId: string) => Promise<boolean>;
+    setCardColor: (color: string) => Promise<boolean>;
     
     // List actions
-    addList: (title: string, color: string) => void;
-    updateList: (listId: string, updates: Partial<ProjectList>) => void;
-    deleteList: (listId: string) => void;
-    moveList: (listId: string, newPosition: number) => void;
-    archiveList: (listId: string) => void;
+    addList: (title: string, color: string) => Promise<boolean>;
+    updateList: (listId: string, updates: Partial<ProjectList>) => Promise<boolean>;
+    deleteList: (listId: string) => Promise<boolean>;
+    moveList: (listId: string, newPosition: number) => Promise<boolean>;
+    archiveList: (listId: string) => Promise<boolean>;
     
     // Card actions
-    addCard: (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt'>) => void;
-    updateCard: (card: ProjectCard) => void;
-    deleteCard: (cardId: string) => void;
-    moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => void;
-    duplicateCard: (cardId: string) => void;
-    archiveCard: (cardId: string) => void;
+    addCard: (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt' | 'activities'>) => Promise<boolean>;
+    updateCard: (card: ProjectCard) => Promise<boolean>;
+    deleteCard: (cardId: string) => Promise<boolean>;
+    moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => Promise<boolean>;
+    duplicateCard: (cardId: string) => Promise<boolean>;
+    archiveCard: (cardId: string) => Promise<boolean>;
     
     // Label actions
-    addLabel: (name: string, color: string, description?: string) => void;
-    updateLabel: (labelId: string, updates: Partial<{ name: string; color: string; description: string }>) => void;
-    deleteLabel: (labelId: string) => void;
+    addLabel: (name: string, color: string, description?: string) => Promise<boolean>;
+    updateLabel: (labelId: string, updates: Partial<{ name: string; color: string; description: string }>) => Promise<boolean>;
+    deleteLabel: (labelId: string) => Promise<boolean>;
     
-    // Utility functions
+    // Member actions
+    addMember: (name: string, email: string, role?: string) => Promise<boolean>;
+    updateMember: (memberId: string, updates: Partial<ProjectMember>) => Promise<boolean>;
+    removeMember: (memberId: string) => Promise<boolean>;
+    
+    // Utility actions
+    getCurrentUser: () => any;
     getFilteredCards: () => ProjectCard[];
-    getCurrentUser: () => { id: string; name: string } | null;
-    addActivity: (cardId: string, type: string, description: string, metadata?: any) => void;
+    addActivity: (cardId: string, type: string, description: string, metadata?: any) => Promise<boolean>;
   };
 }
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
 
-// Provider
-export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
-  const [state, dispatch] = useReducer(projectsReducer, initialState);
-  const { toast } = useToast();
+export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const [state, setState] = useState<ProjectsState>(initialState);
+  
+  // Supabase hooks
+  const boardsHook = useProjectBoards();
+  const listsHook = useProjectLists(state.currentBoard?.id);
+  const cardsHook = useProjectCards();
+  const labelsHook = useProjectLabels(state.currentBoard?.id);
+  const membersHook = useProjectMembers(state.currentBoard?.id);
 
-  // Load persisted data from localStorage directly
+  // Load all boards and set initial board
   useEffect(() => {
+    if (boardsHook.boards.length > 0 && !state.currentBoard) {
+      loadBoard(boardsHook.boards[0].id);
+    }
+    setState(prev => ({ 
+      ...prev, 
+      boards: boardsHook.boards.map(board => transformDBBoard(board, [], [], [])),
+      isLoading: boardsHook.isLoading
+    }));
+  }, [boardsHook.boards, boardsHook.isLoading]);
+
+  // Load current board data
+  const loadBoard = async (boardId: string) => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    
     try {
-      const saved = localStorage.getItem('projects-data');
-      if (saved) {
-        const parsedData = JSON.parse(saved);
-        if (parsedData.currentBoard) {
-          dispatch({ type: 'SET_CURRENT_BOARD', payload: parsedData.currentBoard });
-        }
+      const board = boardsHook.boards.find(b => b.id === boardId);
+      if (!board) return;
+
+      // Fetch related data
+      await Promise.all([
+        listsHook.fetchLists(),
+        labelsHook.fetchLabels(),
+        membersHook.fetchMembers()
+      ]);
+
+      // Load cards for all lists
+      const allCards: ProjectCard[] = [];
+      for (const list of listsHook.lists) {
+        const listCards = await cardsHook.fetchAllBoardCards(boardId);
+        allCards.push(...listCards.filter(c => c.list_id === list.id).map(transformDBCard));
       }
+
+      // Group cards by list
+      const listsWithCards = listsHook.lists.map(list => 
+        transformDBList(list, allCards.filter(card => card.listId === list.id))
+      );
+
+      const transformedBoard = transformDBBoard(
+        board,
+        listsWithCards,
+        labelsHook.labels,
+        membersHook.members
+      );
+
+      setState(prev => ({
+        ...prev,
+        currentBoard: transformedBoard,
+        isLoading: false
+      }));
     } catch (error) {
-      console.error('Error loading projects data:', error);
+      console.error('Error loading board:', error);
+      setState(prev => ({ ...prev, isLoading: false }));
     }
-  }, []);
+  };
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    if (state.currentBoard) {
-      try {
-        localStorage.setItem('projects-data', JSON.stringify({
-          currentBoard: state.currentBoard,
-          lastUpdated: new Date().toISOString(),
-        }));
-      } catch (error) {
-        console.error('Error saving projects data:', error);
-      }
-    }
-  }, [state.currentBoard]);
-
-  // Activity logging helper
-  const addActivity = useCallback((cardId: string, type: string, description: string, metadata?: any) => {
-    const currentUser = actions.getCurrentUser();
-    if (!currentUser) return;
-
-    const activity = {
-      id: generateId(),
-      type,
-      description,
-      author: currentUser.id,
-      authorName: currentUser.name,
-      createdAt: new Date().toISOString(),
-      metadata
-    };
-
-    dispatch({ 
-      type: 'ADD_CARD_ACTIVITY', 
-      payload: { cardId, activity } 
-    });
-  }, []);
-
+  // Actions
   const actions = {
+    // View actions
     setCurrentView: (view: ViewType) => {
-      dispatch({ type: 'SET_CURRENT_VIEW', payload: view });
+      setState(prev => ({ ...prev, currentView: view }));
     },
-    
+
     setFilters: (filters: Partial<FilterState>) => {
-      dispatch({ type: 'SET_FILTERS', payload: filters });
+      setState(prev => ({ ...prev, filters: { ...prev.filters, ...filters } }));
     },
-    
+
     resetFilters: () => {
-      dispatch({ type: 'RESET_FILTERS' });
+      setState(prev => ({ ...prev, filters: initialFilters }));
     },
-    
+
     setSelectedCard: (card: ProjectCard | null) => {
-      dispatch({ type: 'SET_SELECTED_CARD', payload: card });
+      setState(prev => ({ ...prev, selectedCard: card }));
     },
-    
+
     setDraggedItem: (item: { type: 'card' | 'list'; id: string } | null) => {
-      dispatch({ type: 'SET_DRAGGED_ITEM', payload: item });
-    },
-    
-    updateBoard: (updates: Partial<ProjectBoard>) => {
-      dispatch({ type: 'UPDATE_BOARD', payload: updates });
+      setState(prev => ({ ...prev, draggedItem: item }));
     },
 
-    setCardColor: (color: string) => {
-      dispatch({ type: 'SET_CARD_COLOR', payload: color });
-    },
-    
-    addList: (title: string, color: string) => {
-      dispatch({ type: 'ADD_LIST', payload: { title, color } });
-      toast({
-        title: 'Lista criada',
-        description: `Lista "${title}" foi criada com sucesso.`,
-      });
-    },
-    
-    updateList: (listId: string, updates: Partial<ProjectList>) => {
-      dispatch({ type: 'UPDATE_LIST', payload: { listId, updates } });
-    },
-    
-    deleteList: (listId: string) => {
-      const list = state.currentBoard?.lists.find(l => l.id === listId);
-      dispatch({ type: 'DELETE_LIST', payload: listId });
-      
-      if (list) {
-        toast({
-          title: 'Lista excluída',
-          description: `Lista "${list.title}" foi excluída.`,
-          variant: 'destructive',
-        });
+    // Board actions
+    setCurrentBoard: (board: ProjectBoard | null) => {
+      setState(prev => ({ ...prev, currentBoard: board }));
+      if (board) {
+        loadBoard(board.id);
       }
-    },
-    
-    moveList: (listId: string, newPosition: number) => {
-      dispatch({ type: 'MOVE_LIST', payload: { listId, newPosition } });
-    },
-    
-    archiveList: (listId: string) => {
-      const list = state.currentBoard?.lists.find(l => l.id === listId);
-      dispatch({ type: 'ARCHIVE_LIST', payload: listId });
-      
-      if (list) {
-        toast({
-          title: 'Lista arquivada',
-          description: `Lista "${list.title}" foi arquivada.`,
-        });
-      }
-    },
-    
-    addCard: (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt'>) => {
-      dispatch({ type: 'ADD_CARD', payload: { listId, card } });
-      toast({
-        title: 'Cartão criado',
-        description: `"${card.title}" foi criado com sucesso.`,
-      });
-    },
-    
-    updateCard: (card: ProjectCard) => {
-      // Auto-update status based on due date
-      const updatedCard = { ...card, status: getAutoStatus(card) };
-      
-      // Log activity for updates
-      const currentCard = state.currentBoard?.lists
-        .flatMap(l => l.cards)
-        .find(c => c.id === card.id);
-      
-      if (currentCard) {
-        // Log automatic status change
-        if (updatedCard.status !== card.status) {
-          addActivity(card.id, 'update', `status alterado automaticamente para ${getStatusLabel(updatedCard.status)} baseado na data de vencimento`);
-        }
-        
-        if (card.title !== currentCard.title) {
-          addActivity(card.id, 'update', 'alterou o título');
-        }
-        if (card.description !== currentCard.description) {
-          addActivity(card.id, 'update', 'alterou a descrição');
-        }
-        if (card.dueDate !== currentCard.dueDate) {
-          if (card.dueDate) {
-            addActivity(card.id, 'due_date', `definiu data de vencimento para ${new Date(card.dueDate).toLocaleDateString('pt-BR')}`);
-          } else {
-            addActivity(card.id, 'due_date', 'removeu a data de vencimento');
-          }
-        }
-        // Check assignee changes
-        const addedMembers = card.assignees.filter(m => !currentCard.assignees.some(cm => cm.id === m.id));
-        const removedMembers = currentCard.assignees.filter(cm => !card.assignees.some(m => m.id === cm.id));
-        
-        addedMembers.forEach(member => {
-          addActivity(card.id, 'assign', `atribuiu ${member.name}`);
-        });
-        removedMembers.forEach(member => {
-          addActivity(card.id, 'assign', `removeu ${member.name}`);
-        });
-        
-        // Check label changes
-        const addedLabels = card.labels.filter(l => !currentCard.labels.some(cl => cl.id === l.id));
-        const removedLabels = currentCard.labels.filter(cl => !card.labels.some(l => l.id === cl.id));
-        
-        addedLabels.forEach(label => {
-          addActivity(card.id, 'update', `adicionou etiqueta "${label.name}"`);
-        });
-        removedLabels.forEach(label => {
-          addActivity(card.id, 'update', `removeu etiqueta "${label.name}"`);
-        });
-      }
-      
-      dispatch({ type: 'UPDATE_CARD', payload: updatedCard });
-    },
-    
-    deleteCard: (cardId: string) => {
-      const card = state.currentBoard?.lists
-        .flatMap(l => l.cards)
-        .find(c => c.id === cardId);
-      
-      dispatch({ type: 'DELETE_CARD', payload: cardId });
-      
-      if (card) {
-        toast({
-          title: 'Cartão excluído',
-          description: `"${card.title}" foi excluído.`,
-          variant: 'destructive',
-        });
-      }
-    },
-    
-    moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => {
-      // Add activity for card move
-      if (sourceListId !== destListId) {
-        const sourceList = state.currentBoard?.lists.find(l => l.id === sourceListId);
-        const destList = state.currentBoard?.lists.find(l => l.id === destListId);
-        
-        if (sourceList && destList) {
-          addActivity(cardId, 'move', `moveu de "${sourceList.title}" para "${destList.title}"`);
-        }
-      }
-      
-      dispatch({ type: 'MOVE_CARD', payload: { cardId, sourceListId, destListId, newPosition } });
-    },
-    
-    duplicateCard: (cardId: string) => {
-      dispatch({ type: 'DUPLICATE_CARD', payload: cardId });
-      toast({
-        title: 'Cartão duplicado',
-        description: 'Cartão foi duplicado com sucesso.',
-      });
     },
 
-    archiveCard: (cardId: string) => {
-      addActivity(cardId, 'archive', 'arquivou este cartão');
+    createBoard: async (title: string, description?: string) => {
+      const result = await boardsHook.createBoard({
+        title,
+        description,
+        status: 'active',
+        settings: {
+          visibility: 'private',
+          allowComments: true,
+          allowVoting: false,
+          cardAging: false,
+          calendarFeed: false
+        }
+      });
       
-      const card = state.currentBoard?.lists
-        .flatMap(l => l.cards)
-        .find(c => c.id === cardId);
-      
-      dispatch({ type: 'ARCHIVE_CARD', payload: cardId });
-      
-      if (card) {
-        toast({
-          title: 'Cartão arquivado',
-          description: `"${card.title}" foi arquivado.`,
-        });
+      if (result) {
+        await loadBoard(result.id);
+        return true;
       }
+      return false;
     },
-    
-    getFilteredCards: (): ProjectCard[] => {
+
+    updateBoard: async (updates: Partial<ProjectBoard>) => {
+      if (!state.currentBoard) return false;
+      return await boardsHook.updateBoard(state.currentBoard.id, updates as any);
+    },
+
+    deleteBoard: async (boardId: string) => {
+      const result = await boardsHook.deleteBoard(boardId);
+      if (result && state.currentBoard?.id === boardId) {
+        setState(prev => ({ ...prev, currentBoard: null }));
+      }
+      return result;
+    },
+
+    // List actions
+    addList: async (title: string, color: string) => {
+      if (!state.currentBoard) return false;
+      
+      const result = await listsHook.createList({
+        board_id: state.currentBoard.id,
+        title,
+        color,
+        position: listsHook.lists.length,
+        archived: false,
+        subscribed: true
+      });
+      
+      if (result) {
+        await loadBoard(state.currentBoard.id);
+        return true;
+      }
+      return false;
+    },
+
+    updateList: async (listId: string, updates: Partial<ProjectList>) => {
+      const result = await listsHook.updateList(listId, updates as any);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    deleteList: async (listId: string) => {
+      const result = await listsHook.deleteList(listId);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    moveList: async (listId: string, newPosition: number) => {
+      const result = await listsHook.updateList(listId, { position: newPosition });
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    archiveList: async (listId: string) => {
+      const result = await listsHook.updateList(listId, { archived: true });
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    // Card actions
+    addCard: async (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt' | 'activities'>) => {
+      if (!user) return false;
+
+      const result = await cardsHook.createCard({
+        list_id: listId,
+        title: card.title,
+        description: card.description,
+        status: card.status,
+        priority: card.priority,
+        due_date: card.dueDate,
+        start_date: card.startDate,
+        estimated_hours: card.estimatedHours,
+        actual_hours: card.actualHours,
+        position: 0,
+        cover: card.cover,
+        location: card.location,
+        custom_fields: card.customFields,
+        archived: card.archived,
+        watching: card.watching,
+        created_by: user.id
+      });
+      
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+        return true;
+      }
+      return false;
+    },
+
+    updateCard: async (card: ProjectCard) => {
+      const result = await cardsHook.updateCard(card.id, {
+        title: card.title,
+        description: card.description,
+        status: card.status,
+        priority: card.priority,
+        due_date: card.dueDate,
+        start_date: card.startDate,
+        estimated_hours: card.estimatedHours,
+        actual_hours: card.actualHours,
+        cover: card.cover,
+        location: card.location,
+        custom_fields: card.customFields,
+        archived: card.archived,
+        watching: card.watching
+      } as any);
+      
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    deleteCard: async (cardId: string) => {
+      const result = await cardsHook.deleteCard(cardId);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    moveCard: async (cardId: string, sourceListId: string, destListId: string, newPosition: number) => {
+      const result = await cardsHook.updateCard(cardId, {
+        list_id: destListId,
+        position: newPosition
+      } as any);
+      
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    duplicateCard: async (cardId: string) => {
+      // TODO: Implement card duplication
+      toast({
+        title: "Em desenvolvimento",
+        description: "Funcionalidade de duplicar cartão em desenvolvimento",
+      });
+      return false;
+    },
+
+    archiveCard: async (cardId: string) => {
+      const result = await cardsHook.updateCard(cardId, { archived: true } as any);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    // Label actions
+    addLabel: async (name: string, color: string, description?: string) => {
+      if (!state.currentBoard) return false;
+      
+      const result = await labelsHook.createLabel({
+        board_id: state.currentBoard.id,
+        name,
+        color,
+        description
+      });
+      
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+        return true;
+      }
+      return false;
+    },
+
+    updateLabel: async (labelId: string, updates: Partial<{ name: string; color: string; description: string }>) => {
+      const result = await labelsHook.updateLabel(labelId, updates);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    deleteLabel: async (labelId: string) => {
+      const result = await labelsHook.deleteLabel(labelId);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    // Member actions
+    addMember: async (name: string, email: string, role: string = 'member') => {
+      if (!state.currentBoard || !user) return false;
+      
+      const result = await membersHook.addMember({
+        board_id: state.currentBoard.id,
+        user_id: uuidv4(), // Generate a temp ID for now
+        name,
+        email,
+        role
+      });
+      
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+        return true;
+      }
+      return false;
+    },
+
+    updateMember: async (memberId: string, updates: Partial<ProjectMember>) => {
+      const result = await membersHook.updateMember(memberId, updates);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    removeMember: async (memberId: string) => {
+      const result = await membersHook.removeMember(memberId);
+      if (result && state.currentBoard) {
+        await loadBoard(state.currentBoard.id);
+      }
+      return result;
+    },
+
+    // Additional utility methods for compatibility
+    setCardColor: async (color: string) => {
+      if (!state.currentBoard) return false;
+      return await boardsHook.updateBoard(state.currentBoard.id, { cardColor: color } as any);
+    },
+
+    getCurrentUser: () => {
+      return user ? {
+        id: user.id,
+        name: (user as any).user_metadata?.full_name || user.email,
+        email: user.email
+      } : null;
+    },
+
+    getFilteredCards: () => {
       if (!state.currentBoard) return [];
       
-      const allCards = state.currentBoard.lists.flatMap(list => list.cards);
-      const { filters } = state;
-      
+      let allCards: ProjectCard[] = [];
+      state.currentBoard.lists.forEach(list => {
+        allCards.push(...list.cards);
+      });
+
+      // Apply filters
       return allCards.filter(card => {
         // Search filter
-        if (filters.search && !card.title.toLowerCase().includes(filters.search.toLowerCase())) {
+        if (state.filters.search && !card.title.toLowerCase().includes(state.filters.search.toLowerCase())) {
           return false;
         }
-        
-        // Members filter
-        if (filters.members.length > 0) {
+
+        // Status filter
+        if (state.filters.cardStatus.length > 0 && !state.filters.cardStatus.includes(card.status)) {
+          return false;
+        }
+
+        // Priority filter
+        if (state.filters.priority.length > 0 && !state.filters.priority.includes(card.priority)) {
+          return false;
+        }
+
+        // Member filter
+        if (state.filters.members.length > 0) {
           const hasMatchingMember = card.assignees.some(assignee => 
-            filters.members.includes(assignee.id)
+            state.filters.members.includes(assignee.id)
           );
           if (!hasMatchingMember) return false;
         }
-        
-        // Labels filter
-        if (filters.labels.length > 0) {
+
+        // Label filter
+        if (state.filters.labels.length > 0) {
           const hasMatchingLabel = card.labels.some(label => 
-            filters.labels.includes(label.id)
+            state.filters.labels.includes(label.id)
           );
           if (!hasMatchingLabel) return false;
         }
-        
+
         // Due date filter
-        if (filters.dueDate) {
+        if (state.filters.dueDate) {
           const now = new Date();
-          const cardDueDate = card.dueDate ? new Date(card.dueDate) : null;
+          const dueDate = card.dueDate ? new Date(card.dueDate) : null;
           
-          switch (filters.dueDate) {
+          switch (state.filters.dueDate) {
             case 'no-date':
-              if (cardDueDate) return false;
+              if (dueDate) return false;
               break;
             case 'overdue':
-              if (!cardDueDate || cardDueDate >= now) return false;
+              if (!dueDate || dueDate >= now) return false;
               break;
             case 'today':
-              if (!cardDueDate || cardDueDate.toDateString() !== now.toDateString()) return false;
+              if (!dueDate || dueDate.toDateString() !== now.toDateString()) return false;
               break;
             case 'week':
-              if (!cardDueDate || cardDueDate > new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)) return false;
+              if (!dueDate) return false;
+              const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+              if (dueDate > weekFromNow) return false;
               break;
             case 'month':
-              if (!cardDueDate || cardDueDate > new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)) return false;
+              if (!dueDate) return false;
+              const monthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+              if (dueDate > monthFromNow) return false;
               break;
           }
         }
-        
-        // Status filter
-        if (filters.cardStatus.length > 0 && !filters.cardStatus.includes(card.status)) {
-          return false;
+
+        // Show my cards filter
+        if (state.filters.showMyCards && user) {
+          const isAssignedToMe = card.assignees.some(assignee => assignee.id === user.id);
+          if (!isAssignedToMe) return false;
         }
-        
-        // Priority filter
-        if (filters.priority.length > 0 && !filters.priority.includes(card.priority)) {
-          return false;
-        }
-        
+
         // Archived filter
-        if (!filters.archived && card.archived) {
+        if (state.filters.archived !== card.archived) {
           return false;
         }
-        
+
         return true;
       });
     },
-    
-    addLabel: (name: string, color: string, description?: string) => {
-      dispatch({ type: 'ADD_LABEL', payload: { name, color, description } });
-      toast({
-        title: 'Etiqueta criada',
-        description: `Etiqueta "${name}" foi criada com sucesso.`,
-      });
-    },
-    
-    updateLabel: (labelId: string, updates: Partial<{ name: string; color: string; description: string }>) => {
-      dispatch({ type: 'UPDATE_LABEL', payload: { labelId, updates } });
-      toast({
-        title: 'Etiqueta atualizada',
-        description: 'Etiqueta foi atualizada com sucesso.',
-      });
-    },
-    
-    deleteLabel: (labelId: string) => {
-      const label = state.currentBoard?.labels.find(l => l.id === labelId);
-      dispatch({ type: 'DELETE_LABEL', payload: labelId });
-      
-      if (label) {
-        toast({
-          title: 'Etiqueta excluída',
-          description: `Etiqueta "${label.name}" foi excluída.`,
-          variant: 'destructive',
-        });
-      }
-    },
-    
-    getCurrentUser: () => {
-      // This would normally come from auth context
-      return state.currentBoard?.members[0] || null;
-    },
-    
-    addActivity: addActivity
-  };
 
-  // Auto-update card statuses when component mounts or daily
-  useEffect(() => {
-    if (state.currentBoard) {
-      const updatedCards: ProjectCard[] = [];
-      
-      state.currentBoard.lists.forEach(list => {
-        list.cards.forEach(card => {
-          const autoStatus = getAutoStatus(card);
-          if (autoStatus !== card.status && !card.archived) {
-            updatedCards.push({ ...card, status: autoStatus });
-          }
-        });
-      });
-      
-      // Update cards with auto status changes
-      updatedCards.forEach(card => {
-        dispatch({ type: 'UPDATE_CARD', payload: card });
-      });
+    addActivity: async (cardId: string, type: string, description: string, metadata?: any) => {
+      // For now, just return true as activities will be handled separately
+      // In a full implementation, you'd want to add activities to a separate table
+      return true;
     }
-  }, [state.currentBoard?.id]); // Only run when board changes
+  };
 
   return (
     <ProjectsContext.Provider value={{ state, actions }}>
@@ -1118,7 +629,7 @@ export const ProjectsProvider = ({ children }: { children: ReactNode }) => {
 export const useProjects = () => {
   const context = useContext(ProjectsContext);
   if (context === undefined) {
-    throw new Error('useProjects deve ser usado dentro de um ProjectsProvider');
+    throw new Error('useProjects must be used within a ProjectsProvider');
   }
   return context;
 };
