@@ -196,7 +196,7 @@ export const CardDetailModal = ({
     actions.updateCard(updatedCard);
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0" onClick={(e) => e.stopPropagation()}>
         <DialogTitle className="sr-only">Detalhes do cartão</DialogTitle>
         <DialogDescription className="sr-only">Visualize e edite as informações do cartão.</DialogDescription>
         <div className="flex h-full min-h-[70vh]">

@@ -49,6 +49,12 @@ const transformDBList = (dbList: DBProjectList, cards: ProjectCard[]): ProjectLi
 };
 
 const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
+  const cf = (dbCard.custom_fields as any) || {};
+  const checklists = Array.isArray(cf.checklists) ? cf.checklists : [];
+  const comments = Array.isArray(cf.comments) ? cf.comments : [];
+  const attachments = Array.isArray(cf.attachments) ? cf.attachments : [];
+  const activities = Array.isArray(cf.activities) ? cf.activities : [];
+
   return {
     id: dbCard.id,
     title: dbCard.title,
@@ -61,10 +67,10 @@ const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
     startDate: dbCard.start_date,
     estimatedHours: dbCard.estimated_hours,
     actualHours: dbCard.actual_hours,
-    checklists: [],
-    attachments: [],
-    comments: [],
-    activities: [],
+    checklists,
+    attachments,
+    comments,
+    activities,
     position: dbCard.position,
     listId: dbCard.list_id,
     createdBy: dbCard.created_by,
@@ -72,7 +78,7 @@ const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
     updatedAt: dbCard.updated_at,
     cover: dbCard.cover,
     location: dbCard.location,
-    customFields: dbCard.custom_fields,
+    customFields: cf,
     archived: dbCard.archived,
     watching: dbCard.watching
   };
@@ -419,7 +425,13 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         position: 0,
         cover: card.cover,
         location: card.location,
-        custom_fields: card.customFields,
+        custom_fields: {
+          ...(card.customFields || {}),
+          checklists: card.checklists || [],
+          comments: card.comments || [],
+          attachments: card.attachments || [],
+          activities: []
+        },
         archived: card.archived,
         watching: card.watching,
         created_by: user.id
@@ -444,7 +456,13 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         actual_hours: card.actualHours,
         cover: card.cover,
         location: card.location,
-        custom_fields: card.customFields,
+        custom_fields: {
+          ...(card.customFields || {}),
+          checklists: card.checklists || [],
+          comments: card.comments || [],
+          attachments: card.attachments || [],
+          activities: card.activities || []
+        },
         archived: card.archived,
         watching: card.watching
       } as any);

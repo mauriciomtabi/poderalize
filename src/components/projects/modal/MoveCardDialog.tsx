@@ -57,7 +57,7 @@ export const MoveCardDialog = ({
             Selecione a lista de destino para mover este cartão:
           </p>
           
-          <ScrollArea className="max-h-60">
+          <ScrollArea className="max-h-80">
             <div className="space-y-2">
               {availableLists
                 .filter(list => !list.archived)

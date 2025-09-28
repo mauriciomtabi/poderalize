@@ -120,7 +120,7 @@ export const AttachmentManager = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-2xl max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Paperclip className="h-4 w-4" />
@@ -130,11 +130,11 @@ export const AttachmentManager = ({
         
         <div className="space-y-4">
           {/* Upload Actions */}
-          <div className="flex gap-2">
+          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
               className="flex-1"
             >
               <Upload className="h-4 w-4 mr-2" />
@@ -143,7 +143,7 @@ export const AttachmentManager = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsAddingLink(!isAddingLink)}
+              onClick={(e) => { e.stopPropagation(); setIsAddingLink(!isAddingLink); }}
               className="flex-1"
             >
               <Link className="h-4 w-4 mr-2" />
@@ -161,7 +161,7 @@ export const AttachmentManager = ({
 
           {/* Add Link Form */}
           {isAddingLink && (
-            <div className="p-4 border rounded-md space-y-3">
+            <div className="p-4 border rounded-md space-y-3" onClick={(e) => e.stopPropagation()}>
               <Input
                 placeholder="URL do link"
                 value={linkUrl}
@@ -173,13 +173,14 @@ export const AttachmentManager = ({
                 onChange={(e) => setLinkName(e.target.value)}
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleAddLink} disabled={!linkUrl.trim()}>
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); handleAddLink(); }} disabled={!linkUrl.trim()}>
                   Adicionar
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setIsAddingLink(false);
                     setLinkUrl("");
                     setLinkName("");
@@ -217,31 +218,32 @@ export const AttachmentManager = ({
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        if (attachment.type === 'link') {
-                          window.open(attachment.url, '_blank');
-                        } else {
-                          const link = document.createElement('a');
-                          link.href = attachment.url;
-                          link.download = attachment.name;
-                          link.click();
-                        }
-                      }}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleRemoveAttachment(attachment.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (attachment.type === 'link') {
+                  window.open(attachment.url, '_blank');
+                } else {
+                  const link = document.createElement('a');
+                  link.href = attachment.url;
+                  link.download = attachment.name;
+                  link.click();
+                }
+              }}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => { e.stopPropagation(); handleRemoveAttachment(attachment.id); }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
                 </div>
               ))}
             </div>
