@@ -144,13 +144,13 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem 
-                  onClick={() => handleDeleteChecklist(checklist.id)}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteChecklist(checklist.id); }}
                   className="text-red-600"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -174,7 +174,7 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
 
           <div className="space-y-2 pl-6">
             {checklist.items.map(item => (
-              <div key={item.id} className="flex items-center gap-3 group">
+              <div key={item.id} className="flex items-center gap-3 group" onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   checked={item.completed}
                   onCheckedChange={() => handleToggleItem(checklist.id, item.id)}
@@ -186,7 +186,7 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
                   variant="ghost"
                   size="sm"
                   className="opacity-0 group-hover:opacity-100"
-                  onClick={() => handleDeleteItem(checklist.id, item.id)}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteItem(checklist.id, item.id); }}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -194,7 +194,7 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
             ))}
 
             {showNewItemForms[checklist.id] ? (
-              <div className="flex gap-2">
+              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                 <Input
                   value={newItemTexts[checklist.id] || ''}
                   onChange={(e) => setNewItemTexts(prev => ({ 
@@ -212,12 +212,13 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
                   }}
                   autoFocus
                 />
-                <Button onClick={() => handleAddItem(checklist.id)}>
+                <Button onClick={(e) => { e.stopPropagation(); handleAddItem(checklist.id); }}>
                   Adicionar
                 </Button>
                 <Button 
                   variant="ghost"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowNewItemForms(prev => ({ ...prev, [checklist.id]: false }));
                     setNewItemTexts(prev => ({ ...prev, [checklist.id]: '' }));
                   }}
@@ -230,7 +231,7 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start"
-                onClick={() => setShowNewItemForms(prev => ({ ...prev, [checklist.id]: true }))}
+                onClick={(e) => { e.stopPropagation(); setShowNewItemForms(prev => ({ ...prev, [checklist.id]: true })); }}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar item
@@ -242,7 +243,7 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
 
       {/* Add new checklist */}
       {showNewChecklistForm ? (
-        <div className="space-y-2">
+        <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
           <Input
             value={newChecklistTitle}
             onChange={(e) => setNewChecklistTitle(e.target.value)}
@@ -258,12 +259,13 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
             autoFocus
           />
           <div className="flex gap-2">
-            <Button onClick={handleAddChecklist}>
+            <Button onClick={(e) => { e.stopPropagation(); handleAddChecklist(); }}>
               Adicionar
             </Button>
             <Button 
               variant="ghost"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setShowNewChecklistForm(false);
                 setNewChecklistTitle('');
               }}
@@ -276,7 +278,7 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
         <Button
           variant="ghost"
           className="w-full justify-start"
-          onClick={() => setShowNewChecklistForm(true)}
+          onClick={(e) => { e.stopPropagation(); setShowNewChecklistForm(true); }}
         >
           <CheckSquare className="h-4 w-4 mr-2" />
           Lista de verificação

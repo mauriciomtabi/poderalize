@@ -60,13 +60,15 @@ export const DueDatePicker = ({
             </div>
           )}
 
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            initialFocus
-            className={cn("p-3 pointer-events-auto")}
-          />
+          <div onClick={(e) => e.stopPropagation()}>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </div>
 
           <div className="flex justify-between gap-2 pt-4">
             <div>
@@ -74,7 +76,7 @@ export const DueDatePicker = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={handleRemoveDate}
+                  onClick={(e) => { e.stopPropagation(); handleRemoveDate(); }}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -84,10 +86,10 @@ export const DueDatePicker = ({
             </div>
             
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCancel}>
+              <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleCancel(); }}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave}>
+              <Button onClick={(e) => { e.stopPropagation(); handleSave(); }}>
                 {selectedDate ? 'Salvar' : 'Remover'}
               </Button>
             </div>

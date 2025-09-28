@@ -52,14 +52,14 @@ export const MemberPicker = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4 max-h-96 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           {availableMembers.map(member => {
             const isSelected = tempSelected.some(m => m.id === member.id);
             return (
               <div 
                 key={member.id} 
                 className="flex items-center space-x-3 p-2 rounded hover:bg-muted cursor-pointer"
-                onClick={() => handleToggleMember(member)}
+                onClick={(e) => { e.stopPropagation(); handleToggleMember(member); }}
               >
                 <Checkbox checked={isSelected} onChange={() => {}} />
                 <Avatar className="h-8 w-8">
@@ -78,10 +78,10 @@ export const MemberPicker = ({
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleCancel(); }}>
             Cancelar
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={(e) => { e.stopPropagation(); handleSave(); }}>
             Salvar ({tempSelected.length})
           </Button>
         </div>

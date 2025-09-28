@@ -97,17 +97,17 @@ export const MoveCardDialog = ({
           </ScrollArea>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleMove} 
-            disabled={!selectedListId || selectedListId === currentListId}
-          >
-            Mover
-          </Button>
-        </DialogFooter>
+      <DialogFooter>
+        <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleCancel(); }}>
+          Cancelar
+        </Button>
+        <Button 
+          onClick={(e) => { e.stopPropagation(); handleMove(); }}
+          disabled={!selectedListId || selectedListId === currentListId}
+        >
+          Mover
+        </Button>
+      </DialogFooter>
       </DialogContent>
     </Dialog>
   );

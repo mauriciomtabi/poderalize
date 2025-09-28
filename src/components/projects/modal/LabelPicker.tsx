@@ -52,14 +52,14 @@ export const LabelPicker = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-3 max-h-96 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           {availableLabels.map(label => {
             const isSelected = tempSelected.some(l => l.id === label.id);
             return (
               <div 
                 key={label.id} 
                 className="flex items-center space-x-3 p-3 rounded hover:bg-muted cursor-pointer"
-                onClick={() => handleToggleLabel(label)}
+                onClick={(e) => { e.stopPropagation(); handleToggleLabel(label); }}
               >
                 <Checkbox checked={isSelected} onChange={() => {}} />
                 <Badge 
@@ -74,10 +74,10 @@ export const LabelPicker = ({
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleCancel(); }}>
             Cancelar
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={(e) => { e.stopPropagation(); handleSave(); }}>
             Salvar ({tempSelected.length})
           </Button>
         </div>

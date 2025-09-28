@@ -67,7 +67,7 @@ export const CommentsSection = ({ card }: CommentsSectionProps) => {
 
       {/* Add new comment */}
       {currentUser && (
-        <div className="flex gap-3">
+        <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
           <Avatar className="h-8 w-8">
             <AvatarImage src={currentUser.name} />
             <AvatarFallback className="text-xs">
@@ -84,7 +84,7 @@ export const CommentsSection = ({ card }: CommentsSectionProps) => {
             />
             <div className="flex justify-end">
               <Button 
-                onClick={handleAddComment}
+                onClick={(e) => { e.stopPropagation(); handleAddComment(); }}
                 disabled={!newComment.trim()}
                 size="sm"
               >

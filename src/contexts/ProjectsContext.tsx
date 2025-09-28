@@ -476,12 +476,58 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     duplicateCard: async (cardId: string) => {
-      // TODO: Implement card duplication
-      toast({
-        title: "Em desenvolvimento",
-        description: "Funcionalidade de duplicar cartão em desenvolvimento",
-      });
-      return false;
+      try {
+        if (!state.currentBoard) return false;
+        
+        // Find the original card
+        const originalCard = state.currentBoard.lists
+          .flatMap(list => list.cards)
+          .find(card => card.id === cardId);
+          
+        if (!originalCard) return false;
+
+        // Create duplicate with new position
+        const cardsInSameList = state.currentBoard.lists
+          .find(list => list.id === originalCard.listId)?.cards || [];
+        const newPosition = cardsInSameList.length;
+
+        const duplicatedCard = await cardsHook.createCard({
+          list_id: originalCard.listId,
+          title: `${originalCard.title} (cópia)`,
+          description: originalCard.description,
+          status: originalCard.status,
+          priority: originalCard.priority,
+          position: newPosition,
+          cover: originalCard.cover,
+          location: originalCard.location,
+          custom_fields: originalCard.customFields,
+          estimated_hours: originalCard.estimatedHours,
+          actual_hours: 0, // Reset actual hours for copy
+          start_date: originalCard.startDate,
+          due_date: originalCard.dueDate,
+          archived: false,
+          watching: false,
+          created_by: user?.id || ''
+        });
+
+        if (duplicatedCard && state.currentBoard) {
+          await loadBoard(state.currentBoard.id);
+          toast({
+            title: "Cartão duplicado",
+            description: "O cartão foi duplicado com sucesso",
+          });
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Error duplicating card:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao duplicar cartão",
+          variant: "destructive",
+        });
+        return false;
+      }
     },
 
     archiveCard: async (cardId: string) => {
