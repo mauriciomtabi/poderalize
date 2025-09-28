@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
-  PieChart
+  PieChart,
+  UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const menuItems = [
   { icon: Kanban, label: "Projetos", href: "/projetos" },
   { icon: PieChart, label: "CRM", href: "/crm" },
   { icon: Target, label: "Leads", href: "/leads" },
+  { icon: UserCheck, label: "Clientes", href: "/clientes" },
   { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
   { icon: Settings, label: "Configurações", href: "/configuracoes" },
 ];
