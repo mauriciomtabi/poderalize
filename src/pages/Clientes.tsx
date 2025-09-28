@@ -283,6 +283,6 @@ const Clientes = () => {
         </Dialog>
       </div>
     );
-  };
+};
 
-  export default Clientes;
+export default Clientes;
