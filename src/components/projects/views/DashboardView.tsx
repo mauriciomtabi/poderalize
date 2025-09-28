@@ -50,38 +50,38 @@ export const DashboardView = () => {
   }
 
   const allCards = state.currentBoard.lists.flatMap(list => list.cards);
-  const filteredCards = actions.getFilteredCards();
+  const cards = actions.getFilteredCards();
 
   // Calculate metrics
   const metrics: DashboardMetrics = {
     totalCards: allCards.length,
-    completedCards: allCards.filter(card => card.status === 'done').length,
-    overdue: allCards.filter(card => 
+    completedCards: cards.filter(card => card.status === 'done').length,
+    overdue: cards.filter(card => 
       card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done'
     ).length,
-    completionRate: allCards.length > 0 ? (allCards.filter(card => card.status === 'done').length / allCards.length) * 100 : 0,
-    averageTimeToComplete: 0, // Would need to calculate based on completion dates
-    cardsByStatus: allCards.reduce((acc, card) => {
+    completionRate: cards.length > 0 ? (cards.filter(card => card.status === 'done').length / cards.length) * 100 : 0,
+    averageTimeToComplete: 0,
+    cardsByStatus: cards.reduce((acc, card) => {
       acc[card.status] = (acc[card.status] || 0) + 1;
       return acc;
     }, {} as Record<CardStatus, number>),
-    cardsByPriority: allCards.reduce((acc, card) => {
+    cardsByPriority: cards.reduce((acc, card) => {
       acc[card.priority] = (acc[card.priority] || 0) + 1;
       return acc;
     }, {} as Record<Priority, number>),
-    cardsByMember: allCards.reduce((acc, card) => {
+    cardsByMember: cards.reduce((acc, card) => {
       card.assignees.forEach(assignee => {
         acc[assignee.name] = (acc[assignee.name] || 0) + 1;
       });
       return acc;
     }, {} as Record<string, number>),
-    cardsByLabel: allCards.reduce((acc, card) => {
+    cardsByLabel: cards.reduce((acc, card) => {
       card.labels.forEach(label => {
         acc[label.name] = (acc[label.name] || 0) + 1;
       });
       return acc;
     }, {} as Record<string, number>),
-    activityTrend: [] // Would need to calculate based on card creation/completion dates
+    activityTrend: []
   };
 
   // Prepare chart data
@@ -94,11 +94,10 @@ export const DashboardView = () => {
     color: STATUS_COLORS[status as CardStatus]
   }));
 
-  // Get all unique labels and their usage count
   const labelData = (() => {
     const labelCounts: { [key: string]: { count: number; color: string; name: string } } = {};
     
-    allCards.forEach(card => {
+    cards.forEach(card => {
       card.labels.forEach(label => {
         if (labelCounts[label.id]) {
           labelCounts[label.id].count++;
@@ -116,7 +115,7 @@ export const DashboardView = () => {
       name: data.name,
       value: data.count,
       color: data.color
-    })).sort((a, b) => b.value - a.value).slice(0, 8); // Top 8 labels
+    })).sort((a, b) => b.value - a.value).slice(0, 8);
   })();
 
   const memberChartData = Object.entries(metrics.cardsByMember)
@@ -139,7 +138,7 @@ export const DashboardView = () => {
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totalCards}</div>
             <p className="text-xs text-muted-foreground">
-              {filteredCards.length} após filtros
+              {cards.length} após filtros
             </p>
           </CardContent>
         </Card>
@@ -268,7 +267,7 @@ export const DashboardView = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {state.currentBoard.members.map((member) => {
-              const memberCards = allCards.filter(card => 
+              const memberCards = cards.filter(card => 
                 card.assignees.some(assignee => assignee.id === member.id)
               );
               const completedCards = memberCards.filter(card => card.status === 'done');

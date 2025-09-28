@@ -43,7 +43,7 @@ const statusConfig = {
   'done': { label: 'Concluído', className: 'text-green-500' }
 };
 
-type SortField = 'title' | 'priority' | 'status' | 'dueDate' | 'assignee';
+type SortField = 'title' | 'status' | 'dueDate' | 'assignee';
 type SortDirection = 'asc' | 'desc';
 
 export const TableView = () => {
@@ -51,9 +51,6 @@ export const TableView = () => {
   const [sortField, setSortField] = useState<SortField>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
-
-  const allCards = state.currentBoard?.lists.flatMap(list => list.cards) || [];
-  const filteredCards = actions.getFilteredCards();
 
   const handleDelete = (cardId: string) => {
     actions.deleteCard(cardId);
@@ -73,7 +70,7 @@ export const TableView = () => {
     }
   };
 
-  const sortedCards = [...filteredCards].sort((a, b) => {
+  const sortedCards = [...actions.getFilteredCards()].sort((a, b) => {
     let aValue: any;
     let bValue: any;
 
@@ -81,11 +78,6 @@ export const TableView = () => {
       case 'title':
         aValue = a.title.toLowerCase();
         bValue = b.title.toLowerCase();
-        break;
-      case 'priority':
-        const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
-        aValue = priorityOrder[a.priority];
-        bValue = priorityOrder[b.priority];
         break;
       case 'status':
         aValue = a.status;
@@ -169,7 +161,6 @@ export const TableView = () => {
           </TableHeader>
           <TableBody>
             {sortedCards.map((card) => {
-              const PriorityIcon = priorityConfig[card.priority].icon;
               const completedChecklists = card.checklists.reduce((acc, checklist) => 
                 acc + checklist.items.filter(item => item.completed).length, 0
               );
@@ -204,7 +195,6 @@ export const TableView = () => {
                       {statusConfig[card.status].label}
                     </Badge>
                   </TableCell>
-                  
                   
                   <TableCell>
                     <div className="flex -space-x-1">
