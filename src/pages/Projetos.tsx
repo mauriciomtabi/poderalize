@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
 import { ProjectsProvider } from "@/contexts/ProjectsContext";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ProjectsHeader } from "@/components/projects/ProjectsHeader";

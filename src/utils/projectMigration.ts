@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export const createInitialBoard = async (userId: string) => {
+export const createInitialBoard = async (userId: string, userEmail?: string, userName?: string) => {
   try {
     // Create initial board
     const { data: board, error: boardError } = await supabase
@@ -79,8 +79,8 @@ export const createInitialBoard = async (userId: string) => {
       .insert({
         board_id: board.id,
         user_id: userId,
-        name: 'Você',
-        email: 'user@example.com',
+        name: userName || 'Você',
+        email: userEmail || 'user@example.com',
         role: 'owner'
       });
 

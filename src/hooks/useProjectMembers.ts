@@ -54,12 +54,20 @@ export const useProjectMembers = (boardId?: string) => {
     if (!user) return null;
 
     try {
+      // If adding the current user, use their real data
+      const finalMemberData = memberData.user_id === user.id ? {
+        ...memberData,
+        name: user.full_name || user.email || 'Você',
+        email: user.email || 'user@example.com',
+        added_by: user.id,
+      } : {
+        ...memberData,
+        added_by: user.id,
+      };
+
       const { data, error } = await supabase
         .from('project_members')
-        .insert({
-          ...memberData,
-          added_by: user.id,
-        })
+        .insert(finalMemberData)
         .select()
         .single();
 

@@ -181,17 +181,37 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const labelsHook = useProjectLabels(state.currentBoard?.id);
   const membersHook = useProjectMembers(state.currentBoard?.id);
 
-  // Load all boards and set initial board
+  // Load all boards and set initial board, create one if none exists
   useEffect(() => {
-    if (boardsHook.boards.length > 0 && !state.currentBoard) {
-      loadBoard(boardsHook.boards[0].id);
-    }
-    setState(prev => ({ 
-      ...prev, 
-      boards: boardsHook.boards.map(board => transformDBBoard(board, [], [], [])),
-      isLoading: boardsHook.isLoading
-    }));
-  }, [boardsHook.boards, boardsHook.isLoading]);
+    const handleBoardsLoaded = async () => {
+      if (!boardsHook.isLoading && user) {
+        if (boardsHook.boards.length === 0) {
+          // No boards exist, create initial board
+          setState(prev => ({ ...prev, isLoading: true }));
+          const { createInitialBoard } = await import('@/utils/projectMigration');
+          const newBoard = await createInitialBoard(user.id, user.email, user.full_name);
+          
+          if (newBoard) {
+            // Refresh boards after creation
+            await boardsHook.fetchBoards();
+          } else {
+            setState(prev => ({ ...prev, isLoading: false }));
+          }
+        } else if (!state.currentBoard) {
+          // Boards exist, load the first one
+          loadBoard(boardsHook.boards[0].id);
+        }
+      }
+      
+      setState(prev => ({ 
+        ...prev, 
+        boards: boardsHook.boards.map(board => transformDBBoard(board, [], [], [])),
+        isLoading: boardsHook.isLoading
+      }));
+    };
+    
+    handleBoardsLoaded();
+  }, [boardsHook.boards, boardsHook.isLoading, user]);
 
   // Load current board data
   const loadBoard = async (boardId: string) => {
