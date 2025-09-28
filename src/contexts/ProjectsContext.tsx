@@ -273,6 +273,51 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         allCards.push(...listCards.filter(c => c.list_id === list.id).map(transformDBCard));
       }
 
+      // Enrich cards with labels and assignees from linking tables
+      const cardIds = allCards.map(c => c.id);
+      if (cardIds.length > 0) {
+        // Map helpers
+        const labelMap = new Map(labels.map(l => [l.id, l]));
+        const memberMap = new Map(members.map(m => [m.id, m]));
+
+        // Load card-label links
+        const { data: cardLabelLinks } = await supabase
+          .from('project_card_labels')
+          .select('card_id, label_id')
+          .in('card_id', cardIds);
+
+        // Load card-assignee links
+        const { data: cardAssigneeLinks } = await supabase
+          .from('project_card_assignees')
+          .select('card_id, member_id')
+          .in('card_id', cardIds);
+
+        const labelsByCard = new Map<string, any[]>();
+        const assigneesByCard = new Map<string, any[]>();
+
+        (cardLabelLinks || []).forEach(link => {
+          const lbl = labelMap.get(link.label_id);
+          if (!lbl) return;
+          const arr = labelsByCard.get(link.card_id) || [];
+          arr.push(lbl);
+          labelsByCard.set(link.card_id, arr);
+        });
+
+        (cardAssigneeLinks || []).forEach(link => {
+          const mem = memberMap.get(link.member_id);
+          if (!mem) return;
+          const arr = assigneesByCard.get(link.card_id) || [];
+          arr.push(mem);
+          assigneesByCard.set(link.card_id, arr);
+        });
+
+        // Attach to card objects
+        allCards.forEach(c => {
+          (c as any).labels = labelsByCard.get(c.id) || [];
+          (c as any).assignees = assigneesByCard.get(c.id) || [];
+        });
+      }
+
       // Group cards by list
       const listsWithCards = lists.map(list => 
         transformDBList(list, allCards.filter(card => card.listId === list.id))
@@ -469,32 +514,79 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     updateCard: async (card: ProjectCard) => {
-      const result = await cardsHook.updateCard(card.id, {
-        title: card.title,
-        description: card.description,
-        status: card.status,
-        priority: card.priority,
-        due_date: card.dueDate,
-        start_date: card.startDate,
-        estimated_hours: card.estimatedHours,
-        actual_hours: card.actualHours,
-        cover: card.cover,
-        location: card.location,
-        custom_fields: {
-          ...(card.customFields || {}),
-          checklists: card.checklists || [],
-          comments: card.comments || [],
-          attachments: card.attachments || [],
-          activities: card.activities || []
-        },
-        archived: card.archived,
-        watching: card.watching
-      } as any);
-      
-      if (result && state.currentBoard) {
-        await loadBoard(state.currentBoard.id);
+      try {
+        // Sync labels and assignees link tables if we have current board context
+        const prevCard = state.currentBoard?.lists.flatMap(l => l.cards).find(c => c.id === card.id);
+
+        // Labels diff
+        const prevLabelIds = (prevCard?.labels || []).map(l => l.id);
+        const newLabelIds = (card.labels || []).map(l => l.id);
+        const labelsToAdd = newLabelIds.filter(id => !prevLabelIds.includes(id));
+        const labelsToRemove = prevLabelIds.filter(id => !newLabelIds.includes(id));
+
+        if (labelsToAdd.length > 0) {
+          await supabase
+            .from('project_card_labels')
+            .insert(labelsToAdd.map(id => ({ card_id: card.id, label_id: id })) as any);
+        }
+        if (labelsToRemove.length > 0) {
+          await supabase
+            .from('project_card_labels')
+            .delete()
+            .eq('card_id', card.id)
+            .in('label_id', labelsToRemove as any);
+        }
+
+        // Assignees diff
+        const prevMemberIds = (prevCard?.assignees || []).map(m => m.id);
+        const newMemberIds = (card.assignees || []).map(m => m.id);
+        const membersToAdd = newMemberIds.filter(id => !prevMemberIds.includes(id));
+        const membersToRemove = prevMemberIds.filter(id => !newMemberIds.includes(id));
+
+        if (membersToAdd.length > 0) {
+          await supabase
+            .from('project_card_assignees')
+            .insert(membersToAdd.map(id => ({ card_id: card.id, member_id: id })) as any);
+        }
+        if (membersToRemove.length > 0) {
+          await supabase
+            .from('project_card_assignees')
+            .delete()
+            .eq('card_id', card.id)
+            .in('member_id', membersToRemove as any);
+        }
+
+        // Update main card fields
+        const result = await cardsHook.updateCard(card.id, {
+          title: card.title,
+          description: card.description,
+          status: card.status,
+          priority: card.priority,
+          due_date: card.dueDate,
+          start_date: card.startDate,
+          estimated_hours: card.estimatedHours,
+          actual_hours: card.actualHours,
+          cover: card.cover,
+          location: card.location,
+          custom_fields: {
+            ...(card.customFields || {}),
+            checklists: card.checklists || [],
+            comments: card.comments || [],
+            attachments: card.attachments || [],
+            activities: card.activities || []
+          },
+          archived: card.archived,
+          watching: card.watching
+        } as any);
+        
+        if (result && state.currentBoard) {
+          await loadBoard(state.currentBoard.id);
+        }
+        return result;
+      } catch (error) {
+        console.error('Error updating card with labels/assignees:', error);
+        return false;
       }
-      return result;
     },
 
     deleteCard: async (cardId: string) => {
