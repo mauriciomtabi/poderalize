@@ -40,7 +40,7 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
     return filter !== null;
   }).length;
   return (
-    <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       {/* View Selector and Search */}
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">

@@ -76,12 +76,17 @@ export const EnhancedProjectCard = ({
 
   return (
     <Card className={cn("card-kanban group", cardColorClass)} onClick={onClick}>
-      {/* Header: title + assignees + labels */}
+      {/* Header: title + assignees + labels + priority */}
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-medium text-sm cursor-pointer line-clamp-1">
+        <h3 className="font-medium text-sm cursor-pointer line-clamp-1 flex-1">
           {card.title}
         </h3>
         <div className="flex items-center gap-2">
+          {/* Priority indicator */}
+          <div className={cn("p-1 rounded", priorityConfig[card.priority].className)}>
+            <PriorityIcon size={12} />
+          </div>
+          
           {/* Assignees (initials) */}
           {card.assignees.length > 0 && (
             <div className="flex -space-x-1">
@@ -171,10 +176,7 @@ export const EnhancedProjectCard = ({
             </div>
           )}
 
-          {/* Priority Icon */}
-          <div className={priorityConfig[card.priority].className}>
-            <PriorityIcon size={12} />
-          </div>
+          {/* No longer showing priority icon here since it's in the header */}
         </div>
 
         <div className="flex items-center space-x-2">
