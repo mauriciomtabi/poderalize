@@ -10,22 +10,8 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 export const ProjectsContent = ({ showFilters }: { showFilters: boolean }) => {
   const { state } = useProjects();
 
-  // Show loading state while creating initial project or loading data
-  if (state.isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" />
-          <div className="space-y-2">
-            <p className="text-lg font-medium">Carregando projetos...</p>
-            <p className="text-sm text-muted-foreground">
-              {state.boards.length === 0 ? "Criando seu primeiro projeto" : "Carregando dados"}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Note: We no longer unmount the view during loading to prevent modal closures
+  // The LoadingOverlay in KanbanView will handle the loading state
 
   const renderCurrentView = () => {
     switch (state.currentView) {

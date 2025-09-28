@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Member } from "@/types/projects";
@@ -50,6 +50,9 @@ export const MemberPicker = ({
             <Users className="h-5 w-5" />
             Selecionar Membros
           </DialogTitle>
+          <DialogDescription>
+            Escolha os membros que deseja atribuir ao cartão.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 max-h-96 overflow-y-auto" onClick={(e) => e.stopPropagation()}>

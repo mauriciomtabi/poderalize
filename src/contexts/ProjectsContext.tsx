@@ -247,11 +247,20 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         return;
       }
 
-      // Fetch labels and members
-      await Promise.all([
-        labelsHook.fetchLabels(),
-        membersHook.fetchMembers()
+      // Fetch labels and members directly from Supabase for reliability
+      const [labelsResponse, membersResponse] = await Promise.all([
+        supabase
+          .from('project_labels')
+          .select('*')
+          .eq('board_id', boardId),
+        supabase
+          .from('project_members')
+          .select('*')
+          .eq('board_id', boardId)
       ]);
+
+      const labels = labelsResponse.data?.map(transformDBLabel) || [];
+      const members = membersResponse.data?.map(transformDBMember) || [];
 
       // Load cards for all lists
       const allCards: ProjectCard[] = [];
@@ -270,8 +279,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const transformedBoard = transformDBBoard(
         board,
         listsWithCards,
-        labelsHook.labels,
-        membersHook.members
+        labels,
+        members
       );
 
       setState(prev => ({
