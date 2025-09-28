@@ -28,10 +28,10 @@ export const createInitialBoard = async (userId: string, userEmail?: string, use
 
     // Create initial lists
     const lists = [
-      { title: 'A fazer', color: '#3b82f6', position: 0 },
+      { title: 'A Fazer', color: '#f59e0b', position: 0 },
       { title: 'Em andamento', color: '#f59e0b', position: 1 },
-      { title: 'Aguardando aprovação', color: '#8b5cf6', position: 2 },
-      { title: 'Finalizado', color: '#10b981', position: 3 }
+      { title: 'Aguardando Aprovação', color: '#f59e0b', position: 2 },
+      { title: 'Executado', color: '#f59e0b', position: 3 }
     ];
 
     const { data: createdLists, error: listsError } = await supabase
