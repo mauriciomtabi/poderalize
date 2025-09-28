@@ -181,6 +181,13 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const labelsHook = useProjectLabels(state.currentBoard?.id);
   const membersHook = useProjectMembers(state.currentBoard?.id);
 
+  // Refetch lists when current board changes
+  useEffect(() => {
+    if (state.currentBoard?.id) {
+      listsHook.fetchLists();
+    }
+  }, [state.currentBoard?.id]);
+
   // Load all boards and set initial board, create one if none exists
   useEffect(() => {
     const handleBoardsLoaded = async () => {
@@ -221,22 +228,36 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const board = boardsHook.boards.find(b => b.id === boardId);
       if (!board) return;
 
-      // Fetch related data
+      // Create a temporary lists hook for this specific board
+      const { data: listsData, error: listsError } = await supabase
+        .from('project_lists')
+        .select('*')
+        .eq('board_id', boardId)
+        .order('position', { ascending: true });
+
+      if (listsError) {
+        console.error('Error fetching lists:', listsError);
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      // Fetch labels and members
       await Promise.all([
-        listsHook.fetchLists(),
         labelsHook.fetchLabels(),
         membersHook.fetchMembers()
       ]);
 
       // Load cards for all lists
       const allCards: ProjectCard[] = [];
-      for (const list of listsHook.lists) {
+      const lists = listsData || [];
+      
+      for (const list of lists) {
         const listCards = await cardsHook.fetchAllBoardCards(boardId);
         allCards.push(...listCards.filter(c => c.list_id === list.id).map(transformDBCard));
       }
 
       // Group cards by list
-      const listsWithCards = listsHook.lists.map(list => 
+      const listsWithCards = lists.map(list => 
         transformDBList(list, allCards.filter(card => card.listId === list.id))
       );
 
@@ -327,11 +348,17 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     addList: async (title: string, color: string) => {
       if (!state.currentBoard) return false;
       
+      // Get current lists count
+      const { data: existingLists } = await supabase
+        .from('project_lists')
+        .select('id')
+        .eq('board_id', state.currentBoard.id);
+      
       const result = await listsHook.createList({
         board_id: state.currentBoard.id,
         title,
         color,
-        position: listsHook.lists.length,
+        position: existingLists?.length || 0,
         archived: false,
         subscribed: true
       });

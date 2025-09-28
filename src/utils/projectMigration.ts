@@ -2,6 +2,25 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const createInitialBoard = async (userId: string, userEmail?: string, userName?: string) => {
   try {
+    // Check if user already has a board
+    const { data: existingBoards } = await supabase
+      .from('project_boards')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (existingBoards && existingBoards.length > 0) {
+      // User already has boards, return the first one
+      const { data: board } = await supabase
+        .from('project_boards')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+      
+      return board;
+    }
+
     // Create initial board
     const { data: board, error: boardError } = await supabase
       .from('project_boards')
