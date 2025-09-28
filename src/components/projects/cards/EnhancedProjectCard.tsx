@@ -76,24 +76,40 @@ export const EnhancedProjectCard = ({
 
   return (
     <Card className={cn("card-kanban group", cardColorClass)} onClick={onClick}>
-      {/* Labels */}
-      {card.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {card.labels.map((label) => (
-            <div
-              key={label.id}
-              className="h-2 min-w-8 rounded flex-1 max-w-16"
-              style={{ backgroundColor: label.color }}
-              title={label.name}
-            />
-          ))}
+      {/* Header: title + assignees + labels */}
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="font-medium text-sm cursor-pointer line-clamp-1">
+          {card.title}
+        </h3>
+        <div className="flex items-center gap-2">
+          {/* Assignees (initials) */}
+          {card.assignees.length > 0 && (
+            <div className="flex -space-x-1">
+              {card.assignees.slice(0, 3).map((assignee) => (
+                <Avatar key={assignee.id} className="h-5 w-5 border-2 border-background">
+                  <AvatarImage src={assignee.avatar} />
+                  <AvatarFallback className="text-[10px]">
+                    {assignee.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+            </div>
+          )}
+          {/* Label dots */}
+          {card.labels.length > 0 && (
+            <div className="flex items-center gap-1">
+              {card.labels.slice(0, 3).map((label) => (
+                <span
+                  key={label.id}
+                  className="h-3 w-3 rounded-full border border-background"
+                  style={{ backgroundColor: label.color }}
+                  title={label.name}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      {/* Title */}
-      <h3 className="font-medium text-sm mb-2 cursor-pointer">
-        {card.title}
-      </h3>
+      </div>
 
       {/* Description */}
       {card.description && (

@@ -236,8 +236,34 @@ export const CardDetailModal = ({
                       na lista <span className="font-medium">{state.currentBoard?.lists.find(l => l.id === latestCard.listId)?.title}</span>
                     </p>
                   </div>
-                  
-                </div>
+                  <div className="flex items-center gap-3">
+                    {/* Assignees next to title */}
+                    {latestCard.assignees.length > 0 && (
+                      <div className="flex -space-x-2">
+                        {latestCard.assignees.slice(0, 4).map(member => (
+                          <Avatar key={member.id} className="h-6 w-6 border-2 border-background">
+                            <AvatarImage src={member.avatar} />
+                            <AvatarFallback className="text-[10px]">
+                              {member.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                      </div>
+                    )}
+                    {/* Label dots next to title */}
+                    {latestCard.labels.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        {latestCard.labels.slice(0, 5).map(label => (
+                          <span
+                            key={label.id}
+                            className="h-3 w-3 rounded-full border border-background"
+                            style={{ backgroundColor: label.color }}
+                            title={label.name}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                 {/* Labels */}
                 {latestCard.labels.length > 0 && <div className="space-y-2">
