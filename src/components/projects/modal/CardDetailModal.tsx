@@ -264,6 +264,7 @@ export const CardDetailModal = ({
                       </div>
                     )}
                   </div>
+                </div>
 
                 {/* Labels */}
                 {latestCard.labels.length > 0 && <div className="space-y-2">
