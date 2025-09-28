@@ -14,12 +14,14 @@ import { TemperatureSelector } from "./TemperatureSelector";
 import { InteractionForm } from "./InteractionForm";
 import { InteractionHistory } from "./InteractionHistory";
 import { ScheduleFollowUpDialog } from "./ScheduleFollowUpDialog";
-import { Building2, Mail, Phone, Globe, DollarSign, Calendar, TrendingUp, Clock, Save, Lightbulb, AlertTriangle, Star, Check, Eye } from "lucide-react";
+import { Building2, Mail, Phone, Globe, DollarSign, Calendar, TrendingUp, Clock, Save, Lightbulb, AlertTriangle, Star, Check, Eye, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { LeadActionDialog } from "./LeadActionDialog";
+import { useLeads } from "@/hooks/useLeads";
 interface LeadDetailModalProps {
   lead: LeadAdvanced;
 }
@@ -42,6 +44,12 @@ export const LeadDetailModal = ({
   });
   
   const [selectedFollowUp, setSelectedFollowUp] = useState<any>(null);
+  const [actionDialog, setActionDialog] = useState<{ isOpen: boolean; action: 'close' | 'lose' | null }>({
+    isOpen: false,
+    action: null
+  });
+
+  const { markLeadAsClosed, markLeadAsLost } = useLeads();
 
   // Hooks for interactions and follow-ups
   const {
@@ -129,6 +137,20 @@ export const LeadDetailModal = ({
       toast.error("Erro ao marcar follow-up como concluído");
     }
   };
+
+  const handleLeadAction = async (motivo?: string) => {
+    if (actionDialog.action === 'close') {
+      const success = await markLeadAsClosed(lead.id);
+      if (success) {
+        setSelectedLead(null); // Close modal after conversion
+      }
+    } else if (actionDialog.action === 'lose' && motivo) {
+      const success = await markLeadAsLost(lead.id, motivo);
+      if (success) {
+        setSelectedLead(null); // Close modal after marking as lost
+      }
+    }
+  };
   return <Dialog open={!!selectedLead} onOpenChange={() => setSelectedLead(null)}>
       <DialogContent className="max-w-5xl h-[85vh] p-0 flex flex-col">
         {/* Header with Action Buttons */}
@@ -155,7 +177,24 @@ export const LeadDetailModal = ({
             </div>
             {/* Action Buttons moved to header */}
             <div className="flex gap-2">
-              <Button onClick={handleSaveNegotiation} size="sm">
+              <Button 
+                onClick={() => setActionDialog({ isOpen: true, action: 'close' })} 
+                size="sm"
+                variant="default"
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Fechar Lead
+              </Button>
+              <Button 
+                onClick={() => setActionDialog({ isOpen: true, action: 'lose' })} 
+                size="sm"
+                variant="destructive"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Marcar Perdido
+              </Button>
+              <Button onClick={handleSaveNegotiation} size="sm" variant="outline">
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>
@@ -345,6 +384,15 @@ export const LeadDetailModal = ({
           </div>
         </ScrollArea>
       </DialogContent>
+
+      {/* Lead Action Dialog */}
+      <LeadActionDialog
+        isOpen={actionDialog.isOpen}
+        onClose={() => setActionDialog({ isOpen: false, action: null })}
+        onConfirm={handleLeadAction}
+        action={actionDialog.action!}
+        leadName={lead.nome}
+      />
       
       {/* Follow-up Detail Modal */}
       {selectedFollowUp && (

@@ -847,6 +847,7 @@ export type Database = {
           id: string
           indicador_potencial: string | null
           instagram: string | null
+          motivo_perda: string | null
           necessidade_oculta: string[] | null
           nivel_consciencia: string | null
           nome: string
@@ -898,6 +899,7 @@ export type Database = {
           id?: string
           indicador_potencial?: string | null
           instagram?: string | null
+          motivo_perda?: string | null
           necessidade_oculta?: string[] | null
           nivel_consciencia?: string | null
           nome: string
@@ -949,6 +951,7 @@ export type Database = {
           id?: string
           indicador_potencial?: string | null
           instagram?: string | null
+          motivo_perda?: string | null
           necessidade_oculta?: string[] | null
           nivel_consciencia?: string | null
           nome?: string

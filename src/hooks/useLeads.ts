@@ -120,6 +120,9 @@ export interface Lead {
   // Temperatura da negociação
   temperatura_negociacao?: 'muito_fraca' | 'fraca' | 'mediana' | 'forte' | 'muito_forte';
   
+  // Motivo da perda
+  motivo_perda?: string;
+  
   created_at: string;
   updated_at: string;
 }
@@ -421,6 +424,91 @@ export function useLeads() {
     }
   }, [user, leads.length, isLoading, migrateLocalStorageData]);
 
+  // Mark lead as closed (converts to client)
+  const markLeadAsClosed = useCallback(async (leadId: string) => {
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return false;
+    }
+
+    try {
+      const leadToClose = leads.find(lead => lead.id === leadId);
+      if (!leadToClose) {
+        toast.error('Lead não encontrado');
+        return false;
+      }
+
+      const { data, error } = await supabase
+        .from('leads')
+        .update({ status_simple: 'fechado' })
+        .eq('id', leadId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao marcar lead como fechado:', error);
+        toast.error(`Erro ao marcar lead como fechado: ${error.message}`);
+        return false;
+      }
+
+      // Convert to client
+      await convertLeadToCliente(data);
+      
+      setLeads(prev => prev.map(lead => lead.id === leadId ? data : lead));
+      return true;
+    } catch (error) {
+      console.error('Erro ao marcar lead como fechado:', error);
+      toast.error('Erro ao marcar lead como fechado');
+      return false;
+    }
+  }, [user, leads, convertLeadToCliente]);
+
+  // Mark lead as lost with reason
+  const markLeadAsLost = useCallback(async (leadId: string, motivo: string) => {
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return false;
+    }
+
+    if (!motivo || motivo.trim() === '') {
+      toast.error('Motivo da perda é obrigatório');
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .update({ 
+          status_simple: 'perdido',
+          motivo_perda: motivo.trim()
+        })
+        .eq('id', leadId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao marcar lead como perdido:', error);
+        toast.error(`Erro ao marcar lead como perdido: ${error.message}`);
+        return false;
+      }
+
+      setLeads(prev => prev.map(lead => lead.id === leadId ? data : lead));
+      toast.success('Lead marcado como perdido');
+      return true;
+    } catch (error) {
+      console.error('Erro ao marcar lead como perdido:', error);
+      toast.error('Erro ao marcar lead como perdido');
+      return false;
+    }
+  }, [user]);
+
+  // Get lost leads
+  const getLeadsPerdidos = useCallback(() => {
+    return leads.filter(lead => lead.status_simple === 'perdido');
+  }, [leads]);
+
   return {
     leads,
     isLoading,
@@ -429,5 +517,8 @@ export function useLeads() {
     deleteLead,
     refreshLeads: loadLeads,
     convertLeadToCliente,
+    markLeadAsClosed,
+    markLeadAsLost,
+    getLeadsPerdidos,
   };
 }

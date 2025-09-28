@@ -3,13 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LeadAdvanced } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
-import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell } from "lucide-react";
+import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell, MoreVertical, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NegotiationTemperature } from "@/types/crm";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { LeadActionDialog } from "./LeadActionDialog";
+import { useLeads } from "@/hooks/useLeads";
 interface LeadCardProps {
   lead: LeadAdvanced;
 }
@@ -22,6 +26,12 @@ export const LeadCard = ({
   const { user } = useAuth();
   const [hasPendingFollowUp, setHasPendingFollowUp] = useState(false);
   const [followUpState, setFollowUpState] = useState<'overdue' | 'today' | 'scheduled' | null>(null);
+  const [actionDialog, setActionDialog] = useState<{ isOpen: boolean; action: 'close' | 'lose' | null }>({
+    isOpen: false,
+    action: null
+  });
+
+  const { markLeadAsClosed, markLeadAsLost } = useLeads();
 
   useEffect(() => {
     const checkPendingFollowUps = async () => {
@@ -122,6 +132,18 @@ export const LeadCard = ({
   const handleClick = () => {
     setSelectedLead(lead);
   };
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+  };
+
+  const handleLeadAction = async (motivo?: string) => {
+    if (actionDialog.action === 'close') {
+      await markLeadAsClosed(lead.id);
+    } else if (actionDialog.action === 'lose' && motivo) {
+      await markLeadAsLost(lead.id, motivo);
+    }
+  };
   return <Card className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 border border-border" onClick={handleClick}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -142,20 +164,47 @@ export const LeadCard = ({
           </div>
         </div>
         
-        {/* Follow-up Indicator */}
-        {hasPendingFollowUp && followUpState && (
-          <div className="flex items-center" title={
-            followUpState === 'overdue' ? 'Follow-up atrasado' :
-            followUpState === 'today' ? 'Follow-up hoje' :
-            'Follow-up agendado'
-          }>
-            <Bell className={`h-4 w-4 ${
-              followUpState === 'overdue' ? 'text-red-500' :
-              followUpState === 'today' ? 'text-orange-500 animate-pulse' :
-              'text-blue-500'
-            }`} />
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Follow-up Indicator */}
+          {hasPendingFollowUp && followUpState && (
+            <div className="flex items-center" title={
+              followUpState === 'overdue' ? 'Follow-up atrasado' :
+              followUpState === 'today' ? 'Follow-up hoje' :
+              'Follow-up agendado'
+            }>
+              <Bell className={`h-4 w-4 ${
+                followUpState === 'overdue' ? 'text-red-500' :
+                followUpState === 'today' ? 'text-orange-500 animate-pulse' :
+                'text-blue-500'
+              }`} />
+            </div>
+          )}
+
+          {/* Actions Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={handleMenuClick}>
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => setActionDialog({ isOpen: true, action: 'close' })}
+                className="text-green-600"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Marcar como Fechado
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setActionDialog({ isOpen: true, action: 'lose' })}
+                className="text-red-600"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Marcar como Perdido
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Contact Info */}
@@ -205,5 +254,14 @@ export const LeadCard = ({
         
         
       </div>
+
+      {/* Lead Action Dialog */}
+      <LeadActionDialog
+        isOpen={actionDialog.isOpen}
+        onClose={() => setActionDialog({ isOpen: false, action: null })}
+        onConfirm={handleLeadAction}
+        action={actionDialog.action!}
+        leadName={lead.nome}
+      />
     </Card>;
 };

@@ -20,7 +20,8 @@ const Leads = () => {
     isLoading,
     addLead,
     updateLead,
-    deleteLead
+    deleteLead,
+    getLeadsPerdidos
   } = useLeads();
   const {
     user
@@ -37,6 +38,7 @@ const Leads = () => {
 
   // Estado de busca
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Estado do novo lead
   const [novoLead, setNovoLead] = useState<CreateLeadData>({
@@ -222,8 +224,28 @@ const Leads = () => {
     }
   };
 
-  // Filtrar leads com base na busca
-  const filteredLeads = leads.filter(lead => lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) || lead.empresa.toLowerCase().includes(searchTerm.toLowerCase()) || lead.email.toLowerCase().includes(searchTerm.toLowerCase()) || lead.fonte.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filtrar leads com base na busca e status
+  const filteredLeads = leads.filter(lead => {
+    const matchesSearch = lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         lead.empresa.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         lead.fonte.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'perdidos' && lead.status_simple === 'perdido') ||
+                         (statusFilter !== 'perdidos' && lead.status_simple === statusFilter);
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Calcular métricas dos leads perdidos
+  const leadsPerdidos = getLeadsPerdidos();
+  const motivosPerda = leadsPerdidos.reduce((acc, lead) => {
+    if (lead.motivo_perda) {
+      acc[lead.motivo_perda] = (acc[lead.motivo_perda] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   // Show loading if not authenticated
   if (!user) {
@@ -290,11 +312,32 @@ const Leads = () => {
         </Card>
       </div>
 
-      {/* Header com busca e botão de adicionar */}
+      {/* Header com busca, filtros e botão de adicionar */}
       <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input placeholder="Buscar leads..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+        <div className="flex gap-4 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input placeholder="Buscar leads..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+          </div>
+          
+          <div className="min-w-[200px]">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Leads</SelectItem>
+                <SelectItem value="novo">Novos</SelectItem>
+                <SelectItem value="qualificado">Qualificados</SelectItem>
+                <SelectItem value="proposta">Proposta</SelectItem>
+                <SelectItem value="negociacao">Negociação</SelectItem>
+                <SelectItem value="fechado">Fechados</SelectItem>
+                <SelectItem value="perdidos">
+                  🔍 Leads Perdidos {leadsPerdidos.length > 0 && `(${leadsPerdidos.length})`}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
@@ -546,6 +589,38 @@ const Leads = () => {
       </div>
 
       {/* Lista de leads */}
+      {statusFilter === 'perdidos' && leadsPerdidos.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg text-red-600">📊 Análise de Leads Perdidos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                <strong>Total de leads perdidos:</strong> {leadsPerdidos.length}
+              </p>
+              {Object.keys(motivosPerda).length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Principais motivos de perda:</p>
+                  <div className="space-y-1">
+                    {Object.entries(motivosPerda)
+                      .sort(([,a], [,b]) => b - a)
+                      .slice(0, 5)
+                      .map(([motivo, count]) => (
+                        <div key={motivo} className="flex justify-between items-center text-sm">
+                          <span className="truncate">{motivo}</span>
+                          <Badge variant="outline">{count}</Badge>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Lista de leads */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredLeads.length === 0 ? <div className="col-span-full text-center py-8">
             <p className="text-muted-foreground">
@@ -574,6 +649,14 @@ const Leads = () => {
                   <Building className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{lead.fonte}</span>
                 </div>
+                
+                {/* Show motivo_perda if lead is perdido */}
+                {lead.status_simple === 'perdido' && lead.motivo_perda && (
+                  <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded">
+                    <p className="text-xs font-medium text-red-800">Motivo da Perda:</p>
+                    <p className="text-xs text-red-700">{lead.motivo_perda}</p>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-2">
                   <div>
                     <p className="text-sm font-semibold">{formatCurrency(lead.valor || 0)}</p>
