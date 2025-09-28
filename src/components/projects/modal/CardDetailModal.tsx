@@ -88,6 +88,7 @@ export const CardDetailModal = ({
         ...latestCard,
         title: title.trim()
       });
+      actions.addActivity(latestCard.id, 'update', `alterou o título para "${title.trim()}"`);
     } else {
       setTitle(latestCard.title);
     }
@@ -99,6 +100,7 @@ export const CardDetailModal = ({
         ...latestCard,
         description: description.trim()
       });
+      actions.addActivity(latestCard.id, 'update', `alterou a descrição`);
     }
     setIsEditingDescription(false);
   };
@@ -115,19 +117,39 @@ export const CardDetailModal = ({
   };
   const toggleLabel = (labelId: string) => {
     const hasLabel = latestCard.labels.some(l => l.id === labelId);
-    const newLabels = hasLabel ? latestCard.labels.filter(l => l.id !== labelId) : [...latestCard.labels, availableLabels.find(l => l.id === labelId)!];
+    const label = availableLabels.find(l => l.id === labelId);
+    const newLabels = hasLabel ? latestCard.labels.filter(l => l.id !== labelId) : [...latestCard.labels, label!];
+    
     actions.updateCard({
       ...latestCard,
       labels: newLabels
     });
+    
+    if (label) {
+      actions.addActivity(
+        latestCard.id, 
+        'label', 
+        hasLabel ? `removeu a etiqueta "${label.name}"` : `adicionou a etiqueta "${label.name}"`
+      );
+    }
   };
   const toggleMember = (memberId: string) => {
     const hasMember = latestCard.assignees.some(m => m.id === memberId);
-    const newAssignees = hasMember ? latestCard.assignees.filter(m => m.id !== memberId) : [...latestCard.assignees, availableMembers.find(m => m.id === memberId)!];
+    const member = availableMembers.find(m => m.id === memberId);
+    const newAssignees = hasMember ? latestCard.assignees.filter(m => m.id !== memberId) : [...latestCard.assignees, member!];
+    
     actions.updateCard({
       ...latestCard,
       assignees: newAssignees
     });
+    
+    if (member) {
+      actions.addActivity(
+        latestCard.id, 
+        'assign', 
+        hasMember ? `removeu ${member.name}` : `atribuiu a ${member.name}`
+      );
+    }
   };
 
   // Sidebar action handlers

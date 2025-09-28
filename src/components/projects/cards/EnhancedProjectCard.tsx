@@ -82,7 +82,7 @@ export const EnhancedProjectCard = ({
           {card.labels.map((label) => (
             <div
               key={label.id}
-              className="h-2 w-8 rounded"
+              className="h-2 min-w-8 rounded flex-1 max-w-16"
               style={{ backgroundColor: label.color }}
               title={label.name}
             />

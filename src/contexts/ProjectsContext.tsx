@@ -53,7 +53,8 @@ const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
   const checklists = Array.isArray(cf.checklists) ? cf.checklists : [];
   const comments = Array.isArray(cf.comments) ? cf.comments : [];
   const attachments = Array.isArray(cf.attachments) ? cf.attachments : [];
-  const activities = Array.isArray(cf.activities) ? cf.activities : [];
+  // Activities will be loaded separately from the database
+  const activities: any[] = [];
 
   return {
     id: dbCard.id,
@@ -171,6 +172,7 @@ interface ProjectsContextType {
     getCurrentUser: () => any;
     getFilteredCards: () => ProjectCard[];
     addActivity: (cardId: string, type: string, description: string, metadata?: any) => Promise<boolean>;
+    loadCardActivities: (cardId: string) => Promise<any[]>;
   };
 }
 
@@ -447,6 +449,19 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       });
       
       if (result && state.currentBoard) {
+        // Add activity for card creation
+        if (user) {
+          await supabase
+            .from('project_activities')
+            .insert({
+              card_id: result.id,
+              type: 'create',
+              description: 'criou o cartão',
+              author: user.id,
+              author_name: user.full_name || user.email || 'Usuário',
+              metadata: {}
+            } as any);
+        }
         await loadBoard(state.currentBoard.id);
         return true;
       }
@@ -497,6 +512,21 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       } as any);
       
       if (result && state.currentBoard) {
+        // Add activity for card move
+        const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
+        const destList = state.currentBoard.lists.find(l => l.id === destListId);
+        if (sourceList && destList && sourceListId !== destListId && user) {
+          await supabase
+            .from('project_activities')
+            .insert({
+              card_id: cardId,
+              type: 'move',
+              description: `moveu de "${sourceList.title}" para "${destList.title}"`,
+              author: user.id,
+              author_name: user.full_name || user.email || 'Usuário',
+              metadata: { sourceListId, destListId }
+            } as any);
+        }
         await loadBoard(state.currentBoard.id);
       }
       return result;
@@ -538,6 +568,18 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         });
 
         if (duplicatedCard && state.currentBoard) {
+          if (user) {
+            await supabase
+              .from('project_activities')
+              .insert({
+                card_id: duplicatedCard.id,
+                type: 'create',
+                description: `duplicou do cartão "${originalCard.title}"`,
+                author: user.id,
+                author_name: user.full_name || user.email || 'Usuário',
+                metadata: { originalCardId: originalCard.id }
+              } as any);
+          }
           await loadBoard(state.currentBoard.id);
           toast({
             title: "Cartão duplicado",
@@ -559,7 +601,17 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     archiveCard: async (cardId: string) => {
       const result = await cardsHook.updateCard(cardId, { archived: true } as any);
-      if (result && state.currentBoard) {
+      if (result && state.currentBoard && user) {
+        await supabase
+          .from('project_activities')
+          .insert({
+            card_id: cardId,
+            type: 'archive',
+            description: 'arquivou o cartão',
+            author: user.id,
+            author_name: user.full_name || user.email || 'Usuário',
+            metadata: {}
+          } as any);
         await loadBoard(state.currentBoard.id);
       }
       return result;
@@ -733,9 +785,50 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     addActivity: async (cardId: string, type: string, description: string, metadata?: any) => {
-      // For now, just return true as activities will be handled separately
-      // In a full implementation, you'd want to add activities to a separate table
-      return true;
+      try {
+        if (!user) return false;
+        
+        const { error } = await supabase
+          .from('project_activities')
+          .insert({
+            card_id: cardId,
+            type,
+            description,
+            author: user.id,
+            author_name: user.full_name || user.email || 'Usuário',
+            metadata: metadata || {}
+          } as any);
+          
+        if (error) {
+          console.error('Error adding activity:', error);
+          return false;
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Error adding activity:', error);
+        return false;
+      }
+    },
+
+    loadCardActivities: async (cardId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('project_activities')
+          .select('*')
+          .eq('card_id', cardId)
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          console.error('Error loading activities:', error);
+          return [];
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error('Error loading activities:', error);
+        return [];
+      }
     }
   };
 

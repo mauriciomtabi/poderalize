@@ -76,6 +76,9 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
         checklists: updatedChecklists
       });
 
+      // Add activity for new checklist item
+      actions.addActivity(card.id, 'checklist', `adicionou "${itemText.trim()}" à lista`);
+
       setNewItemTexts(prev => ({ ...prev, [checklistId]: '' }));
       setShowNewItemForms(prev => ({ ...prev, [checklistId]: false }));
     }
