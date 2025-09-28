@@ -445,6 +445,78 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes: {
+        Row: {
+          created_at: string
+          data_fechamento: string
+          email: string
+          empresa: string
+          facebook: string | null
+          faturamento_atual: number | null
+          faturamento_desejado: number | null
+          fonte_original: string | null
+          id: string
+          instagram: string | null
+          lead_id: string | null
+          nome: string
+          observacoes: string | null
+          outras_redes_sociais: string | null
+          site: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+          valor_fechamento: number | null
+          vendedor_id: string | null
+          vendedor_nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_fechamento?: string
+          email: string
+          empresa: string
+          facebook?: string | null
+          faturamento_atual?: number | null
+          faturamento_desejado?: number | null
+          fonte_original?: string | null
+          id?: string
+          instagram?: string | null
+          lead_id?: string | null
+          nome: string
+          observacoes?: string | null
+          outras_redes_sociais?: string | null
+          site?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+          valor_fechamento?: number | null
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_fechamento?: string
+          email?: string
+          empresa?: string
+          facebook?: string | null
+          faturamento_atual?: number | null
+          faturamento_desejado?: number | null
+          fonte_original?: string | null
+          id?: string
+          instagram?: string | null
+          lead_id?: string | null
+          nome?: string
+          observacoes?: string | null
+          outras_redes_sociais?: string | null
+          site?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_fechamento?: number | null
+          vendedor_id?: string | null
+          vendedor_nome?: string | null
+        }
+        Relationships: []
+      }
       colaboradores: {
         Row: {
           avatar_url: string | null

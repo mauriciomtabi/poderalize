@@ -25,6 +25,7 @@ const getPageTitle = (pathname: string): string => {
     '/projetos': 'Projetos',
     '/crm': 'CRM',
     '/leads': 'Leads',
+    '/clientes': 'Clientes',
     '/vendas': 'Vendas',
     '/acompanhamento': 'Acompanhamento',
     '/relatorios': 'Relatórios',

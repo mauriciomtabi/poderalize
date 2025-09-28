@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { CreateClienteData } from './useClientes';
 
 // Lead validation schema
 const leadSchema = z.object({
@@ -217,6 +218,55 @@ export function useLeads() {
     }
   }, [user]);
 
+  // Convert lead to cliente
+  const convertLeadToCliente = useCallback(async (lead: Lead) => {
+    if (!user) {
+      toast.error('Usuário não autenticado');
+      return null;
+    }
+
+    try {
+      const clienteData: CreateClienteData = {
+        lead_id: lead.id,
+        nome: lead.nome,
+        empresa: lead.empresa,
+        email: lead.email,
+        telefone: lead.telefone,
+        valor_fechamento: lead.valor || 0,
+        data_fechamento: new Date().toISOString().split('T')[0],
+        observacoes: lead.observacoes,
+        site: lead.site,
+        instagram: lead.instagram,
+        facebook: lead.facebook,
+        outras_redes_sociais: lead.outras_redes_sociais,
+        faturamento_atual: lead.faturamento_atual,
+        faturamento_desejado: lead.faturamento_desejado,
+        fonte_original: lead.fonte,
+        vendedor_id: lead.vendedor_id,
+        vendedor_nome: lead.vendedor_nome,
+      };
+
+      const { data, error } = await supabase
+        .from('clientes')
+        .insert([{ ...clienteData, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao converter lead para cliente:', error);
+        toast.error(`Erro ao converter lead para cliente: ${error.message}`);
+        return null;
+      }
+
+      toast.success(`🎉 Lead ${lead.nome} convertido para cliente com sucesso!`);
+      return data;
+    } catch (error) {
+      console.error('Erro ao converter lead para cliente:', error);
+      toast.error('Erro ao converter lead para cliente');
+      return null;
+    }
+  }, [user]);
+
   // Update lead
   const updateLead = useCallback(async (id: string, leadData: UpdateLeadData) => {
     if (!user) {
@@ -257,6 +307,11 @@ export function useLeads() {
         return null;
       }
 
+      // Check if lead was marked as "fechado" and convert to cliente
+      if (data.status_simple === 'fechado') {
+        await convertLeadToCliente(data);
+      }
+
       setLeads(prev => prev.map(lead => lead.id === id ? data : lead));
       toast.success('Lead atualizado com sucesso!');
       return data;
@@ -270,7 +325,7 @@ export function useLeads() {
       }
       return null;
     }
-  }, [user]);
+  }, [user, convertLeadToCliente]);
 
   // Delete lead
   const deleteLead = useCallback(async (id: string) => {
@@ -373,5 +428,6 @@ export function useLeads() {
     updateLead,
     deleteLead,
     refreshLeads: loadLeads,
+    convertLeadToCliente,
   };
 }

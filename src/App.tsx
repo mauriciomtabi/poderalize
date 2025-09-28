@@ -13,6 +13,7 @@ import Colaboradores from "./pages/Colaboradores";
 import Projetos from "./pages/Projetos";
 import CRM from "./pages/CRM";
 import Leads from "./pages/Leads";
+import Clientes from "./pages/Clientes";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import Acompanhamento from "./pages/Acompanhamento";
@@ -52,6 +53,7 @@ const App = () => (
                   <Route path="projetos" element={<Projetos />} />
                   <Route path="crm" element={<CRM />} />
                   <Route path="leads" element={<Leads />} />
+                  <Route path="clientes" element={<Clientes />} />
                   <Route path="vendas" element={<Vendas />} />
                   <Route path="acompanhamento" element={<Acompanhamento />} />
                   <Route path="relatorios" element={<Relatorios />} />
