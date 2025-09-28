@@ -157,9 +157,6 @@ export const TableView = () => {
                 <SortButton field="status">Status</SortButton>
               </TableHead>
               <TableHead>
-                <SortButton field="priority">Prioridade</SortButton>
-              </TableHead>
-              <TableHead>
                 <SortButton field="assignee">Responsável</SortButton>
               </TableHead>
               <TableHead>Etiquetas</TableHead>
@@ -208,14 +205,6 @@ export const TableView = () => {
                     </Badge>
                   </TableCell>
                   
-                  <TableCell>
-                    <div className={cn("flex items-center space-x-1", priorityConfig[card.priority].className)}>
-                      <PriorityIcon size={14} />
-                      <span className="text-sm capitalize">
-                        {priorityConfig[card.priority].label}
-                      </span>
-                    </div>
-                  </TableCell>
                   
                   <TableCell>
                     <div className="flex -space-x-1">

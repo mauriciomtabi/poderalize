@@ -94,13 +94,30 @@ export const DashboardView = () => {
     color: STATUS_COLORS[status as CardStatus]
   }));
 
-  const priorityChartData = Object.entries(metrics.cardsByPriority).map(([priority, count]) => ({
-    name: priority === 'urgent' ? 'Urgente' :
-          priority === 'high' ? 'Alta' :
-          priority === 'medium' ? 'Média' : 'Baixa',
-    value: count,
-    color: PRIORITY_COLORS[priority as Priority]
-  }));
+  // Get all unique labels and their usage count
+  const labelData = (() => {
+    const labelCounts: { [key: string]: { count: number; color: string; name: string } } = {};
+    
+    allCards.forEach(card => {
+      card.labels.forEach(label => {
+        if (labelCounts[label.id]) {
+          labelCounts[label.id].count++;
+        } else {
+          labelCounts[label.id] = {
+            count: 1,
+            color: label.color,
+            name: label.name
+          };
+        }
+      });
+    });
+
+    return Object.entries(labelCounts).map(([id, data]) => ({
+      name: data.name,
+      value: data.count,
+      color: data.color
+    })).sort((a, b) => b.value - a.value).slice(0, 8); // Top 8 labels
+  })();
 
   const memberChartData = Object.entries(metrics.cardsByMember)
     .sort(([,a], [,b]) => b - a)
@@ -193,25 +210,34 @@ export const DashboardView = () => {
           </CardContent>
         </Card>
 
-        {/* Priority Distribution */}
+        {/* Label Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Distribuição por Prioridade</CardTitle>
+            <CardTitle className="text-lg">Distribuição por Etiqueta</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={priorityChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#8884d8">
-                  {priorityChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            {labelData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={labelData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" fontSize={12} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="hsl(var(--primary))">
+                    {labelData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                <div className="text-center">
+                  <div className="text-lg font-medium mb-2">Nenhuma etiqueta encontrada</div>
+                  <div className="text-sm">Adicione etiquetas aos cartões para ver a distribuição</div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

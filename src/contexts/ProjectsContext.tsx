@@ -800,6 +800,11 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         allCards.push(...list.cards);
       });
 
+      // Filter out archived cards from main views (unless specifically viewing archived)
+      if (!state.filters.archived) {
+        allCards = allCards.filter(card => !card.archived);
+      }
+
       // Apply filters
       return allCards.filter(card => {
         // Search filter

@@ -178,24 +178,6 @@ export const EnhancedProjectCard = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Assignees */}
-          <div className="flex -space-x-1">
-            {card.assignees.slice(0, 3).map((assignee) => (
-              <Avatar key={assignee.id} className="h-6 w-6 border-2 border-background">
-                <AvatarImage src={assignee.avatar} />
-                <AvatarFallback className="text-xs">
-                  {assignee.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-            ))}
-            {card.assignees.length > 3 && (
-              <div className="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                <span className="text-xs text-muted-foreground">
-                  +{card.assignees.length - 3}
-                </span>
-              </div>
-            )}
-          </div>
 
           {/* Actions Menu */}
           <DropdownMenu>

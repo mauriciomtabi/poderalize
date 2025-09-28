@@ -17,6 +17,7 @@ import { ProjectCard, Priority } from "@/types/projects";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { CardDetailModal } from "../modal/CardDetailModal";
 
 const priorityConfig = {
   low: { icon: Clock, className: 'text-blue-500' },
@@ -29,6 +30,7 @@ export const CalendarView = () => {
   const { state, actions } = useProjects();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedCard, setSelectedCard] = useState<ProjectCard | null>(null);
 
   const filteredCards = actions.getFilteredCards();
   const cardsWithDates = filteredCards.filter(card => card.dueDate);
@@ -139,7 +141,7 @@ export const CalendarView = () => {
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      "p-2 border border-border rounded cursor-pointer transition-colors min-h-[120px]",
+                      "p-2 border border-border rounded cursor-pointer transition-colors min-h-[120px] max-h-[120px] overflow-hidden",
                       isToday && "bg-primary/10 border-primary/30",
                       isSelected && "bg-accent",
                       "hover:bg-muted/30"
@@ -160,7 +162,7 @@ export const CalendarView = () => {
                           className="text-xs p-1 bg-card border rounded truncate cursor-pointer hover:bg-muted/50"
                           onClick={(e) => {
                             e.stopPropagation();
-                            actions.setSelectedCard(card);
+                            setSelectedCard(card);
                           }}
                           style={{
                             borderLeftColor: priorityConfig[card.priority].className.includes('blue') ? '#3b82f6' :
@@ -201,7 +203,13 @@ export const CalendarView = () => {
 
           <div className="space-y-3">
             {getCardsForDate(selectedDate).map((card) => (
-              <CardItem key={card.id} card={card} />
+              <div
+                key={card.id}
+                className="cursor-pointer"
+                onClick={() => setSelectedCard(card)}
+              >
+                <CardItem card={card} />
+              </div>
             ))}
             
             {getCardsForDate(selectedDate).length === 0 && (
@@ -212,6 +220,15 @@ export const CalendarView = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Card Detail Modal */}
+      {selectedCard && (
+        <CardDetailModal
+          card={selectedCard}
+          isOpen={!!selectedCard}
+          onClose={() => setSelectedCard(null)}
+        />
       )}
     </div>
   );
