@@ -14,11 +14,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { LeadActionDialog } from "./LeadActionDialog";
 import { useLeads } from "@/hooks/useLeads";
+import { LeadStageSelector } from "./LeadStageSelector";
 interface LeadCardProps {
   lead: LeadAdvanced;
+  onLeadUpdate?: () => void;
 }
 export const LeadCard = ({
-  lead
+  lead,
+  onLeadUpdate
 }: LeadCardProps) => {
   const {
     setSelectedLead
@@ -239,14 +242,24 @@ export const LeadCard = ({
         )}
       </div>
 
-      {/* Last Contact */}
-      <div className="flex items-center gap-1 text-xs text-muted-foreground border-t pt-2">
-        <Calendar className="h-3 w-3" />
-        <span>
-          Últ. contato: {format(new Date(lead.ultimaInteracao), "dd/MM", {
-          locale: ptBR
-        })}
-        </span>
+      {/* Last Contact and Stage Selector */}
+      <div className="flex items-center justify-between border-t pt-2">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Calendar className="h-3 w-3" />
+          <span>
+            Últ. contato: {format(new Date(lead.ultimaInteracao), "dd/MM", {
+            locale: ptBR
+          })}
+          </span>
+        </div>
+        
+        <LeadStageSelector
+          leadId={lead.id}
+          currentStageId={lead.funnelStageId}
+          currentStageTitle={lead.etapaFunil}
+          funnelId={lead.funnelId}
+          onStageChange={onLeadUpdate}
+        />
       </div>
 
       {/* Score Indicator */}

@@ -135,7 +135,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                                   : ''
                               }`}
                             >
-                              <LeadCard lead={lead} />
+                              <LeadCard lead={lead} onLeadUpdate={() => window.location.reload()} />
                             </div>
                           )}
                         </Draggable>

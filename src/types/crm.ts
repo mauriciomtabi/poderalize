@@ -80,6 +80,10 @@ export interface LeadAdvanced {
   
   // Temperatura da negociação
   temperaturaNegociacao?: NegotiationTemperature;
+  
+  // Dados do funil
+  funnelId?: string;
+  funnelStageId?: string;
 }
 
 export interface SalesMetrics {

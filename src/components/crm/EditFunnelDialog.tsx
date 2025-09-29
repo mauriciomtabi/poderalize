@@ -120,6 +120,14 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
         return;
       }
 
+      // Primeiro, mover todos os leads deste funil para a primeira etapa (sem stage específica)
+      const { error: updateLeadsError } = await supabase
+        .from('leads')
+        .update({ funnel_stage_id: null })
+        .eq('funnel_id', funnel.id);
+
+      if (updateLeadsError) throw updateLeadsError;
+
       // Deletar etapas existentes
       const { error: deleteError } = await supabase
         .from('funnel_stages')
@@ -136,11 +144,23 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
         position: index,
       }));
 
-      const { error: insertError } = await supabase
+      const { data: newStages, error: insertError } = await supabase
         .from('funnel_stages')
-        .insert(stageInserts);
+        .insert(stageInserts)
+        .select();
 
       if (insertError) throw insertError;
+
+      // Atribuir leads à primeira etapa
+      if (newStages && newStages.length > 0) {
+        const { error: assignLeadsError } = await supabase
+          .from('leads')
+          .update({ funnel_stage_id: newStages[0].id })
+          .eq('funnel_id', funnel.id)
+          .is('funnel_stage_id', null);
+
+        if (assignLeadsError) throw assignLeadsError;
+      }
 
       toast.success('Funil atualizado com sucesso!');
       onOpenChange(false);
