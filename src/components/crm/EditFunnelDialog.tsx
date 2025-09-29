@@ -89,11 +89,6 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
     ));
   };
 
-  const updateStageColor = (stageId: string, color: string) => {
-    setStages(stages.map(stage => 
-      stage.id === stageId ? { ...stage, color } : stage
-    ));
-  };
 
   const handleSave = async () => {
     if (!user) {
@@ -222,23 +217,13 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
                                 <GripVertical className="h-4 w-4" />
                               </div>
 
-                              <div className="flex-1 grid grid-cols-3 gap-3 items-center">
+                              <div className="flex-1 grid grid-cols-2 gap-3 items-center">
                                 <Input
                                   value={stage.title}
                                   onChange={(e) => updateStageTitle(stage.id, e.target.value)}
                                   placeholder="Nome da etapa"
                                 />
                                 
-                                <div className="flex items-center gap-2">
-                                  <Label htmlFor={`color-${stage.id}`} className="text-sm">Cor:</Label>
-                                  <input
-                                    id={`color-${stage.id}`}
-                                    type="color"
-                                    value={stage.color}
-                                    onChange={(e) => updateStageColor(stage.id, e.target.value)}
-                                    className="w-8 h-8 rounded border cursor-pointer"
-                                  />
-                                </div>
 
                                 <div className="flex items-center justify-between">
                                   <Badge variant="outline">

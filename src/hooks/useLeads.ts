@@ -313,6 +313,21 @@ export function useLeads() {
       // Check if lead was marked as "fechado" and convert to cliente
       if (data.status_simple === 'fechado') {
         await convertLeadToCliente(data);
+        
+        // Remove the lead from leads table after successful conversion
+        const { error: deleteError } = await supabase
+          .from('leads')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (deleteError) {
+          console.error('Erro ao remover lead após conversão:', deleteError);
+        } else {
+          // Remove from local state
+          setLeads(prev => prev.filter(lead => lead.id !== id));
+          return data;
+        }
       }
 
       setLeads(prev => prev.map(lead => lead.id === id ? data : lead));
