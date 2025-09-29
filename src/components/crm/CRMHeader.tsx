@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Filter, Plus, Settings, Zap, TrendingUp, Clock, DollarSign } from "lucide-react";
+import { Search, Filter, Plus, Settings, Zap, TrendingUp, Clock, DollarSign, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +7,14 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCRM } from "@/contexts/CRMContext";
 import { CreateFunnelDialog } from "./CreateFunnelDialog";
+import { EditFunnelDialog } from "./EditFunnelDialog";
 import { CRMFilters } from "./CRMFilters";
 import { CRMSettings } from "./CRMSettings";
 
 export const CRMHeader = () => {
   const { currentFunnel, funnels, metrics, filters, setCurrentFunnel, setFilters } = useCRM();
   const [showCreateFunnel, setShowCreateFunnel] = useState(false);
+  const [showEditFunnel, setShowEditFunnel] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -143,6 +145,17 @@ export const CRMHeader = () => {
             Novo Funil
           </Button>
 
+          {currentFunnel && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowEditFunnel(true)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Funil
+            </Button>
+          )}
+
           <Button 
             variant="outline" 
             size="sm"
@@ -165,6 +178,15 @@ export const CRMHeader = () => {
         open={showCreateFunnel}
         onOpenChange={setShowCreateFunnel}
       />
+
+      {/* Edit Funnel Dialog */}
+      {currentFunnel && (
+        <EditFunnelDialog
+          open={showEditFunnel}
+          onOpenChange={setShowEditFunnel}
+          funnel={currentFunnel}
+        />
+      )}
 
       {/* Settings Dialog */}
       <CRMSettings

@@ -438,24 +438,37 @@ export function useLeads() {
         return false;
       }
 
-      const { data, error } = await supabase
+      // Buscar o lead para convertê-lo em cliente
+      const { data: leadData, error: leadError } = await supabase
         .from('leads')
-        .update({ status_simple: 'fechado' })
+        .select('*')
         .eq('id', leadId)
         .eq('user_id', user.id)
-        .select()
         .single();
 
-      if (error) {
-        console.error('Erro ao marcar lead como fechado:', error);
-        toast.error(`Erro ao marcar lead como fechado: ${error.message}`);
+      if (leadError) {
+        console.error('Erro ao buscar lead:', leadError);
+        toast.error(`Erro ao buscar lead: ${leadError.message}`);
         return false;
       }
 
       // Convert to client
-      await convertLeadToCliente(data);
+      await convertLeadToCliente(leadData);
       
-      setLeads(prev => prev.map(lead => lead.id === leadId ? data : lead));
+      // Remover o lead da tabela leads após conversão bem-sucedida
+      const { error: deleteError } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', leadId)
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error('Erro ao remover lead:', deleteError);
+        toast.error(`Erro ao remover lead: ${deleteError.message}`);
+        return false;
+      }
+
+      setLeads(prev => prev.filter(lead => lead.id !== leadId));
       return true;
     } catch (error) {
       console.error('Erro ao marcar lead como fechado:', error);
