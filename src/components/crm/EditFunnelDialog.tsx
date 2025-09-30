@@ -124,7 +124,8 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
       const { error: updateLeadsError } = await supabase
         .from('leads')
         .update({ funnel_stage_id: null })
-        .eq('funnel_id', funnel.id);
+        .eq('funnel_id', funnel.id)
+        .eq('user_id', user.id);
 
       if (updateLeadsError) throw updateLeadsError;
 
@@ -139,7 +140,7 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
       // Criar novas etapas
       const stageInserts = stages.map((stage, index) => ({
         funnel_id: funnel.id,
-        title: stage.title,
+        title: stage.title.trim(),
         color: stage.color,
         position: index,
       }));
@@ -157,6 +158,7 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
           .from('leads')
           .update({ funnel_stage_id: newStages[0].id })
           .eq('funnel_id', funnel.id)
+          .eq('user_id', user.id)
           .is('funnel_stage_id', null);
 
         if (assignLeadsError) throw assignLeadsError;
@@ -166,7 +168,8 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
       onOpenChange(false);
     } catch (error) {
       console.error('Erro ao atualizar funil:', error);
-      toast.error('Erro ao atualizar funil');
+      const message = (error as { message?: string })?.message || 'Erro ao atualizar funil';
+      toast.error(`Erro ao atualizar funil: ${message}`);
     } finally {
       setIsLoading(false);
     }
