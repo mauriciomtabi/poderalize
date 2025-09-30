@@ -120,14 +120,29 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
         return;
       }
 
-      // Primeiro, mover todos os leads deste funil para a primeira etapa (sem stage específica)
-      const { error: updateLeadsError } = await supabase
+      // Primeiro, buscar os IDs dos leads deste funil para reassignar depois
+      const { data: leadsToUpdate, error: fetchLeadsError } = await supabase
         .from('leads')
-        .update({ funnel_stage_id: null })
+        .select('id')
         .eq('funnel_id', funnel.id)
         .eq('user_id', user.id);
 
-      if (updateLeadsError) throw updateLeadsError;
+      if (fetchLeadsError) throw fetchLeadsError;
+
+      const leadIds = leadsToUpdate?.map(l => l.id) || [];
+
+      // Setar funnel_id e funnel_stage_id como null (constraint exige ambos null ou ambos not null)
+      if (leadIds.length > 0) {
+        const { error: updateLeadsError } = await supabase
+          .from('leads')
+          .update({ 
+            funnel_stage_id: null,
+            funnel_id: null 
+          })
+          .in('id', leadIds);
+
+        if (updateLeadsError) throw updateLeadsError;
+      }
 
       // Deletar etapas existentes
       const { error: deleteError } = await supabase
@@ -152,14 +167,15 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
 
       if (insertError) throw insertError;
 
-      // Atribuir leads à primeira etapa
-      if (newStages && newStages.length > 0) {
+      // Reassignar leads à primeira etapa do funil
+      if (newStages && newStages.length > 0 && leadIds.length > 0) {
         const { error: assignLeadsError } = await supabase
           .from('leads')
-          .update({ funnel_stage_id: newStages[0].id })
-          .eq('funnel_id', funnel.id)
-          .eq('user_id', user.id)
-          .is('funnel_stage_id', null);
+          .update({ 
+            funnel_id: funnel.id,
+            funnel_stage_id: newStages[0].id 
+          })
+          .in('id', leadIds);
 
         if (assignLeadsError) throw assignLeadsError;
       }
