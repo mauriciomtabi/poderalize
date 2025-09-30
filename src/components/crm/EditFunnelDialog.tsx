@@ -5,10 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomFunnel, FunnelStage } from "@/types/crm";
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, GripVertical, Plus } from "lucide-react";
+import { GripVertical, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useFunnels } from "@/hooks/useFunnels";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +19,15 @@ interface EditFunnelDialogProps {
   funnel: CustomFunnel;
 }
 
+const defaultColors = [
+  'hsl(220 70% 50%)', // Blue
+  'hsl(30 100% 50%)', // Orange
+  'hsl(45 100% 50%)', // Yellow
+  'hsl(120 60% 50%)', // Green
+  'hsl(280 60% 50%)', // Purple
+  'hsl(0 70% 50%)', // Red
+];
+
 export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialogProps) => {
   const { updateFunnel } = useFunnels();
   const { user } = useAuth();
@@ -28,7 +36,6 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
     description: funnel.description || '',
   });
   const [stages, setStages] = useState<FunnelStage[]>(funnel.stages);
-  const [newStageName, setNewStageName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -39,57 +46,36 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
     setStages(funnel.stages);
   }, [funnel]);
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-
-    const items = Array.from(stages);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Atualizar posições
-    const updatedStages = items.map((stage, index) => ({
-      ...stage,
-      position: index,
-    }));
-
-    setStages(updatedStages);
+  const handleAddStage = () => {
+    setStages([
+      ...stages,
+      { 
+        id: `new-${Date.now()}`,
+        title: `Etapa ${stages.length + 1}`, 
+        color: defaultColors[stages.length % defaultColors.length],
+        position: stages.length,
+        leads: []
+      }
+    ]);
   };
 
-  const addStage = () => {
-    if (!newStageName.trim()) {
-      toast.error('Nome da etapa é obrigatório');
-      return;
-    }
-
-    const newStage: FunnelStage = {
-      id: `new-${Date.now()}`, // ID temporário
-      title: newStageName.trim(),
-      color: '#3B82F6',
-      position: stages.length,
-      leads: [],
-    };
-
-    setStages([...stages, newStage]);
-    setNewStageName('');
-  };
-
-  const removeStage = (stageId: string) => {
-    const stage = stages.find(s => s.id === stageId);
-    if (stage && stage.leads.length > 0) {
+  const handleRemoveStage = (index: number) => {
+    const stage = stages[index];
+    if (stage.leads.length > 0) {
       toast.error('Não é possível remover uma etapa que contém leads');
       return;
     }
-
-    setStages(stages.filter(s => s.id !== stageId));
+    
+    if (stages.length > 2) {
+      setStages(stages.filter((_, i) => i !== index));
+    }
   };
 
-  const updateStageTitle = (stageId: string, title: string) => {
-    setStages(stages.map(stage => 
-      stage.id === stageId ? { ...stage, title } : stage
+  const handleStageChange = (index: number, field: 'title' | 'color', value: string) => {
+    setStages(stages.map((stage, i) => 
+      i === index ? { ...stage, [field]: value } : stage
     ));
   };
-
-
   const handleSave = async () => {
     if (!user) {
       toast.error('Usuário não autenticado');
@@ -227,85 +213,88 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
           <div>
             <div className="flex items-center justify-between mb-4">
               <Label>Etapas do Funil</Label>
-              <Badge variant="secondary">{stages.length} etapas</Badge>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddStage}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Etapa
+              </Button>
             </div>
 
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="funnel-stages">
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="space-y-3"
-                  >
-                    {stages.map((stage, index) => (
-                      <Draggable key={stage.id} draggableId={stage.id} index={index}>
-                        {(provided, snapshot) => (
-                          <Card
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`p-4 ${
-                              snapshot.isDragging ? 'shadow-lg' : ''
-                            }`}
+            <div className="space-y-3">
+              {stages.map((stage, index) => (
+                <Card key={stage.id} className="p-4">
+                  <div className="flex items-center gap-3">
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                    
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Nome da etapa"
+                            value={stage.title}
+                            onChange={(e) => handleStageChange(index, 'title', e.target.value)}
+                          />
+                        </div>
+                        
+                        {/* Color Picker */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">Cor:</span>
+                          <div className="flex gap-1">
+                            {defaultColors.map((color) => (
+                              <button
+                                key={color}
+                                type="button"
+                                className={`w-6 h-6 rounded-full border-2 transition-all ${
+                                  stage.color === color 
+                                    ? 'border-foreground scale-110' 
+                                    : 'border-transparent hover:border-muted-foreground'
+                                }`}
+                                style={{ backgroundColor: color }}
+                                onClick={() => handleStageChange(index, 'color', color)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {stages.length > 2 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveStage(index)}
+                            disabled={stage.leads.length > 0}
                           >
-                            <div className="flex items-center gap-3">
-                              <div
-                                {...provided.dragHandleProps}
-                                className="text-muted-foreground hover:text-foreground cursor-grab"
-                              >
-                                <GripVertical className="h-4 w-4" />
-                              </div>
-
-                              <div className="flex-1 grid grid-cols-2 gap-3 items-center">
-                                <Input
-                                  value={stage.title}
-                                  onChange={(e) => updateStageTitle(stage.id, e.target.value)}
-                                  placeholder="Nome da etapa"
-                                />
-                                
-
-                                <div className="flex items-center justify-between">
-                                  <Badge variant="outline">
-                                    {stage.leads.length} leads
-                                  </Badge>
-                                  
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeStage(stage.id)}
-                                    disabled={stage.leads.length > 0}
-                                    className="text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </Card>
+                            <X className="h-4 w-4" />
+                          </Button>
                         )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                      </div>
 
-            {/* Adicionar Nova Etapa */}
-            <Card className="p-4 border-dashed">
-              <div className="flex items-center gap-3">
-                <Input
-                  value={newStageName}
-                  onChange={(e) => setNewStageName(e.target.value)}
-                  placeholder="Nome da nova etapa"
-                  onKeyPress={(e) => e.key === 'Enter' && addStage()}
-                />
-                <Button onClick={addStage} variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar
-                </Button>
-              </div>
-            </Card>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          Posição {index + 1}
+                        </Badge>
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: stage.color }}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {stage.title || `Etapa ${index + 1}`}
+                        </span>
+                        {stage.leads.length > 0 && (
+                          <Badge variant="secondary" className="text-xs ml-auto">
+                            {stage.leads.length} leads
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
 
           {/* Ações */}
