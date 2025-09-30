@@ -123,6 +123,10 @@ export interface Lead {
   // Motivo da perda
   motivo_perda?: string;
   
+  // Funnel relationship
+  funnel_id?: string;
+  funnel_stage_id?: string;
+  
   created_at: string;
   updated_at: string;
 }

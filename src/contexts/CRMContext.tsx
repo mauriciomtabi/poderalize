@@ -183,17 +183,45 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ultimaInteracao: lead.ultima_interacao ? new Date(lead.ultima_interacao).toISOString() : new Date().toISOString(),
         vendedorId: lead.vendedor_id || '',
         vendedorNome: lead.vendedor_nome || '',
-        temperaturaNegociacao: lead.temperatura_negociacao
+        temperaturaNegociacao: lead.temperatura_negociacao,
+        funnelId: lead.funnel_id,
+        funnelStageId: lead.funnel_stage_id
       }));
 
       dispatch({ type: 'SET_LEADS', payload: convertedLeads });
       
-      // Update metrics
+      // Calculate metrics based on real data
+      const totalLeads = convertedLeads.length;
+      
+      // Taxa de conversão: percentual de leads fechados
+      const closedLeads = convertedLeads.filter(l => 
+        l.etapaFunil === 'fechamento' || l.status === 'quente'
+      ).length;
+      const conversionRate = totalLeads > 0 ? (closedLeads / totalLeads) * 100 : 0;
+      
+      // Ciclo médio: tempo médio desde o primeiro contato até agora
+      let averageCycleTime = 30; // Default
+      if (convertedLeads.length > 0) {
+        const now = new Date();
+        const totalDays = convertedLeads.reduce((sum, lead) => {
+          const contactDate = new Date(lead.dataContato);
+          const diffTime = Math.abs(now.getTime() - contactDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return sum + diffDays;
+        }, 0);
+        averageCycleTime = Math.round(totalDays / convertedLeads.length);
+      }
+      
+      // Receita prevista: soma de (valor * probabilidade) de todos os leads
+      const predictedRevenue = convertedLeads.reduce((sum, lead) => 
+        sum + (lead.valor * (lead.probabilidade / 100)), 0
+      );
+      
       const metrics: CRMMetrics = {
-        totalLeads: convertedLeads.length,
-        conversionRate: convertedLeads.length > 0 ? (convertedLeads.filter(l => l.status === 'quente').length / convertedLeads.length) * 100 : 0,
-        averageCycleTime: 30, // Default value
-        predictedRevenue: convertedLeads.reduce((sum, lead) => sum + (lead.valor * (lead.probabilidade / 100)), 0)
+        totalLeads,
+        conversionRate: Math.round(conversionRate),
+        averageCycleTime,
+        predictedRevenue: Math.round(predictedRevenue)
       };
       
       dispatch({ type: 'UPDATE_METRICS', payload: metrics });
