@@ -2,10 +2,8 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSidebarContext } from "./Layout";
 import { 
-  Home, 
   Users, 
   Kanban, 
-  UserPlus, 
   Settings, 
   BarChart3,
   ChevronLeft,
@@ -19,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/poderalize-logo.png";
 
 const menuItems = [
-  { icon: Home, label: "Dashboard", href: "/" },
   { icon: Users, label: "Colaboradores", href: "/colaboradores" },
   { icon: Kanban, label: "Projetos", href: "/projetos" },
   { icon: PieChart, label: "CRM", href: "/crm" },
@@ -83,7 +80,7 @@ export const Sidebar = () => {
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = location.pathname === item.href || (location.pathname === "/" && item.href === "/projetos");
           return (
             <Link
               key={item.href}

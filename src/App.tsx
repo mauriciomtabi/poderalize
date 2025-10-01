@@ -8,7 +8,6 @@ import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { Layout } from "@/components/layout/Layout";
-import Dashboard from "./pages/Dashboard";
 import Colaboradores from "./pages/Colaboradores";
 import Projetos from "./pages/Projetos";
 import CRM from "./pages/CRM";
@@ -49,7 +48,7 @@ const App = () => (
                     <Layout />
                   </AuthGuard>
                 }>
-                  <Route index element={<Dashboard />} />
+                  <Route index element={<Projetos />} />
                   <Route path="projetos" element={<Projetos />} />
                   <Route path="crm" element={<CRM />} />
                   <Route path="leads" element={<Leads />} />
