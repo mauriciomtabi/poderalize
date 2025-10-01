@@ -212,9 +212,9 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         averageCycleTime = Math.round(totalDays / convertedLeads.length);
       }
       
-      // Receita prevista: soma de (valor * probabilidade) de todos os leads
+      // Receita prevista: soma do valor de todos os leads do funil atual
       const predictedRevenue = convertedLeads.reduce((sum, lead) => 
-        sum + (lead.valor * (lead.probabilidade / 100)), 0
+        sum + lead.valor, 0
       );
       
       const metrics: CRMMetrics = {

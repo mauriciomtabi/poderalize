@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,36 +16,83 @@ import {
   Filter,
   RefreshCw
 } from "lucide-react";
+import { useProjects } from "@/contexts/ProjectsContext";
+import { useLeads } from "@/hooks/useLeads";
+import { useColaboradores } from "@/hooks/useColaboradores";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Relatorios = () => {
-  // Mock data for demonstrations
+  // Get real data from hooks
+  const { state: projectsState } = useProjects();
+  const { leads, isLoading: leadsLoading } = useLeads();
+  const { colaboradores, loading: colaboradoresLoading } = useColaboradores();
+
+  // Calculate project stats from real data
+  const allCards = projectsState.boards.flatMap(board => 
+    board.lists.flatMap(list => list.cards)
+  );
+  
   const projectStats = {
-    total: 24,
-    completed: 18,
-    inProgress: 4,
-    pending: 2
+    total: projectsState.boards.length,
+    completed: allCards.filter(card => card.status === 'done').length,
+    inProgress: allCards.filter(card => card.status === 'in-progress').length,
+    pending: allCards.filter(card => card.status === 'todo').length
   };
 
+  // Calculate team stats from real data
   const teamStats = {
-    totalMembers: 8,
-    activeProjects: 12,
-    completedTasks: 156,
-    pendingTasks: 23
+    totalMembers: colaboradores.length,
+    activeProjects: projectsState.boards.filter(board => board.status === 'active').length,
+    completedTasks: allCards.filter(card => card.status === 'done').length,
+    pendingTasks: allCards.filter(card => card.status === 'todo').length
   };
 
+  // Calculate leads stats from real data
   const leadsStats = {
-    total: 89,
-    qualified: 34,
-    contacted: 28,
-    converted: 12
+    total: leads.length,
+    qualified: leads.filter(l => l.status_simple === 'qualificado').length,
+    contacted: leads.filter(l => l.status_simple === 'proposta' || l.status_simple === 'negociacao').length,
+    converted: leads.filter(l => l.status_simple === 'fechado').length
   };
 
+  // Calculate completion rate
+  const completionRate = allCards.length > 0 
+    ? Math.round((allCards.filter(card => card.status === 'done').length / allCards.length) * 100)
+    : 0;
+
+  // Calculate average cycle time (mock for now, would need timestamps)
+  const averageCycleTime = "14.2d";
+
+  // Get lead sources
+  const leadSources = leads.reduce((acc, lead) => {
+    acc[lead.fonte] = (acc[lead.fonte] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topSources = Object.entries(leadSources)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 4)
+    .map(([source, count]) => ({
+      source,
+      count,
+      percentage: Math.round((count / leads.length) * 100)
+    }));
+
+  // Recent activity (simplified)
   const recentActivity = [
-    { id: 1, action: "Projeto 'Website Redesign' concluído", time: "2h atrás", type: "success" },
-    { id: 2, action: "Novo lead qualificado: Empresa ABC", time: "4h atrás", type: "info" },
-    { id: 3, action: "Task 'Review Design' atrasada", time: "6h atrás", type: "warning" },
-    { id: 4, action: "Maria Silva adicionada ao projeto", time: "1d atrás", type: "info" },
+    { id: 1, action: `${projectStats.completed} projetos concluídos`, time: "Hoje", type: "success" },
+    { id: 2, action: `${leadsStats.qualified} leads qualificados`, time: "Esta semana", type: "info" },
+    { id: 3, action: `${teamStats.totalMembers} membros ativos`, time: "Atualizado", type: "info" },
   ];
+
+  // Loading state
+  if (leadsLoading || colaboradoresLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -100,11 +146,11 @@ const Relatorios = () => {
               <CheckCircle2 className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">87%</div>
+              <div className="text-2xl font-bold">{completionRate}%</div>
               <p className="text-xs text-muted-foreground">
-                +12% vs mês anterior
+                Taxa de conclusão de tarefas
               </p>
-              <Progress value={87} className="mt-2" />
+              <Progress value={completionRate} className="mt-2" />
             </CardContent>
           </Card>
 
@@ -128,9 +174,9 @@ const Relatorios = () => {
               <Clock className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">14.2d</div>
+              <div className="text-2xl font-bold">{averageCycleTime}</div>
               <p className="text-xs text-muted-foreground">
-                -2.1d vs mês anterior
+                Tempo médio de conclusão
               </p>
               <Progress value={45} className="mt-2" />
             </CardContent>
@@ -221,24 +267,37 @@ const Relatorios = () => {
                   <CardTitle>Produtividade da Equipe</CardTitle>
                   <CardDescription>Tasks concluídas por membro</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {["João Silva", "Maria Santos", "Pedro Costa", "Ana Oliveira"].map((name, index) => (
-                      <div key={name} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-white text-xs font-medium">
-                            {name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <span className="text-sm">{name}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Progress value={[85, 72, 68, 91][index]} className="w-20" />
-                          <span className="text-sm font-medium">{[34, 28, 26, 36][index]}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
+                 <CardContent>
+                   <div className="space-y-4">
+                     {colaboradores.slice(0, 5).map((colaborador) => {
+                       const memberCards = allCards.filter(card => 
+                         card.assignees?.some(a => a.name === colaborador.nome)
+                       );
+                       const completedCards = memberCards.filter(card => card.status === 'done').length;
+                       const progress = memberCards.length > 0 
+                         ? Math.round((completedCards / memberCards.length) * 100)
+                         : 0;
+                       
+                       return (
+                         <div key={colaborador.id} className="flex items-center justify-between">
+                           <div className="flex items-center space-x-2">
+                             <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center text-white text-xs font-medium">
+                               {colaborador.nome.split(' ').map(n => n[0]).join('')}
+                             </div>
+                             <span className="text-sm">{colaborador.nome}</span>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                             <Progress value={progress} className="w-20" />
+                             <span className="text-sm font-medium">{completedCards}</span>
+                           </div>
+                         </div>
+                       );
+                     })}
+                     {colaboradores.length === 0 && (
+                       <p className="text-sm text-muted-foreground">Nenhum colaborador cadastrado</p>
+                     )}
+                   </div>
+                 </CardContent>
               </Card>
 
               <Card>
@@ -307,25 +366,22 @@ const Relatorios = () => {
                   <CardTitle>Origem dos Leads</CardTitle>
                   <CardDescription>Principais canais de aquisição</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {[
-                      { source: "Google Ads", count: 32, percentage: 36 },
-                      { source: "Redes Sociais", count: 24, percentage: 27 },
-                      { source: "Indicação", count: 18, percentage: 20 },
-                      { source: "Website", count: 15, percentage: 17 }
-                    ].map((item) => (
+                 <CardContent>
+                   <div className="space-y-3">
+                     {topSources.length > 0 ? topSources.map((item) => (
                       <div key={item.source} className="flex items-center justify-between">
                         <span className="text-sm">{item.source}</span>
                         <div className="flex items-center space-x-2">
                           <Progress value={item.percentage} className="w-20" />
                           <span className="text-sm font-medium w-8">{item.count}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                         </div>
+                       </div>
+                     )) : (
+                       <p className="text-sm text-muted-foreground">Nenhum dado disponível</p>
+                     )}
+                   </div>
+                 </CardContent>
+               </Card>
             </div>
           </TabsContent>
 
