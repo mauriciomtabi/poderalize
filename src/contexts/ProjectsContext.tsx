@@ -289,8 +289,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .map(r => transformDBLabel(r.data!));
       }
 
-      // Auto-sync colaboradores if no members exist
-      if (members.length === 0 && user) {
+      // Auto-sync colaboradores - always check for missing ones
+      if (user) {
         const { data: colaboradoresData } = await supabase
           .from('colaboradores')
           .select('*')
@@ -298,22 +298,37 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .eq('status', 'ativo');
 
         if (colaboradoresData && colaboradoresData.length > 0) {
-          const insertPromises = colaboradoresData.map(colab =>
-            supabase.from('project_members').insert({
-              board_id: boardId,
-              user_id: user.id,
-              name: colab.nome,
-              email: colab.email,
-              avatar: colab.avatar_url,
-              role: 'member',
-              added_by: user.id,
-            }).select().single()
+          // Check which colaboradores are not yet in project_members
+          const existingEmails = new Set(members.map(m => m.email.toLowerCase()));
+          const missingColaboradores = colaboradoresData.filter(
+            colab => !existingEmails.has(colab.email.toLowerCase())
           );
 
-          const results = await Promise.all(insertPromises);
-          members = results
-            .filter(r => r.data)
-            .map(r => transformDBMember(r.data!));
+          if (missingColaboradores.length > 0) {
+            const insertPromises = missingColaboradores.map(colab =>
+              supabase.from('project_members').insert({
+                board_id: boardId,
+                user_id: colab.id, // Use colaborador's ID, not admin's
+                name: colab.nome,
+                email: colab.email,
+                avatar: colab.avatar_url,
+                role: 'member',
+                added_by: user.id,
+              }).select().single()
+            );
+
+            const results = await Promise.all(insertPromises);
+            const newMembers = results
+              .filter(r => r.data)
+              .map(r => transformDBMember(r.data!));
+            
+            members = [...members, ...newMembers];
+            
+            toast({
+              title: "Colaboradores sincronizados",
+              description: `${newMembers.length} colaborador(es) adicionado(s) ao projeto.`,
+            });
+          }
         }
       }
 
