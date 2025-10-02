@@ -120,7 +120,7 @@ export const ChecklistTemplateManager = ({ isOpen, onClose, boardId }: Checklist
               Novo Template
             </Button>
 
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-2">
                 {templates.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
@@ -218,8 +218,8 @@ export const ChecklistTemplateManager = ({ isOpen, onClose, boardId }: Checklist
                 </Button>
               </div>
 
-              <ScrollArea className="h-[200px] border rounded-lg p-2">
-                <div className="space-y-2">
+              <ScrollArea className="h-[160px] border rounded-lg p-2">
+                <div className="space-y-2 pr-2">
                   {formData.items.map((item, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -235,6 +235,7 @@ export const ChecklistTemplateManager = ({ isOpen, onClose, boardId }: Checklist
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveItem(index)}
+                          className="flex-shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

@@ -69,7 +69,7 @@ export const ChecklistTemplateDialog = ({
               />
             </div>
 
-            <ScrollArea className="h-[400px]">
+            <ScrollArea className="h-[320px]">
               <div className="space-y-2 pr-4">
                 {filteredTemplates.length === 0 ? (
                   <div className="text-center py-12">
