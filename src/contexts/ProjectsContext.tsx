@@ -468,6 +468,12 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     addCard: async (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt' | 'activities'>) => {
       if (!user) return false;
 
+      // Get current cards count in the list for proper positioning
+      const { data: existingCards } = await supabase
+        .from('project_cards')
+        .select('id')
+        .eq('list_id', listId);
+
       const result = await cardsHook.createCard({
         list_id: listId,
         title: card.title,
@@ -478,7 +484,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         start_date: card.startDate,
         estimated_hours: card.estimatedHours,
         actual_hours: card.actualHours,
-        position: 0,
+        position: existingCards?.length || 0,
         cover: card.cover,
         location: card.location,
         custom_fields: {

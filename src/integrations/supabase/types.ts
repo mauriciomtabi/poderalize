@@ -1783,6 +1783,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      user_can_manage_card_on_list: {
+        Args: { _list_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_has_board_access: {
         Args: { _board_id: string; _user_id: string }
         Returns: boolean
