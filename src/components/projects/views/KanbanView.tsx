@@ -15,17 +15,15 @@ import {
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useState, useRef, useEffect } from "react";
 import { EnhancedProjectCard } from "../cards/EnhancedProjectCard";
-import { AddCardDialog } from "../dialogs/AddCardDialog";
 import { AddListDialog } from "../dialogs/AddListDialog";
 import { ListActionsDialog } from "../dialogs/ListActionsDialog";
 import { CardDetailModal } from "../modal/CardDetailModal";
 import { InlineEdit } from "@/components/kanban/InlineEdit";
 import { LoadingOverlay } from "@/components/ui/loading-spinner";
-import { ProjectList } from "@/types/projects";
+import { ProjectList, CardStatus, Priority } from "@/types/projects";
 
 export const KanbanView = () => {
   const { state, actions } = useProjects();
-  const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string>("");
   const [selectedCard, setSelectedCard] = useState<any>(null);
   const [showCardModal, setShowCardModal] = useState(false);
@@ -80,29 +78,36 @@ export const KanbanView = () => {
     );
   };
 
-  const handleAddCard = (listId: string) => {
-    setSelectedListId(listId);
-    setIsAddCardOpen(true);
-  };
-
-  const handleCreateCard = (cardData: any) => {
+  const handleAddCard = async (listId: string) => {
     const currentUser = actions.getCurrentUser();
     if (!currentUser) return;
 
-    actions.addCard(selectedListId, {
-      ...cardData,
+    // Criar card básico imediatamente
+    const success = await actions.addCard(listId, {
+      title: "Novo Cartão",
+      description: "",
+      status: 'todo' as CardStatus,
+      priority: 'medium' as Priority,
       createdBy: currentUser.id,
-      listId: selectedListId,
-      assignees: cardData.assignees || [],
-      labels: cardData.labels || [],
+      listId: listId,
+      assignees: [],
+      labels: [],
       checklists: [],
       attachments: [],
       comments: [],
-      activities: [],
       archived: false,
       watching: false
     });
-    setIsAddCardOpen(false);
+
+    // Após criar, buscar o último card da lista e abrir modal completo
+    if (success && state.currentBoard) {
+      const list = state.currentBoard.lists.find(l => l.id === listId);
+      if (list && list.cards.length > 0) {
+        const newCard = list.cards[list.cards.length - 1];
+        actions.setSelectedCard(newCard);
+        setShowCardModal(true);
+      }
+    }
   };
 
   const handleCardClick = (card: any) => {
@@ -265,14 +270,6 @@ export const KanbanView = () => {
             </DragDropContext>
           </div>
         </div>
-
-        <AddCardDialog
-          isOpen={isAddCardOpen}
-          onClose={() => setIsAddCardOpen(false)}
-          onCreateCard={handleCreateCard}
-          availableMembers={state.currentBoard.members}
-          availableLabels={state.currentBoard.labels}
-        />
 
         {selectedCard && (
           <CardDetailModal
