@@ -26,6 +26,7 @@ import {
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ProjectCard, Priority } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { EditCardDialog } from "@/components/projects/dialogs/EditCardDialog";
 import { cn } from "@/lib/utils";
 
 const priorityConfig = {
@@ -51,6 +52,7 @@ export const TableView = () => {
   const [sortField, setSortField] = useState<SortField>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
+  const [editingCard, setEditingCard] = useState<ProjectCard | null>(null);
 
   const handleDelete = (cardId: string) => {
     actions.deleteCard(cardId);
@@ -59,6 +61,11 @@ export const TableView = () => {
 
   const handleDuplicate = (cardId: string) => {
     actions.duplicateCard(cardId);
+  };
+
+  const handleUpdateCard = (updatedCard: ProjectCard) => {
+    actions.updateCard(updatedCard);
+    setEditingCard(null);
   };
 
   const handleSort = (field: SortField) => {
@@ -269,7 +276,7 @@ export const TableView = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => actions.setSelectedCard(card)}
+                        onClick={() => setEditingCard(card)}
                         className="h-6 w-6 p-0"
                       >
                         <Edit size={12} />
@@ -298,6 +305,18 @@ export const TableView = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Edit Card Dialog */}
+      {editingCard && (
+        <EditCardDialog
+          card={editingCard}
+          isOpen={!!editingCard}
+          onClose={() => setEditingCard(null)}
+          onUpdateCard={handleUpdateCard}
+          availableMembers={state.currentBoard?.members || []}
+          availableLabels={state.currentBoard?.labels || []}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
