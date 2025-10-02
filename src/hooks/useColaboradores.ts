@@ -209,11 +209,11 @@ export function useColaboradores() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('Usuário não autenticado');
 
-      // Buscar usuários aprovados
+      // Buscar usuários aprovados (colaboradores e admins)
       const { data: approvedUsers, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id')
-        .eq('role', 'colaborador');
+        .in('role', ['colaborador', 'admin']);
 
       if (rolesError) throw rolesError;
       if (!approvedUsers || approvedUsers.length === 0) {
