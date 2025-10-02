@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { ProfileDialog } from "./ProfileDialog";
+import { getInitials } from "@/lib/utils";
 interface HeaderProps {
   title: string;
 }
@@ -15,6 +19,8 @@ export const Header = ({
     user,
     signOut
   } = useAuthContext();
+  const [profileOpen, setProfileOpen] = useState(false);
+  
   const handleSignOut = () => {
     signOut();
   };
@@ -38,9 +44,15 @@ export const Header = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <User size={16} className="text-primary-foreground" />
-                </div>
+                <Avatar className="w-8 h-8">
+                  {user?.avatar_url ? (
+                    <AvatarImage src={user.avatar_url} alt={user.full_name || 'Avatar'} />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getInitials(user?.full_name || user?.email || 'U')}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
                 <span className="font-medium">{user?.full_name || user?.email || 'Usuário'}</span>
                 <Badge variant="outline" className="text-xs">
                   {user?.role === 'admin' ? 'Admin' : user?.role === 'colaborador' ? 'Colaborador' : 'Pendente'}
@@ -50,8 +62,10 @@ export const Header = ({
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Configurações</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+                <User size={16} className="mr-2" />
+                Perfil
+              </DropdownMenuItem>
               
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
@@ -60,6 +74,9 @@ export const Header = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          {/* Profile Dialog */}
+          <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
         </div>
       </div>
     </header>;
