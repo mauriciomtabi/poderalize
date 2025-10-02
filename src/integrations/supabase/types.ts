@@ -1787,6 +1787,10 @@ export type Database = {
         Args: { _board_id: string; _user_id: string }
         Returns: boolean
       }
+      user_has_card_access: {
+        Args: { _card_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_has_page_permission: {
         Args: {
           _page: Database["public"]["Enums"]["page_permission"]
