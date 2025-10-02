@@ -3,6 +3,7 @@ import { Activity, Clock } from "lucide-react";
 import { ProjectCard } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ActivityHistoryProps {
   card: ProjectCard;
@@ -22,6 +23,26 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
     };
     
     loadActivities();
+  }, [card.id, actions]);
+
+  // Realtime: refresh when new activities are inserted for this card
+  useEffect(() => {
+    const channel = supabase
+      .channel(`project_activities_${card.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'project_activities',
+        filter: `card_id=eq.${card.id}`
+      }, async () => {
+        const cardActivities = await actions.loadCardActivities(card.id);
+        setActivities(cardActivities);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [card.id, actions]);
 
   const formatDate = (dateString: string) => {

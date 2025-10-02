@@ -977,9 +977,11 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .from('project_activities')
           .insert({
             card_id: cardId,
-            user_id: user.id,
-            action: description,
-            details: metadata || {}
+            type,
+            description,
+            author: user.id,
+            author_name: (user as any).user_metadata?.full_name || user.email || 'Usuário',
+            metadata: metadata || {}
           } as any);
           
         if (error) {
@@ -1035,12 +1037,14 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           (profiles || []).map(p => [p.user_id, p])
         );
         
-        // Transform to include author name
+        // Transform to include author name and UI-friendly fields
         return activities.map(activity => ({
           ...activity,
           author_name: profileMap.get(activity.author)?.full_name || 
                       profileMap.get(activity.author)?.email || 
-                      'Usuário'
+                      activity.author_name || 'Usuário',
+          action: activity.description,
+          details: activity.metadata
         }));
       } catch (error) {
         console.error('Error loading activities:', error);
