@@ -41,31 +41,22 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
     });
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'create':
-        return '➕';
-      case 'update':
-        return '✏️';
-      case 'move':
-        return '🔀';
-      case 'comment':
-        return '💬';
-      case 'assign':
-        return '👥';
-      case 'due_date':
-        return '📅';
-      case 'complete':
-        return '✅';
-      case 'attachment':
-        return '📎';
-      case 'checklist':
-        return '☑️';
-      case 'archive':
-        return '📦';
-      default:
-        return '📝';
-    }
+  const getActivityIcon = (action: string) => {
+    const actionLower = action.toLowerCase();
+    
+    if (actionLower.includes('criou')) return '➕';
+    if (actionLower.includes('atualizou') || actionLower.includes('editou')) return '✏️';
+    if (actionLower.includes('moveu')) return '🔀';
+    if (actionLower.includes('comentou')) return '💬';
+    if (actionLower.includes('atribuiu') || actionLower.includes('membro')) return '👥';
+    if (actionLower.includes('vencimento') || actionLower.includes('data')) return '📅';
+    if (actionLower.includes('completou') || actionLower.includes('concluiu')) return '✅';
+    if (actionLower.includes('anexo') || actionLower.includes('arquivo')) return '📎';
+    if (actionLower.includes('checklist') || actionLower.includes('tarefa')) return '☑️';
+    if (actionLower.includes('arquivou')) return '📦';
+    if (actionLower.includes('duplicou')) return '📋';
+    
+    return '📝';
   };
 
   // Activities are now loaded from the database
@@ -86,22 +77,22 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
         ) : activities.map(activity => (
           <div key={activity.id} className="flex gap-3">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm">
-              {getActivityIcon(activity.type)}
+              {getActivityIcon(activity.action || '')}
             </div>
             <div className="flex-1 space-y-1">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <span className="font-medium text-sm">{activity.author_name}</span>
-                  <span className="text-sm ml-1">{activity.description}</span>
+                  <span className="text-sm ml-1">{activity.action}</span>
                 </div>
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {formatDate(activity.created_at)}
                 </span>
               </div>
-              {activity.metadata && Object.keys(activity.metadata).length > 0 && (
+              {activity.details && Object.keys(activity.details).length > 0 && (
                 <div className="text-xs text-muted-foreground">
-                  {JSON.stringify(activity.metadata)}
+                  {JSON.stringify(activity.details)}
                 </div>
               )}
             </div>

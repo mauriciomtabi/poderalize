@@ -261,8 +261,61 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .eq('board_id', boardId)
       ]);
 
-      const labels = labelsResponse.data?.map(transformDBLabel) || [];
-      const members = membersResponse.data?.map(transformDBMember) || [];
+      let labels = labelsResponse.data?.map(transformDBLabel) || [];
+      let members = membersResponse.data?.map(transformDBMember) || [];
+
+      // Auto-create default labels if none exist
+      if (labels.length === 0 && user) {
+        const defaultLabels = [
+          { name: 'Bug', color: '#ef4444', description: 'Problemas e correções' },
+          { name: 'Feature', color: '#3b82f6', description: 'Novas funcionalidades' },
+          { name: 'Urgent', color: '#f59e0b', description: 'Prioridade alta' },
+          { name: 'Design', color: '#8b5cf6', description: 'Trabalhos de design' },
+          { name: 'Review', color: '#10b981', description: 'Revisão necessária' },
+        ];
+
+        const insertPromises = defaultLabels.map(label =>
+          supabase.from('project_labels').insert({
+            board_id: boardId,
+            name: label.name,
+            color: label.color,
+            description: label.description,
+          }).select().single()
+        );
+
+        const results = await Promise.all(insertPromises);
+        labels = results
+          .filter(r => r.data)
+          .map(r => transformDBLabel(r.data!));
+      }
+
+      // Auto-sync colaboradores if no members exist
+      if (members.length === 0 && user) {
+        const { data: colaboradoresData } = await supabase
+          .from('colaboradores')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'ativo');
+
+        if (colaboradoresData && colaboradoresData.length > 0) {
+          const insertPromises = colaboradoresData.map(colab =>
+            supabase.from('project_members').insert({
+              board_id: boardId,
+              user_id: user.id,
+              name: colab.nome,
+              email: colab.email,
+              avatar: colab.avatar_url,
+              role: 'member',
+              added_by: user.id,
+            }).select().single()
+          );
+
+          const results = await Promise.all(insertPromises);
+          members = results
+            .filter(r => r.data)
+            .map(r => transformDBMember(r.data!));
+        }
+      }
 
       // Load cards for all lists
       const allCards: ProjectCard[] = [];
@@ -506,11 +559,9 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             .from('project_activities')
             .insert({
               card_id: result.id,
-              type: 'create',
-              description: 'criou o cartão',
-              author: user.id,
-              author_name: user.full_name || user.email || 'Usuário',
-              metadata: {}
+              user_id: user.id,
+              action: 'criou o cartão',
+              details: {}
             } as any);
         }
         await loadBoard(state.currentBoard.id);
@@ -618,11 +669,9 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             .from('project_activities')
             .insert({
               card_id: cardId,
-              type: 'move',
-              description: `moveu de "${sourceList.title}" para "${destList.title}"`,
-              author: user.id,
-              author_name: user.full_name || user.email || 'Usuário',
-              metadata: { sourceListId, destListId }
+              user_id: user.id,
+              action: `moveu de "${sourceList.title}" para "${destList.title}"`,
+              details: { sourceListId, destListId }
             } as any);
         }
         await loadBoard(state.currentBoard.id);
@@ -671,11 +720,9 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
               .from('project_activities')
               .insert({
                 card_id: duplicatedCard.id,
-                type: 'create',
-                description: `duplicou do cartão "${originalCard.title}"`,
-                author: user.id,
-                author_name: user.full_name || user.email || 'Usuário',
-                metadata: { originalCardId: originalCard.id }
+                user_id: user.id,
+                action: `duplicou do cartão "${originalCard.title}"`,
+                details: { originalCardId: originalCard.id }
               } as any);
           }
           await loadBoard(state.currentBoard.id);
@@ -704,11 +751,9 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .from('project_activities')
           .insert({
             card_id: cardId,
-            type: 'archive',
-            description: 'arquivou o cartão',
-            author: user.id,
-            author_name: user.full_name || user.email || 'Usuário',
-            metadata: {}
+            user_id: user.id,
+            action: 'arquivou o cartão',
+            details: {}
           } as any);
         await loadBoard(state.currentBoard.id);
       }
@@ -895,21 +940,29 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .from('project_activities')
           .insert({
             card_id: cardId,
-            type,
-            description,
-            author: user.id,
-            author_name: user.full_name || user.email || 'Usuário',
-            metadata: metadata || {}
+            user_id: user.id,
+            action: description,
+            details: metadata || {}
           } as any);
           
         if (error) {
           console.error('Error adding activity:', error);
+          toast({
+            title: "Aviso",
+            description: "Não foi possível registrar a atividade",
+            variant: "destructive",
+          });
           return false;
         }
         
         return true;
       } catch (error) {
         console.error('Error adding activity:', error);
+        toast({
+          title: "Aviso",
+          description: "Não foi possível registrar a atividade",
+          variant: "destructive",
+        });
         return false;
       }
     },
@@ -918,7 +971,10 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       try {
         const { data, error } = await supabase
           .from('project_activities')
-          .select('*')
+          .select(`
+            *,
+            profiles:user_id (full_name, email)
+          `)
           .eq('card_id', cardId)
           .order('created_at', { ascending: false });
           
@@ -927,7 +983,11 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           return [];
         }
         
-        return data || [];
+        // Transform to include author name
+        return (data || []).map(activity => ({
+          ...activity,
+          author_name: (activity.profiles as any)?.full_name || (activity.profiles as any)?.email || 'Usuário'
+        }));
       } catch (error) {
         console.error('Error loading activities:', error);
         return [];
