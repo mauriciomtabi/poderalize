@@ -47,18 +47,7 @@ export const Header = ({
                 </Badge>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Configurações</DropdownMenuItem>
-              
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                <LogOut size={16} className="mr-2" />
-                Sair
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+            
           </DropdownMenu>
         </div>
       </div>
