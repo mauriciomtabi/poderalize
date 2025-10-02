@@ -19,24 +19,35 @@ import {
 import { ProjectCard, Checklist, ChecklistItem } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { generateId } from "@/hooks/useUuid";
+import { ChecklistTemplateDialog } from "@/components/projects/ChecklistTemplateDialog";
 
 interface ChecklistManagerProps {
   card: ProjectCard;
 }
 
 export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
-  const { actions } = useProjects();
+  const { actions, state } = useProjects();
   const [newChecklistTitle, setNewChecklistTitle] = useState('');
   const [showNewChecklistForm, setShowNewChecklistForm] = useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [newItemTexts, setNewItemTexts] = useState<Record<string, string>>({});
   const [showNewItemForms, setShowNewItemForms] = useState<Record<string, boolean>>({});
 
-  const handleAddChecklist = () => {
-    if (newChecklistTitle.trim()) {
+  const handleAddChecklist = (title?: string, items?: string[]) => {
+    const checklistTitle = title || newChecklistTitle.trim();
+    if (checklistTitle) {
+      const checklistItems: ChecklistItem[] = items
+        ? items.map(text => ({
+            id: generateId(),
+            text,
+            completed: false
+          }))
+        : [];
+
       const newChecklist: Checklist = {
         id: generateId(),
-        title: newChecklistTitle.trim(),
-        items: []
+        title: checklistTitle,
+        items: checklistItems
       };
       
       actions.updateCard({
@@ -47,6 +58,11 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
       setNewChecklistTitle('');
       setShowNewChecklistForm(false);
     }
+  };
+
+  const handleSelectTemplate = (templateId: string, items: string[]) => {
+    // Template title is handled in the dialog, just use a default name
+    handleAddChecklist("Lista de Verificação", items);
   };
 
   const handleDeleteChecklist = (checklistId: string) => {
@@ -281,12 +297,24 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
         <Button
           variant="ghost"
           className="w-full justify-start"
-          onClick={(e) => { e.stopPropagation(); setShowNewChecklistForm(true); }}
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            setShowTemplateDialog(true);
+          }}
         >
           <CheckSquare className="h-4 w-4 mr-2" />
           Lista de verificação
         </Button>
       )}
+
+      {/* Template Dialog */}
+      <ChecklistTemplateDialog
+        isOpen={showTemplateDialog}
+        onClose={() => setShowTemplateDialog(false)}
+        onSelectTemplate={handleSelectTemplate}
+        onCreateEmpty={() => setShowNewChecklistForm(true)}
+        boardId={state.currentBoard?.id}
+      />
     </div>
   );
 };

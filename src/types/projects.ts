@@ -185,3 +185,24 @@ export interface DashboardMetrics {
     cardsCompleted: number;
   }[];
 }
+
+export interface ChecklistTemplateItem {
+  id: string;
+  templateId: string;
+  text: string;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChecklistTemplate {
+  id: string;
+  userId: string;
+  boardId?: string;
+  title: string;
+  description?: string;
+  isGlobal: boolean;
+  items: ChecklistTemplateItem[];
+  createdAt: string;
+  updatedAt: string;
+}

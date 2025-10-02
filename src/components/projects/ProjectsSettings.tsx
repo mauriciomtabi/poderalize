@@ -9,10 +9,13 @@ import {
   Tag, 
   Archive,
   Settings,
-  Palette
+  Palette,
+  ListChecks
 } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ManageLabelsDialog } from "./dialogs/ManageLabelsDialog";
+import { ChecklistTemplateManager } from "./ChecklistTemplateManager";
+import { useChecklistTemplates } from "@/hooks/useChecklistTemplates";
 
 interface ProjectsSettingsProps {
   isOpen: boolean;
@@ -22,6 +25,8 @@ interface ProjectsSettingsProps {
 export const ProjectsSettings = ({ isOpen, onClose }: ProjectsSettingsProps) => {
   const { state, actions } = useProjects();
   const [showManageLabels, setShowManageLabels] = useState(false);
+  const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const { templates } = useChecklistTemplates(state.currentBoard?.id);
   
   const cardColors = [
     { name: "Padrão", value: "default", color: "hsl(var(--card))" },
@@ -113,6 +118,33 @@ export const ProjectsSettings = ({ isOpen, onClose }: ProjectsSettingsProps) => 
 
               <Separator />
 
+              {/* Checklist Templates */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ListChecks size={16} className="text-muted-foreground" />
+                    <h4 className="font-medium text-sm">Templates de Listas</h4>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTemplateManager(true)}
+                    className="h-8 px-3"
+                  >
+                    Gerenciar
+                  </Button>
+                </div>
+                
+                <div className="text-xs text-muted-foreground">
+                  {templates.length === 0 
+                    ? "Nenhum template criado ainda" 
+                    : `${templates.length} ${templates.length === 1 ? 'template disponível' : 'templates disponíveis'}`
+                  }
+                </div>
+              </div>
+
+              <Separator />
+
               {/* Archived Items */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -146,6 +178,12 @@ export const ProjectsSettings = ({ isOpen, onClose }: ProjectsSettingsProps) => 
       <ManageLabelsDialog
         isOpen={showManageLabels}
         onClose={() => setShowManageLabels(false)}
+      />
+
+      <ChecklistTemplateManager
+        isOpen={showTemplateManager}
+        onClose={() => setShowTemplateManager(false)}
+        boardId={state.currentBoard?.id}
       />
     </>
   );
