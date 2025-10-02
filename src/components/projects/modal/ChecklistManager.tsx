@@ -60,9 +60,8 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
     }
   };
 
-  const handleSelectTemplate = (templateId: string, items: string[]) => {
-    // Template title is handled in the dialog, just use a default name
-    handleAddChecklist("Lista de Verificação", items);
+  const handleSelectTemplate = (templateId: string, title: string, items: string[]) => {
+    handleAddChecklist(title, items);
   };
 
   const handleDeleteChecklist = (checklistId: string) => {

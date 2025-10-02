@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 interface ChecklistTemplateDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectTemplate: (templateId: string, items: string[]) => void;
+  onSelectTemplate: (templateId: string, title: string, items: string[]) => void;
   onCreateEmpty: () => void;
   boardId?: string;
 }
@@ -25,8 +25,8 @@ export const ChecklistTemplateDialog = ({
   } = useChecklistTemplates(boardId);
   const [search, setSearch] = useState("");
   const filteredTemplates = templates.filter(template => template.title.toLowerCase().includes(search.toLowerCase()) || (template.description?.toLowerCase() || "").includes(search.toLowerCase()));
-  const handleSelectTemplate = (templateId: string, items: string[]) => {
-    onSelectTemplate(templateId, items);
+  const handleSelectTemplate = (templateId: string, title: string, items: string[]) => {
+    onSelectTemplate(templateId, title, items);
     onClose();
   };
   const handleCreateEmpty = () => {
@@ -62,7 +62,7 @@ export const ChecklistTemplateDialog = ({
                     <p className="text-xs text-muted-foreground mt-2">
                       Crie templates nas configurações do projeto
                     </p>
-                  </div> : filteredTemplates.map(template => <button key={template.id} onClick={() => handleSelectTemplate(template.id, template.items.map(i => i.text))} className="w-full p-4 border rounded-lg text-left hover:bg-accent/50 transition-colors">
+                  </div> : filteredTemplates.map(template => <button key={template.id} onClick={() => handleSelectTemplate(template.id, template.title, template.items.map(i => i.text))} className="w-full p-4 border rounded-lg text-left hover:bg-accent/50 transition-colors">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{template.title}</h4>
