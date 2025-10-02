@@ -618,6 +618,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           await supabase
             .from('project_card_assignees')
             .insert(membersToAdd.map(id => ({ card_id: card.id, member_id: id })) as any);
+          
+          // TODO: Create notifications for newly added members once notifications table is created
         }
         if (membersToRemove.length > 0) {
           await supabase
@@ -983,12 +985,9 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     loadCardActivities: async (cardId: string) => {
       try {
-        const { data, error } = await supabase
+        const { data: activities, error } = await supabase
           .from('project_activities')
-          .select(`
-            *,
-            profiles:user_id (full_name, email)
-          `)
+          .select('*')
           .eq('card_id', cardId)
           .order('created_at', { ascending: false });
           
@@ -997,10 +996,30 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           return [];
         }
         
+        if (!activities || activities.length === 0) {
+          return [];
+        }
+        
+        // Get unique author IDs
+        const authorIds = [...new Set(activities.map(a => a.author).filter(Boolean))];
+        
+        // Fetch profiles for these users
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, email')
+          .in('user_id', authorIds);
+        
+        // Create a map of user_id to profile
+        const profileMap = new Map(
+          (profiles || []).map(p => [p.user_id, p])
+        );
+        
         // Transform to include author name
-        return (data || []).map(activity => ({
+        return activities.map(activity => ({
           ...activity,
-          author_name: (activity.profiles as any)?.full_name || (activity.profiles as any)?.email || 'Usuário'
+          author_name: profileMap.get(activity.author)?.full_name || 
+                      profileMap.get(activity.author)?.email || 
+                      'Usuário'
         }));
       } catch (error) {
         console.error('Error loading activities:', error);
