@@ -94,12 +94,12 @@ const transformDBLabel = (dbLabel: ProjectLabel) => {
   };
 };
 
-const transformDBMember = (dbMember: ProjectMember) => {
+const transformDBMember = (dbMember: any) => {
   return {
     id: dbMember.id,
     name: dbMember.name,
     email: dbMember.email,
-    avatar: dbMember.avatar,
+    avatar: dbMember.profiles?.avatar_url || dbMember.avatar,
     role: dbMember.role as any
   };
 };
@@ -250,6 +250,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
 
       // Fetch labels and members directly from Supabase for reliability
+      // Join with profiles to get avatar_url
       const [labelsResponse, membersResponse] = await Promise.all([
         supabase
           .from('project_labels')
@@ -257,7 +258,10 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .eq('board_id', boardId),
         supabase
           .from('project_members')
-          .select('*')
+          .select(`
+            *,
+            profiles!inner(avatar_url)
+          `)
           .eq('board_id', boardId)
       ]);
 
@@ -307,7 +311,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             const insertPromises = missingColaboradores.map(colab =>
               supabase.from('project_members').insert({
                 board_id: boardId,
-                user_id: colab.id, // Use colaborador's ID, not admin's
+                user_id: colab.user_id, // Correctly use user_id from colaborador
                 name: colab.nome,
                 email: colab.email,
                 avatar: colab.avatar_url,

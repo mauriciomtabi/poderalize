@@ -41,7 +41,7 @@ export function useColaboradores() {
     }
   };
 
-  const addColaborador = async (formData: ColaboradorFormData) => {
+  const addColaborador = async (formData: ColaboradorFormData, colaboradorUserId?: string) => {
     try {
       // Validação com Zod
       const validatedData = colaboradorSchema.parse({
@@ -58,6 +58,18 @@ export function useColaboradores() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) throw new Error('Usuário não autenticado');
 
+      // Try to find user_id by email if not provided
+      let finalUserId = colaboradorUserId;
+      if (!finalUserId) {
+        const { data: authUser } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', validatedData.email)
+          .maybeSingle();
+        
+        finalUserId = authUser?.user_id;
+      }
+
       // Preparar dados para inserção
       const insertData = {
         nome: validatedData.nome,
@@ -66,7 +78,7 @@ export function useColaboradores() {
         telefone: validatedData.telefone || null,
         departamento: validatedData.departamento,
         status: validatedData.status || 'ativo',
-        user_id: userData.user.id
+        user_id: finalUserId || userData.user.id // Use colaborador's user_id or fallback to admin's
       };
 
       const { data, error } = await supabase

@@ -214,7 +214,7 @@ const Colaboradores = () => {
     try {
       await approveUser(userId, userEmail, userName);
       
-      // Automatically create colaborador entry for approved user
+      // Automatically create colaborador entry for approved user with their user_id
       await addColaborador({
         nome: userName,
         email: userEmail,
@@ -222,7 +222,7 @@ const Colaboradores = () => {
         funcao: "A definir",
         departamento: "",
         status: "ativo"
-      });
+      }, userId); // Pass the userId of the approved user
       
       toast({
         title: "Usuário aprovado e adicionado",
