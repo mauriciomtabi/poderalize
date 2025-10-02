@@ -26,7 +26,7 @@ import {
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ProjectCard, Priority } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { EditCardDialog } from "@/components/projects/dialogs/EditCardDialog";
+import { CardDetailModal } from "@/components/projects/modal/CardDetailModal";
 import { cn } from "@/lib/utils";
 
 const priorityConfig = {
@@ -52,7 +52,7 @@ export const TableView = () => {
   const [sortField, setSortField] = useState<SortField>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [deleteCardId, setDeleteCardId] = useState<string | null>(null);
-  const [editingCard, setEditingCard] = useState<ProjectCard | null>(null);
+  const [showCardModal, setShowCardModal] = useState(false);
 
   const handleDelete = (cardId: string) => {
     actions.deleteCard(cardId);
@@ -63,9 +63,9 @@ export const TableView = () => {
     actions.duplicateCard(cardId);
   };
 
-  const handleUpdateCard = (updatedCard: ProjectCard) => {
-    actions.updateCard(updatedCard);
-    setEditingCard(null);
+  const handleCardClick = (card: ProjectCard) => {
+    actions.setSelectedCard(card);
+    setShowCardModal(true);
   };
 
   const handleSort = (field: SortField) => {
@@ -181,8 +181,8 @@ export const TableView = () => {
                   <TableCell>
                     <div className="space-y-1">
                       <div 
-                        className="font-medium cursor-pointer hover:text-primary"
-                        onClick={() => actions.setSelectedCard(card)}
+                        className="font-medium cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => handleCardClick(card)}
                       >
                         {card.title}
                       </div>
@@ -276,7 +276,7 @@ export const TableView = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setEditingCard(card)}
+                        onClick={() => handleCardClick(card)}
                         className="h-6 w-6 p-0"
                       >
                         <Edit size={12} />
@@ -306,15 +306,15 @@ export const TableView = () => {
         </Table>
       </div>
 
-      {/* Edit Card Dialog */}
-      {editingCard && (
-        <EditCardDialog
-          card={editingCard}
-          isOpen={!!editingCard}
-          onClose={() => setEditingCard(null)}
-          onUpdateCard={handleUpdateCard}
-          availableMembers={state.currentBoard?.members || []}
-          availableLabels={state.currentBoard?.labels || []}
+      {/* Card Detail Modal */}
+      {state.selectedCard && (
+        <CardDetailModal
+          card={state.selectedCard}
+          isOpen={showCardModal}
+          onClose={() => {
+            setShowCardModal(false);
+            actions.setSelectedCard(null);
+          }}
         />
       )}
 
