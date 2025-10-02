@@ -33,7 +33,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw } from "lucide-react";
+import { Plus, Search, Mail, Phone, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw, Shield } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useApprovedUsers } from "@/hooks/useApprovedUsers";
@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/types/colaboradores";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PermissionsDialog } from "@/components/colaboradores/PermissionsDialog";
 
 const Colaboradores = () => {
   const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador, syncApprovedUsers } = useColaboradores();
@@ -52,6 +53,8 @@ const Colaboradores = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [colaboradorToDelete, setColaboradorToDelete] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
+  const [selectedUserIdForPermissions, setSelectedUserIdForPermissions] = useState<string>("");
   const [novoColaborador, setNovoColaborador] = useState({
     nome: "",
     email: "",
@@ -673,19 +676,32 @@ const Colaboradores = () => {
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex space-x-2 ml-auto">
-                      <Button variant="outline" size="sm" onClick={handleEditColaborador}>
-                        <Edit3 size={14} className="mr-2" />
-                        Editar
-                      </Button>
+                    <div className="flex justify-between w-full">
                       <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => setColaboradorToDelete(selectedColaborador.id)}
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUserIdForPermissions(selectedColaborador.user_id);
+                          setIsPermissionsDialogOpen(true);
+                        }}
                       >
-                        <Trash2 size={14} className="mr-2" />
-                        Remover
+                        <Shield size={14} className="mr-2" />
+                        Gerenciar Permissões
                       </Button>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" onClick={handleEditColaborador}>
+                          <Edit3 size={14} className="mr-2" />
+                          Editar
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => setColaboradorToDelete(selectedColaborador.id)}
+                        >
+                          <Trash2 size={14} className="mr-2" />
+                          Remover
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -716,6 +732,16 @@ const Colaboradores = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Diálogo de Permissões */}
+        {selectedColaborador && (
+          <PermissionsDialog
+            isOpen={isPermissionsDialogOpen}
+            onClose={() => setIsPermissionsDialogOpen(false)}
+            userId={selectedUserIdForPermissions}
+            userName={selectedColaborador.nome}
+          />
+        )}
     </div>
   );
 };
