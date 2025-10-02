@@ -267,11 +267,10 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       // Auto-create default labels if none exist
       if (labels.length === 0 && user) {
         const defaultLabels = [
-          { name: 'Bug', color: '#ef4444', description: 'Problemas e correções' },
-          { name: 'Feature', color: '#3b82f6', description: 'Novas funcionalidades' },
-          { name: 'Urgent', color: '#f59e0b', description: 'Prioridade alta' },
-          { name: 'Design', color: '#8b5cf6', description: 'Trabalhos de design' },
-          { name: 'Review', color: '#10b981', description: 'Revisão necessária' },
+          { name: 'Crítico', color: '#ef4444', description: 'Prioridade crítica' },
+          { name: 'Alta', color: '#f97316', description: 'Prioridade alta' },
+          { name: 'Média', color: '#f59e0b', description: 'Prioridade média' },
+          { name: 'Baixa', color: '#22c55e', description: 'Prioridade baixa' },
         ];
 
         const insertPromises = defaultLabels.map(label =>
