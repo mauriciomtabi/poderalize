@@ -2,30 +2,23 @@ import { Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { NotificationsDropdown } from "./NotificationsDropdown";
-
 interface HeaderProps {
   title: string;
 }
-
-export const Header = ({ title }: HeaderProps) => {
-  const { user, signOut } = useAuthContext();
-
+export const Header = ({
+  title
+}: HeaderProps) => {
+  const {
+    user,
+    signOut
+  } = useAuthContext();
   const handleSignOut = () => {
     signOut();
   };
-
-  return (
-    <header className="bg-card border-b border-border px-6 py-4">
+  return <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold text-foreground">{title}</h1>
@@ -35,10 +28,7 @@ export const Header = ({ title }: HeaderProps) => {
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-            <Input
-              placeholder="Buscar..."
-              className="pl-9 w-64 bg-background"
-            />
+            <Input placeholder="Buscar..." className="pl-9 w-64 bg-background" />
           </div>
 
           {/* Notifications */}
@@ -62,7 +52,7 @@ export const Header = ({ title }: HeaderProps) => {
               <DropdownMenuSeparator />
               <DropdownMenuItem>Perfil</DropdownMenuItem>
               <DropdownMenuItem>Configurações</DropdownMenuItem>
-              <DropdownMenuItem>Ajuda</DropdownMenuItem>
+              
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                 <LogOut size={16} className="mr-2" />
@@ -72,6 +62,5 @@ export const Header = ({ title }: HeaderProps) => {
           </DropdownMenu>
         </div>
       </div>
-    </header>
-  );
+    </header>;
 };
