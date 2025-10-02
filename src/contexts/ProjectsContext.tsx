@@ -619,7 +619,28 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             .from('project_card_assignees')
             .insert(membersToAdd.map(id => ({ card_id: card.id, member_id: id })) as any);
           
-          // TODO: Create notifications for newly added members once notifications table is created
+          // Create notifications for newly added members
+          for (const memberId of membersToAdd) {
+            const { data: memberData } = await supabase
+              .from('project_members')
+              .select('user_id, name')
+              .eq('id', memberId)
+              .single();
+            
+            if (memberData?.user_id) {
+              await supabase
+                .from('notifications')
+                .insert({
+                  user_id: memberData.user_id,
+                  type: 'project_assignment',
+                  title: 'Novo cartão atribuído',
+                  description: `Você foi atribuído ao cartão "${card.title}"`,
+                  priority: 'medium',
+                  link: `/projetos?card=${card.id}`,
+                  read: false
+                });
+            }
+          }
         }
         if (membersToRemove.length > 0) {
           await supabase
