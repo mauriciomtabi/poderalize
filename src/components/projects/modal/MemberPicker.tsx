@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Member } from "@/types/projects";
 import { Users } from "lucide-react";
+import { getInitials } from "@/lib/utils";
 
 interface MemberPickerProps {
   isOpen: boolean;
@@ -22,6 +23,13 @@ export const MemberPicker = ({
   onMembersChange
 }: MemberPickerProps) => {
   const [tempSelected, setTempSelected] = useState<Member[]>(selectedMembers);
+
+  // Sync tempSelected when dialog opens or selectedMembers change
+  useEffect(() => {
+    if (isOpen) {
+      setTempSelected(selectedMembers);
+    }
+  }, [isOpen, selectedMembers]);
 
   const handleToggleMember = (member: Member) => {
     const isSelected = tempSelected.some(m => m.id === member.id);
@@ -77,9 +85,9 @@ export const MemberPicker = ({
                 >
                   <Checkbox checked={isSelected} onChange={() => {}} />
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={avatarSrc} />
+                    {avatarSrc && <AvatarImage src={avatarSrc} alt={member.name} />}
                     <AvatarFallback className="text-xs">
-                      {member.name.split(' ').map(n => n[0]).join('')}
+                      {getInitials(member.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>

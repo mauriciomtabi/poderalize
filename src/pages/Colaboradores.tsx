@@ -546,6 +546,9 @@ const Colaboradores = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center space-x-3">
                 <Avatar className="w-10 h-10">
+                  {selectedColaborador?.avatar_url && (
+                    <AvatarImage src={selectedColaborador.avatar_url} alt={selectedColaborador.nome} />
+                  )}
                   <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                     {selectedColaborador && getInitials(selectedColaborador.nome)}
                   </AvatarFallback>
