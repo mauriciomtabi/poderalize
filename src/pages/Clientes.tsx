@@ -7,14 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe } from 'lucide-react';
+import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Cliente } from '@/hooks/useClientes';
+import { Cliente, CreateClienteData } from '@/hooks/useClientes';
+import { ClienteForm } from '@/components/clientes/ClienteForm';
 const Clientes = () => {
   const {
     clientes,
-    isLoading
+    isLoading,
+    addCliente
   } = useClientes();
   const {
     user
@@ -22,6 +24,7 @@ const Clientes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   if (!user) {
     return <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Você precisa estar logado para acessar os clientes</p>
@@ -52,6 +55,13 @@ const Clientes = () => {
   const handleCardClick = (cliente: Cliente) => {
     setSelectedCliente(cliente);
     setIsViewModalOpen(true);
+  };
+
+  const handleAddCliente = async (clienteData: CreateClienteData) => {
+    const result = await addCliente(clienteData);
+    if (result) {
+      setIsAddModalOpen(false);
+    }
   };
   return <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
@@ -101,6 +111,10 @@ const Clientes = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input placeholder="Buscar clientes por nome, empresa ou email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Cliente
+          </Button>
         </div>
 
         {/* Clientes List */}
@@ -159,6 +173,22 @@ const Clientes = () => {
                 </CardContent>
               </Card>)}
           </div>}
+
+        {/* Add Modal */}
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Adicionar Novo Cliente
+              </DialogTitle>
+            </DialogHeader>
+            <ClienteForm 
+              onSubmit={handleAddCliente}
+              onCancel={() => setIsAddModalOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
 
         {/* View Modal */}
         <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
