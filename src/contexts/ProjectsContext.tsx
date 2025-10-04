@@ -95,11 +95,14 @@ const transformDBLabel = (dbLabel: ProjectLabel) => {
 };
 
 const transformDBMember = (dbMember: any) => {
+  const profileAvatar = Array.isArray(dbMember.profiles)
+    ? dbMember.profiles?.[0]?.avatar_url
+    : dbMember.profiles?.avatar_url;
   return {
     id: dbMember.id,
     name: dbMember.name || 'Usuário',
     email: dbMember.email || '',
-    avatar: dbMember.profiles?.[0]?.avatar_url || dbMember.avatar || undefined,
+    avatar: profileAvatar || dbMember.avatar || undefined,
     role: dbMember.role as any
   };
 };
