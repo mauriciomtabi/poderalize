@@ -78,13 +78,16 @@ export const DashboardView = () => {
   const allCards = state.currentBoard.lists.flatMap(list => list.cards);
   const cards = actions.getFilteredCards();
 
-  // Calculate metrics - considering only "done" status as "Executado"
-  const completedCards = allCards.filter(card => card.status === 'done');
+  // Calculate metrics - considering only cards in "Executado" list
+  const executadoList = state.currentBoard.lists.find(list => 
+    list.title.toLowerCase().match(/^(executado|concluído|concluidos|done)$/i)
+  );
+  const completedCards = executadoList ? executadoList.cards.length : 0;
   const metrics: DashboardMetrics = {
     totalCards: allCards.length,
-    completedCards: completedCards.length,
+    completedCards: completedCards,
     overdue: allCards.filter(card => card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done').length,
-    completionRate: allCards.length > 0 ? (completedCards.length / allCards.length) * 100 : 0,
+    completionRate: allCards.length > 0 ? (completedCards / allCards.length) * 100 : 0,
     averageTimeToComplete: 0,
     cardsByStatus: cards.reduce((acc, card) => {
       acc[card.status] = (acc[card.status] || 0) + 1;
@@ -109,21 +112,15 @@ export const DashboardView = () => {
     activityTrend: []
   };
 
-  // Prepare chart data - distribution by status with different colors
-  const statusLabels = {
-    'todo': 'A Fazer',
-    'in-progress': 'Andamento',
-    'review': 'Aguardando A',
-    'blocked': 'Entro',
-    'done': 'Executado'
-  };
-  
-  const statusChartData = Object.entries(metrics.cardsByStatus)
-    .map(([status, count]) => ({
-      name: statusLabels[status as CardStatus] || status,
-      value: count,
-      color: STATUS_COLORS[status as CardStatus]
+  // Prepare chart data - distribution by lists (not card status)
+  const statusChartData = state.currentBoard.lists
+    .filter(list => !list.archived)
+    .map(list => ({
+      name: list.title,
+      value: list.cards.length,
+      color: list.color || '#3b82f6'
     }))
+    .filter(item => item.value > 0)
     .sort((a, b) => b.value - a.value);
   const labelData = (() => {
     const labelCounts: {
@@ -313,12 +310,10 @@ export const DashboardView = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {state.currentBoard.members.map(member => {
-            // Count cards assigned to this member
-            const memberCards = allCards.filter(card => 
-              card.assignees.some(assignee => assignee.id === member.id)
-            );
-            const completedCards = memberCards.filter(card => card.status === 'done');
-            const completionRate = memberCards.length > 0 ? (completedCards.length / memberCards.length) * 100 : 0;
+            // Count checklist items assigned to this member
+            const memberItems = checklistItems.filter(item => item.assignee === member.id);
+            const completedItems = memberItems.filter(item => item.completed);
+            const completionRate = memberItems.length > 0 ? (completedItems.length / memberItems.length) * 100 : 0;
             
             return (
               <div key={member.id} className="flex items-center space-x-4">
@@ -338,9 +333,8 @@ export const DashboardView = () => {
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                    <span>{memberCards.length} tarefas</span>
-                    <span>{Math.round(completionRate)}% concluído</span>
-                    <span>{completedCards.length} / {memberCards.length} completos</span>
+                    <span>{memberItems.length} tarefas</span>
+                    <span>{completedItems.length} / {memberItems.length} completas</span>
                   </div>
                   
                   <Progress value={completionRate} className="h-2" />
