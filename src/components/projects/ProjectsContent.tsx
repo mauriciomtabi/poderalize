@@ -18,8 +18,8 @@ export const ProjectsContent = ({ showFilters }: { showFilters: boolean }) => {
   // The LoadingOverlay in KanbanView will handle the loading state
 
   const renderCurrentView = () => {
-    // Restrict calendar and dashboard views to admins only
-    if ((state.currentView === 'calendar' || state.currentView === 'dashboard') && !isAdmin) {
+    // Restrict dashboard view to admins only
+    if (state.currentView === 'dashboard' && !isAdmin) {
       return (
         <div className="flex items-center justify-center h-full p-8">
           <Alert className="max-w-md">

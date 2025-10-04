@@ -47,8 +47,8 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">
           {Object.entries(viewIcons).map(([view, Icon]) => {
-            // Only admins can see calendar and dashboard views
-            if ((view === 'calendar' || view === 'dashboard') && !isAdmin) {
+            // Only admins can see dashboard view
+            if (view === 'dashboard' && !isAdmin) {
               return null;
             }
             
