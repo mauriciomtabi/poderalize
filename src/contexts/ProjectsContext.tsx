@@ -1021,6 +1021,26 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           return false;
         }
 
+        // Visibility filter: regular members only see cards they're assigned to
+        // Admins and board owners see all cards
+        if (user) {
+          const isAdmin = (user as any).role === 'admin';
+          const isBoardOwner = state.currentBoard?.createdBy === user.id;
+          
+          if (!isAdmin && !isBoardOwner) {
+            // For regular members, check if they're assigned to the card
+            const isAssignedToCard = card.assignees.some(assignee => assignee.id === user.id);
+            
+            // Also check by email match with board members
+            const memberRecord = state.currentBoard?.members.find(m => m.email === user.email);
+            const isCardAssignee = memberRecord && card.assignees.some(assignee => assignee.id === memberRecord.id);
+            
+            if (!isAssignedToCard && !isCardAssignee) {
+              return false;
+            }
+          }
+        }
+
         return true;
       });
     },
