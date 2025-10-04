@@ -78,12 +78,13 @@ export const DashboardView = () => {
   const allCards = state.currentBoard.lists.flatMap(list => list.cards);
   const cards = actions.getFilteredCards();
 
-  // Calculate metrics
+  // Calculate metrics - considering only "done" status as "Executado"
+  const completedCards = allCards.filter(card => card.status === 'done');
   const metrics: DashboardMetrics = {
     totalCards: allCards.length,
-    completedCards: cards.filter(card => card.status === 'done').length,
-    overdue: cards.filter(card => card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done').length,
-    completionRate: cards.length > 0 ? cards.filter(card => card.status === 'done').length / cards.length * 100 : 0,
+    completedCards: completedCards.length,
+    overdue: allCards.filter(card => card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done').length,
+    completionRate: allCards.length > 0 ? (completedCards.length / allCards.length) * 100 : 0,
     averageTimeToComplete: 0,
     cardsByStatus: cards.reduce((acc, card) => {
       acc[card.status] = (acc[card.status] || 0) + 1;
@@ -108,13 +109,20 @@ export const DashboardView = () => {
     activityTrend: []
   };
 
-  // Prepare chart data - distribution by lists (not status)
-  const listChartData = state.currentBoard.lists
-    .filter(list => !list.archived)
-    .map(list => ({
-      name: list.title,
-      value: list.cards.length,
-      color: list.color || '#3B82F6'
+  // Prepare chart data - distribution by status with different colors
+  const statusLabels = {
+    'todo': 'A Fazer',
+    'in-progress': 'Andamento',
+    'review': 'Aguardando A',
+    'blocked': 'Entro',
+    'done': 'Executado'
+  };
+  
+  const statusChartData = Object.entries(metrics.cardsByStatus)
+    .map(([status, count]) => ({
+      name: statusLabels[status as CardStatus] || status,
+      value: count,
+      color: STATUS_COLORS[status as CardStatus]
     }))
     .sort((a, b) => b.value - a.value);
   const labelData = (() => {
@@ -205,17 +213,17 @@ export const DashboardView = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* List Distribution */}
+        {/* Status Distribution */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Distribuição por Status</CardTitle>
           </CardHeader>
           <CardContent>
-            {listChartData.length > 0 ? (
+            {statusChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie 
-                    data={listChartData} 
+                    data={statusChartData} 
                     cx="50%" 
                     cy="50%" 
                     labelLine={false}
@@ -223,18 +231,25 @@ export const DashboardView = () => {
                     outerRadius={100} 
                     dataKey="value"
                   >
-                    {listChartData.map((entry, index) => (
+                    {statusChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${value} cartões`, 'Quantidade']} />
+                  <Tooltip 
+                    formatter={(value) => [`${value} cartões`, 'Quantidade']}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 <div className="text-center">
-                  <div className="text-lg font-medium mb-2">Nenhuma lista encontrada</div>
-                  <div className="text-sm">Crie listas no projeto para ver a distribuição</div>
+                  <div className="text-lg font-medium mb-2">Nenhum cartão encontrado</div>
+                  <div className="text-sm">Adicione cartões ao projeto para ver a distribuição</div>
                 </div>
               </div>
             )}
@@ -249,7 +264,7 @@ export const DashboardView = () => {
           <CardContent>
             {labelData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={labelData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={labelData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="name" 
@@ -258,8 +273,7 @@ export const DashboardView = () => {
                     tick={{ fill: 'hsl(var(--foreground))' }}
                   />
                   <YAxis 
-                    stroke="hsl(var(--foreground))"
-                    tick={{ fill: 'hsl(var(--foreground))' }}
+                    hide
                   />
                   <Tooltip 
                     formatter={(value) => [`${value} cartões`, 'Quantidade']}
@@ -269,7 +283,11 @@ export const DashboardView = () => {
                       borderRadius: '6px'
                     }}
                   />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  <Bar 
+                    dataKey="value" 
+                    radius={[8, 8, 0, 0]}
+                    label={{ position: 'top', fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                  >
                     {labelData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -295,10 +313,12 @@ export const DashboardView = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {state.currentBoard.members.map(member => {
-            // Count checklist items assigned to this member
-            const memberTasks = checklistItems.filter(item => item.assigned_to === member.id);
-            const completedTasks = memberTasks.filter(item => item.completed);
-            const completionRate = memberTasks.length > 0 ? (completedTasks.length / memberTasks.length) * 100 : 0;
+            // Count cards assigned to this member
+            const memberCards = allCards.filter(card => 
+              card.assignees.some(assignee => assignee.id === member.id)
+            );
+            const completedCards = memberCards.filter(card => card.status === 'done');
+            const completionRate = memberCards.length > 0 ? (completedCards.length / memberCards.length) * 100 : 0;
             
             return (
               <div key={member.id} className="flex items-center space-x-4">
@@ -318,9 +338,9 @@ export const DashboardView = () => {
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                    <span>{memberTasks.length} tarefas</span>
+                    <span>{memberCards.length} tarefas</span>
                     <span>{Math.round(completionRate)}% concluído</span>
-                    <span>{completedTasks.length} / {memberTasks.length} completos</span>
+                    <span>{completedCards.length} / {memberCards.length} completos</span>
                   </div>
                   
                   <Progress value={completionRate} className="h-2" />
