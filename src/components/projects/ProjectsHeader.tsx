@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { ProjectsFilters } from "@/components/projects/ProjectsFilters";
 import { ProjectsSettings } from "@/components/projects/ProjectsSettings";
+import { useAuthContext } from "@/contexts/AuthContext";
 const viewIcons = {
   kanban: LayoutGrid,
   table: Table,
@@ -24,6 +25,7 @@ const viewLabels = {
 };
 export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => void }) => {
   const { state, actions } = useProjects();
+  const { isAdmin } = useAuthContext();
   const [showSettings, setShowSettings] = useState(false);
   const handleViewChange = (view: ViewType) => {
     actions.setCurrentView(view);
@@ -44,21 +46,28 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
       {/* View Selector and Search */}
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">
-          {Object.entries(viewIcons).map(([view, Icon]) => (
-            <Button 
-              key={view} 
-              variant={state.currentView === view ? "default" : "ghost"} 
-              size="sm" 
-              onClick={() => handleViewChange(view as ViewType)} 
-              className={cn(
-                "h-8 px-3 text-muted-foreground hover:text-foreground", 
-                state.currentView === view && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm"
-              )}
-            >
-              <Icon size={16} className="mr-1" />
-              {viewLabels[view as ViewType]}
-            </Button>
-          ))}
+          {Object.entries(viewIcons).map(([view, Icon]) => {
+            // Only admins can see calendar and dashboard views
+            if ((view === 'calendar' || view === 'dashboard') && !isAdmin) {
+              return null;
+            }
+            
+            return (
+              <Button 
+                key={view} 
+                variant={state.currentView === view ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => handleViewChange(view as ViewType)} 
+                className={cn(
+                  "h-8 px-3 text-muted-foreground hover:text-foreground", 
+                  state.currentView === view && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm"
+                )}
+              >
+                <Icon size={16} className="mr-1" />
+                {viewLabels[view as ViewType]}
+              </Button>
+            );
+          })}
         </div>
 
         <div className="flex items-center space-x-2">

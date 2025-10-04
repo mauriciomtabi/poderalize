@@ -1021,23 +1021,20 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           return false;
         }
 
-        // Visibility filter: regular members only see cards they're assigned to
-        // Admins and board owners see all cards
+        // Visibility filter: all users (including admins) only see cards they're assigned to or created
         if (user) {
-          const isAdmin = (user as any).role === 'admin';
-          const isBoardOwner = state.currentBoard?.createdBy === user.id;
+          // Check if user is assigned to the card
+          const isAssignedToCard = card.assignees.some(assignee => assignee.id === user.id);
           
-          if (!isAdmin && !isBoardOwner) {
-            // For regular members, check if they're assigned to the card
-            const isAssignedToCard = card.assignees.some(assignee => assignee.id === user.id);
-            
-            // Also check by email match with board members
-            const memberRecord = state.currentBoard?.members.find(m => m.email === user.email);
-            const isCardAssignee = memberRecord && card.assignees.some(assignee => assignee.id === memberRecord.id);
-            
-            if (!isAssignedToCard && !isCardAssignee) {
-              return false;
-            }
+          // Also check by email match with board members
+          const memberRecord = state.currentBoard?.members.find(m => m.email === user.email);
+          const isCardAssignee = memberRecord && card.assignees.some(assignee => assignee.id === memberRecord.id);
+          
+          // Check if user created the card
+          const isCreator = card.createdBy === user.id;
+          
+          if (!isAssignedToCard && !isCardAssignee && !isCreator) {
+            return false;
           }
         }
 

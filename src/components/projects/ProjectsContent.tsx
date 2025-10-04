@@ -1,4 +1,5 @@
 import { useProjects } from "@/contexts/ProjectsContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { ProjectsFilters } from "./ProjectsFilters";
 import { KanbanView } from "./views/KanbanView";
 import { TableView } from "./views/TableView";
@@ -6,14 +7,31 @@ import { CalendarView } from "./views/CalendarView";
 import { DashboardView } from "./views/DashboardView";
 import { ArchivedView } from "./views/ArchivedView";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Shield } from "lucide-react";
 
 export const ProjectsContent = ({ showFilters }: { showFilters: boolean }) => {
   const { state } = useProjects();
+  const { isAdmin } = useAuthContext();
 
   // Note: We no longer unmount the view during loading to prevent modal closures
   // The LoadingOverlay in KanbanView will handle the loading state
 
   const renderCurrentView = () => {
+    // Restrict calendar and dashboard views to admins only
+    if ((state.currentView === 'calendar' || state.currentView === 'dashboard') && !isAdmin) {
+      return (
+        <div className="flex items-center justify-center h-full p-8">
+          <Alert className="max-w-md">
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              Apenas administradores podem acessar esta visualização.
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
+
     switch (state.currentView) {
       case 'kanban':
         return <KanbanView />;
