@@ -2,38 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  Calendar,
-  Target
-} from "lucide-react";
+import { BarChart3, TrendingUp, Users, Clock, CheckCircle2, AlertTriangle, Calendar, Target } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { DashboardMetrics, Priority, CardStatus } from "@/types/projects";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer 
-} from "recharts";
-
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 const PRIORITY_COLORS = {
   low: '#3b82f6',
-  medium: '#f59e0b', 
+  medium: '#f59e0b',
   high: '#ef4444',
   urgent: '#dc2626'
 };
-
 const STATUS_COLORS = {
   'todo': '#6b7280',
   'in-progress': '#3b82f6',
@@ -41,14 +19,14 @@ const STATUS_COLORS = {
   'blocked': '#ef4444',
   'done': '#10b981'
 };
-
 export const DashboardView = () => {
-  const { state, actions } = useProjects();
-  
+  const {
+    state,
+    actions
+  } = useProjects();
   if (!state.currentBoard) {
     return <div className="flex items-center justify-center h-full">Nenhum projeto selecionado</div>;
   }
-
   const allCards = state.currentBoard.lists.flatMap(list => list.cards);
   const cards = actions.getFilteredCards();
 
@@ -56,10 +34,8 @@ export const DashboardView = () => {
   const metrics: DashboardMetrics = {
     totalCards: allCards.length,
     completedCards: cards.filter(card => card.status === 'done').length,
-    overdue: cards.filter(card => 
-      card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done'
-    ).length,
-    completionRate: cards.length > 0 ? (cards.filter(card => card.status === 'done').length / cards.length) * 100 : 0,
+    overdue: cards.filter(card => card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done').length,
+    completionRate: cards.length > 0 ? cards.filter(card => card.status === 'done').length / cards.length * 100 : 0,
     averageTimeToComplete: 0,
     cardsByStatus: cards.reduce((acc, card) => {
       acc[card.status] = (acc[card.status] || 0) + 1;
@@ -86,17 +62,18 @@ export const DashboardView = () => {
 
   // Prepare chart data
   const statusChartData = Object.entries(metrics.cardsByStatus).map(([status, count]) => ({
-    name: status === 'todo' ? 'A fazer' :
-          status === 'in-progress' ? 'Em andamento' :
-          status === 'review' ? 'Revisão' :
-          status === 'blocked' ? 'Bloqueado' : 'Concluído',
+    name: status === 'todo' ? 'A fazer' : status === 'in-progress' ? 'Em andamento' : status === 'review' ? 'Revisão' : status === 'blocked' ? 'Bloqueado' : 'Concluído',
     value: count,
     color: STATUS_COLORS[status as CardStatus]
   }));
-
   const labelData = (() => {
-    const labelCounts: { [key: string]: { count: number; color: string; name: string } } = {};
-    
+    const labelCounts: {
+      [key: string]: {
+        count: number;
+        color: string;
+        name: string;
+      };
+    } = {};
     cards.forEach(card => {
       card.labels.forEach(label => {
         if (labelCounts[label.id]) {
@@ -110,24 +87,18 @@ export const DashboardView = () => {
         }
       });
     });
-
     return Object.entries(labelCounts).map(([id, data]) => ({
       name: data.name,
       value: data.count,
       color: data.color
     })).sort((a, b) => b.value - a.value).slice(0, 8);
   })();
-
-  const memberChartData = Object.entries(metrics.cardsByMember)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 5)
-    .map(([name, count]) => ({
-      name: name.split(' ')[0], // First name only
-      value: count
-    }));
-
-  return (
-    <div className="h-full p-6 space-y-6 overflow-auto">
+  const memberChartData = Object.entries(metrics.cardsByMember).sort(([, a], [, b]) => b - a).slice(0, 5).map(([name, count]) => ({
+    name: name.split(' ')[0],
+    // First name only
+    value: count
+  }));
+  return <div className="h-full p-6 space-y-6 overflow-auto">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -191,17 +162,11 @@ export const DashboardView = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie
-                  data={statusChartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                >
-                  {statusChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                <Pie data={statusChartData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({
+                name,
+                value
+              }) => `${name}: ${value}`}>
+                  {statusChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -215,50 +180,29 @@ export const DashboardView = () => {
             <CardTitle className="text-lg">Distribuição por Etiqueta</CardTitle>
           </CardHeader>
           <CardContent>
-            {labelData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+            {labelData.length > 0 ? <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={labelData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" fontSize={12} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="value" fill="hsl(var(--primary))">
-                    {labelData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
+                    {labelData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              </ResponsiveContainer> : <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 <div className="text-center">
                   <div className="text-lg font-medium mb-2">Nenhuma etiqueta encontrada</div>
                   <div className="text-sm">Adicione etiquetas aos cartões para ver a distribuição</div>
                 </div>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Member Workload */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Carga de Trabalho por Membro</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={memberChartData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={80} />
-                <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        
 
         {/* Team Members */}
         <Card>
@@ -266,15 +210,11 @@ export const DashboardView = () => {
             <CardTitle className="text-lg">Membros da Equipe</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {state.currentBoard.members.map((member) => {
-              const memberCards = cards.filter(card => 
-                card.assignees.some(assignee => assignee.id === member.id)
-              );
-              const completedCards = memberCards.filter(card => card.status === 'done');
-              const completionRate = memberCards.length > 0 ? (completedCards.length / memberCards.length) * 100 : 0;
-
-              return (
-                <div key={member.id} className="flex items-center space-x-4">
+            {state.currentBoard.members.map(member => {
+            const memberCards = cards.filter(card => card.assignees.some(assignee => assignee.id === member.id));
+            const completedCards = memberCards.filter(card => card.status === 'done');
+            const completionRate = memberCards.length > 0 ? completedCards.length / memberCards.length * 100 : 0;
+            return <div key={member.id} className="flex items-center space-x-4">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={member.avatar} />
                     <AvatarFallback>
@@ -297,9 +237,8 @@ export const DashboardView = () => {
                     
                     <Progress value={completionRate} className="mt-2 h-2" />
                   </div>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </CardContent>
         </Card>
       </div>
@@ -316,6 +255,5 @@ export const DashboardView = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
