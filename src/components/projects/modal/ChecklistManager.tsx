@@ -276,25 +276,28 @@ export const ChecklistManager = ({
                     {item.text}
                   </span>
                   
-                  {/* Assignee selector */}
+                  {/* Avatar sempre visível do responsável */}
+                  {assignee ? (
+                    <Avatar className="h-5 w-5 flex-shrink-0">
+                      <AvatarImage src={assignee.avatar} />
+                      <AvatarFallback className="text-[10px]">
+                        {getInitials(assignee.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="h-5 w-5 flex-shrink-0" />
+                  )}
+                  
+                  {/* Assignee selector - aparece no hover */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-6 px-2 opacity-0 group-hover:opacity-100"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {assignee ? (
-                          <Avatar className="h-5 w-5">
-                            <AvatarImage src={assignee.avatar} />
-                            <AvatarFallback className="text-[10px]">
-                              {getInitials(assignee.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : (
-                          <User className="h-4 w-4" />
-                        )}
+                        <User className="h-3.5 w-3.5" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-56 p-2" onClick={(e) => e.stopPropagation()}>
