@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ProjectCard } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
 
@@ -94,7 +94,7 @@ export const EnhancedProjectCard = ({
                 <Avatar key={assignee.id} className="h-5 w-5 border-2 border-background">
                   <AvatarImage src={assignee.avatar} />
                   <AvatarFallback className="text-[10px]">
-                    {assignee.name.split(' ').map(n => n[0]).join('')}
+                    {getInitials(assignee.name)}
                   </AvatarFallback>
                 </Avatar>
               ))}
