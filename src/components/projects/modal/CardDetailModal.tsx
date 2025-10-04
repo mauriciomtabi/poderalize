@@ -564,13 +564,17 @@ export const CardDetailModal = ({
 
         <DueDatePicker isOpen={showDueDatePicker} onClose={() => setShowDueDatePicker(false)} currentDate={cardDueDate} onDateChange={handleDueDateChange} />
 
-        <ConfirmationDialog isOpen={showDeleteConfirmation} onClose={() => setShowDeleteConfirmation(false)} onConfirm={handleDelete} title="Excluir Cartão" description="Tem certeza de que deseja excluir este cartão? Esta ação não pode ser desfeita." confirmText="Excluir" variant="destructive" />
+        {!isCreationMode && latestCard && (
+          <>
+            <ConfirmationDialog isOpen={showDeleteConfirmation} onClose={() => setShowDeleteConfirmation(false)} onConfirm={handleDelete} title="Excluir Cartão" description="Tem certeza de que deseja excluir este cartão? Esta ação não pode ser desfeita." confirmText="Excluir" variant="destructive" />
 
-        <ConfirmationDialog isOpen={showArchiveConfirmation} onClose={() => setShowArchiveConfirmation(false)} onConfirm={handleArchive} title="Arquivar Cartão" description="Tem certeza de que deseja arquivar este cartão?" confirmText="Arquivar" />
+            <ConfirmationDialog isOpen={showArchiveConfirmation} onClose={() => setShowArchiveConfirmation(false)} onConfirm={handleArchive} title="Arquivar Cartão" description="Tem certeza de que deseja arquivar este cartão?" confirmText="Arquivar" />
 
-        <MoveCardDialog isOpen={showMoveDialog} onClose={() => setShowMoveDialog(false)} currentListId={latestCard.listId} availableLists={state.currentBoard?.lists || []} onMove={handleMoveCard} />
+            <MoveCardDialog isOpen={showMoveDialog} onClose={() => setShowMoveDialog(false)} currentListId={latestCard.listId} availableLists={state.currentBoard?.lists || []} onMove={handleMoveCard} />
 
-        <AttachmentManager isOpen={showAttachmentManager} onClose={() => setShowAttachmentManager(false)} card={latestCard} />
+            <AttachmentManager isOpen={showAttachmentManager} onClose={() => setShowAttachmentManager(false)} card={latestCard} />
+          </>
+        )}
       </DialogContent>
     </Dialog>;
 };
