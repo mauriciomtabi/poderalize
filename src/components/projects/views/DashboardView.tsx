@@ -21,6 +21,19 @@ const STATUS_COLORS = {
   'blocked': '#ef4444',
   'done': '#10b981'
 };
+
+const CHART_COLORS = [
+  '#ef4444', // red
+  '#f59e0b', // orange
+  '#10b981', // green
+  '#3b82f6', // blue
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#14b8a6', // teal
+  '#f97316', // orange-dark
+  '#06b6d4', // cyan
+  '#a855f7', // violet
+];
 export const DashboardView = () => {
   const {
     state,
@@ -115,10 +128,10 @@ export const DashboardView = () => {
   // Prepare chart data - distribution by lists (not card status)
   const statusChartData = state.currentBoard.lists
     .filter(list => !list.archived)
-    .map(list => ({
+    .map((list, index) => ({
       name: list.title,
       value: list.cards.length,
-      color: list.color || '#3b82f6'
+      color: CHART_COLORS[index % CHART_COLORS.length]
     }))
     .filter(item => item.value > 0)
     .sort((a, b) => b.value - a.value);
