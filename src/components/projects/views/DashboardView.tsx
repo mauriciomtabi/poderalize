@@ -60,12 +60,13 @@ export const DashboardView = () => {
     activityTrend: []
   };
 
-  // Prepare chart data
-  const statusChartData = Object.entries(metrics.cardsByStatus).map(([status, count]) => ({
+  // Prepare chart data - ensure all statuses are included even with 0 count
+  const allStatuses: CardStatus[] = ['todo', 'in-progress', 'review', 'blocked', 'done'];
+  const statusChartData = allStatuses.map(status => ({
     name: status === 'todo' ? 'A fazer' : status === 'in-progress' ? 'Em andamento' : status === 'review' ? 'Revisão' : status === 'blocked' ? 'Bloqueado' : 'Concluído',
-    value: count,
-    color: STATUS_COLORS[status as CardStatus]
-  }));
+    value: metrics.cardsByStatus[status] || 0,
+    color: STATUS_COLORS[status]
+  })).filter(item => item.value > 0);
   const labelData = (() => {
     const labelCounts: {
       [key: string]: {
@@ -160,17 +161,33 @@ export const DashboardView = () => {
             <CardTitle className="text-lg">Distribuição por Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={statusChartData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({
-                name,
-                value
-              }) => `${name}: ${value}`}>
-                  {statusChartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {statusChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie 
+                    data={statusChartData} 
+                    cx="50%" 
+                    cy="50%" 
+                    labelLine={false}
+                    label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                    outerRadius={100} 
+                    dataKey="value"
+                  >
+                    {statusChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} cartões`, 'Quantidade']} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                <div className="text-center">
+                  <div className="text-lg font-medium mb-2">Nenhum cartão encontrado</div>
+                  <div className="text-sm">Adicione cartões ao projeto para ver a distribuição</div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -180,79 +197,161 @@ export const DashboardView = () => {
             <CardTitle className="text-lg">Distribuição por Etiqueta</CardTitle>
           </CardHeader>
           <CardContent>
-            {labelData.length > 0 ? <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={labelData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" fontSize={12} />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="hsl(var(--primary))">
-                    {labelData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+            {labelData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={labelData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="name" 
+                    fontSize={12} 
+                    stroke="hsl(var(--foreground))"
+                    tick={{ fill: 'hsl(var(--foreground))' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--foreground))"
+                    tick={{ fill: 'hsl(var(--foreground))' }}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`${value} cartões`, 'Quantidade']}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {labelData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer> : <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 <div className="text-center">
                   <div className="text-lg font-medium mb-2">Nenhuma etiqueta encontrada</div>
                   <div className="text-sm">Adicione etiquetas aos cartões para ver a distribuição</div>
                 </div>
-              </div>}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Member Workload */}
-        
-
-        {/* Team Members */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Membros da Equipe</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {state.currentBoard.members.map(member => {
+      {/* Team Members - Full Width */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Membros da Equipe</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {state.currentBoard.members.map(member => {
             const memberCards = cards.filter(card => card.assignees.some(assignee => assignee.id === member.id));
             const completedCards = memberCards.filter(card => card.status === 'done');
-            const completionRate = memberCards.length > 0 ? completedCards.length / memberCards.length * 100 : 0;
-            return <div key={member.id} className="flex items-center space-x-4">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={member.avatar} />
-                    <AvatarFallback>
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="font-medium">{member.name}</div>
-                      <Badge variant="outline" className="text-xs">
-                        {member.role}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <span>{memberCards.length} cartões</span>
-                      <span>{Math.round(completionRate)}% concluído</span>
-                    </div>
-                    
-                    <Progress value={completionRate} className="mt-2 h-2" />
+            const completionRate = memberCards.length > 0 ? (completedCards.length / memberCards.length) * 100 : 0;
+            
+            return (
+              <div key={member.id} className="flex items-center space-x-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={member.avatar} />
+                  <AvatarFallback>
+                    {member.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="font-medium">{member.name}</div>
+                    <Badge variant="outline" className="text-xs">
+                      {member.role}
+                    </Badge>
                   </div>
-                </div>;
+                  
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                    <span>{memberCards.length} cartões</span>
+                    <span>{Math.round(completionRate)}% concluído</span>
+                    <span>{completedCards.length} / {memberCards.length} completos</span>
+                  </div>
+                  
+                  <Progress value={completionRate} className="h-2" />
+                </div>
+              </div>
+            );
           })}
-          </CardContent>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Recent Activity would go here */}
+      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Atividade Recente</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center text-muted-foreground py-8">
-            <Clock size={32} className="mx-auto mb-2 opacity-50" />
-            <div>Funcionalidade de atividade recente em desenvolvimento</div>
-          </div>
+          {allCards.length > 0 ? (
+            <div className="space-y-4">
+              {allCards
+                .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                .slice(0, 10)
+                .map((card) => {
+                  const list = state.currentBoard?.lists.find(l => l.id === card.listId);
+                  const timeAgo = (() => {
+                    const diff = Date.now() - new Date(card.updatedAt).getTime();
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(diff / 3600000);
+                    const days = Math.floor(diff / 86400000);
+                    
+                    if (days > 0) return `há ${days} dia${days > 1 ? 's' : ''}`;
+                    if (hours > 0) return `há ${hours} hora${hours > 1 ? 's' : ''}`;
+                    if (minutes > 0) return `há ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+                    return 'agora mesmo';
+                  })();
+
+                  return (
+                    <div key={card.id} className="flex items-start space-x-3 pb-3 border-b last:border-0">
+                      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0`} 
+                           style={{ backgroundColor: STATUS_COLORS[card.status] }} />
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium truncate">{card.title}</p>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm text-muted-foreground">
+                            {list?.title || 'Lista desconhecida'}
+                          </span>
+                          {card.assignees.length > 0 && (
+                            <>
+                              <span className="text-muted-foreground">•</span>
+                              <div className="flex -space-x-2">
+                                {card.assignees.slice(0, 3).map((assignee) => (
+                                  <Avatar key={assignee.id} className="h-5 w-5 border-2 border-background">
+                                    <AvatarImage src={assignee.avatar} />
+                                    <AvatarFallback className="text-xs">
+                                      {assignee.name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                ))}
+                                {card.assignees.length > 3 && (
+                                  <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                                    <span className="text-[10px] font-medium">+{card.assignees.length - 3}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              <Clock size={32} className="mx-auto mb-2 opacity-50" />
+              <div>Nenhuma atividade recente</div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>;
