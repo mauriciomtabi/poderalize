@@ -42,6 +42,8 @@ import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/ty
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PermissionsDialog } from "@/components/colaboradores/PermissionsDialog";
+import { getInitials } from "@/lib/utils";
+import { AvatarImage } from "@/components/ui/avatar";
 
 const Colaboradores = () => {
   const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador, syncApprovedUsers } = useColaboradores();
@@ -237,9 +239,6 @@ const Colaboradores = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const getInitials = (nome: string) => {
-    return nome.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
 
   const getBadgeColor = (departamento: string) => {
     const colors = {
@@ -394,6 +393,9 @@ const Colaboradores = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-12 h-12">
+                      {colaborador.avatar_url && (
+                        <AvatarImage src={colaborador.avatar_url} alt={colaborador.nome} />
+                      )}
                       <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                         {getInitials(colaborador.nome)}
                       </AvatarFallback>

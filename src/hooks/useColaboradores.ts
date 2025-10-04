@@ -22,13 +22,30 @@ export function useColaboradores() {
   const fetchColaboradores = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: colaboradoresData, error } = await supabase
         .from('colaboradores')
         .select('*')
         .order('nome');
 
       if (error) throw error;
-      setColaboradores(data || []);
+      
+      // Fetch profiles to get avatar_url
+      const userIds = colaboradoresData?.map(c => c.user_id).filter(Boolean) || [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, avatar_url')
+        .in('user_id', userIds);
+      
+      // Map avatar_url from profiles to colaboradores
+      const colaboradoresWithAvatars = colaboradoresData?.map(c => {
+        const profile = profilesData?.find(p => p.user_id === c.user_id);
+        return {
+          ...c,
+          avatar_url: profile?.avatar_url || c.avatar_url
+        };
+      }) || [];
+      
+      setColaboradores(colaboradoresWithAvatars);
     } catch (error) {
       console.error('Erro ao buscar colaboradores:', error);
       toast({

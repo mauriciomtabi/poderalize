@@ -107,7 +107,8 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 
       setSaving(true);
 
-      const { error } = await supabase
+      // Update profiles table
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: fullName.trim(),
@@ -115,7 +116,21 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
         })
         .eq('user_id', user?.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update colaboradores table
+      const { error: colaboradorError } = await supabase
+        .from('colaboradores')
+        .update({
+          nome: fullName.trim(),
+          avatar_url: avatarUrl || null,
+        })
+        .eq('user_id', user?.id);
+
+      // Don't throw error if colaborador doesn't exist, just log it
+      if (colaboradorError) {
+        console.log('No colaborador record to update:', colaboradorError);
+      }
 
       toast({
         title: 'Sucesso',
