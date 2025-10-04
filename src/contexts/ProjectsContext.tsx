@@ -97,9 +97,9 @@ const transformDBLabel = (dbLabel: ProjectLabel) => {
 const transformDBMember = (dbMember: any) => {
   return {
     id: dbMember.id,
-    name: dbMember.name,
-    email: dbMember.email,
-    avatar: dbMember.profiles?.avatar_url || dbMember.avatar,
+    name: dbMember.name || 'Usuário',
+    email: dbMember.email || '',
+    avatar: dbMember.profiles?.[0]?.avatar_url || dbMember.avatar || undefined,
     role: dbMember.role as any
   };
 };
@@ -260,7 +260,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .from('project_members')
           .select(`
             *,
-            profiles!inner(avatar_url)
+            profiles(avatar_url)
           `)
           .eq('board_id', boardId)
       ]);
