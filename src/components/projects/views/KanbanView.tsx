@@ -79,35 +79,9 @@ export const KanbanView = () => {
   };
 
   const handleAddCard = async (listId: string) => {
-    const currentUser = actions.getCurrentUser();
-    if (!currentUser) return;
-
-    // Criar card básico imediatamente
-    const success = await actions.addCard(listId, {
-      title: "Novo Cartão",
-      description: "",
-      status: 'todo' as CardStatus,
-      priority: 'medium' as Priority,
-      createdBy: currentUser.id,
-      listId: listId,
-      assignees: [],
-      labels: [],
-      checklists: [],
-      attachments: [],
-      comments: [],
-      archived: false,
-      watching: false
-    });
-
-    // Após criar, buscar o último card da lista e abrir modal completo
-    if (success && state.currentBoard) {
-      const list = state.currentBoard.lists.find(l => l.id === listId);
-      if (list && list.cards.length > 0) {
-        const newCard = list.cards[list.cards.length - 1];
-        actions.setSelectedCard(newCard);
-        setShowCardModal(true);
-      }
-    }
+    setSelectedListId(listId);
+    setSelectedCard(undefined);
+    setShowCardModal(true);
   };
 
   const handleCardClick = (card: any) => {
@@ -271,16 +245,16 @@ export const KanbanView = () => {
           </div>
         </div>
 
-        {selectedCard && (
-          <CardDetailModal
-            card={selectedCard}
-            isOpen={showCardModal}
-            onClose={() => {
-              setShowCardModal(false);
-              setSelectedCard(null);
-            }}
-          />
-        )}
+        <CardDetailModal
+          card={selectedCard}
+          listId={selectedListId}
+          isOpen={showCardModal}
+          onClose={() => {
+            setShowCardModal(false);
+            setSelectedCard(null);
+            setSelectedListId("");
+          }}
+        />
 
         <AddListDialog
           isOpen={showAddListDialog}
