@@ -240,8 +240,8 @@ export const ManageLabelsDialog = ({ isOpen, onClose }: ManageLabelsDialogProps)
                 )}
               </div>
 
-              <ScrollArea className="max-h-60">
-                <div className="space-y-2">
+              <ScrollArea className="h-[200px]">
+                <div className="space-y-2 pr-3">
                   {availableLabels.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
