@@ -88,6 +88,22 @@ export const CardDetailModal = ({
       setSelectedDueDate(latestCard.dueDate);
     }
   }, [latestCard, isCreationMode]);
+
+  // Reset all fields when opening modal in creation mode
+  useEffect(() => {
+    if (isOpen && isCreationMode) {
+      setTitle('');
+      setDescription('');
+      setSelectedMembers([]);
+      setSelectedLabels([]);
+      setSelectedDueDate(undefined);
+      setTempChecklists([]);
+      setTempComments([]);
+      setTempAttachments([]);
+      setIsEditingTitle(true);
+      setIsEditingDescription(false);
+    }
+  }, [isOpen, isCreationMode]);
   const completedTasks = latestCard?.checklists.reduce((acc, checklist) => acc + checklist.items.filter(item => item.completed).length, 0) || 0;
   const totalTasks = latestCard?.checklists.reduce((acc, checklist) => acc + checklist.items.length, 0) || 0;
   const progress = totalTasks > 0 ? completedTasks / totalTasks * 100 : 0;
