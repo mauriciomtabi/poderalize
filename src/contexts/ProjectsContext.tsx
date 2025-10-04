@@ -599,6 +599,30 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       });
       
       if (result && state.currentBoard) {
+        // Insert assignees into project_card_assignees
+        if (card.assignees && card.assignees.length > 0) {
+          const assigneeInserts = card.assignees.map(assignee => ({
+            card_id: result.id,
+            member_id: assignee.id
+          }));
+          
+          await supabase
+            .from('project_card_assignees')
+            .insert(assigneeInserts as any);
+        }
+
+        // Insert labels into project_card_labels
+        if (card.labels && card.labels.length > 0) {
+          const labelInserts = card.labels.map(label => ({
+            card_id: result.id,
+            label_id: label.id
+          }));
+          
+          await supabase
+            .from('project_card_labels')
+            .insert(labelInserts as any);
+        }
+
         // Add activity for card creation
         if (user) {
           await supabase
