@@ -6,6 +6,8 @@ import { BarChart3, TrendingUp, Users, Clock, CheckCircle2, AlertTriangle, Calen
 import { useProjects } from "@/contexts/ProjectsContext";
 import { DashboardMetrics, Priority, CardStatus } from "@/types/projects";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 const PRIORITY_COLORS = {
   low: '#3b82f6',
   medium: '#f59e0b',
@@ -24,6 +26,52 @@ export const DashboardView = () => {
     state,
     actions
   } = useProjects();
+  
+  const [checklistItems, setChecklistItems] = useState<any[]>([]);
+  
+  // Fetch all checklist items for the current board
+  useEffect(() => {
+    const fetchAllChecklistItems = async () => {
+      if (!state.currentBoard?.id) return;
+      
+      try {
+        // Get all cards from the board
+        const allCardIds = state.currentBoard.lists.flatMap(list => list.cards.map(card => card.id));
+        
+        if (allCardIds.length === 0) {
+          setChecklistItems([]);
+          return;
+        }
+        
+        // Get all checklists for these cards
+        const { data: checklists } = await supabase
+          .from('project_checklists')
+          .select('id')
+          .in('card_id', allCardIds);
+        
+        if (!checklists || checklists.length === 0) {
+          setChecklistItems([]);
+          return;
+        }
+        
+        const checklistIds = checklists.map(cl => cl.id);
+        
+        // Get all items from these checklists
+        const { data: items } = await supabase
+          .from('project_checklist_items')
+          .select('*')
+          .in('checklist_id', checklistIds);
+        
+        setChecklistItems(items || []);
+      } catch (error) {
+        console.error('Error fetching checklist items:', error);
+        setChecklistItems([]);
+      }
+    };
+    
+    fetchAllChecklistItems();
+  }, [state.currentBoard?.id]);
+  
   if (!state.currentBoard) {
     return <div className="flex items-center justify-center h-full">Nenhum projeto selecionado</div>;
   }
@@ -60,13 +108,15 @@ export const DashboardView = () => {
     activityTrend: []
   };
 
-  // Prepare chart data - ensure all statuses are included even with 0 count
-  const allStatuses: CardStatus[] = ['todo', 'in-progress', 'review', 'blocked', 'done'];
-  const statusChartData = allStatuses.map(status => ({
-    name: status === 'todo' ? 'A fazer' : status === 'in-progress' ? 'Em andamento' : status === 'review' ? 'Revisão' : status === 'blocked' ? 'Bloqueado' : 'Concluído',
-    value: metrics.cardsByStatus[status] || 0,
-    color: STATUS_COLORS[status]
-  })).filter(item => item.value > 0);
+  // Prepare chart data - distribution by lists (not status)
+  const listChartData = state.currentBoard.lists
+    .filter(list => !list.archived)
+    .map(list => ({
+      name: list.title,
+      value: list.cards.length,
+      color: list.color || '#3B82F6'
+    }))
+    .sort((a, b) => b.value - a.value);
   const labelData = (() => {
     const labelCounts: {
       [key: string]: {
@@ -155,17 +205,17 @@ export const DashboardView = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Status Distribution */}
+        {/* List Distribution */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Distribuição por Status</CardTitle>
           </CardHeader>
           <CardContent>
-            {statusChartData.length > 0 ? (
+            {listChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie 
-                    data={statusChartData} 
+                    data={listChartData} 
                     cx="50%" 
                     cy="50%" 
                     labelLine={false}
@@ -173,7 +223,7 @@ export const DashboardView = () => {
                     outerRadius={100} 
                     dataKey="value"
                   >
-                    {statusChartData.map((entry, index) => (
+                    {listChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -183,8 +233,8 @@ export const DashboardView = () => {
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 <div className="text-center">
-                  <div className="text-lg font-medium mb-2">Nenhum cartão encontrado</div>
-                  <div className="text-sm">Adicione cartões ao projeto para ver a distribuição</div>
+                  <div className="text-lg font-medium mb-2">Nenhuma lista encontrada</div>
+                  <div className="text-sm">Crie listas no projeto para ver a distribuição</div>
                 </div>
               </div>
             )}
@@ -245,9 +295,10 @@ export const DashboardView = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {state.currentBoard.members.map(member => {
-            const memberCards = cards.filter(card => card.assignees.some(assignee => assignee.id === member.id));
-            const completedCards = memberCards.filter(card => card.status === 'done');
-            const completionRate = memberCards.length > 0 ? (completedCards.length / memberCards.length) * 100 : 0;
+            // Count checklist items assigned to this member
+            const memberTasks = checklistItems.filter(item => item.assigned_to === member.id);
+            const completedTasks = memberTasks.filter(item => item.completed);
+            const completionRate = memberTasks.length > 0 ? (completedTasks.length / memberTasks.length) * 100 : 0;
             
             return (
               <div key={member.id} className="flex items-center space-x-4">
@@ -267,9 +318,9 @@ export const DashboardView = () => {
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                    <span>{memberCards.length} cartões</span>
+                    <span>{memberTasks.length} tarefas</span>
                     <span>{Math.round(completionRate)}% concluído</span>
-                    <span>{completedCards.length} / {memberCards.length} completos</span>
+                    <span>{completedTasks.length} / {memberTasks.length} completos</span>
                   </div>
                   
                   <Progress value={completionRate} className="h-2" />
