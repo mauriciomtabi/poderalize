@@ -13,7 +13,8 @@ import {
   Zap,
   CheckCircle2,
   Copy,
-  Trash2
+  Trash2,
+  CheckSquare
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -74,6 +75,16 @@ export const EnhancedProjectCard = ({
   
   const cardColorClass = cardColorStyles[state.currentBoard?.cardColor as keyof typeof cardColorStyles] || cardColorStyles.default;
 
+  // Get first incomplete task
+  const firstIncompleteTask = card.checklists
+    .flatMap(checklist => checklist.items)
+    .find(item => !item.completed);
+
+  // Get assignee info for the first incomplete task
+  const taskAssignee = firstIncompleteTask?.assignee 
+    ? card.assignees.find(a => a.id === firstIncompleteTask.assignee)
+    : null;
+
   return (
     <Card className={cn("card-kanban group", cardColorClass)} onClick={onClick}>
       {/* Header: title + assignees + labels + priority */}
@@ -121,6 +132,28 @@ export const EnhancedProjectCard = ({
         <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
           {card.description}
         </p>
+      )}
+
+      {/* Current Task - Primeira tarefa incompleta */}
+      {firstIncompleteTask && (
+        <div className="mb-2 p-2 rounded-md bg-muted/50 border border-border/50">
+          <div className="flex items-start gap-2">
+            <CheckSquare size={14} className="text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                {firstIncompleteTask.text}
+              </p>
+            </div>
+            {taskAssignee && (
+              <Avatar className="h-5 w-5 flex-shrink-0">
+                <AvatarImage src={taskAssignee.avatar} />
+                <AvatarFallback className="text-[10px]">
+                  {getInitials(taskAssignee.name)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Progress Bar */}

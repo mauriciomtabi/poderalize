@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   CheckSquare, 
   Plus, 
   Trash2, 
   GripVertical,
-  MoreHorizontal
+  MoreHorizontal,
+  User
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -16,10 +18,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ProjectCard, Checklist, ChecklistItem } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { generateId } from "@/hooks/useUuid";
 import { ChecklistTemplateDialog } from "@/components/projects/ChecklistTemplateDialog";
+import { getInitials } from "@/lib/utils";
 
 interface ChecklistManagerProps {
   card?: ProjectCard;
@@ -181,6 +189,33 @@ export const ChecklistManager = ({
     return (completed / checklist.items.length) * 100;
   };
 
+  const handleAssigneeChange = (checklistId: string, itemId: string, assigneeId: string | null) => {
+    const updatedChecklists = currentChecklists.map(cl => 
+      cl.id === checklistId 
+        ? {
+            ...cl,
+            items: cl.items.map(item =>
+              item.id === itemId ? { ...item, assignee: assigneeId || undefined } : item
+            )
+          }
+        : cl
+    );
+
+    if (isCreationMode && onChecklistsChange) {
+      onChecklistsChange(updatedChecklists);
+    } else if (card) {
+      actions.updateCard({
+        ...card,
+        checklists: updatedChecklists
+      });
+    }
+  };
+
+  const getAssigneeInfo = (assigneeId?: string) => {
+    if (!assigneeId || !card) return null;
+    return card.assignees.find(a => a.id === assigneeId);
+  };
+
   return (
     <div className="space-y-4">
       {currentChecklists.length === 0 && !showNewChecklistForm && (
@@ -229,25 +264,98 @@ export const ChecklistManager = ({
           )}
 
           <div className="space-y-2 pl-6">
-            {checklist.items.map(item => (
-              <div key={item.id} className="flex items-center gap-3 group" onClick={(e) => e.stopPropagation()}>
-                <Checkbox
-                  checked={item.completed}
-                  onCheckedChange={() => handleToggleItem(checklist.id, item.id)}
-                />
-                <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
-                  {item.text}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100"
-                  onClick={(e) => { e.stopPropagation(); handleDeleteItem(checklist.id, item.id); }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
+            {checklist.items.map(item => {
+              const assignee = getAssigneeInfo(item.assignee);
+              return (
+                <div key={item.id} className="flex items-center gap-2 group" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={item.completed}
+                    onCheckedChange={() => handleToggleItem(checklist.id, item.id)}
+                  />
+                  <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
+                    {item.text}
+                  </span>
+                  
+                  {/* Assignee selector */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 px-2 opacity-0 group-hover:opacity-100"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {assignee ? (
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={assignee.avatar} />
+                            <AvatarFallback className="text-[10px]">
+                              {getInitials(assignee.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <User className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium mb-2">Atribuir a</div>
+                        {card?.assignees && card.assignees.length > 0 ? (
+                          <>
+                            {card.assignees.map(member => (
+                              <Button
+                                key={member.id}
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start gap-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAssigneeChange(checklist.id, item.id, member.id);
+                                }}
+                              >
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={member.avatar} />
+                                  <AvatarFallback className="text-[10px]">
+                                    {getInitials(member.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs">{member.name}</span>
+                              </Button>
+                            ))}
+                            {assignee && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start text-xs text-red-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAssigneeChange(checklist.id, item.id, null);
+                                }}
+                              >
+                                Remover responsável
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground py-2">
+                            Nenhum membro atribuído ao card
+                          </p>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteItem(checklist.id, item.id); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              );
+            })}
 
             {showNewItemForms[checklist.id] ? (
               <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
