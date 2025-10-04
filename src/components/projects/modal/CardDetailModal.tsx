@@ -67,13 +67,6 @@ export const CardDetailModal = ({
   const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false);
   const availableMembers = state.currentBoard?.members || [];
   const availableLabels = state.currentBoard?.labels || [];
-  
-  // Debug logs
-  useEffect(() => {
-    console.log('🔍 Available members:', availableMembers);
-    console.log('🔍 Current board:', state.currentBoard);
-  }, [availableMembers, state.currentBoard]);
-
 
   // Get the latest card data from global state to eliminate delays
   const latestCard = useMemo(() => {

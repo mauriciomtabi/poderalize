@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ProjectsState, ProjectBoard, ProjectList, ProjectCard, ViewType, FilterState, Priority, CardStatus } from '@/types/projects';
+import { ProjectsState, ProjectBoard, ProjectList, ProjectCard, ViewType, FilterState, Priority, CardStatus, Member } from '@/types/projects';
 import { useProjectBoards, ProjectBoard as DBProjectBoard } from '@/hooks/useProjectBoards';
 import { useProjectLists, ProjectList as DBProjectList } from '@/hooks/useProjectLists';
 import { useProjectCards, ProjectCard as DBProjectCard } from '@/hooks/useProjectCards';
@@ -253,7 +253,6 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
 
       // Fetch labels and members directly from Supabase for reliability
-      // Join with profiles to get avatar_url
       const [labelsResponse, membersResponse] = await Promise.all([
         supabase
           .from('project_labels')
@@ -261,15 +260,33 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           .eq('board_id', boardId),
         supabase
           .from('project_members')
-          .select(`
-            *,
-            profiles(avatar_url)
-          `)
+          .select('*')
           .eq('board_id', boardId)
       ]);
 
       let labels = labelsResponse.data?.map(transformDBLabel) || [];
-      let members = membersResponse.data?.map(transformDBMember) || [];
+      
+      // Fetch profiles separately to avoid join errors
+      let members: Member[] = [];
+      if (membersResponse.data && membersResponse.data.length > 0) {
+        const userIds = membersResponse.data.map((m: any) => m.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, avatar_url')
+          .in('user_id', userIds);
+
+        const profilesMap = new Map(
+          (profilesData || []).map(p => [p.user_id, p.avatar_url])
+        );
+
+        members = membersResponse.data.map((m: any) => ({
+          id: m.id,
+          name: m.name || 'Usuário',
+          email: m.email || '',
+          avatar: profilesMap.get(m.user_id) || m.avatar || undefined,
+          role: m.role as any
+        }));
+      }
 
       // Auto-create default labels if none exist
       if (labels.length === 0 && user) {
@@ -311,29 +328,81 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           );
 
           if (missingColaboradores.length > 0) {
-            const insertPromises = missingColaboradores.map(colab =>
-              supabase.from('project_members').insert({
-                board_id: boardId,
-                user_id: colab.user_id, // Correctly use user_id from colaborador
-                name: colab.nome,
-                email: colab.email,
-                avatar: colab.avatar_url,
-                role: 'member',
-                added_by: user.id,
-              }).select().single()
+            // Resolve user_ids from profiles by email
+            const colaboradorEmails = missingColaboradores.map(c => c.email);
+            const { data: profilesData } = await supabase
+              .from('profiles')
+              .select('user_id, email, full_name, avatar_url')
+              .in('email', colaboradorEmails);
+
+            const profilesByEmail = new Map(
+              (profilesData || []).map(p => [p.email.toLowerCase(), p])
             );
 
-            const results = await Promise.all(insertPromises);
-            const newMembers = results
-              .filter(r => r.data)
-              .map(r => transformDBMember(r.data!));
-            
-            members = [...members, ...newMembers];
-            
-            toast({
-              title: "Colaboradores sincronizados",
-              description: `${newMembers.length} colaborador(es) adicionado(s) ao projeto.`,
-            });
+            const newMembersToInsert = [];
+            const colaboradoresSemConta = [];
+
+            for (const colab of missingColaboradores) {
+              const profile = profilesByEmail.get(colab.email.toLowerCase());
+              if (profile) {
+                newMembersToInsert.push({
+                  board_id: boardId,
+                  user_id: profile.user_id,
+                  name: colab.nome || profile.full_name || colab.email,
+                  email: colab.email,
+                  avatar: colab.avatar_url || profile.avatar_url,
+                  role: 'member',
+                  added_by: user.id,
+                });
+              } else {
+                colaboradoresSemConta.push(colab.nome);
+              }
+            }
+
+            if (newMembersToInsert.length > 0) {
+              try {
+                const insertPromises = newMembersToInsert.map(member =>
+                  supabase
+                    .from('project_members')
+                    .insert(member)
+                    .select()
+                    .single()
+                );
+
+                const results = await Promise.all(insertPromises);
+                const newMembers = results
+                  .filter(r => r.data && !r.error)
+                  .map(r => ({
+                    id: r.data!.id,
+                    name: r.data!.name || 'Usuário',
+                    email: r.data!.email || '',
+                    avatar: r.data!.avatar || undefined,
+                    role: r.data!.role as any
+                  }));
+                
+                members = [...members, ...newMembers];
+                
+                toast({
+                  title: "Colaboradores sincronizados",
+                  description: `${newMembers.length} colaborador(es) adicionado(s) ao projeto.`,
+                });
+              } catch (error) {
+                console.error('Error inserting members:', error);
+                toast({
+                  title: "Erro ao sincronizar",
+                  description: "Erro ao adicionar alguns colaboradores ao projeto.",
+                  variant: "destructive",
+                });
+              }
+            }
+
+            if (colaboradoresSemConta.length > 0) {
+              toast({
+                title: "Colaboradores sem conta",
+                description: `${colaboradoresSemConta.length} colaborador(es) não possui(em) conta ativa. Convide-os para se cadastrar.`,
+                variant: "destructive",
+              });
+            }
           }
         }
       }
