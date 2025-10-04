@@ -26,15 +26,24 @@ import { cn } from "@/lib/utils";
 interface AttachmentManagerProps {
   isOpen: boolean;
   onClose: () => void;
-  card: ProjectCard;
+  card?: ProjectCard;
+  attachments?: Attachment[];
+  onAttachmentsChange?: (attachments: Attachment[]) => void;
+  isCreationMode?: boolean;
 }
 
 export const AttachmentManager = ({
   isOpen,
   onClose,
   card,
+  attachments,
+  onAttachmentsChange,
+  isCreationMode = false
 }: AttachmentManagerProps) => {
   const { actions } = useProjects();
+  
+  // Use either card attachments or provided attachments
+  const currentAttachments = isCreationMode ? (attachments || []) : (card?.attachments || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddingLink, setIsAddingLink] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -54,13 +63,17 @@ export const AttachmentManager = ({
           uploadedBy: "user-1" // TODO: Get from current user
         };
         
-        const updatedCard = {
-          ...card,
-          attachments: [...(card.attachments || []), attachment]
-        };
-        
-        actions.updateCard(updatedCard);
-        actions.addActivity(card.id, 'attachment', `anexou "${attachment.name}"`);
+        if (isCreationMode && onAttachmentsChange) {
+          onAttachmentsChange([...currentAttachments, attachment]);
+        } else if (card) {
+          const updatedCard = {
+            ...card,
+            attachments: [...(card.attachments || []), attachment]
+          };
+          
+          actions.updateCard(updatedCard);
+          actions.addActivity(card.id, 'attachment', `anexou "${attachment.name}"`);
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -78,13 +91,18 @@ export const AttachmentManager = ({
         uploadedBy: "user-1" // TODO: Get from current user
       };
       
-      const updatedCard = {
-        ...card,
-        attachments: [...(card.attachments || []), attachment]
-      };
+      if (isCreationMode && onAttachmentsChange) {
+        onAttachmentsChange([...currentAttachments, attachment]);
+      } else if (card) {
+        const updatedCard = {
+          ...card,
+          attachments: [...(card.attachments || []), attachment]
+        };
+        
+        actions.updateCard(updatedCard);
+        actions.addActivity(card.id, 'attachment', `anexou link "${attachment.name}"`);
+      }
       
-      actions.updateCard(updatedCard);
-      actions.addActivity(card.id, 'attachment', `anexou link "${attachment.name}"`);
       setLinkUrl("");
       setLinkName("");
       setIsAddingLink(false);
@@ -92,15 +110,20 @@ export const AttachmentManager = ({
   };
 
   const handleRemoveAttachment = (attachmentId: string) => {
-    const attachment = card.attachments?.find(a => a.id === attachmentId);
-    const updatedCard = {
-      ...card,
-      attachments: (card.attachments || []).filter(a => a.id !== attachmentId)
-    };
-    actions.updateCard(updatedCard);
+    const attachment = currentAttachments.find(a => a.id === attachmentId);
     
-    if (attachment) {
-      actions.addActivity(card.id, 'attachment', `removeu anexo "${attachment.name}"`);
+    if (isCreationMode && onAttachmentsChange) {
+      onAttachmentsChange(currentAttachments.filter(a => a.id !== attachmentId));
+    } else if (card) {
+      const updatedCard = {
+        ...card,
+        attachments: (card.attachments || []).filter(a => a.id !== attachmentId)
+      };
+      actions.updateCard(updatedCard);
+      
+      if (attachment) {
+        actions.addActivity(card.id, 'attachment', `removeu anexo "${attachment.name}"`);
+      }
     }
   };
 
@@ -195,13 +218,13 @@ export const AttachmentManager = ({
           {/* Attachments List */}
           <ScrollArea className="max-h-60">
             <div className="space-y-2">
-              {card.attachments?.length === 0 && (
+              {currentAttachments.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Nenhum anexo adicionado ainda
                 </p>
               )}
               
-              {card.attachments?.map((attachment) => (
+              {currentAttachments.map((attachment) => (
                 <div
                   key={attachment.id}
                   className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors"

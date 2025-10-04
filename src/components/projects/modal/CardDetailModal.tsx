@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move } from "lucide-react";
-import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment, CardStatus, Priority } from "@/types/projects";
+import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment, Attachment, CardStatus, Priority } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ChecklistManager } from "./ChecklistManager";
 import { CommentsSection } from "./CommentsSection";
@@ -51,6 +51,11 @@ export const CardDetailModal = ({
   const [selectedDueDate, setSelectedDueDate] = useState<string | undefined>(card?.dueDate);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Temporary states for creation mode
+  const [tempChecklists, setTempChecklists] = useState<Checklist[]>([]);
+  const [tempComments, setTempComments] = useState<Comment[]>([]);
+  const [tempAttachments, setTempAttachments] = useState<any[]>([]);
 
   // Dialog states
   const [showMemberPicker, setShowMemberPicker] = useState(false);
@@ -275,9 +280,9 @@ export const CardDetailModal = ({
       listId: listId,
       assignees: selectedMembers,
       labels: selectedLabels,
-      checklists: [],
-      attachments: [],
-      comments: [],
+      checklists: tempChecklists,
+      attachments: tempAttachments,
+      comments: tempComments,
       archived: false,
       watching: false,
       dueDate: selectedDueDate
@@ -443,12 +448,28 @@ export const CardDetailModal = ({
                   </div>}
 
                 {/* Checklists */}
-                {!isCreationMode && latestCard && <ChecklistManager card={latestCard} />}
+                {isCreationMode ? (
+                  <ChecklistManager 
+                    checklists={tempChecklists}
+                    onChecklistsChange={setTempChecklists}
+                    isCreationMode={true}
+                  />
+                ) : latestCard ? (
+                  <ChecklistManager card={latestCard} />
+                ) : null}
 
                 {/* Comments */}
-                {!isCreationMode && latestCard && <CommentsSection card={latestCard} />}
+                {isCreationMode ? (
+                  <CommentsSection 
+                    comments={tempComments}
+                    onCommentsChange={setTempComments}
+                    isCreationMode={true}
+                  />
+                ) : latestCard ? (
+                  <CommentsSection card={latestCard} />
+                ) : null}
 
-                {/* Activity */}
+                {/* Activity - only in edit mode */}
                 {!isCreationMode && latestCard && <ActivityHistory card={latestCard} />}
                 
                 {/* Create button in creation mode */}
@@ -481,22 +502,14 @@ export const CardDetailModal = ({
                     <Tag className="h-4 w-4 mr-2" />
                     Etiquetas
                   </Button>
-                  {!isCreationMode && (
-                    <Button variant="ghost" className="w-full justify-start" size="sm" onClick={handleAddChecklist}>
-                      <CheckSquare className="h-4 w-4 mr-2" />
-                      Lista de verificação
-                    </Button>
-                  )}
                   <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => setShowDueDatePicker(true)}>
                     <Calendar className="h-4 w-4 mr-2" />
                     Data de vencimento
                   </Button>
-                  {!isCreationMode && (
-                    <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => setShowAttachmentManager(true)}>
-                      <Paperclip className="h-4 w-4 mr-2" />
-                      Anexo
-                    </Button>
-                  )}
+                  <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => setShowAttachmentManager(true)}>
+                    <Paperclip className="h-4 w-4 mr-2" />
+                    Anexo
+                  </Button>
                 </div>
 
                 {!isCreationMode && <h3 className="text-sm font-medium">Ações</h3>}
@@ -564,6 +577,24 @@ export const CardDetailModal = ({
 
         <DueDatePicker isOpen={showDueDatePicker} onClose={() => setShowDueDatePicker(false)} currentDate={cardDueDate} onDateChange={handleDueDateChange} />
 
+        {/* Attachment Manager - works in both modes */}
+        {isCreationMode ? (
+          <AttachmentManager 
+            isOpen={showAttachmentManager} 
+            onClose={() => setShowAttachmentManager(false)} 
+            attachments={tempAttachments}
+            onAttachmentsChange={setTempAttachments}
+            isCreationMode={true}
+          />
+        ) : latestCard ? (
+          <AttachmentManager 
+            isOpen={showAttachmentManager} 
+            onClose={() => setShowAttachmentManager(false)} 
+            card={latestCard} 
+          />
+        ) : null}
+
+        {/* Dialogs only for edit mode */}
         {!isCreationMode && latestCard && (
           <>
             <ConfirmationDialog isOpen={showDeleteConfirmation} onClose={() => setShowDeleteConfirmation(false)} onConfirm={handleDelete} title="Excluir Cartão" description="Tem certeza de que deseja excluir este cartão? Esta ação não pode ser desfeita." confirmText="Excluir" variant="destructive" />
@@ -571,8 +602,6 @@ export const CardDetailModal = ({
             <ConfirmationDialog isOpen={showArchiveConfirmation} onClose={() => setShowArchiveConfirmation(false)} onConfirm={handleArchive} title="Arquivar Cartão" description="Tem certeza de que deseja arquivar este cartão?" confirmText="Arquivar" />
 
             <MoveCardDialog isOpen={showMoveDialog} onClose={() => setShowMoveDialog(false)} currentListId={latestCard.listId} availableLists={state.currentBoard?.lists || []} onMove={handleMoveCard} />
-
-            <AttachmentManager isOpen={showAttachmentManager} onClose={() => setShowAttachmentManager(false)} card={latestCard} />
           </>
         )}
       </DialogContent>

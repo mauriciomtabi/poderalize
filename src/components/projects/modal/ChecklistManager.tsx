@@ -22,11 +22,22 @@ import { generateId } from "@/hooks/useUuid";
 import { ChecklistTemplateDialog } from "@/components/projects/ChecklistTemplateDialog";
 
 interface ChecklistManagerProps {
-  card: ProjectCard;
+  card?: ProjectCard;
+  checklists?: Checklist[];
+  onChecklistsChange?: (checklists: Checklist[]) => void;
+  isCreationMode?: boolean;
 }
 
-export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
+export const ChecklistManager = ({ 
+  card, 
+  checklists, 
+  onChecklistsChange,
+  isCreationMode = false 
+}: ChecklistManagerProps) => {
   const { actions, state } = useProjects();
+  
+  // Use either card checklists or provided checklists
+  const currentChecklists = isCreationMode ? (checklists || []) : (card?.checklists || []);
   const [newChecklistTitle, setNewChecklistTitle] = useState('');
   const [showNewChecklistForm, setShowNewChecklistForm] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
@@ -50,10 +61,14 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
         items: checklistItems
       };
       
-      actions.updateCard({
-        ...card,
-        checklists: [...card.checklists, newChecklist]
-      });
+      if (isCreationMode && onChecklistsChange) {
+        onChecklistsChange([...currentChecklists, newChecklist]);
+      } else if (card) {
+        actions.updateCard({
+          ...card,
+          checklists: [...card.checklists, newChecklist]
+        });
+      }
       
       setNewChecklistTitle('');
       setShowNewChecklistForm(false);
@@ -65,10 +80,14 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
   };
 
   const handleDeleteChecklist = (checklistId: string) => {
-    actions.updateCard({
-      ...card,
-      checklists: card.checklists.filter(cl => cl.id !== checklistId)
-    });
+    if (isCreationMode && onChecklistsChange) {
+      onChecklistsChange(currentChecklists.filter(cl => cl.id !== checklistId));
+    } else if (card) {
+      actions.updateCard({
+        ...card,
+        checklists: card.checklists.filter(cl => cl.id !== checklistId)
+      });
+    }
   };
 
   const handleAddItem = (checklistId: string) => {
@@ -80,19 +99,22 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
         completed: false
       };
 
-      const updatedChecklists = card.checklists.map(cl => 
+      const updatedChecklists = currentChecklists.map(cl => 
         cl.id === checklistId 
           ? { ...cl, items: [...cl.items, newItem] }
           : cl
       );
 
-      actions.updateCard({
-        ...card,
-        checklists: updatedChecklists
-      });
-
-      // Add activity for new checklist item
-      actions.addActivity(card.id, 'checklist', `adicionou "${itemText.trim()}" à lista`);
+      if (isCreationMode && onChecklistsChange) {
+        onChecklistsChange(updatedChecklists);
+      } else if (card) {
+        actions.updateCard({
+          ...card,
+          checklists: updatedChecklists
+        });
+        // Add activity for new checklist item
+        actions.addActivity(card.id, 'checklist', `adicionou "${itemText.trim()}" à lista`);
+      }
 
       setNewItemTexts(prev => ({ ...prev, [checklistId]: '' }));
       setShowNewItemForms(prev => ({ ...prev, [checklistId]: false }));
@@ -100,7 +122,7 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
   };
 
   const handleToggleItem = (checklistId: string, itemId: string) => {
-    const updatedChecklists = card.checklists.map(cl => 
+    const updatedChecklists = currentChecklists.map(cl => 
       cl.id === checklistId 
         ? {
             ...cl,
@@ -111,38 +133,46 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
         : cl
     );
 
-    actions.updateCard({
-      ...card,
-      checklists: updatedChecklists
-    });
-    
-    // Add activity for checklist completion
-    const checklistItem = card.checklists
-      .find(cl => cl.id === checklistId)?.items
-      .find(item => item.id === itemId);
-    
-    if (checklistItem) {
-      actions.addActivity(
-        card.id, 
-        'checklist', 
-        checklistItem.completed 
-          ? `desmarcou "${checklistItem.text}"` 
-          : `completou "${checklistItem.text}"`
-      );
+    if (isCreationMode && onChecklistsChange) {
+      onChecklistsChange(updatedChecklists);
+    } else if (card) {
+      actions.updateCard({
+        ...card,
+        checklists: updatedChecklists
+      });
+      
+      // Add activity for checklist completion
+      const checklistItem = card.checklists
+        .find(cl => cl.id === checklistId)?.items
+        .find(item => item.id === itemId);
+      
+      if (checklistItem) {
+        actions.addActivity(
+          card.id, 
+          'checklist', 
+          checklistItem.completed 
+            ? `desmarcou "${checklistItem.text}"` 
+            : `completou "${checklistItem.text}"`
+        );
+      }
     }
   };
 
   const handleDeleteItem = (checklistId: string, itemId: string) => {
-    const updatedChecklists = card.checklists.map(cl => 
+    const updatedChecklists = currentChecklists.map(cl => 
       cl.id === checklistId 
         ? { ...cl, items: cl.items.filter(item => item.id !== itemId) }
         : cl
     );
 
-    actions.updateCard({
-      ...card,
-      checklists: updatedChecklists
-    });
+    if (isCreationMode && onChecklistsChange) {
+      onChecklistsChange(updatedChecklists);
+    } else if (card) {
+      actions.updateCard({
+        ...card,
+        checklists: updatedChecklists
+      });
+    }
   };
 
   const getChecklistProgress = (checklist: Checklist) => {
@@ -153,7 +183,15 @@ export const ChecklistManager = ({ card }: ChecklistManagerProps) => {
 
   return (
     <div className="space-y-4">
-      {card.checklists.map(checklist => (
+      {currentChecklists.length === 0 && !showNewChecklistForm && (
+        <div className="text-center py-8 text-muted-foreground">
+          <CheckSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Nenhuma lista de verificação ainda</p>
+          <p className="text-xs">Adicione uma lista para organizar suas tarefas</p>
+        </div>
+      )}
+      
+      {currentChecklists.map(checklist => (
         <div key={checklist.id} className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

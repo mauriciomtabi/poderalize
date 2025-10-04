@@ -8,13 +8,24 @@ import { useProjects } from "@/contexts/ProjectsContext";
 import { generateId } from "@/hooks/useUuid";
 
 interface CommentsSectionProps {
-  card: ProjectCard;
+  card?: ProjectCard;
+  comments?: Comment[];
+  onCommentsChange?: (comments: Comment[]) => void;
+  isCreationMode?: boolean;
 }
 
-export const CommentsSection = ({ card }: CommentsSectionProps) => {
+export const CommentsSection = ({ 
+  card, 
+  comments, 
+  onCommentsChange,
+  isCreationMode = false 
+}: CommentsSectionProps) => {
   const { actions, state } = useProjects();
   const [newComment, setNewComment] = useState('');
   const currentUser = actions.getCurrentUser();
+  
+  // Use either card comments or provided comments
+  const currentComments = isCreationMode ? (comments || []) : (card?.comments || []);
 
   const handleAddComment = () => {
     if (newComment.trim() && currentUser) {
@@ -27,11 +38,15 @@ export const CommentsSection = ({ card }: CommentsSectionProps) => {
         mentions: []
       };
 
-      actions.updateCard({
-        ...card,
-        comments: [...card.comments, comment]
-      });
-      actions.addActivity(card.id, 'comment', 'adicionou um comentário', { commentId: comment.id });
+      if (isCreationMode && onCommentsChange) {
+        onCommentsChange([...currentComments, comment]);
+      } else if (card) {
+        actions.updateCard({
+          ...card,
+          comments: [...card.comments, comment]
+        });
+        actions.addActivity(card.id, 'comment', 'adicionou um comentário', { commentId: comment.id });
+      }
 
       setNewComment('');
     }
@@ -60,8 +75,8 @@ export const CommentsSection = ({ card }: CommentsSectionProps) => {
       <div className="flex items-center gap-2">
         <MessageCircle className="h-4 w-4" />
         <h3 className="font-medium">Comentários</h3>
-        {card.comments.length > 0 && (
-          <span className="text-sm text-muted-foreground">({card.comments.length})</span>
+        {currentComments.length > 0 && (
+          <span className="text-sm text-muted-foreground">({currentComments.length})</span>
         )}
       </div>
 
@@ -98,7 +113,7 @@ export const CommentsSection = ({ card }: CommentsSectionProps) => {
 
       {/* Comments list */}
       <div className="space-y-4">
-        {card.comments.map(comment => (
+        {currentComments.map(comment => (
           <div key={comment.id} className="flex gap-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs">
@@ -119,7 +134,7 @@ export const CommentsSection = ({ card }: CommentsSectionProps) => {
           </div>
         ))}
 
-        {card.comments.length === 0 && (
+        {currentComments.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Nenhum comentário ainda</p>
