@@ -70,21 +70,25 @@ export const ProjectsSettings = ({ isOpen, onClose }: ProjectsSettingsProps) => 
                   </Button>
                 </div>
                 
-                <div className="flex flex-wrap gap-2">
-                  {state.currentBoard?.labels.map((label) => (
-                    <Badge
-                      key={label.id}
-                      variant="secondary"
-                      className="flex items-center gap-1"
-                    >
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: label.color }}
-                      />
-                      {label.name}
-                    </Badge>
-                  ))}
-                </div>
+                <ScrollArea className="max-h-24">
+                  <div className="flex flex-wrap gap-2 pr-3">
+                    {state.currentBoard?.labels.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Nenhuma etiqueta criada ainda
+                      </p>
+                    ) : (
+                      state.currentBoard?.labels.map((label) => (
+                        <Badge
+                          key={label.id}
+                          className="text-white"
+                          style={{ backgroundColor: label.color }}
+                        >
+                          {label.name}
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
               </div>
 
               <Separator />
