@@ -40,51 +40,6 @@ export const DashboardView = () => {
     actions
   } = useProjects();
   
-  const [checklistItems, setChecklistItems] = useState<any[]>([]);
-  
-  // Fetch all checklist items for the current board
-  useEffect(() => {
-    const fetchAllChecklistItems = async () => {
-      if (!state.currentBoard?.id) return;
-      
-      try {
-        // Get all cards from the board
-        const allCardIds = state.currentBoard.lists.flatMap(list => list.cards.map(card => card.id));
-        
-        if (allCardIds.length === 0) {
-          setChecklistItems([]);
-          return;
-        }
-        
-        // Get all checklists for these cards
-        const { data: checklists } = await supabase
-          .from('project_checklists')
-          .select('id')
-          .in('card_id', allCardIds);
-        
-        if (!checklists || checklists.length === 0) {
-          setChecklistItems([]);
-          return;
-        }
-        
-        const checklistIds = checklists.map(cl => cl.id);
-        
-        // Get all items from these checklists
-        const { data: items } = await supabase
-          .from('project_checklist_items')
-          .select('*')
-          .in('checklist_id', checklistIds);
-        
-        setChecklistItems(items || []);
-      } catch (error) {
-        console.error('Error fetching checklist items:', error);
-        setChecklistItems([]);
-      }
-    };
-    
-    fetchAllChecklistItems();
-  }, [state.currentBoard?.id]);
-  
   if (!state.currentBoard) {
     return <div className="flex items-center justify-center h-full">Nenhum projeto selecionado</div>;
   }
@@ -323,8 +278,15 @@ export const DashboardView = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {state.currentBoard.members.map(member => {
-            // Count checklist items assigned to this member
-            const memberItems = checklistItems.filter(item => item.assignee === member.id);
+            // Get all cards from all lists
+            const allCards = state.currentBoard.lists.flatMap(list => list.cards);
+            
+            // Get all checklist items assigned to this member from all cards
+            const memberItems = allCards
+              .flatMap(card => card.customFields?.checklists || [])
+              .flatMap(checklist => checklist.items || [])
+              .filter(item => item.assignee === member.id);
+            
             const completedItems = memberItems.filter(item => item.completed);
             const completionRate = memberItems.length > 0 ? (completedItems.length / memberItems.length) * 100 : 0;
             
