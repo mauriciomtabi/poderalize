@@ -287,6 +287,10 @@ export const CardDetailModal = ({
     }
     
     if (!latestCard) return;
+    
+    // Update local state immediately for visual feedback
+    setSelectedClientId(clientId);
+    
     actions.updateCard({
       ...latestCard,
       client_id: clientId
