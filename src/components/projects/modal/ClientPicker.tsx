@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -40,6 +40,9 @@ export const ClientPicker = ({ isOpen, onClose, selectedClientId, onSelectClient
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Selecionar Cliente</DialogTitle>
+          <DialogDescription className="sr-only">
+            Selecione um cliente para associar ao cartão
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

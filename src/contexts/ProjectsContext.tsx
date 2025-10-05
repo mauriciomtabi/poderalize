@@ -587,6 +587,7 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
         position: existingCards?.length || 0,
         cover: card.cover,
         location: card.location,
+        client_id: card.client_id,
         custom_fields: {
           ...(card.customFields || {}),
           checklists: card.checklists || [],
@@ -719,6 +720,7 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           actual_hours: card.actualHours,
           cover: card.cover,
           location: card.location,
+          client_id: card.client_id,
           custom_fields: {
             ...(card.customFields || {}),
             checklists: card.checklists || [],
@@ -803,6 +805,7 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           actual_hours: 0, // Reset actual hours for copy
           start_date: originalCard.startDate,
           due_date: originalCard.dueDate,
+          client_id: originalCard.client_id,
           archived: false,
           watching: false,
           created_by: user?.id || ''
