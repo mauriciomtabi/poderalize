@@ -106,9 +106,19 @@ export const useRecurringCards = (boardId: string | null) => {
 
   const updateCard = async (id: string, updates: Partial<RecurringCard>) => {
     try {
+      // Ensure days_of_week is stored inside template_config (column doesn't exist at root)
+      const updatesToSend: any = { ...updates };
+      if (Object.prototype.hasOwnProperty.call(updatesToSend, 'days_of_week')) {
+        updatesToSend.template_config = {
+          ...(updatesToSend.template_config || {}),
+          days_of_week: updatesToSend.days_of_week || [],
+        };
+        delete updatesToSend.days_of_week;
+      }
+
       const { error } = await supabase
         .from('recurring_cards')
-        .update(updates)
+        .update(updatesToSend)
         .eq('id', id);
 
       if (error) throw error;
