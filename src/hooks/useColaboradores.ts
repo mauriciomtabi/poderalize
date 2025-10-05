@@ -258,11 +258,19 @@ export function useColaboradores() {
         if (error) throw error;
       }
       
+      // Atualizar estado local imediatamente após sucesso
       setColaboradores(prev => prev.filter(col => col.id !== id));
+      
       toast({
         title: "Sucesso",
         description: "Colaborador removido completamente do sistema"
       });
+      
+      // Aguardar um pouco e recarregar para garantir sincronização
+      setTimeout(() => {
+        fetchColaboradores();
+      }, 1000);
+      
     } catch (error) {
       console.error('Erro ao deletar colaborador:', error);
       toast({

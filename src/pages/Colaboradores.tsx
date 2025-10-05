@@ -248,9 +248,24 @@ const { checkIsAdmin, promoteToAdmin, removeAdmin } = useAdminRole();
 
   const handleDeleteColaborador = async (id: string) => {
     try {
+      // Primeiro, determinar qual colaborador está sendo deletado
+      const colaboradorToRemove = allActiveColaboradores.find(c => c.id === id);
+      
       await deleteColaborador(id);
+      
+      // Atualizar o estado local imediatamente após a remoção bem-sucedida
+      // Forçar re-sincronização dos dados
+      await syncApprovedUsers();
+      
       setColaboradorToDelete(null);
       setIsDetailsOpen(false);
+      
+      // Mostrar feedback específico
+      toast({
+        title: "Colaborador removido",
+        description: `${colaboradorToRemove?.nome || 'Colaborador'} foi removido completamente do sistema`,
+        variant: "destructive"
+      });
     } catch (error) {
       // Error handling is done in the hook
     }
