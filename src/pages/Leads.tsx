@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Search, Eye, Edit2, Trash2, TrendingUp, Users, DollarSign, Target, Phone, Mail, Building, Calendar, FileText, Globe, Instagram, Facebook, Share, User } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, Trash2, TrendingUp, Users, DollarSign, Target, Phone, Mail, Building, Calendar, FileText, Globe, Instagram, Facebook, Share, User, UserCheck } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useClientes } from '@/hooks/useClientes';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { toast } from 'sonner';
 import { useLeads, type Lead, type CreateLeadData } from '@/hooks/useLeads';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,10 +30,14 @@ const Leads = () => {
     user
   } = useAuth();
 
+  // Hooks
+  const { addCliente } = useClientes();
+
   // Estados dos modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -222,6 +228,59 @@ const Leads = () => {
       setShowDeleteModal(false);
       setLeadToDelete(null);
       setShowViewModal(false);
+    }
+  };
+
+  // Função para promover lead a cliente
+  const handlePromoteToClient = async () => {
+    if (!selectedLead) return;
+
+    try {
+      // Criar cliente com dados do lead
+      const clienteData = {
+        nome: selectedLead.nome,
+        empresa: selectedLead.empresa,
+        email: selectedLead.email,
+        telefone: selectedLead.telefone || undefined,
+        valor_fechamento: selectedLead.valor || 0,
+        data_fechamento: new Date().toISOString().split('T')[0],
+        observacoes: selectedLead.observacoes || undefined,
+        site: selectedLead.site || undefined,
+        instagram: selectedLead.instagram || undefined,
+        facebook: selectedLead.facebook || undefined,
+        outras_redes_sociais: selectedLead.outras_redes_sociais || undefined,
+        faturamento_atual: selectedLead.faturamento_atual || undefined,
+        faturamento_desejado: selectedLead.faturamento_desejado || undefined,
+        nivel_consciencia: selectedLead.nivel_consciencia || undefined,
+        etapa_jornada: selectedLead.etapa_jornada || undefined,
+        indicador_potencial: selectedLead.indicador_potencial || undefined,
+        equipe_atual: selectedLead.equipe_atual || undefined,
+        avatar_url: selectedLead.avatar_url || undefined,
+        fonte_original: selectedLead.fonte,
+        vendedor_id: selectedLead.vendedor_id || undefined,
+        vendedor_nome: selectedLead.vendedor_nome || undefined,
+        lead_id: selectedLead.id,
+      };
+
+      const success = await addCliente(clienteData);
+      
+      if (success) {
+        // Deletar o lead após criar o cliente
+        await deleteLead(selectedLead.id);
+        
+        toast.success('Lead promovido a cliente', {
+          description: `${selectedLead.nome} agora é um cliente!`,
+        });
+        
+        setShowPromoteModal(false);
+        setShowViewModal(false);
+        setSelectedLead(null);
+      }
+    } catch (error) {
+      console.error('Erro ao promover lead:', error);
+      toast.error('Erro ao promover lead', {
+        description: 'Não foi possível promover o lead a cliente.',
+      });
     }
   };
 
@@ -678,6 +737,15 @@ const Leads = () => {
               </DialogTitle>
               <div className="flex gap-2">
                 {!isEditing ? <>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      onClick={() => setShowPromoteModal(true)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Promover a Cliente
+                    </Button>
                     <Button variant="outline" size="sm" onClick={handleEdit}>
                       <Edit2 className="h-4 w-4 mr-2" />
                       Editar
@@ -717,6 +785,29 @@ const Leads = () => {
           </DialogHeader>
           
           {selectedLead && <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Avatar Section */}
+              {!isEditing && (
+                <div className="flex justify-center pb-4 border-b">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={selectedLead.avatar_url} alt={selectedLead.nome} />
+                    <AvatarFallback>
+                      <User className="h-12 w-12" />
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
+              
+              {/* Avatar Upload in Edit Mode */}
+              {isEditing && (
+                <div className="flex justify-center pb-4">
+                  <AvatarUpload
+                    currentAvatarUrl={editedLead?.avatar_url}
+                    onAvatarChange={(url) => setEditedLead(prev => prev ? {...prev, avatar_url: url || undefined} : null)}
+                    fallbackText={editedLead?.nome ? editedLead.nome.substring(0, 2).toUpperCase() : "LE"}
+                  />
+                </div>
+              )}
+
               {/* Dados Básicos */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-primary">DADOS BÁSICOS</h3>
@@ -1003,6 +1094,29 @@ const Leads = () => {
             </div>}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de confirmação para promover a cliente */}
+      <AlertDialog open={showPromoteModal} onOpenChange={setShowPromoteModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Promover Lead a Cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja promover "{selectedLead?.nome}" a cliente? 
+              O lead será movido da página de Leads para a página de Clientes.
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handlePromoteToClient}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Sim, Promover a Cliente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>;
 };
 export default Leads;

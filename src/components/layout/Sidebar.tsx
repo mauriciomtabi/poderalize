@@ -24,7 +24,7 @@ const menuItems = [
   { icon: Kanban, label: "Projetos", href: "/projetos", page: "projetos" as PagePermission },
   { icon: PieChart, label: "CRM", href: "/crm", page: "crm" as PagePermission },
   { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
-  { icon: UserCheck, label: "Clientes", href: "/clientes", page: null },
+  { icon: UserCheck, label: "Clientes", href: "/clientes", page: "clientes" as PagePermission },
 ];
 
 export const Sidebar = () => {

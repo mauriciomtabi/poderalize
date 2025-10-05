@@ -33,7 +33,8 @@ export const PermissionsDialog = ({ isOpen, onClose, userId, userName }: Permiss
     relatorios: false,
     configuracoes: false,
     dashboard: false,
-    colaboradores: false
+    colaboradores: false,
+    clientes: false
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -48,7 +49,8 @@ export const PermissionsDialog = ({ isOpen, onClose, userId, userName }: Permiss
         relatorios: false,
         configuracoes: false,
         dashboard: false,
-        colaboradores: false
+        colaboradores: false,
+        clientes: false
       };
 
       permissions.forEach(p => {
@@ -76,7 +78,8 @@ export const PermissionsDialog = ({ isOpen, onClose, userId, userName }: Permiss
       relatorios: true,
       configuracoes: true,
       dashboard: true,
-      colaboradores: true
+      colaboradores: true,
+      clientes: true
     };
     setLocalPermissions(allAllowed);
   };
@@ -91,7 +94,8 @@ export const PermissionsDialog = ({ isOpen, onClose, userId, userName }: Permiss
       relatorios: false,
       configuracoes: false,
       dashboard: false,
-      colaboradores: false
+      colaboradores: false,
+      clientes: false
     };
     setLocalPermissions(allDenied);
   };

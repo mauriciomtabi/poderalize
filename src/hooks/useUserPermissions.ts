@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export type PagePermission = 'dashboard' | 'projetos' | 'crm' | 'leads' | 'vendas' | 'colaboradores' | 'acompanhamento' | 'relatorios' | 'configuracoes';
+export type PagePermission = 'dashboard' | 'projetos' | 'crm' | 'leads' | 'vendas' | 'colaboradores' | 'acompanhamento' | 'relatorios' | 'configuracoes' | 'clientes';
 
 export interface UserPermission {
   id: string;
