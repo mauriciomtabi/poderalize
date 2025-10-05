@@ -174,61 +174,15 @@ export const MentionTextarea = ({
     }
   }, [selectedIndex, showSuggestions]);
 
-  // Render overlay text masking mention IDs while showing only name and type
-  const renderHighlightedText = () => {
-    const parts: (string | JSX.Element)[] = [];
-    let lastIndex = 0;
-    const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^\)]+)\)/g;
-    let match;
-
-    while ((match = mentionRegex.exec(value)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(value.substring(lastIndex, match.index));
-      }
-
-      const name = match[1];
-      const type = match[3] as 'member' | 'client';
-
-      parts.push(
-        <span
-          key={`m-${match.index}`}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-accent text-foreground/90 align-baseline"
-        >
-          {type === 'member' ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-          <span>{name}</span>
-          <span className="text-xs opacity-70">({type === 'member' ? 'Membro' : 'Cliente'})</span>
-        </span>
-      );
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    if (lastIndex < value.length) {
-      parts.push(value.substring(lastIndex));
-    }
-
-    return parts;
-  };
-
   return (
     <div className="relative">
-      {/* Overlay that displays formatted text without IDs */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 px-3 py-2 text-sm whitespace-pre-wrap break-words"
-      >
-        {value ? renderHighlightedText() : (
-          <span className="text-muted-foreground">{placeholder}</span>
-        )}
-      </div>
-
       <Textarea
         ref={textareaRef}
         value={value}
         onChange={handleTextChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={cn("min-h-[80px] resize-none bg-transparent text-transparent caret-foreground", className)}
+        className={cn("min-h-[80px] resize-none", className)}
       />
       
       {showSuggestions && suggestions.length > 0 && (

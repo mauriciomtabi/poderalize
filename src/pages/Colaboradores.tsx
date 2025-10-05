@@ -758,42 +758,46 @@ const Colaboradores = () => {
                       <div className="flex space-x-2">
                         <Button 
                           variant="outline" 
-                          size="sm"
+                          size="icon"
                           onClick={() => {
                             setSelectedUserIdForPermissions(selectedColaborador.user_id);
                             setIsPermissionsDialogOpen(true);
                           }}
+                          title="Gerenciar Permissões"
                         >
-                          <Shield size={14} className="mr-2" />
-                          Gerenciar Permissões
+                          <Shield size={16} />
                         </Button>
                         {selectedColaborador.user_id && (
                           <Button
                             variant={adminUsers.has(selectedColaborador.user_id) ? "secondary" : "default"}
-                            size="sm"
+                            size="icon"
                             onClick={() => handlePromoteToAdmin(
                               selectedColaborador.user_id!,
                               selectedColaborador.nome,
                               adminUsers.has(selectedColaborador.user_id)
                             )}
+                            title={adminUsers.has(selectedColaborador.user_id) ? 'Remover Admin' : 'Promover a Admin'}
                           >
-                            <Crown size={14} className="mr-2" />
-                            {adminUsers.has(selectedColaborador.user_id) ? 'Remover Admin' : 'Promover a Admin'}
+                            <Crown size={16} />
                           </Button>
                         )}
                       </div>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={handleEditColaborador}>
-                          <Edit3 size={14} className="mr-2" />
-                          Editar
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={handleEditColaborador}
+                          title="Editar"
+                        >
+                          <Edit3 size={16} />
                         </Button>
                         <Button 
                           variant="destructive" 
-                          size="sm" 
+                          size="icon" 
                           onClick={() => setColaboradorToDelete(selectedColaborador.id)}
+                          title="Remover"
                         >
-                          <Trash2 size={14} className="mr-2" />
-                          Remover
+                          <Trash2 size={16} />
                         </Button>
                       </div>
                     </div>
