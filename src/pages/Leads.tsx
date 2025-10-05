@@ -42,6 +42,7 @@ const Leads = () => {
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedLead, setEditedLead] = useState<Lead | null>(null);
+  const [newLeadAvatarUrl, setNewLeadAvatarUrl] = useState<string | undefined>(undefined);
 
   // Estado de busca
   const [searchTerm, setSearchTerm] = useState('');
@@ -108,7 +109,10 @@ const Leads = () => {
       toast.error('Por favor, preencha todos os campos obrigatórios');
       return;
     }
-    const success = await addLead(novoLead);
+    const success = await addLead({
+      ...novoLead,
+      avatar_url: newLeadAvatarUrl
+    });
     if (success) {
       // Reset form
       setNovoLead({
@@ -138,6 +142,7 @@ const Leads = () => {
         indicador_potencial: '',
         equipe_atual: ''
       });
+      setNewLeadAvatarUrl(undefined);
       setShowAddModal(false);
     }
   };
@@ -400,6 +405,15 @@ const Leads = () => {
               <DialogTitle>Cadastro de Lead</DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
+              {/* Avatar Upload */}
+              <div className="flex justify-center py-4">
+                <AvatarUpload
+                  currentAvatarUrl={newLeadAvatarUrl}
+                  onAvatarChange={(url) => setNewLeadAvatarUrl(url || undefined)}
+                  fallbackText={novoLead.nome ? novoLead.nome.substring(0, 2).toUpperCase() : "LE"}
+                />
+              </div>
+
               {/* Dados Básicos */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Dados Básicos</h3>
