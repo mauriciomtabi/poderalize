@@ -6,10 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Plus, Tag, Users, Calendar, Clock } from "lucide-react";
 import { useRecurringCards } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { format } from "date-fns";
+import type { Priority } from "@/types/projects";
 
 interface RecurringCardsTabProps {
   boardId: string | null;
@@ -28,7 +30,14 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
     day_of_week: 1,
     day_of_month: 1,
     time_of_day: "09:00",
-    days_of_week: [] as number[], // For daily: which days to repeat
+    days_of_week: [] as number[],
+    // Card properties
+    priority: "medium" as Priority,
+    label_ids: [] as string[],
+    assignee_ids: [] as string[],
+    due_date_offset: 0, // Days from creation
+    start_date_offset: 0, // Days from creation
+    estimated_hours: 0,
   });
 
   const handleSubmit = async () => {
@@ -94,7 +103,14 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       time_of_day: formData.time_of_day,
       next_creation_at: nextCreation.toISOString(),
       days_of_week: formData.frequency === 'daily' ? formData.days_of_week : undefined,
-      template_config: {},
+      template_config: {
+        priority: formData.priority,
+        label_ids: formData.label_ids,
+        assignee_ids: formData.assignee_ids,
+        due_date_offset: formData.due_date_offset,
+        start_date_offset: formData.start_date_offset,
+        estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined,
+      },
       enabled: true,
     });
 
@@ -108,6 +124,12 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       day_of_month: 1,
       time_of_day: "09:00",
       days_of_week: [],
+      priority: "medium",
+      label_ids: [],
+      assignee_ids: [],
+      due_date_offset: 0,
+      start_date_offset: 0,
+      estimated_hours: 0,
     });
   };
 
@@ -126,6 +148,38 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
     { value: 5, label: "Sexta" },
     { value: 6, label: "Sábado" },
   ];
+
+  const priorityLabels = {
+    low: "Baixa",
+    medium: "Média",
+    high: "Alta",
+    urgent: "Urgente",
+  };
+
+  const priorityColors = {
+    low: "bg-blue-500",
+    medium: "bg-yellow-500",
+    high: "bg-orange-500",
+    urgent: "bg-red-500",
+  };
+
+  const toggleLabel = (labelId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      label_ids: prev.label_ids.includes(labelId)
+        ? prev.label_ids.filter(id => id !== labelId)
+        : [...prev.label_ids, labelId]
+    }));
+  };
+
+  const toggleAssignee = (memberId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      assignee_ids: prev.assignee_ids.includes(memberId)
+        ? prev.assignee_ids.filter(id => id !== memberId)
+        : [...prev.assignee_ids, memberId]
+    }));
+  };
 
   return (
     <div className="space-y-4">
@@ -268,6 +322,121 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
               </div>
             )}
 
+            <div className="border-t pt-4 space-y-4">
+              <h3 className="font-medium flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                Propriedades do Card
+              </h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">Prioridade</Label>
+                <Select value={formData.priority} onValueChange={(value: Priority) => setFormData({ ...formData, priority: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    {Object.entries(priorityLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${priorityColors[value as Priority]}`} />
+                          {label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {state.currentBoard && state.currentBoard.labels.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Etiquetas</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {state.currentBoard.labels.map((label) => (
+                      <Badge
+                        key={label.id}
+                        variant={formData.label_ids.includes(label.id) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        style={formData.label_ids.includes(label.id) ? {
+                          backgroundColor: label.color,
+                          borderColor: label.color,
+                        } : {}}
+                        onClick={() => toggleLabel(label.id)}
+                      >
+                        {label.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {state.currentBoard && state.currentBoard.members.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Membros</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {state.currentBoard.members.map((member) => (
+                      <Badge
+                        key={member.id}
+                        variant={formData.assignee_ids.includes(member.id) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => toggleAssignee(member.id)}
+                      >
+                        <Users className="h-3 w-3 mr-1" />
+                        {member.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start_date_offset" className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    Início (dias)
+                  </Label>
+                  <Input
+                    id="start_date_offset"
+                    type="number"
+                    min="0"
+                    value={formData.start_date_offset}
+                    onChange={(e) => setFormData({ ...formData, start_date_offset: Number(e.target.value) })}
+                    placeholder="0 = mesmo dia"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="due_date_offset" className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    Vencimento (dias)
+                  </Label>
+                  <Input
+                    id="due_date_offset"
+                    type="number"
+                    min="0"
+                    value={formData.due_date_offset}
+                    onChange={(e) => setFormData({ ...formData, due_date_offset: Number(e.target.value) })}
+                    placeholder="0 = sem vencimento"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="estimated_hours" className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Horas Estimadas
+                </Label>
+                <Input
+                  id="estimated_hours"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={formData.estimated_hours}
+                  onChange={(e) => setFormData({ ...formData, estimated_hours: Number(e.target.value) })}
+                  placeholder="0 = não especificado"
+                />
+              </div>
+            </div>
+
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={() => setShowForm(false)}>
                 Cancelar
@@ -322,7 +491,12 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-sm text-muted-foreground space-y-1">
-                  <p>Frequência: {frequencyLabels[card.frequency]}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span>Frequência: {frequencyLabels[card.frequency]}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {priorityLabels[card.template_config?.priority as Priority || 'medium']}
+                    </Badge>
+                  </div>
                   {card.frequency === 'daily' && card.days_of_week && card.days_of_week.length > 0 && (
                     <p>
                       Dias: {card.days_of_week
@@ -338,7 +512,31 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                     <p>Dia do mês: {card.day_of_month}</p>
                   )}
                   <p>Horário: {card.time_of_day || '09:00'}</p>
-                  <p>Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
+                  
+                  {card.template_config && (
+                    <>
+                      {Array.isArray(card.template_config.label_ids) && card.template_config.label_ids.length > 0 && (
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <Tag className="h-3 w-3" />
+                          {card.template_config.label_ids.length} etiqueta(s)
+                        </div>
+                      )}
+                      {Array.isArray(card.template_config.assignee_ids) && card.template_config.assignee_ids.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {card.template_config.assignee_ids.length} membro(s)
+                        </div>
+                      )}
+                      {card.template_config.estimated_hours > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {card.template_config.estimated_hours}h estimadas
+                        </div>
+                      )}
+                    </>
+                  )}
+                  
+                  <p className="pt-1 border-t">Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
                   {card.last_created_at && (
                     <p>Última criação: {format(new Date(card.last_created_at), 'dd/MM/yyyy HH:mm')}</p>
                   )}

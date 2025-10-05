@@ -49,7 +49,21 @@ serve(async (req) => {
           ? existingCards[0].position + 1 
           : 0;
 
-        // Create the card
+        // Get template config
+        const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
+          ? recurringCard.template_config as Record<string, any>
+          : {};
+
+        // Calculate dates if offsets are provided
+        const creationDate = new Date();
+        const startDate = config.start_date_offset > 0
+          ? new Date(creationDate.getTime() + config.start_date_offset * 24 * 60 * 60 * 1000)
+          : null;
+        const dueDate = config.due_date_offset > 0
+          ? new Date(creationDate.getTime() + config.due_date_offset * 24 * 60 * 60 * 1000)
+          : null;
+
+        // Create the card with all properties
         const { data: newCard, error: cardError } = await supabase
           .from('project_cards')
           .insert({
@@ -58,10 +72,13 @@ serve(async (req) => {
             description: recurringCard.description,
             position: nextPosition,
             status: 'todo',
-            priority: 'medium',
+            priority: config.priority || 'medium',
+            start_date: startDate?.toISOString(),
+            due_date: dueDate?.toISOString(),
+            estimated_hours: config.estimated_hours || null,
             archived: false,
             watching: false,
-            created_by: '00000000-0000-0000-0000-000000000000', // System user
+            created_by: '00000000-0000-0000-0000-000000000000',
           })
           .select()
           .single();
@@ -72,6 +89,38 @@ serve(async (req) => {
         }
 
         console.log(`Created card: ${newCard.id}`);
+
+        // Add labels if specified
+        if (Array.isArray(config.label_ids) && config.label_ids.length > 0) {
+          const labelInserts = config.label_ids.map((labelId: string) => ({
+            card_id: newCard.id,
+            label_id: labelId,
+          }));
+          
+          const { error: labelsError } = await supabase
+            .from('project_card_labels')
+            .insert(labelInserts);
+            
+          if (labelsError) {
+            console.error('Error adding labels:', labelsError);
+          }
+        }
+
+        // Add assignees if specified
+        if (Array.isArray(config.assignee_ids) && config.assignee_ids.length > 0) {
+          const assigneeInserts = config.assignee_ids.map((memberId: string) => ({
+            card_id: newCard.id,
+            member_id: memberId,
+          }));
+          
+          const { error: assigneesError } = await supabase
+            .from('project_card_assignees')
+            .insert(assigneeInserts);
+            
+          if (assigneesError) {
+            console.error('Error adding assignees:', assigneesError);
+          }
+        }
 
         // Calculate next creation time
         let nextCreation = new Date(recurringCard.next_creation_at);
@@ -184,6 +233,20 @@ serve(async (req) => {
           ? existingCards[0].position + 1 
           : 0;
 
+        // Get template config
+        const config = typeof scheduledCard.template_config === 'object' && scheduledCard.template_config !== null
+          ? scheduledCard.template_config as Record<string, any>
+          : {};
+
+        // Calculate dates if offsets are provided
+        const creationDate = new Date();
+        const startDate = config.start_date_offset > 0
+          ? new Date(creationDate.getTime() + config.start_date_offset * 24 * 60 * 60 * 1000)
+          : null;
+        const dueDate = config.due_date_offset > 0
+          ? new Date(creationDate.getTime() + config.due_date_offset * 24 * 60 * 60 * 1000)
+          : null;
+
         const { data: newCard, error: cardError } = await supabase
           .from('project_cards')
           .insert({
@@ -192,7 +255,10 @@ serve(async (req) => {
             description: scheduledCard.description,
             position: nextPosition,
             status: 'todo',
-            priority: 'medium',
+            priority: config.priority || 'medium',
+            start_date: startDate?.toISOString(),
+            due_date: dueDate?.toISOString(),
+            estimated_hours: config.estimated_hours || null,
             archived: false,
             watching: false,
             created_by: '00000000-0000-0000-0000-000000000000',
@@ -203,6 +269,38 @@ serve(async (req) => {
         if (cardError) {
           console.error('Error creating scheduled card:', cardError);
           throw cardError;
+        }
+
+        // Add labels if specified
+        if (Array.isArray(config.label_ids) && config.label_ids.length > 0) {
+          const labelInserts = config.label_ids.map((labelId: string) => ({
+            card_id: newCard.id,
+            label_id: labelId,
+          }));
+          
+          const { error: labelsError } = await supabase
+            .from('project_card_labels')
+            .insert(labelInserts);
+            
+          if (labelsError) {
+            console.error('Error adding labels:', labelsError);
+          }
+        }
+
+        // Add assignees if specified
+        if (Array.isArray(config.assignee_ids) && config.assignee_ids.length > 0) {
+          const assigneeInserts = config.assignee_ids.map((memberId: string) => ({
+            card_id: newCard.id,
+            member_id: memberId,
+          }));
+          
+          const { error: assigneesError } = await supabase
+            .from('project_card_assignees')
+            .insert(assigneeInserts);
+            
+          if (assigneesError) {
+            console.error('Error adding assignees:', assigneesError);
+          }
         }
 
         const { error: updateError } = await supabase
