@@ -100,7 +100,6 @@ export function useClientes() {
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -189,7 +188,6 @@ export function useClientes() {
         .from('clientes')
         .update(validatedData)
         .eq('id', id)
-        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -225,8 +223,7 @@ export function useClientes() {
       const { error } = await supabase
         .from('clientes')
         .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Erro ao deletar cliente:', error);

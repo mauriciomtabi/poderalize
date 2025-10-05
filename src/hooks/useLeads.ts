@@ -153,7 +153,6 @@ export function useLeads() {
       const { data, error } = await supabase
         .from('leads')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -305,7 +304,6 @@ export function useLeads() {
         .from('leads')
         .update(validatedData)
         .eq('id', id)
-        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -323,8 +321,7 @@ export function useLeads() {
         const { error: deleteError } = await supabase
           .from('leads')
           .delete()
-          .eq('id', id)
-          .eq('user_id', user.id);
+          .eq('id', id);
 
         if (deleteError) {
           console.error('Erro ao remover lead após conversão:', deleteError);
@@ -361,8 +358,7 @@ export function useLeads() {
       const { error } = await supabase
         .from('leads')
         .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Erro ao deletar lead:', error);
@@ -463,7 +459,6 @@ export function useLeads() {
         .from('leads')
         .select('*')
         .eq('id', leadId)
-        .eq('user_id', user.id)
         .single();
 
       if (leadError) {
@@ -479,8 +474,7 @@ export function useLeads() {
       const { error: deleteError } = await supabase
         .from('leads')
         .delete()
-        .eq('id', leadId)
-        .eq('user_id', user.id);
+        .eq('id', leadId);
 
       if (deleteError) {
         console.error('Erro ao remover lead:', deleteError);
