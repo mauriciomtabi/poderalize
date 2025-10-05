@@ -280,23 +280,26 @@ export const CardDetailModal = ({
     }
   };
 
-  const handleClientChange = (clientId?: string) => {
+  const handleClientChange = (clientId?: string | null) => {
     if (isCreationMode) {
-      setSelectedClientId(clientId);
+      setSelectedClientId(clientId ?? undefined);
       return;
     }
     
     if (!latestCard) return;
-    
+
+    // Normalize undefined to null for DB updates
+    const newClientId = clientId ?? null;
+
     // Update local state immediately for visual feedback
-    setSelectedClientId(clientId);
+    setSelectedClientId(clientId ?? undefined);
     
     actions.updateCard({
       ...latestCard,
-      client_id: clientId
+      client_id: newClientId as any
     });
     
-    const cliente = clientes.find(c => c.id === clientId);
+    const cliente = clientes.find(c => c.id === (clientId ?? undefined));
     if (clientId && clientId !== latestCard.client_id && cliente) {
       actions.addActivity(latestCard.id, 'update', `associou o cliente ${cliente.nome}`);
     } else if (!clientId && latestCard.client_id) {
@@ -675,7 +678,7 @@ export const CardDetailModal = ({
           isOpen={showClientPicker}
           onClose={() => setShowClientPicker(false)}
           selectedClientId={selectedClientId}
-          onSelectClient={(client) => handleClientChange(client?.id)}
+          onSelectClient={(client) => handleClientChange(client ? client.id : null)}
         />
 
         {/* Attachment Manager - works in both modes */}
