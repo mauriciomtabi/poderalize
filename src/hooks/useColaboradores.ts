@@ -248,7 +248,7 @@ export function useColaboradores() {
       console.error('Erro ao deletar colaborador:', error);
       toast({
         title: "Erro",
-        description: "Erro ao remover colaborador",
+        description: error instanceof Error ? error.message : "Erro ao remover colaborador",
         variant: "destructive"
       });
       throw error;

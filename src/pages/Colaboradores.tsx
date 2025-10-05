@@ -46,6 +46,7 @@ import { PromoteToAdminDialog } from "@/components/colaboradores/PromoteToAdminD
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { getInitials } from "@/lib/utils";
 import { AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
 
 const Colaboradores = () => {
   const { colaboradores, loading, addColaborador, updateColaborador, deleteColaborador, syncApprovedUsers } = useColaboradores();
@@ -62,7 +63,8 @@ const Colaboradores = () => {
   const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
   const [selectedUserForPromotion, setSelectedUserForPromotion] = useState<{ id: string; name: string; isAdmin: boolean } | null>(null);
   const [adminUsers, setAdminUsers] = useState<Set<string>>(new Set());
-  const { checkIsAdmin, promoteToAdmin, removeAdmin } = useAdminRole();
+const { checkIsAdmin, promoteToAdmin, removeAdmin } = useAdminRole();
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [novoColaborador, setNovoColaborador] = useState({
     nome: "",
     email: "",
@@ -122,6 +124,22 @@ const Colaboradores = () => {
       loadAdminStatus();
     }
   }, [allActiveColaboradores, checkIsAdmin]);
+
+  // Verificar se o usuário atual é admin
+  useEffect(() => {
+    const checkCurrent = async () => {
+      const { data } = await supabase.auth.getUser();
+      const uid = data.user?.id;
+      if (uid) {
+        const isAdm = await checkIsAdmin(uid);
+        setIsCurrentUserAdmin(!!isAdm);
+      } else {
+        setIsCurrentUserAdmin(false);
+      }
+    };
+    checkCurrent();
+  }, [checkIsAdmin]);
+
 
   const filteredColaboradores = allActiveColaboradores.filter(colaborador =>
     colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -751,30 +769,34 @@ const Colaboradores = () => {
                   ) : (
                     <div className="flex justify-between w-full">
                       <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="icon"
-                          onClick={() => {
-                            setSelectedUserIdForPermissions(selectedColaborador.user_id);
-                            setIsPermissionsDialogOpen(true);
-                          }}
-                          title="Gerenciar Permissões"
-                        >
-                          <Shield size={16} />
-                        </Button>
-                        {selectedColaborador.user_id && (
-                          <Button
-                            variant={adminUsers.has(selectedColaborador.user_id) ? "secondary" : "default"}
-                            size="icon"
-                            onClick={() => handlePromoteToAdmin(
-                              selectedColaborador.user_id!,
-                              selectedColaborador.nome,
-                              adminUsers.has(selectedColaborador.user_id)
+                        {isCurrentUserAdmin && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => {
+                                setSelectedUserIdForPermissions(selectedColaborador.user_id);
+                                setIsPermissionsDialogOpen(true);
+                              }}
+                              title="Gerenciar Permissões"
+                            >
+                              <Shield size={16} />
+                            </Button>
+                            {selectedColaborador.user_id && (
+                              <Button
+                                variant={adminUsers.has(selectedColaborador.user_id) ? "secondary" : "default"}
+                                size="icon"
+                                onClick={() => handlePromoteToAdmin(
+                                  selectedColaborador.user_id!,
+                                  selectedColaborador.nome,
+                                  adminUsers.has(selectedColaborador.user_id)
+                                )}
+                                title={adminUsers.has(selectedColaborador.user_id) ? 'Remover Admin' : 'Promover a Admin'}
+                              >
+                                <Crown size={16} />
+                              </Button>
                             )}
-                            title={adminUsers.has(selectedColaborador.user_id) ? 'Remover Admin' : 'Promover a Admin'}
-                          >
-                            <Crown size={16} />
-                          </Button>
+                          </>
                         )}
                       </div>
                       <div className="flex space-x-2">
