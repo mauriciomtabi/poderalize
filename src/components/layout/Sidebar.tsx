@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSidebarContext } from "./Layout";
 import { 
@@ -15,20 +15,73 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/poderalize-logo.png";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import type { PagePermission } from "@/hooks/useUserPermissions";
 
 const menuItems = [
-  { icon: Users, label: "Colaboradores", href: "/colaboradores" },
-  { icon: Kanban, label: "Projetos", href: "/projetos" },
-  { icon: PieChart, label: "CRM", href: "/crm" },
-  { icon: Target, label: "Leads", href: "/leads" },
-  { icon: UserCheck, label: "Clientes", href: "/clientes" },
-  { icon: BarChart3, label: "Relatórios", href: "/relatorios" },
-  { icon: Settings, label: "Configurações", href: "/configuracoes" },
+  { icon: Users, label: "Colaboradores", href: "/colaboradores", page: "colaboradores" as PagePermission, adminOnly: true },
+  { icon: Kanban, label: "Projetos", href: "/projetos", page: "projetos" as PagePermission },
+  { icon: PieChart, label: "CRM", href: "/crm", page: "crm" as PagePermission },
+  { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
+  { icon: UserCheck, label: "Clientes", href: "/clientes", page: null }, // Clientes não precisa de permissão específica
+  { icon: BarChart3, label: "Relatórios", href: "/relatorios", page: "relatorios" as PagePermission },
+  { icon: Settings, label: "Configurações", href: "/configuracoes", page: "configuracoes" as PagePermission },
 ];
 
 export const Sidebar = () => {
   const { collapsed, setCollapsed } = useSidebarContext();
   const location = useLocation();
+  const { user, isAdmin } = useAuthContext();
+  const [visibleMenuItems, setVisibleMenuItems] = useState(menuItems);
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!user) {
+        setVisibleMenuItems([]);
+        return;
+      }
+
+      // Admins veem tudo
+      if (isAdmin) {
+        setVisibleMenuItems(menuItems);
+        return;
+      }
+
+      // Para não-admins, verificar permissões
+      const itemsWithPermission = await Promise.all(
+        menuItems.map(async (item) => {
+          // Se o item é só para admin, esconder
+          if (item.adminOnly) {
+            return null;
+          }
+
+          // Se não tem página específica (como Clientes), mostrar
+          if (!item.page) {
+            return item;
+          }
+
+          // Verificar permissão no banco
+          try {
+            const { data, error } = await supabase.rpc('user_has_page_permission', {
+              _user_id: user.id,
+              _page: item.page
+            });
+
+            if (error) throw error;
+            return data ? item : null;
+          } catch (error) {
+            console.error('Error checking permission:', error);
+            return null;
+          }
+        })
+      );
+
+      setVisibleMenuItems(itemsWithPermission.filter(Boolean) as typeof menuItems);
+    };
+
+    checkPermissions();
+  }, [user, isAdmin]);
 
   return (
     <div className={cn(
@@ -79,7 +132,7 @@ export const Sidebar = () => {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = location.pathname === item.href || (location.pathname === "/" && item.href === "/projetos");
           return (
             <Link

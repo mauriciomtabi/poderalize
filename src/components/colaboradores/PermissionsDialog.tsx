@@ -66,6 +66,36 @@ export const PermissionsDialog = ({ isOpen, onClose, userId, userName }: Permiss
     }));
   };
 
+  const handleAllowAll = () => {
+    const allAllowed: Record<PagePermission, boolean> = {
+      projetos: true,
+      crm: true,
+      leads: true,
+      vendas: true,
+      acompanhamento: true,
+      relatorios: true,
+      configuracoes: true,
+      dashboard: true,
+      colaboradores: true
+    };
+    setLocalPermissions(allAllowed);
+  };
+
+  const handleDenyAll = () => {
+    const allDenied: Record<PagePermission, boolean> = {
+      projetos: false,
+      crm: false,
+      leads: false,
+      vendas: false,
+      acompanhamento: false,
+      relatorios: false,
+      configuracoes: false,
+      dashboard: false,
+      colaboradores: false
+    };
+    setLocalPermissions(allDenied);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -99,7 +129,28 @@ export const PermissionsDialog = ({ isOpen, onClose, userId, userName }: Permiss
             <LoadingSpinner />
           </div>
         ) : (
-          <div className="space-y-4 max-h-[400px] overflow-y-auto py-4">
+          <>
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAllowAll}
+                className="flex-1"
+              >
+                <Unlock className="h-4 w-4 mr-2" />
+                Permitir Todos
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDenyAll}
+                className="flex-1"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Negar Todos
+              </Button>
+            </div>
+            <div className="space-y-4 max-h-[400px] overflow-y-auto py-4">
             {ALL_PAGES.map(page => (
               <Card key={page.value} className="border-2">
                 <CardContent className="p-4">
@@ -128,7 +179,8 @@ export const PermissionsDialog = ({ isOpen, onClose, userId, userName }: Permiss
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
+          </>
         )}
 
         <DialogFooter>

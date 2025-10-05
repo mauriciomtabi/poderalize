@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { PageGuard } from "@/components/auth/PageGuard";
 import { Layout } from "@/components/layout/Layout";
 import Colaboradores from "./pages/Colaboradores";
 import Projetos from "./pages/Projetos";
@@ -48,15 +49,39 @@ const App = () => (
                     <Layout />
                   </AuthGuard>
                 }>
-                  <Route index element={<Projetos />} />
-                  <Route path="projetos" element={<Projetos />} />
-                  <Route path="crm" element={<CRM />} />
-                  <Route path="leads" element={<Leads />} />
+                  <Route index element={
+                    <PageGuard page="projetos">
+                      <Projetos />
+                    </PageGuard>
+                  } />
+                  <Route path="projetos" element={
+                    <PageGuard page="projetos">
+                      <Projetos />
+                    </PageGuard>
+                  } />
+                  <Route path="crm" element={
+                    <PageGuard page="crm">
+                      <CRM />
+                    </PageGuard>
+                  } />
+                  <Route path="leads" element={
+                    <PageGuard page="leads">
+                      <Leads />
+                    </PageGuard>
+                  } />
                   <Route path="clientes" element={<Clientes />} />
                   <Route path="vendas" element={<Vendas />} />
                   <Route path="acompanhamento" element={<Acompanhamento />} />
-                  <Route path="relatorios" element={<Relatorios />} />
-                  <Route path="configuracoes" element={<Configuracoes />} />
+                  <Route path="relatorios" element={
+                    <PageGuard page="relatorios">
+                      <Relatorios />
+                    </PageGuard>
+                  } />
+                  <Route path="configuracoes" element={
+                    <PageGuard page="configuracoes">
+                      <Configuracoes />
+                    </PageGuard>
+                  } />
                   <Route path="colaboradores" element={
                     <AuthGuard requiredRole="admin">
                       <Colaboradores />
