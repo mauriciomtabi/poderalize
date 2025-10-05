@@ -316,11 +316,6 @@ export function useColaboradores() {
           description: `${profilesToAdd.length} colaboradores foram adicionados à lista`
         });
         await fetchColaboradores();
-      } else {
-        toast({
-          title: "Sincronização concluída",
-          description: "Todos os usuários aprovados já estão na lista de colaboradores"
-        });
       }
     } catch (error) {
       console.error('Erro ao sincronizar usuários aprovados:', error);

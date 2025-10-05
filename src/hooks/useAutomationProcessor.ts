@@ -24,11 +24,6 @@ export const useAutomationProcessor = () => {
           title: "Automações processadas",
           description: `${totalProcessed} card(s) criado(s) com sucesso`,
         });
-      } else {
-        toast({
-          title: "Nenhuma automação pendente",
-          description: "Não há cards para criar no momento",
-        });
       }
 
       return { success: true, data };
