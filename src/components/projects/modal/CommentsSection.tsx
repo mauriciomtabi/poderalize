@@ -80,12 +80,17 @@ export const CommentsSection = ({
 
   // Format comment text with mentions highlighted
   const formatCommentText = (text: string, commentMentions: string[]) => {
+    console.log('Formatting comment text:', text);
+    console.log('Comment mentions:', commentMentions);
+    
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
     const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^)]+)\)/g;
     let match;
 
     while ((match = mentionRegex.exec(text)) !== null) {
+      console.log('Found mention match:', match);
+      
       // Add text before mention
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
@@ -94,6 +99,8 @@ export const CommentsSection = ({
       const name = match[1];
       const id = match[2];
       const type = match[3];
+
+      console.log('Mention details:', { name, id, type });
 
       // Add mention as badge
       parts.push(
@@ -116,6 +123,7 @@ export const CommentsSection = ({
       parts.push(text.substring(lastIndex));
     }
 
+    console.log('Total parts:', parts.length);
     return parts.length > 0 ? parts : text;
   };
 
@@ -179,9 +187,9 @@ export const CommentsSection = ({
                 </span>
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
-                <p className="text-sm whitespace-pre-wrap flex flex-wrap items-center gap-1">
+                <div className="text-sm whitespace-pre-wrap flex flex-wrap items-center gap-1">
                   {formatCommentText(comment.text, comment.mentions)}
-                </p>
+                </div>
               </div>
             </div>
           </div>
