@@ -80,6 +80,7 @@ export interface Lead {
   probabilidade?: number;
   data_contato: string;
   observacoes?: string;
+  avatar_url?: string;
   
   // Presença Digital
   site?: string;

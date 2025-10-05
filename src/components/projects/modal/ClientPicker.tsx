@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Building2, X } from "lucide-react";
+import { Search, Building2, X, User } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useClientes, Cliente } from "@/hooks/useClientes";
 
 interface ClientPickerProps {
@@ -48,8 +49,13 @@ export const ClientPicker = ({ isOpen, onClose, selectedClientId, onSelectClient
         <div className="space-y-4">
           {selectedClient && (
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={selectedClient.avatar_url} alt={selectedClient.nome} />
+                  <AvatarFallback>
+                    <User className="h-5 w-5" />
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <p className="font-medium text-sm">{selectedClient.nome}</p>
                   <p className="text-xs text-muted-foreground">{selectedClient.empresa}</p>
@@ -97,8 +103,13 @@ export const ClientPicker = ({ isOpen, onClose, selectedClientId, onSelectClient
                       selectedClientId === cliente.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarImage src={cliente.avatar_url} alt={cliente.nome} />
+                        <AvatarFallback>
+                          <User className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{cliente.nome}</p>
                         <p className="text-xs text-muted-foreground truncate">{cliente.empresa}</p>

@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Search, Eye, Edit2, Trash2, TrendingUp, Users, DollarSign, Target, Phone, Mail, Building, Calendar, FileText, Globe, Instagram, Facebook, Share } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, Trash2, TrendingUp, Users, DollarSign, Target, Phone, Mail, Building, Calendar, FileText, Globe, Instagram, Facebook, Share, User } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { useLeads, type Lead, type CreateLeadData } from '@/hooks/useLeads';
 import { useAuth } from '@/hooks/useAuth';
@@ -616,12 +617,20 @@ const Leads = () => {
             </p>
           </div> : filteredLeads.map(lead => <Card key={lead.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(lead)}>
               <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{lead.nome}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{lead.empresa}</p>
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-12 w-12 flex-shrink-0">
+                    <AvatarImage src={lead.avatar_url} alt={lead.nome} />
+                    <AvatarFallback>
+                      <User className="h-6 w-6" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg truncate">{lead.nome}</CardTitle>
+                    <p className="text-sm text-muted-foreground truncate">{lead.empresa}</p>
+                    <Badge className={`${getStatusConfig(lead.status_simple).color} mt-1`}>
+                      {getStatusConfig(lead.status_simple).label}
+                    </Badge>
                   </div>
-                  
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">

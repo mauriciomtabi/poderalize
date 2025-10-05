@@ -26,6 +26,7 @@ export interface Lead {
   probabilidade: number;
   dataContato: string;
   observacoes?: string;
+  avatar_url?: string;
   
   // Presença Digital
   site?: string;

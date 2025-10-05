@@ -487,15 +487,22 @@ export const CardDetailModal = ({
                       <Building2 className="h-4 w-4" />
                       <h3 className="font-medium">Cliente</h3>
                     </div>
-                    <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1">
+                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3 flex-1">
                         {(() => {
                           const cliente = clientes.find(c => c.id === selectedClientId);
                           return cliente ? (
                             <>
-                              <p className="font-medium text-sm">{cliente.nome}</p>
-                              <p className="text-xs text-muted-foreground">{cliente.empresa}</p>
+                              <Avatar className="h-10 w-10 flex-shrink-0">
+                                <AvatarImage src={cliente.avatar_url} alt={cliente.nome} />
+                                <AvatarFallback>
+                                  <Building2 className="h-5 w-5" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <p className="font-medium text-sm">{cliente.nome}</p>
+                                <p className="text-xs text-muted-foreground">{cliente.empresa}</p>
+                              </div>
                             </>
                           ) : (
                             <p className="text-sm text-muted-foreground">Cliente não encontrado</p>
@@ -506,7 +513,7 @@ export const CardDetailModal = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => handleClientChange(undefined)}
-                        className="h-8 w-8"
+                        className="h-8 w-8 flex-shrink-0"
                       >
                         <X className="h-4 w-4" />
                       </Button>
