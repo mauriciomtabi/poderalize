@@ -379,8 +379,31 @@ export function useColaboradores() {
 
   useEffect(() => {
     fetchColaboradores();
+    
     // Sincronizar usuários aprovados na primeira carga
     setTimeout(() => syncApprovedUsers(), 1000);
+    
+    // Configurar realtime para atualizações da tabela colaboradores
+    const channel = supabase
+      .channel('colaboradores-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'colaboradores'
+        },
+        (payload) => {
+          console.log('Colaborador change detected:', payload);
+          // Recarregar colaboradores quando houver mudanças
+          fetchColaboradores();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {
