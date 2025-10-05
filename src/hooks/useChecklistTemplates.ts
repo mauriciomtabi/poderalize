@@ -14,12 +14,16 @@ export const useChecklistTemplates = (boardId?: string) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      // Fetch templates
+      // Fetch templates (user-owned OR global OR board-specific)
+      const orFilters = [
+        `user_id.eq.${user.user.id}`,
+        `is_global.eq.true`,
+        ...(boardId ? [`board_id.eq.${boardId}`] : []),
+      ];
       const { data: templatesData, error: templatesError } = await supabase
         .from('checklist_templates')
         .select('*')
-        .eq('user_id', user.user.id)
-        .or(`is_global.eq.true${boardId ? `,board_id.eq.${boardId}` : ''}`)
+        .or(orFilters.join(','))
         .order('created_at', { ascending: false });
 
       if (templatesError) throw templatesError;
