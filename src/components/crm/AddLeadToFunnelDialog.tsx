@@ -80,6 +80,11 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
     }
   };
 
+  const handleCloseDialog = () => {
+    localStorage.removeItem('lead-form-draft');
+    onOpenChange(false);
+  };
+
   const handleCreateNewLead = async (leadData: Partial<LeadAdvanced>) => {
     if (!currentFunnel) return;
 
@@ -90,6 +95,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
       } as Omit<LeadAdvanced, 'id'>;
 
       await addLead(newLeadData, stageId);
+      localStorage.removeItem('lead-form-draft');
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating new lead:', error);
@@ -97,7 +103,9 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!open) handleCloseDialog();
+    }}>
       <DialogContent className="max-w-4xl h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Adicionar Lead ao Funil</DialogTitle>

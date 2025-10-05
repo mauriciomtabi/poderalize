@@ -62,9 +62,15 @@ const Clientes = () => {
     setIsViewModalOpen(true);
   };
 
+  const handleCloseAddModal = () => {
+    localStorage.removeItem('cliente-form-draft');
+    setIsAddModalOpen(false);
+  };
+
   const handleAddCliente = async (clienteData: CreateClienteData) => {
     const result = await addCliente(clienteData);
     if (result) {
+      localStorage.removeItem('cliente-form-draft');
       setIsAddModalOpen(false);
     }
   };
@@ -219,7 +225,9 @@ const Clientes = () => {
           </div>}
 
         {/* Add Modal */}
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <Dialog open={isAddModalOpen} onOpenChange={(open) => {
+          if (!open) handleCloseAddModal();
+        }}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -230,7 +238,7 @@ const Clientes = () => {
             <ClienteForm 
               key={isAddModalOpen ? Date.now() : 'closed'}
               onSubmit={handleAddCliente}
-              onCancel={() => setIsAddModalOpen(false)}
+              onCancel={handleCloseAddModal}
             />
           </DialogContent>
         </Dialog>
