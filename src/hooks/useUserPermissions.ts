@@ -20,6 +20,7 @@ export const ALL_PAGES: { value: PagePermission; label: string }[] = [
   { value: 'crm', label: 'CRM' },
   { value: 'leads', label: 'Leads' },
   { value: 'vendas', label: 'Vendas' },
+  { value: 'clientes', label: 'Clientes' },
 ];
 
 export const useUserPermissions = (userId?: string) => {
