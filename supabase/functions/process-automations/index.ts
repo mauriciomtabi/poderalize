@@ -78,7 +78,32 @@ serve(async (req) => {
         const [hours, minutes] = (recurringCard.time_of_day || '09:00').split(':').map(Number);
 
         if (recurringCard.frequency === 'daily') {
-          nextCreation.setDate(nextCreation.getDate() + 1);
+          // Check if days_of_week is configured
+          const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
+            ? recurringCard.template_config as Record<string, any>
+            : {};
+          const daysOfWeek = Array.isArray(config.days_of_week) ? config.days_of_week : [];
+          
+          if (daysOfWeek.length > 0) {
+            // Find next occurrence based on selected days
+            const sortedDays = [...daysOfWeek].sort((a: number, b: number) => a - b);
+            const currentDay = nextCreation.getDay();
+            
+            // Find next day from the selected days
+            let nextDay = sortedDays.find((day: number) => day > currentDay);
+            
+            // If no day found after current day, wrap to first day of next week
+            if (nextDay === undefined) {
+              nextDay = sortedDays[0];
+              const daysToAdd = (7 - currentDay + nextDay) % 7;
+              nextCreation.setDate(nextCreation.getDate() + (daysToAdd || 7));
+            } else {
+              nextCreation.setDate(nextCreation.getDate() + (nextDay - currentDay));
+            }
+          } else {
+            // No specific days configured, create daily
+            nextCreation.setDate(nextCreation.getDate() + 1);
+          }
         } else if (recurringCard.frequency === 'weekly') {
           nextCreation.setDate(nextCreation.getDate() + 7);
         } else if (recurringCard.frequency === 'monthly') {

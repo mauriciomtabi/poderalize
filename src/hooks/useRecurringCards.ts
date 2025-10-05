@@ -18,6 +18,7 @@ export interface RecurringCard {
   enabled: boolean;
   created_at: string;
   updated_at: string;
+  days_of_week?: number[]; // For displaying daily frequency
 }
 
 export const useRecurringCards = (boardId: string | null) => {
@@ -37,7 +38,20 @@ export const useRecurringCards = (boardId: string | null) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCards(data || []);
+      
+      // Parse days_of_week from template_config if it exists
+      const parsedData = (data || []).map(card => {
+        const config = typeof card.template_config === 'object' && card.template_config !== null 
+          ? card.template_config as Record<string, any>
+          : {};
+        
+        return {
+          ...card,
+          days_of_week: Array.isArray(config.days_of_week) ? config.days_of_week : []
+        };
+      });
+      
+      setCards(parsedData);
     } catch (error: any) {
       console.error('Error fetching recurring cards:', error);
       toast({
@@ -52,9 +66,21 @@ export const useRecurringCards = (boardId: string | null) => {
 
   const createCard = async (cardData: any) => {
     try {
+      // Store days_of_week in template_config for daily frequency
+      const dataToInsert = {
+        ...cardData,
+        template_config: {
+          ...cardData.template_config,
+          days_of_week: cardData.days_of_week || []
+        }
+      };
+      
+      // Remove days_of_week from root level
+      delete dataToInsert.days_of_week;
+      
       const { data, error } = await supabase
         .from('recurring_cards')
-        .insert([cardData])
+        .insert([dataToInsert])
         .select()
         .single();
 
