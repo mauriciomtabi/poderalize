@@ -283,7 +283,6 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                 type="date"
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                min={new Date().toISOString().split('T')[0]}
               />
             </div>
 
