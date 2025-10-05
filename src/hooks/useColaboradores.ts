@@ -215,21 +215,40 @@ export function useColaboradores() {
         throw new Error('Colaborador não encontrado');
       }
 
-      // If the colaborador has a user_id (is an approved user), remove completely
-      if (colaborador.user_id) {
-        const { data, error } = await supabase.rpc('remove_user_completely', {
-          _user_id: colaborador.user_id
-        });
+        // Determinar com segurança o user_id alvo pelo email do colaborador
+        const { data: currentUser } = await supabase.auth.getUser();
 
-        if (error) {
-          console.error('Erro ao remover usuário completamente:', error);
-          throw error;
+        let targetUserId = colaborador.user_id;
+        if (colaborador.email) {
+          const { data: profileLookup } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('email', colaborador.email)
+            .maybeSingle();
+          if (profileLookup?.user_id) {
+            targetUserId = profileLookup.user_id;
+          }
         }
 
-        if (!data) {
-          throw new Error('Falha ao remover usuário');
-        }
-      } else {
+        if (targetUserId) {
+          // Evitar excluir o usuário autenticado por engano
+          if (currentUser?.user?.id === targetUserId) {
+            throw new Error('Não é possível remover o usuário atualmente autenticado. Peça a outro admin para realizar esta ação.');
+          }
+
+          const { data, error } = await supabase.rpc('remove_user_completely', {
+            _user_id: targetUserId
+          });
+
+          if (error) {
+            console.error('Erro ao remover usuário completamente:', error);
+            throw error;
+          }
+
+          if (!data) {
+            throw new Error('Falha ao remover usuário');
+          }
+        } else {
         // If no user_id, just delete from colaboradores table
         const { error } = await supabase
           .from('colaboradores')
@@ -314,7 +333,7 @@ export function useColaboradores() {
           const { data, error } = await supabase
             .from('colaboradores')
             .insert([{
-              user_id: userData.user.id, // Admin que gerencia os colaboradores
+              user_id: profile.user_id, // Vincular ao próprio usuário colaborador
               nome: profile.full_name || 'Nome não informado',
               email: profile.email,
               funcao: 'A definir',
