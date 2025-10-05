@@ -228,6 +228,7 @@ const Clientes = () => {
               </DialogTitle>
             </DialogHeader>
             <ClienteForm 
+              key={isAddModalOpen ? Date.now() : 'closed'}
               onSubmit={handleAddCliente}
               onCancel={() => setIsAddModalOpen(false)}
             />
