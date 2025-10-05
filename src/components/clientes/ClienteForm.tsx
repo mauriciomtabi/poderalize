@@ -26,6 +26,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
     nome: initialData?.nome || "",
     empresa: initialData?.empresa || "",
     email: initialData?.email || "",
+    cnpj: initialData?.cnpj || "",
     telefone: initialData?.telefone || "",
     valor_fechamento: initialData?.valor_fechamento?.toString() || "",
     data_fechamento: initialData?.data_fechamento || new Date().toISOString().split('T')[0],
@@ -60,6 +61,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
         nome: initialData.nome || "",
         empresa: initialData.empresa || "",
         email: initialData.email || "",
+        cnpj: initialData.cnpj || "",
         telefone: initialData.telefone || "",
         valor_fechamento: initialData.valor_fechamento?.toString() || "",
         data_fechamento: initialData.data_fechamento || new Date().toISOString().split('T')[0],
@@ -120,6 +122,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       nome: novoCliente.nome,
       empresa: novoCliente.empresa,
       email: novoCliente.email,
+      cnpj: novoCliente.cnpj || undefined,
       telefone: novoCliente.telefone || undefined,
       valor_fechamento: parseNumericValue(novoCliente.valor_fechamento),
       data_fechamento: novoCliente.data_fechamento,
@@ -188,6 +191,19 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
               placeholder="email@empresa.com"
             />
           </div>
+          <div>
+            <Label htmlFor="cnpj">CNPJ</Label>
+            <Input
+              id="cnpj"
+              value={novoCliente.cnpj}
+              onChange={(e) => setNovoCliente({...novoCliente, cnpj: e.target.value})}
+              placeholder="00.000.000/0000-00"
+              maxLength={18}
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="telefone">Telefone</Label>
             <div className="flex">

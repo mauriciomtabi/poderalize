@@ -51,6 +51,7 @@ export interface LeadAdvanced {
   nome: string;
   empresa: string;
   email: string;
+  cnpj?: string;
   telefone: string;
   fonte: string;
   status: 'frio' | 'morno' | 'quente';

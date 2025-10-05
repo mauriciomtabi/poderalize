@@ -11,6 +11,7 @@ const leadSchema = z.object({
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   empresa: z.string().trim().min(1, "Empresa é obrigatória").max(100, "Empresa deve ter no máximo 100 caracteres"),
   email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres"),
+  cnpj: z.string().trim().max(18, "CNPJ deve ter no máximo 18 caracteres").optional(),
   telefone: z.string().trim().optional(),
   fonte: z.string().trim().min(1, "Fonte é obrigatória").max(50, "Fonte deve ter no máximo 50 caracteres"),
   status_simple: z.enum(['novo', 'qualificado', 'proposta', 'negociacao', 'fechado', 'perdido']).optional(),
@@ -72,6 +73,7 @@ export interface Lead {
   nome: string;
   empresa: string;
   email: string;
+  cnpj?: string;
   telefone?: string;
   fonte: string;
   status_simple?: 'novo' | 'qualificado' | 'proposta' | 'negociacao' | 'fechado' | 'perdido';
@@ -239,6 +241,7 @@ export function useLeads() {
         nome: lead.nome,
         empresa: lead.empresa,
         email: lead.email,
+        cnpj: lead.cnpj,
         telefone: lead.telefone,
         valor_fechamento: lead.valor || 0,
         data_fechamento: new Date().toISOString().split('T')[0],

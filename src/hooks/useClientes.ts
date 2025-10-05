@@ -9,6 +9,7 @@ const clienteSchema = z.object({
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   empresa: z.string().trim().min(1, "Empresa é obrigatória").max(100, "Empresa deve ter no máximo 100 caracteres"),
   email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres"),
+  cnpj: z.string().trim().max(18, "CNPJ deve ter no máximo 18 caracteres").optional(),
   telefone: z.string().trim().optional(),
   valor_fechamento: z.number().min(0, "Valor deve ser positivo").optional(),
   data_fechamento: z.string().optional(),
@@ -47,6 +48,7 @@ export interface Cliente {
   nome: string;
   empresa: string;
   email: string;
+  cnpj?: string;
   telefone?: string;
   valor_fechamento?: number;
   data_fechamento: string;

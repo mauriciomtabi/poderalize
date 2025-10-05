@@ -654,6 +654,7 @@ export type Database = {
       clientes: {
         Row: {
           avatar_url: string | null
+          cnpj: string | null
           created_at: string
           data_fechamento: string
           email: string
@@ -683,6 +684,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          cnpj?: string | null
           created_at?: string
           data_fechamento?: string
           email: string
@@ -712,6 +714,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          cnpj?: string | null
           created_at?: string
           data_fechamento?: string
           email?: string
@@ -1054,6 +1057,7 @@ export type Database = {
         Row: {
           anuncio_origem: string | null
           avatar_url: string | null
+          cnpj: string | null
           created_at: string
           data_contato: string
           dores_identificadas: string[] | null
@@ -1107,6 +1111,7 @@ export type Database = {
         Insert: {
           anuncio_origem?: string | null
           avatar_url?: string | null
+          cnpj?: string | null
           created_at?: string
           data_contato?: string
           dores_identificadas?: string[] | null
@@ -1160,6 +1165,7 @@ export type Database = {
         Update: {
           anuncio_origem?: string | null
           avatar_url?: string | null
+          cnpj?: string | null
           created_at?: string
           data_contato?: string
           dores_identificadas?: string[] | null

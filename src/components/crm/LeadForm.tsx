@@ -46,6 +46,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
     nome: initialData?.nome || "",
     empresa: initialData?.empresa || "",
     email: initialData?.email || "",
+    cnpj: initialData?.cnpj || "",
     telefone: initialData?.telefone || "",
     fonte: initialData?.fonte || "",
     valor: initialData?.valor?.toString() || "",
@@ -142,6 +143,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
       nome: novoLead.nome,
       empresa: novoLead.empresa,
       email: novoLead.email,
+      cnpj: novoLead.cnpj || undefined,
       telefone: novoLead.telefone,
       fonte: novoLead.fonte,
       valor: parseFloat(novoLead.valor) || 0,
@@ -208,6 +210,19 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
               placeholder="email@empresa.com"
             />
           </div>
+          <div>
+            <Label htmlFor="cnpj">CNPJ</Label>
+            <Input
+              id="cnpj"
+              value={novoLead.cnpj}
+              onChange={(e) => setNovoLead({...novoLead, cnpj: e.target.value})}
+              placeholder="00.000.000/0000-00"
+              maxLength={18}
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="telefone">Telefone</Label>
             <div className="flex">
