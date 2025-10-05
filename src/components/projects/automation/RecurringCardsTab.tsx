@@ -58,40 +58,75 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       const sortedDays = [...formData.days_of_week].sort((a, b) => a - b);
       const currentDay = nextCreation.getDay();
       
-      // Find next day from the selected days
-      let nextDay = sortedDays.find(day => day > currentDay);
+      // Check if the start date's day is in the selected days and if the time hasn't passed yet
+      const isStartDaySelected = sortedDays.includes(currentDay);
+      const hasTimePassed = nextCreation < now;
       
-      // If no day found after current day, wrap to first day of next week
-      if (nextDay === undefined) {
-        nextDay = sortedDays[0];
-        const daysToAdd = (7 - currentDay + nextDay) % 7;
-        nextCreation.setDate(nextCreation.getDate() + (daysToAdd || 7));
+      if (isStartDaySelected && !hasTimePassed) {
+        // Use the start date as-is since it's valid
+        // nextCreation is already set correctly
       } else {
-        nextCreation.setDate(nextCreation.getDate() + (nextDay - currentDay));
-      }
-      
-      // If calculated time is in the past, move to next occurrence
-      if (nextCreation < now) {
-        const daysToAdd = sortedDays.length > 1 ? 1 : 7;
-        let attempts = 0;
-        while (nextCreation < now && attempts < 7) {
-          nextCreation.setDate(nextCreation.getDate() + 1);
-          if (sortedDays.includes(nextCreation.getDay())) {
-            break;
+        // Need to find the next valid day
+        if (hasTimePassed && isStartDaySelected) {
+          // Same day but time has passed, find next occurrence
+          let foundNextDay = false;
+          for (let i = 1; i <= 7; i++) {
+            const testDate = new Date(nextCreation);
+            testDate.setDate(testDate.getDate() + i);
+            if (sortedDays.includes(testDate.getDay())) {
+              nextCreation = testDate;
+              foundNextDay = true;
+              break;
+            }
           }
-          attempts++;
+          if (!foundNextDay) {
+            // Fallback: add 7 days
+            nextCreation.setDate(nextCreation.getDate() + 7);
+          }
+        } else {
+          // Start day is not in selected days, find next valid day
+          let foundNextDay = false;
+          for (let i = 1; i <= 7; i++) {
+            const testDate = new Date(nextCreation);
+            testDate.setDate(testDate.getDate() + i);
+            if (sortedDays.includes(testDate.getDay())) {
+              nextCreation = testDate;
+              foundNextDay = true;
+              break;
+            }
+          }
+          if (!foundNextDay) {
+            // Fallback: use first selected day of next week
+            nextCreation.setDate(nextCreation.getDate() + 7);
+          }
         }
       }
     } else if (formData.frequency === 'weekly') {
-      const daysUntilNext = (formData.day_of_week - nextCreation.getDay() + 7) % 7;
-      nextCreation.setDate(nextCreation.getDate() + (daysUntilNext || 7));
-      if (nextCreation < now) {
-        nextCreation.setDate(nextCreation.getDate() + 7);
+      const currentDay = nextCreation.getDay();
+      const targetDay = formData.day_of_week;
+      
+      // Check if the start date is already on the target day and hasn't passed
+      if (currentDay === targetDay && nextCreation >= now) {
+        // Use the start date as-is
+      } else {
+        // Calculate days until next occurrence
+        const daysUntilNext = (targetDay - currentDay + 7) % 7;
+        nextCreation.setDate(nextCreation.getDate() + (daysUntilNext || 7));
+        
+        // If still in the past, add another week
+        if (nextCreation < now) {
+          nextCreation.setDate(nextCreation.getDate() + 7);
+        }
       }
     } else if (formData.frequency === 'monthly') {
-      nextCreation.setDate(formData.day_of_month);
+      // Set to the target day of month
+      const targetDay = formData.day_of_month;
+      nextCreation.setDate(targetDay);
+      
+      // If in the past, move to next month
       if (nextCreation < now) {
         nextCreation.setMonth(nextCreation.getMonth() + 1);
+        nextCreation.setDate(targetDay);
       }
     }
 
