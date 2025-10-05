@@ -199,6 +199,100 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_logs: {
+        Row: {
+          action: string
+          automation_id: string
+          automation_type: string
+          board_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          status: string
+        }
+        Insert: {
+          action: string
+          automation_id: string
+          automation_type: string
+          board_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          status: string
+        }
+        Update: {
+          action?: string
+          automation_id?: string
+          automation_type?: string
+          board_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          action_config: Json
+          action_type: Database["public"]["Enums"]["automation_action_type"]
+          board_id: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          trigger_config: Json
+          trigger_type: Database["public"]["Enums"]["automation_trigger_type"]
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: Database["public"]["Enums"]["automation_action_type"]
+          board_id: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          trigger_config?: Json
+          trigger_type: Database["public"]["Enums"]["automation_trigger_type"]
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: Database["public"]["Enums"]["automation_action_type"]
+          board_id?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          trigger_config?: Json
+          trigger_type?: Database["public"]["Enums"]["automation_trigger_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       avaliacoes_detalhadas: {
         Row: {
           agendamento_id: string | null
@@ -375,6 +469,50 @@ export type Database = {
             columns: ["avaliador_id"]
             isOneToOne: false
             referencedRelation: "captadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_buttons: {
+        Row: {
+          actions: Json
+          board_id: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          board_id: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          board_id?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_buttons_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
             referencedColumns: ["id"]
           },
         ]
@@ -1745,6 +1883,132 @@ export type Database = {
           },
         ]
       }
+      recurring_cards: {
+        Row: {
+          board_id: string
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          description: string | null
+          enabled: boolean
+          frequency: Database["public"]["Enums"]["recurrence_frequency"]
+          id: string
+          last_created_at: string | null
+          list_id: string
+          next_creation_at: string
+          template_config: Json
+          time_of_day: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          enabled?: boolean
+          frequency: Database["public"]["Enums"]["recurrence_frequency"]
+          id?: string
+          last_created_at?: string | null
+          list_id: string
+          next_creation_at: string
+          template_config?: Json
+          time_of_day?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string | null
+          enabled?: boolean
+          frequency?: Database["public"]["Enums"]["recurrence_frequency"]
+          id?: string
+          last_created_at?: string | null
+          list_id?: string
+          next_creation_at?: string
+          template_config?: Json
+          time_of_day?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_cards_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_cards_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "project_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_cards: {
+        Row: {
+          board_id: string
+          created_at: string
+          description: string | null
+          executed: boolean
+          executed_at: string | null
+          id: string
+          list_id: string
+          scheduled_for: string
+          template_config: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          description?: string | null
+          executed?: boolean
+          executed_at?: string | null
+          id?: string
+          list_id: string
+          scheduled_for: string
+          template_config?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          description?: string | null
+          executed?: boolean
+          executed_at?: string | null
+          id?: string
+          list_id?: string
+          scheduled_for?: string
+          template_config?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_cards_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "project_boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_cards_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "project_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transacoes: {
         Row: {
           categoria: string
@@ -1939,6 +2203,18 @@ export type Database = {
       }
     }
     Enums: {
+      automation_action_type:
+        | "move_card"
+        | "assign_member"
+        | "add_label"
+        | "create_card"
+        | "send_notification"
+      automation_trigger_type:
+        | "card_moved"
+        | "card_created"
+        | "due_date"
+        | "member_assigned"
+        | "label_added"
       follow_up_status: "pendente" | "concluido" | "reagendado"
       follow_up_type: "ligacao" | "whatsapp" | "email" | "reuniao"
       funnel_stage_type:
@@ -1971,6 +2247,7 @@ export type Database = {
         | "acompanhamento"
         | "relatorios"
         | "configuracoes"
+      recurrence_frequency: "daily" | "weekly" | "monthly"
       tipo_discurso: "tecnico" | "emocional" | "inspirador"
       trava_emocional_type:
         | "inseguranca_financeira"
@@ -2106,6 +2383,20 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      automation_action_type: [
+        "move_card",
+        "assign_member",
+        "add_label",
+        "create_card",
+        "send_notification",
+      ],
+      automation_trigger_type: [
+        "card_moved",
+        "card_created",
+        "due_date",
+        "member_assigned",
+        "label_added",
+      ],
       follow_up_status: ["pendente", "concluido", "reagendado"],
       follow_up_type: ["ligacao", "whatsapp", "email", "reuniao"],
       funnel_stage_type: [
@@ -2142,6 +2433,7 @@ export const Constants = {
         "relatorios",
         "configuracoes",
       ],
+      recurrence_frequency: ["daily", "weekly", "monthly"],
       tipo_discurso: ["tecnico", "emocional", "inspirador"],
       trava_emocional_type: [
         "inseguranca_financeira",

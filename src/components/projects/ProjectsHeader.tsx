@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, Table, Calendar, BarChart3, Search, Filter, Plus, Settings, Users, Star } from "lucide-react";
+import { LayoutGrid, Table, Calendar, BarChart3, Search, Filter, Plus, Settings, Users, Star, Zap } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ViewType } from "@/types/projects";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { ProjectsFilters } from "@/components/projects/ProjectsFilters";
 import { ProjectsSettings } from "@/components/projects/ProjectsSettings";
+import { AutomationDialog } from "./automation/AutomationDialog";
 import { useAuthContext } from "@/contexts/AuthContext";
 const viewIcons = {
   kanban: LayoutGrid,
@@ -27,6 +28,7 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
   const { state, actions } = useProjects();
   const { isAdmin } = useAuthContext();
   const [showSettings, setShowSettings] = useState(false);
+  const [showAutomation, setShowAutomation] = useState(false);
   const handleViewChange = (view: ViewType) => {
     actions.setCurrentView(view);
   };
@@ -101,6 +103,16 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setShowAutomation(true)}
+            title="Automação"
+          >
+            <Zap size={16} className="mr-1" />
+            Automação
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowSettings(true)}
           >
             <Settings size={16} className="mr-1" />
@@ -108,6 +120,11 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
           </Button>
         </div>
       </div>
+
+      <AutomationDialog
+        isOpen={showAutomation}
+        onClose={() => setShowAutomation(false)}
+      />
 
       <ProjectsSettings
         isOpen={showSettings}
