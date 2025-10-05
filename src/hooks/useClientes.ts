@@ -24,6 +24,13 @@ const clienteSchema = z.object({
   faturamento_atual: z.number().min(0).optional(),
   faturamento_desejado: z.number().min(0).optional(),
   
+  // Comportamento e Potencial
+  nivel_consciencia: z.string().trim().optional(),
+  etapa_jornada: z.string().trim().optional(),
+  indicador_potencial: z.string().trim().optional(),
+  equipe_atual: z.string().trim().optional(),
+  observacoes_comportamento: z.string().trim().max(1000).optional(),
+  
   // Dados do lead original
   fonte_original: z.string().trim().optional(),
   vendedor_id: z.string().optional(),
@@ -52,6 +59,13 @@ export interface Cliente {
   // Faturamento
   faturamento_atual?: number;
   faturamento_desejado?: number;
+  
+  // Comportamento e Potencial
+  nivel_consciencia?: string;
+  etapa_jornada?: string;
+  indicador_potencial?: string;
+  equipe_atual?: string;
+  observacoes_comportamento?: string;
   
   // Dados do lead original
   fonte_original?: string;

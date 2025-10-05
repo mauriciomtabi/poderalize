@@ -519,15 +519,20 @@ export type Database = {
           data_fechamento: string
           email: string
           empresa: string
+          equipe_atual: string | null
+          etapa_jornada: string | null
           facebook: string | null
           faturamento_atual: number | null
           faturamento_desejado: number | null
           fonte_original: string | null
           id: string
+          indicador_potencial: string | null
           instagram: string | null
           lead_id: string | null
+          nivel_consciencia: string | null
           nome: string
           observacoes: string | null
+          observacoes_comportamento: string | null
           outras_redes_sociais: string | null
           site: string | null
           telefone: string | null
@@ -542,15 +547,20 @@ export type Database = {
           data_fechamento?: string
           email: string
           empresa: string
+          equipe_atual?: string | null
+          etapa_jornada?: string | null
           facebook?: string | null
           faturamento_atual?: number | null
           faturamento_desejado?: number | null
           fonte_original?: string | null
           id?: string
+          indicador_potencial?: string | null
           instagram?: string | null
           lead_id?: string | null
+          nivel_consciencia?: string | null
           nome: string
           observacoes?: string | null
+          observacoes_comportamento?: string | null
           outras_redes_sociais?: string | null
           site?: string | null
           telefone?: string | null
@@ -565,15 +575,20 @@ export type Database = {
           data_fechamento?: string
           email?: string
           empresa?: string
+          equipe_atual?: string | null
+          etapa_jornada?: string | null
           facebook?: string | null
           faturamento_atual?: number | null
           faturamento_desejado?: number | null
           fonte_original?: string | null
           id?: string
+          indicador_potencial?: string | null
           instagram?: string | null
           lead_id?: string | null
+          nivel_consciencia?: string | null
           nome?: string
           observacoes?: string | null
+          observacoes_comportamento?: string | null
           outras_redes_sociais?: string | null
           site?: string | null
           telefone?: string | null

@@ -39,6 +39,13 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
     // Faturamento
     faturamento_atual: initialData?.faturamento_atual?.toString() || "",
     faturamento_desejado: initialData?.faturamento_desejado?.toString() || "",
+    
+    // Comportamento e Potencial
+    nivel_consciencia: initialData?.nivel_consciencia || "",
+    etapa_jornada: initialData?.etapa_jornada || "",
+    indicador_potencial: initialData?.indicador_potencial || "",
+    equipe_atual: initialData?.equipe_atual || "",
+    observacoes_comportamento: initialData?.observacoes_comportamento || "",
   });
 
   const [date, setDate] = useState<Date>(
@@ -62,6 +69,11 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
         outras_redes_sociais: initialData.outras_redes_sociais || "",
         faturamento_atual: initialData.faturamento_atual?.toString() || "",
         faturamento_desejado: initialData.faturamento_desejado?.toString() || "",
+        nivel_consciencia: initialData.nivel_consciencia || "",
+        etapa_jornada: initialData.etapa_jornada || "",
+        indicador_potencial: initialData.indicador_potencial || "",
+        equipe_atual: initialData.equipe_atual || "",
+        observacoes_comportamento: initialData.observacoes_comportamento || "",
       });
       setDate(initialData.data_fechamento ? parseISO(initialData.data_fechamento) : new Date());
     }
@@ -70,6 +82,23 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
   const fonteOptions = [
     "Website", "LinkedIn", "Facebook", "Instagram", "Google Ads", 
     "Indicação", "Evento", "Cold Call", "E-mail Marketing", "CRM"
+  ];
+
+  const nivelConscienciaOptions = [
+    "Inconsciente",
+    "Consciente do problema",
+    "Consciente da solução",
+    "Consciente do produto",
+    "Pronto para comprar"
+  ];
+
+  const etapaJornadaOptions = ["Descoberta", "Consideração", "Decisão", "Fidelização"];
+
+  const indicadorPotencialOptions = [
+    "Alto",
+    "Médio-Alto", 
+    "Médio",
+    "Baixo"
   ];
 
   const handleAddCliente = () => {
@@ -93,6 +122,11 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       faturamento_atual: parseFloat(novoCliente.faturamento_atual) || undefined,
       faturamento_desejado: parseFloat(novoCliente.faturamento_desejado) || undefined,
       fonte_original: novoCliente.fonte_original || undefined,
+      nivel_consciencia: novoCliente.nivel_consciencia || undefined,
+      etapa_jornada: novoCliente.etapa_jornada || undefined,
+      indicador_potencial: novoCliente.indicador_potencial || undefined,
+      equipe_atual: novoCliente.equipe_atual || undefined,
+      observacoes_comportamento: novoCliente.observacoes_comportamento || undefined,
     };
 
     onSubmit(clienteData);
@@ -288,6 +322,93 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
               placeholder="100000"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Comportamento e Potencial */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-primary">COMPORTAMENTO E POTENCIAL</h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="nivel_consciencia">Nível de Consciência</Label>
+            <Select 
+              value={novoCliente.nivel_consciencia}
+              onValueChange={(value) => setNovoCliente({...novoCliente, nivel_consciencia: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o nível" />
+              </SelectTrigger>
+              <SelectContent>
+                {nivelConscienciaOptions.map((opcao) => (
+                  <SelectItem key={opcao} value={opcao}>
+                    {opcao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="etapa_jornada">Etapa da Jornada</Label>
+            <Select
+              value={novoCliente.etapa_jornada}
+              onValueChange={(value) => setNovoCliente({...novoCliente, etapa_jornada: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a etapa" />
+              </SelectTrigger>
+              <SelectContent>
+                {etapaJornadaOptions.map((etapa) => (
+                  <SelectItem key={etapa} value={etapa}>
+                    {etapa}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="indicador_potencial">Indicador de Potencial</Label>
+            <Select
+              value={novoCliente.indicador_potencial}
+              onValueChange={(value) => setNovoCliente({...novoCliente, indicador_potencial: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o potencial" />
+              </SelectTrigger>
+              <SelectContent>
+                {indicadorPotencialOptions.map((indicador) => (
+                  <SelectItem key={indicador} value={indicador}>
+                    {indicador}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="equipe_atual">Equipe Atual</Label>
+            <Input
+              id="equipe_atual"
+              value={novoCliente.equipe_atual}
+              onChange={(e) => setNovoCliente({...novoCliente, equipe_atual: e.target.value})}
+              placeholder="Exemplo: 3 colaboradores fixos e 2 freelancers"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="observacoes_comportamento">Observações</Label>
+          <Textarea
+            id="observacoes_comportamento"
+            value={novoCliente.observacoes_comportamento}
+            onChange={(e) => setNovoCliente({...novoCliente, observacoes_comportamento: e.target.value})}
+            placeholder="Observações sobre comportamento e potencial..."
+            rows={3}
+          />
         </div>
       </div>
 

@@ -305,6 +305,48 @@ const Clientes = () => {
                   </div>
                 </div>
 
+                {/* Behavior and Potential */}
+                {(selectedCliente.nivel_consciencia || selectedCliente.etapa_jornada || 
+                  selectedCliente.indicador_potencial || selectedCliente.equipe_atual) && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold">Comportamento e Potencial</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedCliente.nivel_consciencia && (
+                        <div>
+                          <label className="text-sm font-medium">Nível de Consciência</label>
+                          <p className="text-sm text-muted-foreground mt-1">{selectedCliente.nivel_consciencia}</p>
+                        </div>
+                      )}
+                      {selectedCliente.etapa_jornada && (
+                        <div>
+                          <label className="text-sm font-medium">Etapa da Jornada</label>
+                          <p className="text-sm text-muted-foreground mt-1">{selectedCliente.etapa_jornada}</p>
+                        </div>
+                      )}
+                      {selectedCliente.indicador_potencial && (
+                        <div>
+                          <label className="text-sm font-medium">Indicador de Potencial</label>
+                          <p className="text-sm text-muted-foreground mt-1">{selectedCliente.indicador_potencial}</p>
+                        </div>
+                      )}
+                      {selectedCliente.equipe_atual && (
+                        <div>
+                          <label className="text-sm font-medium">Equipe Atual</label>
+                          <p className="text-sm text-muted-foreground mt-1">{selectedCliente.equipe_atual}</p>
+                        </div>
+                      )}
+                    </div>
+                    {selectedCliente.observacoes_comportamento && (
+                      <div>
+                        <label className="text-sm font-medium">Observações de Comportamento</label>
+                        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                          {selectedCliente.observacoes_comportamento}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Observations */}
                 {selectedCliente.observacoes && <div>
                     <label className="text-sm font-medium">Observações</label>
