@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send, User, Users } from "lucide-react";
 import { ProjectCard, Comment } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
+import { useClientes } from "@/hooks/useClientes";
 import { generateId } from "@/hooks/useUuid";
+import { MentionTextarea } from "./MentionTextarea";
+import { Badge } from "@/components/ui/badge";
 
 interface CommentsSectionProps {
   card?: ProjectCard;
@@ -21,11 +23,16 @@ export const CommentsSection = ({
   isCreationMode = false 
 }: CommentsSectionProps) => {
   const { actions, state } = useProjects();
+  const { clientes } = useClientes();
   const [newComment, setNewComment] = useState('');
+  const [mentions, setMentions] = useState<string[]>([]);
   const currentUser = actions.getCurrentUser();
   
   // Use either card comments or provided comments
   const currentComments = isCreationMode ? (comments || []) : (card?.comments || []);
+  
+  // Get board members
+  const boardMembers = state.currentBoard?.members || [];
 
   const handleAddComment = () => {
     if (newComment.trim() && currentUser) {
@@ -35,7 +42,7 @@ export const CommentsSection = ({
         author: currentUser.id,
         authorName: currentUser.name,
         createdAt: new Date().toISOString(),
-        mentions: []
+        mentions: mentions
       };
 
       if (isCreationMode && onCommentsChange) {
@@ -49,6 +56,7 @@ export const CommentsSection = ({
       }
 
       setNewComment('');
+      setMentions([]);
     }
   };
 
@@ -68,6 +76,46 @@ export const CommentsSection = ({
     if (diffInMinutes < 60) return `${diffInMinutes}m`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
     return date.toLocaleDateString('pt-BR');
+  };
+
+  // Format comment text with mentions highlighted
+  const formatCommentText = (text: string, commentMentions: string[]) => {
+    const parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+    const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^)]+)\)/g;
+    let match;
+
+    while ((match = mentionRegex.exec(text)) !== null) {
+      // Add text before mention
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+
+      const name = match[1];
+      const id = match[2];
+      const type = match[3];
+
+      // Add mention as badge
+      parts.push(
+        <Badge 
+          key={`mention-${match.index}`}
+          variant="secondary" 
+          className="mx-1 font-normal"
+        >
+          {type === 'member' ? <User className="h-3 w-3 mr-1" /> : <Users className="h-3 w-3 mr-1" />}
+          {name}
+        </Badge>
+      );
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
   };
 
   return (
@@ -90,12 +138,14 @@ export const CommentsSection = ({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
-            <Textarea
+            <MentionTextarea
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={setNewComment}
+              onMentionsChange={setMentions}
               onKeyDown={handleKeyDown}
-              placeholder="Escrever um comentário..."
-              className="min-h-[80px] resize-none"
+              placeholder="Escrever um comentário... (use @ para mencionar)"
+              members={boardMembers}
+              clientes={clientes}
             />
             <div className="flex justify-end">
               <Button 
@@ -128,7 +178,9 @@ export const CommentsSection = ({
                 </span>
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
-                <p className="text-sm whitespace-pre-wrap">{comment.text}</p>
+                <p className="text-sm whitespace-pre-wrap flex flex-wrap items-center gap-1">
+                  {formatCommentText(comment.text, comment.mentions)}
+                </p>
               </div>
             </div>
           </div>
