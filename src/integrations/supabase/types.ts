@@ -2201,6 +2201,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      users_share_board: {
+        Args: { _other_user_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       automation_action_type:
