@@ -170,9 +170,8 @@ export function useColaboradores() {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
-        .eq('user_id', userData.user.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Erro do Supabase:', error);
