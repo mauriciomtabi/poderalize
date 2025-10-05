@@ -34,13 +34,13 @@ export const NotificationsDropdown = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'text-red-600 bg-red-50';
+        return 'text-destructive bg-destructive/10';
       case 'medium':
-        return 'text-orange-600 bg-orange-50';
+        return 'text-warning bg-warning/10';
       case 'low':
-        return 'text-blue-600 bg-blue-50';
+        return 'text-primary bg-primary/10';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-muted-foreground bg-muted';
     }
   };
 
