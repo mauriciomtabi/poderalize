@@ -142,6 +142,29 @@ export const useProjectMembers = (boardId?: string) => {
   useEffect(() => {
     if (boardId) {
       fetchMembers();
+      
+      // Configurar realtime para atualizações da tabela project_members
+      const channel = supabase
+        .channel(`project-members-${boardId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+            schema: 'public',
+            table: 'project_members',
+            filter: `board_id=eq.${boardId}`
+          },
+          (payload) => {
+            console.log('Project member change detected:', payload);
+            // Recarregar membros quando houver mudanças
+            fetchMembers();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [boardId]);
 

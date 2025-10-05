@@ -282,6 +282,9 @@ const { data: existingMembers } = await supabase
 
 // Determine which colaboradores are missing in project_members and insert them
 const existingUserIds = new Set((existingMembers || []).map(m => m.user_id));
+const colaboradorUserIds = new Set((colaboradoresData || []).map(c => c.user_id).filter(Boolean));
+
+// Insert missing colaboradores
 const toInsert = (colaboradoresData || [])
   .filter(c => c.user_id && !existingUserIds.has(c.user_id))
   .map(c => ({
@@ -293,12 +296,28 @@ const toInsert = (colaboradoresData || [])
     added_by: currentUser?.id || null,
   }));
 
+// Remove members whose colaborador was deleted
+const toRemove = (existingMembers || []).filter(m => 
+  m.user_id && !colaboradorUserIds.has(m.user_id)
+);
+
 if (toInsert.length > 0) {
   const { error: insertMembersError } = await supabase
     .from('project_members')
     .insert(toInsert as any);
   if (insertMembersError) {
     console.error('Error inserting missing project members:', insertMembersError);
+  }
+}
+
+if (toRemove.length > 0) {
+  const memberIdsToRemove = toRemove.map(m => m.id);
+  const { error: removeMembersError } = await supabase
+    .from('project_members')
+    .delete()
+    .in('id', memberIdsToRemove);
+  if (removeMembersError) {
+    console.error('Error removing deleted project members:', removeMembersError);
   }
 }
 
