@@ -951,9 +951,52 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
 
       // Apply filters
       return allCards.filter(card => {
-        // Search filter
-        if (state.filters.search && !card.title.toLowerCase().includes(state.filters.search.toLowerCase())) {
-          return false;
+        // Enhanced search filter - searches in multiple fields
+        if (state.filters.search) {
+          const searchTerm = state.filters.search.toLowerCase();
+          
+          // Search in card title
+          const matchesTitle = card.title.toLowerCase().includes(searchTerm);
+          
+          // Search in card description
+          const matchesDescription = card.description?.toLowerCase().includes(searchTerm) || false;
+          
+          // Search in comments text
+          const matchesCommentText = card.comments.some(comment => 
+            comment.text.toLowerCase().includes(searchTerm)
+          );
+          
+          // Search in mentioned names in comments
+          const matchesMentionedNames = card.comments.some(comment => {
+            // Extract names from mention format @[Name](id:type)
+            const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^)]+)\)/g;
+            let match;
+            while ((match = mentionRegex.exec(comment.text)) !== null) {
+              const mentionedName = match[1].toLowerCase();
+              if (mentionedName.includes(searchTerm)) {
+                return true;
+              }
+            }
+            return false;
+          });
+          
+          // Search in checklist items
+          const matchesChecklistItems = card.checklists.some(checklist =>
+            checklist.items.some(item => 
+              item.text.toLowerCase().includes(searchTerm)
+            )
+          );
+          
+          // Search in attachment names
+          const matchesAttachments = card.attachments.some(attachment =>
+            attachment.name.toLowerCase().includes(searchTerm)
+          );
+          
+          // If none of the fields match, filter out this card
+          if (!matchesTitle && !matchesDescription && !matchesCommentText && 
+              !matchesMentionedNames && !matchesChecklistItems && !matchesAttachments) {
+            return false;
+          }
         }
 
         // Status filter
