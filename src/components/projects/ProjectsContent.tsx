@@ -6,6 +6,7 @@ import { TableView } from "./views/TableView";
 import { CalendarView } from "./views/CalendarView";
 import { DashboardView } from "./views/DashboardView";
 import { ArchivedView } from "./views/ArchivedView";
+import { AutomationWatcher } from "./AutomationWatcher";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield } from "lucide-react";
@@ -64,6 +65,7 @@ export const ProjectsContent = ({ showFilters }: { showFilters: boolean }) => {
 
   return (
     <div className="flex h-full min-w-0">
+      <AutomationWatcher />
       {showFilters && (
         <div className="flex-shrink-0 border-r bg-muted/30 animate-slide-in-right">
           <ProjectsFilters />
