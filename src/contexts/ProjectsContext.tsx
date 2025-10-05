@@ -81,7 +81,8 @@ const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
     location: dbCard.location,
     customFields: cf,
     archived: dbCard.archived,
-    watching: dbCard.watching
+    watching: dbCard.watching,
+    client_id: dbCard.client_id
   };
 };
 
