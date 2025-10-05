@@ -23,9 +23,12 @@ export const NotificationsDropdown = () => {
       case 'follow-up':
         return <Calendar className="h-4 w-4" />;
       case 'project':
+      case 'project_assignment':
         return <FolderKanban className="h-4 w-4" />;
       case 'assignment':
         return <AlertCircle className="h-4 w-4" />;
+      case 'mention':
+        return <Bell className="h-4 w-4" />;
       default:
         return <Bell className="h-4 w-4" />;
     }

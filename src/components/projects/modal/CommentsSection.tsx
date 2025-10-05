@@ -55,33 +55,45 @@ export const CommentsSection = ({
         });
         actions.addActivity(card.id, 'comment', 'adicionou um comentário', { commentId: comment.id });
         
-        // Criar notificações para os usuários mencionados
-        if (mentions.length > 0) {
-          for (const mentionId of mentions) {
-            // Buscar o user_id do membro através do member_id
-            const { data: memberData } = await supabase
-              .from('project_members')
-              .select('user_id, name')
-              .eq('id', mentionId)
-              .maybeSingle();
-            
-            if (memberData?.user_id) {
-              try {
-                await supabase.from('notifications').insert({
-                  user_id: memberData.user_id,
-                  type: 'mention',
-                  title: 'Você foi mencionado',
-                  description: `${currentUser.name} mencionou você em um comentário no cartão "${card.title}"`,
-                  priority: 'medium',
-                  link: `/projetos?card=${card.id}`,
-                  entity_type: 'card',
-                  entity_id: card.id,
-                  read: false
-                });
-              } catch (error) {
-                console.error('Error creating notification:', error);
+        // Criar notificações para os usuários mencionados (apenas membros)
+        if (newComment.includes('@') && card) {
+          try {
+            // Extrair apenas menções do tipo 'member' do texto completo
+            const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^\)]+)\)/g;
+            const memberMentionIds = new Set<string>();
+            let match;
+            while ((match = mentionRegex.exec(newComment)) !== null) {
+              const id = match[2];
+              const type = match[3];
+              if (type === 'member') memberMentionIds.add(id);
+            }
+
+            if (memberMentionIds.size > 0) {
+              // Buscar user_id de todos os membros mencionados em uma única query
+              const { data: membersData, error: membersError } = await supabase
+                .from('project_members')
+                .select('id, user_id, name')
+                .in('id', Array.from(memberMentionIds));
+
+              if (!membersError && membersData) {
+                for (const m of membersData) {
+                  if (!m?.user_id) continue;
+                  await supabase.from('notifications').insert({
+                    user_id: m.user_id,
+                    type: 'mention',
+                    title: 'Você foi mencionado',
+                    description: `${currentUser.name} mencionou você em um comentário no cartão "${card.title}"`,
+                    priority: 'medium',
+                    link: `/projetos?card=${card.id}`,
+                    entity_type: 'card',
+                    entity_id: card.id,
+                    read: false
+                  });
+                }
               }
             }
+          } catch (error) {
+            console.error('Error creating mention notifications:', error);
           }
         }
       }
@@ -110,27 +122,24 @@ export const CommentsSection = ({
   };
 
   // Format comment text with mentions highlighted
-  const formatCommentText = (text: string, commentMentions: string[]) => {
+  const formatCommentText = (text: string) => {
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
-    const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^)]+)\)/g;
+    const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^\)]+)\)/g;
     let match;
 
     while ((match = mentionRegex.exec(text)) !== null) {
-      // Add text before mention
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
       }
 
       const name = match[1];
-      const id = match[2];
       const type = match[3];
 
-      // Add mention as badge
       parts.push(
-        <Badge 
+        <Badge
           key={`mention-${match.index}`}
-          variant="secondary" 
+          variant="secondary"
           className="mx-1 font-normal inline-flex items-center gap-1"
         >
           {type === 'member' ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
@@ -142,7 +151,6 @@ export const CommentsSection = ({
       lastIndex = match.index + match[0].length;
     }
 
-    // Add remaining text
     if (lastIndex < text.length) {
       parts.push(text.substring(lastIndex));
     }
@@ -212,7 +220,7 @@ export const CommentsSection = ({
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
                 <div className="text-sm whitespace-pre-wrap flex flex-wrap items-center gap-1">
-                  {formatCommentText(comment.text, comment.mentions)}
+                  {formatCommentText(comment.text)}
                 </div>
               </div>
             </div>

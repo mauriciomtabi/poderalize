@@ -96,11 +96,11 @@ export function useNotifications() {
       if (error) throw error;
 
       setNotifications(prev =>
-        prev.map(notif =>
-          notif.id === notificationId ? { ...notif, read: true } : notif
-        )
+        prev.map(notif => (notif.id === notificationId ? { ...notif, read: true } : notif))
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
+
+      await loadNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -118,10 +118,11 @@ export function useNotifications() {
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(notif => ({ ...notif, read: true }))
-      );
+      setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
       setUnreadCount(0);
+
+      // Garantir sincronização com o backend
+      await loadNotifications();
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }

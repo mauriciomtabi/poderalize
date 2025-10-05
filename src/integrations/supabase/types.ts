@@ -1155,10 +1155,13 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          entity_id: string | null
+          entity_type: string | null
           id: string
           link: string | null
           priority: string | null
           read: boolean | null
+          read_at: string | null
           title: string
           type: string
           updated_at: string | null
@@ -1167,10 +1170,13 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           link?: string | null
           priority?: string | null
           read?: boolean | null
+          read_at?: string | null
           title: string
           type: string
           updated_at?: string | null
@@ -1179,10 +1185,13 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
           id?: string
           link?: string | null
           priority?: string | null
           read?: boolean | null
+          read_at?: string | null
           title?: string
           type?: string
           updated_at?: string | null
