@@ -14,8 +14,6 @@ import Projetos from "./pages/Projetos";
 import CRM from "./pages/CRM";
 import Leads from "./pages/Leads";
 import Clientes from "./pages/Clientes";
-import Relatorios from "./pages/Relatorios";
-import Configuracoes from "./pages/Configuracoes";
 import Vendas from "./pages/Vendas";
 import { Auth } from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -70,16 +68,6 @@ const App = () => (
                   } />
                   <Route path="clientes" element={<Clientes />} />
                   <Route path="vendas" element={<Vendas />} />
-                  <Route path="relatorios" element={
-                    <PageGuard page="relatorios">
-                      <Relatorios />
-                    </PageGuard>
-                  } />
-                  <Route path="configuracoes" element={
-                    <PageGuard page="configuracoes">
-                      <Configuracoes />
-                    </PageGuard>
-                  } />
                   <Route path="colaboradores" element={
                     <AuthGuard requiredRole="admin">
                       <Colaboradores />

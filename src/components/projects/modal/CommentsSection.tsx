@@ -133,12 +133,13 @@ export const CommentsSection = ({
       {currentUser && (
         <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
           <Avatar className="h-8 w-8">
-            <AvatarImage src={currentUser.name} />
+            <AvatarImage src={currentUser.avatar} />
             <AvatarFallback className="text-xs">
               {currentUser.name.split(' ').map(n => n[0]).join('')}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
+            <div className="text-sm font-medium">{currentUser.name}</div>
             <MentionTextarea
               value={newComment}
               onChange={setNewComment}

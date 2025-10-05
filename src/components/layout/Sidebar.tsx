@@ -25,8 +25,6 @@ const menuItems = [
   { icon: PieChart, label: "CRM", href: "/crm", page: "crm" as PagePermission },
   { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
   { icon: UserCheck, label: "Clientes", href: "/clientes", page: null },
-  { icon: BarChart3, label: "Relatórios", href: "/relatorios", page: "relatorios" as PagePermission },
-  { icon: Settings, label: "Configurações", href: "/configuracoes", page: "configuracoes" as PagePermission },
 ];
 
 export const Sidebar = () => {
