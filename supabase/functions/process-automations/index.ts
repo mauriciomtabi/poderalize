@@ -124,6 +124,8 @@ serve(async (req) => {
 
         // Calculate next creation time
         let nextCreation = new Date(recurringCard.next_creation_at);
+        
+        // Extract the configured time before any date manipulation
         const [hours, minutes] = (recurringCard.time_of_day || '09:00').split(':').map(Number);
 
         if (recurringCard.frequency === 'daily') {
@@ -165,7 +167,14 @@ serve(async (req) => {
           nextCreation.setMonth(nextCreation.getMonth() + 1);
         }
 
-        nextCreation.setHours(hours, minutes, 0, 0);
+        // Set the time AFTER all date calculations to preserve the configured hours
+        // Get the local date components
+        const year = nextCreation.getFullYear();
+        const month = nextCreation.getMonth();
+        const day = nextCreation.getDate();
+        
+        // Create new date with correct time in local timezone
+        nextCreation = new Date(year, month, day, hours, minutes, 0, 0);
 
         // Update recurring card
         const { error: updateError } = await supabase
