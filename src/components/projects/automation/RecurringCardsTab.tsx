@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Tag, Users, Calendar, Clock } from "lucide-react";
-import { useRecurringCards } from "@/hooks/useRecurringCards";
+import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit } from "lucide-react";
+import { useRecurringCards, RecurringCard } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { format } from "date-fns";
 import type { Priority } from "@/types/projects";
@@ -19,9 +19,10 @@ interface RecurringCardsTabProps {
 
 export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
   const { state } = useProjects();
-  const { cards, isLoading, createCard, deleteCard, toggleEnabled } = useRecurringCards(boardId);
+  const { cards, isLoading, createCard, updateCard, deleteCard, toggleEnabled } = useRecurringCards(boardId);
   
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -92,7 +93,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       }
     }
 
-    await createCard({
+    const cardData = {
       board_id: boardId,
       list_id: formData.list_id,
       title: formData.title,
@@ -112,9 +113,16 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
         estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined,
       },
       enabled: true,
-    });
+    };
+
+    if (editingId) {
+      await updateCard(editingId, cardData);
+    } else {
+      await createCard(cardData);
+    }
 
     setShowForm(false);
+    setEditingId(null);
     setFormData({
       title: "",
       description: "",
@@ -130,6 +138,31 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       due_date_offset: 0,
       start_date_offset: 0,
       estimated_hours: 0,
+    });
+  };
+
+  const handleEdit = (card: RecurringCard) => {
+    const config = typeof card.template_config === 'object' && card.template_config !== null 
+      ? card.template_config as Record<string, any>
+      : {};
+
+    setEditingId(card.id);
+    setShowForm(true);
+    setFormData({
+      title: card.title,
+      description: card.description || "",
+      list_id: card.list_id,
+      frequency: card.frequency,
+      day_of_week: card.day_of_week || 1,
+      day_of_month: card.day_of_month || 1,
+      time_of_day: card.time_of_day || "09:00",
+      days_of_week: card.days_of_week || [],
+      priority: (config.priority as Priority) || "medium",
+      label_ids: Array.isArray(config.label_ids) ? config.label_ids : [],
+      assignee_ids: Array.isArray(config.assignee_ids) ? config.assignee_ids : [],
+      due_date_offset: typeof config.due_date_offset === 'number' ? config.due_date_offset : 0,
+      start_date_offset: typeof config.start_date_offset === 'number' ? config.start_date_offset : 0,
+      estimated_hours: typeof config.estimated_hours === 'number' ? config.estimated_hours : 0,
     });
   };
 
@@ -196,7 +229,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Novo Card Recorrente</CardTitle>
+            <CardTitle>{editingId ? "Editar" : "Novo"} Card Recorrente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -438,7 +471,10 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
             </div>
 
             <div className="flex gap-2 justify-end">
-              <Button variant="ghost" onClick={() => setShowForm(false)}>
+              <Button variant="ghost" onClick={() => {
+                setShowForm(false);
+                setEditingId(null);
+              }}>
                 Cancelar
               </Button>
               <Button 
@@ -449,7 +485,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                   (formData.frequency === 'daily' && formData.days_of_week.length === 0)
                 }
               >
-                Criar
+                {editingId ? "Salvar" : "Criar"}
               </Button>
             </div>
           </CardContent>
@@ -479,6 +515,13 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                       checked={card.enabled}
                       onCheckedChange={(checked) => toggleEnabled(card.id, checked)}
                     />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(card)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
