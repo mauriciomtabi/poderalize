@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus, Pencil, User, Trash2 } from 'lucide-react';
+import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus, Pencil, User, Trash2, FileText } from 'lucide-react';
+import { formatCNPJ, formatPhone } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -183,9 +184,14 @@ const Clientes = () => {
                     <span className="truncate">{cliente.email}</span>
                   </div>
                   
+                  {cliente.cnpj && <div className="flex items-center gap-2 text-sm">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span>{formatCNPJ(cliente.cnpj)}</span>
+                    </div>}
+                  
                   {cliente.telefone && <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{cliente.telefone}</span>
+                      <span>{formatPhone(cliente.telefone)}</span>
                     </div>}
 
                   <div className="flex items-center gap-2 text-sm">
@@ -305,8 +311,12 @@ const Clientes = () => {
                     <p className="text-sm text-muted-foreground mt-1">{selectedCliente.email}</p>
                   </div>
                   <div>
+                    <label className="text-sm font-medium">CNPJ</label>
+                    <p className="text-sm text-muted-foreground mt-1">{selectedCliente.cnpj ? formatCNPJ(selectedCliente.cnpj) : 'Não informado'}</p>
+                  </div>
+                  <div>
                     <label className="text-sm font-medium">Telefone</label>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedCliente.telefone || 'Não informado'}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{selectedCliente.telefone ? formatPhone(selectedCliente.telefone) : 'Não informado'}</p>
                   </div>
                 </div>
 

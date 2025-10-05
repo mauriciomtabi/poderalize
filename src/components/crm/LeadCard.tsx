@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LeadAdvanced } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
-import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell, MoreVertical, CheckCircle, XCircle } from "lucide-react";
+import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell, MoreVertical, CheckCircle, XCircle, FileText } from "lucide-react";
+import { formatCNPJ, formatPhone } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NegotiationTemperature } from "@/types/crm";
@@ -216,9 +217,15 @@ export const LeadCard = ({
           <Mail className="h-3 w-3" />
           <span className="truncate">{lead.email}</span>
         </div>
+        {lead.cnpj && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <FileText className="h-3 w-3" />
+            <span>{formatCNPJ(lead.cnpj)}</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Phone className="h-3 w-3" />
-          <span>{lead.telefone}</span>
+          <span>{formatPhone(lead.telefone)}</span>
         </div>
       </div>
 
