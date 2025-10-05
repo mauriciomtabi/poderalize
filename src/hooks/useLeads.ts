@@ -20,6 +20,7 @@ const leadSchema = z.object({
   probabilidade: z.number().min(0, "Probabilidade deve ser entre 0 e 100").max(100, "Probabilidade deve ser entre 0 e 100").optional(),
   data_contato: z.string().optional(),
   observacoes: z.string().trim().max(1000, "Observações devem ter no máximo 1000 caracteres").optional(),
+  avatar_url: z.string().trim().optional(),
   
   // Presença Digital
   site: z.string().trim().optional(),
