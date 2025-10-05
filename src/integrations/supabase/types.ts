@@ -2267,6 +2267,7 @@ export type Database = {
         | "acompanhamento"
         | "relatorios"
         | "configuracoes"
+        | "clientes"
       recurrence_frequency: "daily" | "weekly" | "monthly"
       tipo_discurso: "tecnico" | "emocional" | "inspirador"
       trava_emocional_type:
@@ -2452,6 +2453,7 @@ export const Constants = {
         "acompanhamento",
         "relatorios",
         "configuracoes",
+        "clientes",
       ],
       recurrence_frequency: ["daily", "weekly", "monthly"],
       tipo_discurso: ["tecnico", "emocional", "inspirador"],
