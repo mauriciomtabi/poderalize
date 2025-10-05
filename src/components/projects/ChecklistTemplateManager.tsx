@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, Edit, GripVertical } from "lucide-react";
+import { Plus, Trash2, Edit, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { useChecklistTemplates } from "@/hooks/useChecklistTemplates";
 import { ChecklistTemplate } from "@/types/projects";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +102,24 @@ export const ChecklistTemplateManager = ({
       items: prev.items.map((item, i) => i === index ? value : item)
     }));
   };
+
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+      return { ...prev, items: newItems };
+    });
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === formData.items.length - 1) return;
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+      return { ...prev, items: newItems };
+    });
+  };
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
@@ -183,9 +201,31 @@ export const ChecklistTemplateManager = ({
                   {formData.items.map((item, index) => <div key={index} className="flex items-center gap-2">
                       <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       <Input value={item} onChange={e => handleItemChange(index, e.target.value)} placeholder={`Item ${index + 1}`} className="flex-1" />
-                      {formData.items.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} className="flex-shrink-0">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>}
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleMoveUp(index)}
+                          disabled={index === 0}
+                          className="h-8 w-8"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleMoveDown(index)}
+                          disabled={index === formData.items.length - 1}
+                          className="h-8 w-8"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </Button>
+                        {formData.items.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} className="h-8 w-8">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>}
+                      </div>
                     </div>)}
                 </div>
               </ScrollArea>
