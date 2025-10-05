@@ -109,12 +109,19 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       return;
     }
 
+    // Parse numeric values correctly, handling empty strings
+    const parseNumericValue = (value: string): number | undefined => {
+      if (!value || value.trim() === '') return undefined;
+      const parsed = Number(value);
+      return isNaN(parsed) ? undefined : parsed;
+    };
+
     const clienteData: CreateClienteData = {
       nome: novoCliente.nome,
       empresa: novoCliente.empresa,
       email: novoCliente.email,
       telefone: novoCliente.telefone || undefined,
-      valor_fechamento: parseFloat(novoCliente.valor_fechamento) || undefined,
+      valor_fechamento: parseNumericValue(novoCliente.valor_fechamento),
       data_fechamento: novoCliente.data_fechamento,
       observacoes: novoCliente.observacoes || undefined,
       avatar_url: avatarUrl,
@@ -122,8 +129,8 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       instagram: novoCliente.instagram || undefined,
       facebook: novoCliente.facebook || undefined,
       outras_redes_sociais: novoCliente.outras_redes_sociais || undefined,
-      faturamento_atual: parseFloat(novoCliente.faturamento_atual) || undefined,
-      faturamento_desejado: parseFloat(novoCliente.faturamento_desejado) || undefined,
+      faturamento_atual: parseNumericValue(novoCliente.faturamento_atual),
+      faturamento_desejado: parseNumericValue(novoCliente.faturamento_desejado),
       fonte_original: novoCliente.fonte_original || undefined,
       nivel_consciencia: novoCliente.nivel_consciencia || undefined,
       etapa_jornada: novoCliente.etapa_jornada || undefined,
@@ -219,9 +226,10 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
             <Input
               id="valor_fechamento"
               type="number"
+              step="0.01"
               value={novoCliente.valor_fechamento}
               onChange={(e) => setNovoCliente({...novoCliente, valor_fechamento: e.target.value})}
-              placeholder="50000"
+              placeholder="2600.00"
             />
           </div>
         </div>
@@ -319,9 +327,10 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
             <Input
               id="faturamento_atual"
               type="number"
+              step="0.01"
               value={novoCliente.faturamento_atual}
               onChange={(e) => setNovoCliente({...novoCliente, faturamento_atual: e.target.value})}
-              placeholder="50000"
+              placeholder="50000.00"
             />
           </div>
           <div>
@@ -329,9 +338,10 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
             <Input
               id="faturamento_desejado"
               type="number"
+              step="0.01"
               value={novoCliente.faturamento_desejado}
               onChange={(e) => setNovoCliente({...novoCliente, faturamento_desejado: e.target.value})}
-              placeholder="100000"
+              placeholder="100000.00"
             />
           </div>
         </div>

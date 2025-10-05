@@ -132,7 +132,7 @@ export function useClientes() {
       const normalizedData = {
         ...validatedData,
         user_id: user.id,
-        valor_fechamento: clienteData.valor_fechamento || 0,
+        valor_fechamento: validatedData.valor_fechamento ?? 0,
         data_fechamento: clienteData.data_fechamento || new Date().toISOString().split('T')[0],
       };
 
