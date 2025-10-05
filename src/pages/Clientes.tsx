@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus, Pencil, User } from 'lucide-react';
+import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus, Pencil, User, Trash2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -18,7 +18,8 @@ const Clientes = () => {
     clientes,
     isLoading,
     addCliente,
-    updateCliente
+    updateCliente,
+    deleteCliente
   } = useClientes();
   const {
     user
@@ -81,6 +82,18 @@ const Clientes = () => {
   const handleOpenEdit = () => {
     setIsViewModalOpen(false);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteCliente = async () => {
+    if (!selectedCliente) return;
+    
+    if (window.confirm(`Tem certeza que deseja excluir o cliente ${selectedCliente.nome}?`)) {
+      const result = await deleteCliente(selectedCliente.id);
+      if (result) {
+        setIsViewModalOpen(false);
+        setSelectedCliente(null);
+      }
+    }
   };
   return <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
@@ -241,14 +254,24 @@ const Clientes = () => {
                   <Users className="h-5 w-5" />
                   Detalhes do Cliente
                 </DialogTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleOpenEdit}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleOpenEdit}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteCliente}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </Button>
+                </div>
               </div>
             </DialogHeader>
 
