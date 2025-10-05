@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LeadAdvanced } from "@/types/crm";
 import { useToast } from "@/hooks/use-toast";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 
 interface LeadFormProps {
   onSubmit: (leadData: Partial<LeadAdvanced>) => void;
@@ -40,6 +41,7 @@ export interface LeadData {
 
 export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
   const { toast } = useToast();
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(initialData?.avatar_url);
   const [novoLead, setNovoLead] = useState({
     nome: initialData?.nome || "",
     empresa: initialData?.empresa || "",
@@ -144,6 +146,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
       fonte: novoLead.fonte,
       valor: parseFloat(novoLead.valor) || 0,
       observacoes: novoLead.observacoes,
+      avatar_url: avatarUrl,
     };
 
     // Salvar na página de Leads
@@ -161,6 +164,15 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Avatar Upload */}
+      <div className="flex justify-center py-4">
+        <AvatarUpload
+          currentAvatarUrl={avatarUrl}
+          onAvatarChange={(url) => setAvatarUrl(url || undefined)}
+          fallbackText={novoLead.nome ? novoLead.nome.substring(0, 2).toUpperCase() : "LE"}
+        />
+      </div>
+
       {/* Dados Básicos */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-primary">DADOS BÁSICOS</h3>

@@ -58,6 +58,7 @@ export interface LeadAdvanced {
   probabilidade: number;
   dataContato: string;
   observacoes?: string;
+  avatar_url?: string;
   
   // Campos do Mindset Comercial Poderalize
   travaEmocional: 'inseguranca_financeira' | 'medo_dar_errado' | 'falta_apoio' | 'falta_tempo' | 'desconfianca';

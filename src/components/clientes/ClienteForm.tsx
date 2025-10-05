@@ -12,6 +12,7 @@ import { CalendarIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 
 interface ClienteFormProps {
   onSubmit: (clienteData: CreateClienteData) => void;
@@ -20,6 +21,7 @@ interface ClienteFormProps {
 }
 
 export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProps) => {
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(initialData?.avatar_url);
   const [novoCliente, setNovoCliente] = useState({
     nome: initialData?.nome || "",
     empresa: initialData?.empresa || "",
@@ -115,6 +117,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       valor_fechamento: parseFloat(novoCliente.valor_fechamento) || undefined,
       data_fechamento: novoCliente.data_fechamento,
       observacoes: novoCliente.observacoes || undefined,
+      avatar_url: avatarUrl,
       site: novoCliente.site || undefined,
       instagram: novoCliente.instagram || undefined,
       facebook: novoCliente.facebook || undefined,
@@ -134,6 +137,15 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
 
   return (
     <div className="space-y-6">
+      {/* Avatar Upload */}
+      <div className="flex justify-center py-4">
+        <AvatarUpload
+          currentAvatarUrl={avatarUrl}
+          onAvatarChange={(url) => setAvatarUrl(url || undefined)}
+          fallbackText={novoCliente.nome ? novoCliente.nome.substring(0, 2).toUpperCase() : "CL"}
+        />
+      </div>
+
       {/* Dados Básicos */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-primary">DADOS BÁSICOS</h3>

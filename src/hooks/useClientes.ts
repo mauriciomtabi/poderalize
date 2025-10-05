@@ -31,6 +31,8 @@ const clienteSchema = z.object({
   equipe_atual: z.string().trim().optional(),
   observacoes_comportamento: z.string().trim().max(1000).optional(),
   
+  avatar_url: z.string().trim().optional(),
+  
   // Dados do lead original
   fonte_original: z.string().trim().optional(),
   vendedor_id: z.string().optional(),
@@ -49,6 +51,7 @@ export interface Cliente {
   valor_fechamento?: number;
   data_fechamento: string;
   observacoes?: string;
+  avatar_url?: string;
   
   // Presença Digital
   site?: string;
