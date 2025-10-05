@@ -929,11 +929,14 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
     },
 
     getCurrentUser: () => {
-      return user ? {
+      if (!user) return null;
+      
+      return {
         id: user.id,
-        name: (user as any).user_metadata?.full_name || user.email,
-        email: user.email
-      } : null;
+        name: user.full_name || user.email?.split('@')[0] || user.email,
+        email: user.email,
+        avatar: user.avatar_url
+      };
     },
 
     getFilteredCards: () => {
