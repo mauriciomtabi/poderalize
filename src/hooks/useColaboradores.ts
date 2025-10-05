@@ -209,17 +209,40 @@ export function useColaboradores() {
 
   const deleteColaborador = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('colaboradores')
-        .delete()
-        .eq('id', id);
+      // First, get the colaborador to find the user_id
+      const colaborador = colaboradores.find(c => c.id === id);
+      if (!colaborador) {
+        throw new Error('Colaborador não encontrado');
+      }
 
-      if (error) throw error;
+      // If the colaborador has a user_id (is an approved user), remove completely
+      if (colaborador.user_id) {
+        const { data, error } = await supabase.rpc('remove_user_completely', {
+          _user_id: colaborador.user_id
+        });
+
+        if (error) {
+          console.error('Erro ao remover usuário completamente:', error);
+          throw error;
+        }
+
+        if (!data) {
+          throw new Error('Falha ao remover usuário');
+        }
+      } else {
+        // If no user_id, just delete from colaboradores table
+        const { error } = await supabase
+          .from('colaboradores')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+      }
       
       setColaboradores(prev => prev.filter(col => col.id !== id));
       toast({
         title: "Sucesso",
-        description: "Colaborador removido com sucesso"
+        description: "Colaborador removido completamente do sistema"
       });
     } catch (error) {
       console.error('Erro ao deletar colaborador:', error);
