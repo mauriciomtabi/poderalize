@@ -83,6 +83,7 @@ export interface ProjectCard {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  client_id?: string;
   
   // Additional Trello-like features
   cover?: string;

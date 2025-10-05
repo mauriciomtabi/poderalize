@@ -1561,6 +1561,7 @@ export type Database = {
         Row: {
           actual_hours: number | null
           archived: boolean
+          client_id: string | null
           cover: string | null
           created_at: string
           created_by: string
@@ -1582,6 +1583,7 @@ export type Database = {
         Insert: {
           actual_hours?: number | null
           archived?: boolean
+          client_id?: string | null
           cover?: string | null
           created_at?: string
           created_by: string
@@ -1603,6 +1605,7 @@ export type Database = {
         Update: {
           actual_hours?: number | null
           archived?: boolean
+          client_id?: string | null
           cover?: string | null
           created_at?: string
           created_by?: string
@@ -1622,6 +1625,13 @@ export type Database = {
           watching?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "project_cards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_cards_list_id_fkey"
             columns: ["list_id"]

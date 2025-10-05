@@ -21,6 +21,7 @@ export interface ProjectCard {
   archived: boolean;
   watching: boolean;
   created_by: string;
+  client_id?: string;
   created_at: string;
   updated_at: string;
 }

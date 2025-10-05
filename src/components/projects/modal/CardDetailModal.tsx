@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move } from "lucide-react";
+import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2 } from "lucide-react";
 import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment, Attachment, CardStatus, Priority } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ChecklistManager } from "./ChecklistManager";
@@ -20,8 +20,10 @@ import { LabelPicker } from "./LabelPicker";
 import { DueDatePicker } from "./DueDatePicker";
 import { MoveCardDialog } from "./MoveCardDialog";
 import { AttachmentManager } from "./AttachmentManager";
+import { ClientPicker } from "./ClientPicker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useClientes } from "@/hooks/useClientes";
 interface CardDetailModalProps {
   card?: ProjectCard;
   listId?: string;
@@ -41,6 +43,7 @@ export const CardDetailModal = ({
   } = useProjects();
   
   const isCreationMode = !card;
+  const { clientes } = useClientes();
   
   const [isEditingTitle, setIsEditingTitle] = useState(isCreationMode);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -49,6 +52,7 @@ export const CardDetailModal = ({
   const [selectedMembers, setSelectedMembers] = useState<Member[]>(card?.assignees || []);
   const [selectedLabels, setSelectedLabels] = useState<ProjectLabel[]>(card?.labels || []);
   const [selectedDueDate, setSelectedDueDate] = useState<string | undefined>(card?.dueDate);
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(card?.client_id);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   
@@ -61,6 +65,7 @@ export const CardDetailModal = ({
   const [showMemberPicker, setShowMemberPicker] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
+  const [showClientPicker, setShowClientPicker] = useState(false);
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [showAttachmentManager, setShowAttachmentManager] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -86,6 +91,7 @@ export const CardDetailModal = ({
       setSelectedMembers(latestCard.assignees);
       setSelectedLabels(latestCard.labels);
       setSelectedDueDate(latestCard.dueDate);
+      setSelectedClientId(latestCard.client_id);
     }
   }, [latestCard, isCreationMode]);
 
@@ -97,6 +103,7 @@ export const CardDetailModal = ({
       setSelectedMembers([]);
       setSelectedLabels([]);
       setSelectedDueDate(undefined);
+      setSelectedClientId(undefined);
       setTempChecklists([]);
       setTempComments([]);
       setTempAttachments([]);
@@ -272,6 +279,27 @@ export const CardDetailModal = ({
       actions.addActivity(latestCard.id, 'due_date', 'removeu a data de vencimento');
     }
   };
+
+  const handleClientChange = (clientId?: string) => {
+    if (isCreationMode) {
+      setSelectedClientId(clientId);
+      return;
+    }
+    
+    if (!latestCard) return;
+    actions.updateCard({
+      ...latestCard,
+      client_id: clientId
+    });
+    
+    const cliente = clientes.find(c => c.id === clientId);
+    if (clientId && clientId !== latestCard.client_id && cliente) {
+      actions.addActivity(latestCard.id, 'update', `associou o cliente ${cliente.nome}`);
+    } else if (!clientId && latestCard.client_id) {
+      actions.addActivity(latestCard.id, 'update', 'removeu a associação com cliente');
+    }
+  };
+
   const handleCreateCard = async () => {
     if (!title.trim()) {
       toast({
@@ -301,7 +329,8 @@ export const CardDetailModal = ({
       comments: tempComments,
       archived: false,
       watching: false,
-      dueDate: selectedDueDate
+      dueDate: selectedDueDate,
+      client_id: selectedClientId
     });
     
     if (success) {
@@ -451,6 +480,40 @@ export const CardDetailModal = ({
                     </div>}
                 </div>
 
+                {/* Cliente */}
+                {selectedClientId && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      <h3 className="font-medium">Cliente</h3>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        {(() => {
+                          const cliente = clientes.find(c => c.id === selectedClientId);
+                          return cliente ? (
+                            <>
+                              <p className="font-medium text-sm">{cliente.nome}</p>
+                              <p className="text-xs text-muted-foreground">{cliente.empresa}</p>
+                            </>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">Cliente não encontrado</p>
+                          );
+                        })()}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleClientChange(undefined)}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Progress */}
                 {!isCreationMode && totalTasks > 0 && <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -517,6 +580,10 @@ export const CardDetailModal = ({
                   <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => setShowLabelPicker(true)}>
                     <Tag className="h-4 w-4 mr-2" />
                     Etiquetas
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => setShowClientPicker(true)}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Cliente
                   </Button>
                   <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => setShowDueDatePicker(true)}>
                     <Calendar className="h-4 w-4 mr-2" />
@@ -592,6 +659,13 @@ export const CardDetailModal = ({
         <LabelPicker isOpen={showLabelPicker} onClose={() => setShowLabelPicker(false)} availableLabels={availableLabels} selectedLabels={cardLabels} onLabelsChange={handleLabelsChange} />
 
         <DueDatePicker isOpen={showDueDatePicker} onClose={() => setShowDueDatePicker(false)} currentDate={cardDueDate} onDateChange={handleDueDateChange} />
+
+        <ClientPicker
+          isOpen={showClientPicker}
+          onClose={() => setShowClientPicker(false)}
+          selectedClientId={selectedClientId}
+          onSelectClient={(client) => handleClientChange(client?.id)}
+        />
 
         {/* Attachment Manager - works in both modes */}
         {isCreationMode ? (
