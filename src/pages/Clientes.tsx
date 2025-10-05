@@ -7,16 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus } from 'lucide-react';
+import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus, Pencil } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Cliente, CreateClienteData } from '@/hooks/useClientes';
+import { Cliente, CreateClienteData, UpdateClienteData } from '@/hooks/useClientes';
 import { ClienteForm } from '@/components/clientes/ClienteForm';
 const Clientes = () => {
   const {
     clientes,
     isLoading,
-    addCliente
+    addCliente,
+    updateCliente
   } = useClientes();
   const {
     user
@@ -25,6 +26,7 @@ const Clientes = () => {
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   if (!user) {
     return <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Você precisa estar logado para acessar os clientes</p>
@@ -62,6 +64,22 @@ const Clientes = () => {
     if (result) {
       setIsAddModalOpen(false);
     }
+  };
+
+  const handleEditCliente = async (clienteData: CreateClienteData) => {
+    if (!selectedCliente) return;
+    
+    const result = await updateCliente(selectedCliente.id, clienteData as UpdateClienteData);
+    if (result) {
+      setIsEditModalOpen(false);
+      setIsViewModalOpen(false);
+      setSelectedCliente(null);
+    }
+  };
+
+  const handleOpenEdit = () => {
+    setIsViewModalOpen(false);
+    setIsEditModalOpen(true);
   };
   return <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
@@ -190,14 +208,41 @@ const Clientes = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Edit Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Pencil className="h-5 w-5" />
+                Editar Cliente
+              </DialogTitle>
+            </DialogHeader>
+            <ClienteForm 
+              onSubmit={handleEditCliente}
+              onCancel={() => setIsEditModalOpen(false)}
+              initialData={selectedCliente || undefined}
+            />
+          </DialogContent>
+        </Dialog>
+
         {/* View Modal */}
         <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Detalhes do Cliente
-              </DialogTitle>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Detalhes do Cliente
+                </DialogTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenEdit}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              </div>
             </DialogHeader>
 
             {selectedCliente && <div className="space-y-6">

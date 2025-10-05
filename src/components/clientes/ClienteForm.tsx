@@ -1,46 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CreateClienteData } from "@/hooks/useClientes";
+import { CreateClienteData, Cliente } from "@/hooks/useClientes";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 interface ClienteFormProps {
   onSubmit: (clienteData: CreateClienteData) => void;
   onCancel: () => void;
+  initialData?: Cliente;
 }
 
-export const ClienteForm = ({ onSubmit, onCancel }: ClienteFormProps) => {
+export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProps) => {
   const [novoCliente, setNovoCliente] = useState({
-    nome: "",
-    empresa: "",
-    email: "",
-    telefone: "",
-    valor_fechamento: "",
-    data_fechamento: new Date().toISOString().split('T')[0],
-    fonte_original: "",
-    observacoes: "",
+    nome: initialData?.nome || "",
+    empresa: initialData?.empresa || "",
+    email: initialData?.email || "",
+    telefone: initialData?.telefone || "",
+    valor_fechamento: initialData?.valor_fechamento?.toString() || "",
+    data_fechamento: initialData?.data_fechamento || new Date().toISOString().split('T')[0],
+    fonte_original: initialData?.fonte_original || "",
+    observacoes: initialData?.observacoes || "",
     
     // Presença Digital
-    site: "",
-    instagram: "",
-    facebook: "",
-    outras_redes_sociais: "",
+    site: initialData?.site || "",
+    instagram: initialData?.instagram || "",
+    facebook: initialData?.facebook || "",
+    outras_redes_sociais: initialData?.outras_redes_sociais || "",
     
     // Faturamento
-    faturamento_atual: "",
-    faturamento_desejado: "",
+    faturamento_atual: initialData?.faturamento_atual?.toString() || "",
+    faturamento_desejado: initialData?.faturamento_desejado?.toString() || "",
   });
 
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date>(
+    initialData?.data_fechamento ? parseISO(initialData.data_fechamento) : new Date()
+  );
+
+  useEffect(() => {
+    if (initialData) {
+      setNovoCliente({
+        nome: initialData.nome || "",
+        empresa: initialData.empresa || "",
+        email: initialData.email || "",
+        telefone: initialData.telefone || "",
+        valor_fechamento: initialData.valor_fechamento?.toString() || "",
+        data_fechamento: initialData.data_fechamento || new Date().toISOString().split('T')[0],
+        fonte_original: initialData.fonte_original || "",
+        observacoes: initialData.observacoes || "",
+        site: initialData.site || "",
+        instagram: initialData.instagram || "",
+        facebook: initialData.facebook || "",
+        outras_redes_sociais: initialData.outras_redes_sociais || "",
+        faturamento_atual: initialData.faturamento_atual?.toString() || "",
+        faturamento_desejado: initialData.faturamento_desejado?.toString() || "",
+      });
+      setDate(initialData.data_fechamento ? parseISO(initialData.data_fechamento) : new Date());
+    }
+  }, [initialData]);
 
   const fonteOptions = [
     "Website", "LinkedIn", "Facebook", "Instagram", "Google Ads", 
@@ -286,7 +311,7 @@ export const ClienteForm = ({ onSubmit, onCancel }: ClienteFormProps) => {
           Cancelar
         </Button>
         <Button type="button" onClick={handleAddCliente}>
-          Adicionar Cliente
+          {initialData ? 'Salvar Alterações' : 'Adicionar Cliente'}
         </Button>
       </div>
     </div>
