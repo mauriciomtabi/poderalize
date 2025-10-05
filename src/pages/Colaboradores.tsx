@@ -465,21 +465,16 @@ const Colaboradores = () => {
                         )}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-lg">{colaborador.nome}</CardTitle>
-                          {isAdmin && (
-                            <Badge variant="default" className="text-xs">
-                              <Crown className="h-3 w-3 mr-1" />
-                              Admin
-                            </Badge>
-                          )}
-                        </div>
+                        <CardTitle className="text-lg">{colaborador.nome}</CardTitle>
                         <p className="text-sm text-muted-foreground">{colaborador.funcao}</p>
                       </div>
                     </div>
-                    <Badge variant={colaborador.status === "ativo" ? "default" : "secondary"}>
-                      {colaborador.status}
-                    </Badge>
+                    {isAdmin && (
+                      <Badge variant="default" className="text-xs">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Admin
+                      </Badge>
+                    )}
                   </div>
                 </CardHeader>
               <CardContent>
