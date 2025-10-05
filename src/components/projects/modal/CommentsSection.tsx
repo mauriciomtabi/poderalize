@@ -8,6 +8,7 @@ import { useClientes } from "@/hooks/useClientes";
 import { generateId } from "@/hooks/useUuid";
 import { MentionTextarea } from "./MentionTextarea";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CommentsSectionProps {
   card?: ProjectCard;
@@ -34,7 +35,7 @@ export const CommentsSection = ({
   // Get board members
   const boardMembers = state.currentBoard?.members || [];
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (newComment.trim() && currentUser) {
       const comment: Comment = {
         id: generateId(),
@@ -53,6 +54,36 @@ export const CommentsSection = ({
           comments: [...card.comments, comment]
         });
         actions.addActivity(card.id, 'comment', 'adicionou um comentário', { commentId: comment.id });
+        
+        // Criar notificações para os usuários mencionados
+        if (mentions.length > 0) {
+          for (const mentionId of mentions) {
+            // Buscar o user_id do membro através do member_id
+            const { data: memberData } = await supabase
+              .from('project_members')
+              .select('user_id, name')
+              .eq('id', mentionId)
+              .maybeSingle();
+            
+            if (memberData?.user_id) {
+              try {
+                await supabase.from('notifications').insert({
+                  user_id: memberData.user_id,
+                  type: 'mention',
+                  title: 'Você foi mencionado',
+                  description: `${currentUser.name} mencionou você em um comentário no cartão "${card.title}"`,
+                  priority: 'medium',
+                  link: `/projetos?card=${card.id}`,
+                  entity_type: 'card',
+                  entity_id: card.id,
+                  read: false
+                });
+              } catch (error) {
+                console.error('Error creating notification:', error);
+              }
+            }
+          }
+        }
       }
 
       setNewComment('');
