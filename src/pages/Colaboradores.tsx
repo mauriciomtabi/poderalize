@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw, Shield } from "lucide-react";
+import { Plus, Search, Mail, Phone, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw, Shield, Crown } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useApprovedUsers } from "@/hooks/useApprovedUsers";
@@ -42,6 +42,8 @@ import { Colaborador, DEPARTAMENTOS_DISPONIVEIS, STATUS_DISPONIVEIS } from "@/ty
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PermissionsDialog } from "@/components/colaboradores/PermissionsDialog";
+import { PromoteToAdminDialog } from "@/components/colaboradores/PromoteToAdminDialog";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { getInitials } from "@/lib/utils";
 import { AvatarImage } from "@/components/ui/avatar";
 
@@ -57,6 +59,10 @@ const Colaboradores = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [selectedUserIdForPermissions, setSelectedUserIdForPermissions] = useState<string>("");
+  const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
+  const [selectedUserForPromotion, setSelectedUserForPromotion] = useState<{ id: string; name: string; isAdmin: boolean } | null>(null);
+  const [adminUsers, setAdminUsers] = useState<Set<string>>(new Set());
+  const { checkIsAdmin, promoteToAdmin, removeAdmin } = useAdminRole();
   const [novoColaborador, setNovoColaborador] = useState({
     nome: "",
     email: "",
@@ -96,6 +102,26 @@ const Colaboradores = () => {
       }));
     return [...colaboradores, ...virtuals].sort((a, b) => a.nome.localeCompare(b.nome));
   }, [colaboradores, approvedProfiles]);
+
+  // Carregar status de admin para todos os colaboradores
+  useEffect(() => {
+    const loadAdminStatus = async () => {
+      const adminSet = new Set<string>();
+      for (const colab of allActiveColaboradores) {
+        if (colab.user_id) {
+          const isAdmin = await checkIsAdmin(colab.user_id);
+          if (isAdmin) {
+            adminSet.add(colab.user_id);
+          }
+        }
+      }
+      setAdminUsers(adminSet);
+    };
+
+    if (allActiveColaboradores.length > 0) {
+      loadAdminStatus();
+    }
+  }, [allActiveColaboradores, checkIsAdmin]);
 
   const filteredColaboradores = allActiveColaboradores.filter(colaborador =>
     colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -210,6 +236,35 @@ const Colaboradores = () => {
     } catch (error) {
       // Error handling is done in the hook
     }
+  };
+
+  const handlePromoteToAdmin = async (userId: string, userName: string, isCurrentlyAdmin: boolean) => {
+    setSelectedUserForPromotion({ id: userId, name: userName, isAdmin: isCurrentlyAdmin });
+    setIsPromoteDialogOpen(true);
+  };
+
+  const confirmPromoteToAdmin = async () => {
+    if (!selectedUserForPromotion) return;
+
+    let success = false;
+    if (selectedUserForPromotion.isAdmin) {
+      success = await removeAdmin(selectedUserForPromotion.id, selectedUserForPromotion.name);
+      if (success) {
+        setAdminUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(selectedUserForPromotion.id);
+          return newSet;
+        });
+      }
+    } else {
+      success = await promoteToAdmin(selectedUserForPromotion.id, selectedUserForPromotion.name);
+      if (success) {
+        setAdminUsers(prev => new Set(prev).add(selectedUserForPromotion.id));
+      }
+    }
+
+    setIsPromoteDialogOpen(false);
+    setSelectedUserForPromotion(null);
   };
 
   const handleApproveUser = async (userId: string, userEmail: string, userName: string) => {
@@ -383,33 +438,50 @@ const Colaboradores = () => {
 
         {/* Grid de colaboradores */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredColaboradores.map((colaborador) => (
-            <Card 
-              key={colaborador.id} 
-              className="card-interactive hover-lift cursor-pointer transition-all duration-200"
-              onClick={() => handleCardClick(colaborador)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="w-12 h-12">
-                      {colaborador.avatar_url && (
-                        <AvatarImage src={colaborador.avatar_url} alt={colaborador.nome} />
-                      )}
-                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                        {getInitials(colaborador.nome)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{colaborador.nome}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{colaborador.funcao}</p>
+          {filteredColaboradores.map((colaborador) => {
+            const isAdmin = colaborador.user_id && adminUsers.has(colaborador.user_id);
+            return (
+              <Card 
+                key={colaborador.id} 
+                className={`card-interactive hover-lift cursor-pointer transition-all duration-200 ${isAdmin ? 'border-2 border-primary/50 shadow-lg' : ''}`}
+                onClick={() => handleCardClick(colaborador)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <Avatar className="w-12 h-12">
+                          {colaborador.avatar_url && (
+                            <AvatarImage src={colaborador.avatar_url} alt={colaborador.nome} />
+                          )}
+                          <AvatarFallback className={`font-semibold ${isAdmin ? 'bg-gradient-to-br from-primary to-primary/70 text-primary-foreground' : 'bg-primary text-primary-foreground'}`}>
+                            {getInitials(colaborador.nome)}
+                          </AvatarFallback>
+                        </Avatar>
+                        {isAdmin && (
+                          <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1">
+                            <Crown className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">{colaborador.nome}</CardTitle>
+                          {isAdmin && (
+                            <Badge variant="default" className="text-xs">
+                              <Crown className="h-3 w-3 mr-1" />
+                              Admin
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{colaborador.funcao}</p>
+                      </div>
                     </div>
+                    <Badge variant={colaborador.status === "ativo" ? "default" : "secondary"}>
+                      {colaborador.status}
+                    </Badge>
                   </div>
-                  <Badge variant={colaborador.status === "ativo" ? "default" : "secondary"}>
-                    {colaborador.status}
-                  </Badge>
-                </div>
-              </CardHeader>
+                </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2 text-sm">
@@ -435,7 +507,8 @@ const Colaboradores = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
 
           {filteredColaboradores.length === 0 && (
@@ -682,17 +755,33 @@ const Colaboradores = () => {
                     </div>
                   ) : (
                     <div className="flex justify-between w-full">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setSelectedUserIdForPermissions(selectedColaborador.user_id);
-                          setIsPermissionsDialogOpen(true);
-                        }}
-                      >
-                        <Shield size={14} className="mr-2" />
-                        Gerenciar Permissões
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUserIdForPermissions(selectedColaborador.user_id);
+                            setIsPermissionsDialogOpen(true);
+                          }}
+                        >
+                          <Shield size={14} className="mr-2" />
+                          Gerenciar Permissões
+                        </Button>
+                        {selectedColaborador.user_id && (
+                          <Button
+                            variant={adminUsers.has(selectedColaborador.user_id) ? "secondary" : "default"}
+                            size="sm"
+                            onClick={() => handlePromoteToAdmin(
+                              selectedColaborador.user_id!,
+                              selectedColaborador.nome,
+                              adminUsers.has(selectedColaborador.user_id)
+                            )}
+                          >
+                            <Crown size={14} className="mr-2" />
+                            {adminUsers.has(selectedColaborador.user_id) ? 'Remover Admin' : 'Promover a Admin'}
+                          </Button>
+                        )}
+                      </div>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" onClick={handleEditColaborador}>
                           <Edit3 size={14} className="mr-2" />
@@ -747,8 +836,22 @@ const Colaboradores = () => {
             userName={selectedColaborador.nome}
           />
         )}
+
+        {/* Dialog de Promoção a Admin */}
+        {selectedUserForPromotion && (
+          <PromoteToAdminDialog
+            isOpen={isPromoteDialogOpen}
+            onClose={() => {
+              setIsPromoteDialogOpen(false);
+              setSelectedUserForPromotion(null);
+            }}
+            onConfirm={confirmPromoteToAdmin}
+            userName={selectedUserForPromotion.name}
+            isAdmin={selectedUserForPromotion.isAdmin}
+          />
+        )}
     </div>
   );
 };
 
-  export default Colaboradores;
+export default Colaboradores;
