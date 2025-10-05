@@ -32,6 +32,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
     day_of_month: 1,
     time_of_day: "09:00",
     days_of_week: [] as number[],
+    start_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
     // Card properties
     priority: "medium" as Priority,
     label_ids: [] as string[],
@@ -48,7 +49,8 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
     const now = new Date();
     const [hours, minutes] = formData.time_of_day.split(':').map(Number);
     
-    let nextCreation = new Date();
+    // Use the selected start date
+    let nextCreation = new Date(formData.start_date);
     nextCreation.setHours(hours, minutes, 0, 0);
 
     if (formData.frequency === 'daily') {
@@ -132,6 +134,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       day_of_month: 1,
       time_of_day: "09:00",
       days_of_week: [],
+      start_date: new Date().toISOString().split('T')[0],
       priority: "medium",
       label_ids: [],
       assignee_ids: [],
@@ -146,6 +149,9 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       ? card.template_config as Record<string, any>
       : {};
 
+    // Extract date from next_creation_at
+    const startDate = new Date(card.next_creation_at).toISOString().split('T')[0];
+
     setEditingId(card.id);
     setShowForm(true);
     setFormData({
@@ -157,6 +163,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       day_of_month: card.day_of_month || 1,
       time_of_day: card.time_of_day || "09:00",
       days_of_week: card.days_of_week || [],
+      start_date: startDate,
       priority: (config.priority as Priority) || "medium",
       label_ids: Array.isArray(config.label_ids) ? config.label_ids : [],
       assignee_ids: Array.isArray(config.assignee_ids) ? config.assignee_ids : [],
@@ -267,6 +274,17 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                     ))}
                   </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="start_date">Data de Início</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                min={new Date().toISOString().split('T')[0]}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
