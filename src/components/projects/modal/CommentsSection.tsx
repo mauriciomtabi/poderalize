@@ -100,10 +100,11 @@ export const CommentsSection = ({
         <Badge 
           key={`mention-${match.index}`}
           variant="secondary" 
-          className="mx-1 font-normal"
+          className="mx-1 font-normal inline-flex items-center gap-1"
         >
-          {type === 'member' ? <User className="h-3 w-3 mr-1" /> : <Users className="h-3 w-3 mr-1" />}
-          {name}
+          {type === 'member' ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+          <span>{name}</span>
+          <span className="text-xs opacity-70">({type === 'member' ? 'Membro' : 'Cliente'})</span>
         </Badge>
       );
 
