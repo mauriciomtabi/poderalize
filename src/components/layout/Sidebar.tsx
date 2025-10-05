@@ -24,7 +24,7 @@ const menuItems = [
   { icon: Kanban, label: "Projetos", href: "/projetos", page: "projetos" as PagePermission },
   { icon: PieChart, label: "CRM", href: "/crm", page: "crm" as PagePermission },
   { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
-  { icon: UserCheck, label: "Clientes", href: "/clientes", page: null }, // Clientes não precisa de permissão específica
+  { icon: UserCheck, label: "Clientes", href: "/clientes", page: null },
   { icon: BarChart3, label: "Relatórios", href: "/relatorios", page: "relatorios" as PagePermission },
   { icon: Settings, label: "Configurações", href: "/configuracoes", page: "configuracoes" as PagePermission },
 ];

@@ -16,7 +16,6 @@ import Leads from "./pages/Leads";
 import Clientes from "./pages/Clientes";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
-import Acompanhamento from "./pages/Acompanhamento";
 import Vendas from "./pages/Vendas";
 import { Auth } from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -71,7 +70,6 @@ const App = () => (
                   } />
                   <Route path="clientes" element={<Clientes />} />
                   <Route path="vendas" element={<Vendas />} />
-                  <Route path="acompanhamento" element={<Acompanhamento />} />
                   <Route path="relatorios" element={
                     <PageGuard page="relatorios">
                       <Relatorios />
