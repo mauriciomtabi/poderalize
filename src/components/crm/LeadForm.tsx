@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,36 +41,100 @@ export interface LeadData {
 
 export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
   const { toast } = useToast();
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(initialData?.avatar_url);
-  const [novoLead, setNovoLead] = useState({
-    nome: initialData?.nome || "",
-    empresa: initialData?.empresa || "",
-    email: initialData?.email || "",
-    cnpj: initialData?.cnpj || "",
-    telefone: initialData?.telefone || "",
-    fonte: initialData?.fonte || "",
-    valor: initialData?.valor?.toString() || "",
-    probabilidade: "25",
-    produtoInteresse: "",
-    observacoes: initialData?.observacoes || "",
+  const STORAGE_KEY = 'lead-form-draft';
+  
+  // Load from localStorage if no initialData (new lead form)
+  const getInitialFormData = () => {
+    if (initialData) {
+      return {
+        nome: initialData?.nome || "",
+        empresa: initialData?.empresa || "",
+        email: initialData?.email || "",
+        cnpj: initialData?.cnpj || "",
+        telefone: initialData?.telefone || "",
+        fonte: initialData?.fonte || "",
+        valor: initialData?.valor?.toString() || "",
+        probabilidade: "25",
+        produtoInteresse: "",
+        observacoes: initialData?.observacoes || "",
+        site: "",
+        instagram: "",
+        facebook: "",
+        outrasRedesSociais: "",
+        faturamentoAtual: "",
+        faturamentoDesejado: "",
+        doresIdentificadas: [] as string[],
+        nivelConsciencia: "",
+        etapaJornada: "",
+        indicadorPotencial: "",
+        equipeAtual: "",
+      };
+    }
     
-    // Presença Digital
-    site: "",
-    instagram: "",
-    facebook: "",
-    outrasRedesSociais: "",
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading form draft:', error);
+    }
     
-    // Faturamento
-    faturamentoAtual: "",
-    faturamentoDesejado: "",
-    
-    // Comportamento e Potencial
-    doresIdentificadas: [] as string[],
-    nivelConsciencia: "",
-    etapaJornada: "",
-    indicadorPotencial: "",
-    equipeAtual: "",
+    return {
+      nome: "",
+      empresa: "",
+      email: "",
+      cnpj: "",
+      telefone: "",
+      fonte: "",
+      valor: "",
+      probabilidade: "25",
+      produtoInteresse: "",
+      observacoes: "",
+      site: "",
+      instagram: "",
+      facebook: "",
+      outrasRedesSociais: "",
+      faturamentoAtual: "",
+      faturamentoDesejado: "",
+      doresIdentificadas: [] as string[],
+      nivelConsciencia: "",
+      etapaJornada: "",
+      indicadorPotencial: "",
+      equipeAtual: "",
+    };
+  };
+
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(() => {
+    if (initialData?.avatar_url) return initialData.avatar_url;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.avatar_url;
+      }
+    } catch (error) {
+      console.error('Error loading avatar from draft:', error);
+    }
+    return undefined;
   });
+  
+  const [novoLead, setNovoLead] = useState(getInitialFormData());
+
+  // Save to localStorage whenever form data changes (only if not editing)
+  useEffect(() => {
+    if (!initialData) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          ...novoLead,
+          avatar_url: avatarUrl
+        }));
+      } catch (error) {
+        console.error('Error saving form draft:', error);
+      }
+    }
+  }, [novoLead, avatarUrl, initialData]);
 
   // Função para salvar lead também na página de Leads
   const saveToLeadsPage = (leadData: LeadData) => {
@@ -153,6 +217,11 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
 
     // Salvar na página de Leads
     saveToLeadsPage(newLeadForLeadsPage);
+
+    // Clear localStorage draft after successful submission
+    if (!initialData) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
 
     // Submeter para o CRM
     onSubmit(leadDataForCRM);

@@ -21,39 +21,112 @@ interface ClienteFormProps {
 }
 
 export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProps) => {
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(initialData?.avatar_url);
-  const [novoCliente, setNovoCliente] = useState({
-    nome: initialData?.nome || "",
-    empresa: initialData?.empresa || "",
-    email: initialData?.email || "",
-    cnpj: initialData?.cnpj || "",
-    telefone: initialData?.telefone || "",
-    valor_fechamento: initialData?.valor_fechamento?.toString() || "",
-    data_fechamento: initialData?.data_fechamento || new Date().toISOString().split('T')[0],
-    fonte_original: initialData?.fonte_original || "",
-    observacoes: initialData?.observacoes || "",
+  const STORAGE_KEY = 'cliente-form-draft';
+  
+  // Load from localStorage if no initialData (new client form)
+  const getInitialFormData = () => {
+    if (initialData) {
+      return {
+        nome: initialData.nome || "",
+        empresa: initialData.empresa || "",
+        email: initialData.email || "",
+        cnpj: initialData.cnpj || "",
+        telefone: initialData.telefone || "",
+        valor_fechamento: initialData.valor_fechamento?.toString() || "",
+        data_fechamento: initialData.data_fechamento || new Date().toISOString().split('T')[0],
+        fonte_original: initialData.fonte_original || "",
+        observacoes: initialData.observacoes || "",
+        site: initialData.site || "",
+        instagram: initialData.instagram || "",
+        facebook: initialData.facebook || "",
+        outras_redes_sociais: initialData.outras_redes_sociais || "",
+        faturamento_atual: initialData.faturamento_atual?.toString() || "",
+        faturamento_desejado: initialData.faturamento_desejado?.toString() || "",
+        nivel_consciencia: initialData.nivel_consciencia || "",
+        etapa_jornada: initialData.etapa_jornada || "",
+        indicador_potencial: initialData.indicador_potencial || "",
+        equipe_atual: initialData.equipe_atual || "",
+        observacoes_comportamento: initialData.observacoes_comportamento || "",
+      };
+    }
     
-    // Presença Digital
-    site: initialData?.site || "",
-    instagram: initialData?.instagram || "",
-    facebook: initialData?.facebook || "",
-    outras_redes_sociais: initialData?.outras_redes_sociais || "",
+    // Try to load from localStorage
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Error loading form draft:', error);
+    }
     
-    // Faturamento
-    faturamento_atual: initialData?.faturamento_atual?.toString() || "",
-    faturamento_desejado: initialData?.faturamento_desejado?.toString() || "",
-    
-    // Comportamento e Potencial
-    nivel_consciencia: initialData?.nivel_consciencia || "",
-    etapa_jornada: initialData?.etapa_jornada || "",
-    indicador_potencial: initialData?.indicador_potencial || "",
-    equipe_atual: initialData?.equipe_atual || "",
-    observacoes_comportamento: initialData?.observacoes_comportamento || "",
+    return {
+      nome: "",
+      empresa: "",
+      email: "",
+      cnpj: "",
+      telefone: "",
+      valor_fechamento: "",
+      data_fechamento: new Date().toISOString().split('T')[0],
+      fonte_original: "",
+      observacoes: "",
+      site: "",
+      instagram: "",
+      facebook: "",
+      outras_redes_sociais: "",
+      faturamento_atual: "",
+      faturamento_desejado: "",
+      nivel_consciencia: "",
+      etapa_jornada: "",
+      indicador_potencial: "",
+      equipe_atual: "",
+      observacoes_comportamento: "",
+    };
+  };
+
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(() => {
+    if (initialData?.avatar_url) return initialData.avatar_url;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.avatar_url;
+      }
+    } catch (error) {
+      console.error('Error loading avatar from draft:', error);
+    }
+    return undefined;
+  });
+  
+  const [novoCliente, setNovoCliente] = useState(getInitialFormData());
+
+  const [date, setDate] = useState<Date>(() => {
+    if (initialData?.data_fechamento) return parseISO(initialData.data_fechamento);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.data_fechamento) return parseISO(data.data_fechamento);
+      }
+    } catch (error) {
+      console.error('Error loading date from draft:', error);
+    }
+    return new Date();
   });
 
-  const [date, setDate] = useState<Date>(
-    initialData?.data_fechamento ? parseISO(initialData.data_fechamento) : new Date()
-  );
+  // Save to localStorage whenever form data changes (only if not editing)
+  useEffect(() => {
+    if (!initialData) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          ...novoCliente,
+          avatar_url: avatarUrl
+        }));
+      } catch (error) {
+        console.error('Error saving form draft:', error);
+      }
+    }
+  }, [novoCliente, avatarUrl, initialData]);
 
   useEffect(() => {
     if (initialData) {
@@ -142,7 +215,20 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       observacoes_comportamento: novoCliente.observacoes_comportamento || undefined,
     };
 
+    // Clear localStorage draft after successful submission
+    if (!initialData) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
     onSubmit(clienteData);
+  };
+
+  const handleCancel = () => {
+    // Clear localStorage draft when canceling
+    if (!initialData) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    onCancel();
   };
 
   return (
@@ -466,7 +552,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={handleCancel}>
           Cancelar
         </Button>
         <Button type="button" onClick={handleAddCliente}>
