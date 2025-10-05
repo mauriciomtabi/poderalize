@@ -134,20 +134,26 @@ serve(async (req) => {
           const daysOfWeek = Array.isArray(config.days_of_week) ? config.days_of_week : [];
           
           if (daysOfWeek.length > 0) {
+            // Move to next day first
+            nextCreation.setDate(nextCreation.getDate() + 1);
+            
             // Find next occurrence based on selected days
             const sortedDays = [...daysOfWeek].sort((a: number, b: number) => a - b);
-            const currentDay = nextCreation.getDay();
+            let foundNextDay = false;
             
-            // Find next day from the selected days
-            let nextDay = sortedDays.find((day: number) => day > currentDay);
+            // Try to find the next valid day within the next 7 days
+            for (let i = 0; i < 7; i++) {
+              if (sortedDays.includes(nextCreation.getDay())) {
+                foundNextDay = true;
+                break;
+              }
+              nextCreation.setDate(nextCreation.getDate() + 1);
+            }
             
-            // If no day found after current day, wrap to first day of next week
-            if (nextDay === undefined) {
-              nextDay = sortedDays[0];
-              const daysToAdd = (7 - currentDay + nextDay) % 7;
-              nextCreation.setDate(nextCreation.getDate() + (daysToAdd || 7));
-            } else {
-              nextCreation.setDate(nextCreation.getDate() + (nextDay - currentDay));
+            if (!foundNextDay) {
+              // Fallback: just add 7 days from original
+              nextCreation = new Date(recurringCard.next_creation_at);
+              nextCreation.setDate(nextCreation.getDate() + 7);
             }
           } else {
             // No specific days configured, create daily
