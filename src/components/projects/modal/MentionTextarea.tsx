@@ -38,8 +38,19 @@ export const MentionTextarea = ({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionStart, setMentionStart] = useState<number>(-1);
+  const [displayValue, setDisplayValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Convert internal format to display format
+  const convertToDisplay = (text: string): string => {
+    return text.replace(/@\[([^\]]+)\]\(([^:]+):([^)]+)\)/g, '@$1');
+  };
+
+  // Keep display value in sync with actual value
+  useEffect(() => {
+    setDisplayValue(convertToDisplay(value));
+  }, [value]);
 
   const getAllSuggestions = (query: string): Suggestion[] => {
     const normalizedQuery = query.toLowerCase();
@@ -66,12 +77,29 @@ export const MentionTextarea = ({
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    onChange(newValue);
+    const newDisplayValue = e.target.value;
+    setDisplayValue(newDisplayValue);
     
     const cursorPosition = e.target.selectionStart || 0;
-    const textBeforeCursor = newValue.substring(0, cursorPosition);
+    const textBeforeCursor = newDisplayValue.substring(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+
+    // Reconstruct the actual value by preserving existing mentions
+    let newValue = newDisplayValue;
+    const existingMentions = value.match(/@\[([^\]]+)\]\(([^:]+):([^)]+)\)/g) || [];
+    
+    // Replace simple @ mentions back with full format if they exist
+    existingMentions.forEach(mention => {
+      const nameMatch = mention.match(/@\[([^\]]+)\]/);
+      if (nameMatch) {
+        const simpleMention = `@${nameMatch[1]}`;
+        if (newDisplayValue.includes(simpleMention) && !newDisplayValue.includes(mention)) {
+          newValue = newValue.replace(simpleMention, mention);
+        }
+      }
+    });
+
+    onChange(newValue);
 
     if (lastAtSymbol !== -1) {
       const textAfterAt = textBeforeCursor.substring(lastAtSymbol + 1);
@@ -96,7 +124,7 @@ export const MentionTextarea = ({
       setShowSuggestions(false);
     }
 
-    // Extract all mentions from the text
+    // Extract all mentions from the actual value
     const mentionRegex = /@\[([^\]]+)\]\(([^:]+):([^)]+)\)/g;
     const extractedMentions: string[] = [];
     let match;
@@ -110,18 +138,25 @@ export const MentionTextarea = ({
     if (mentionStart === -1) return;
 
     const cursorPosition = textareaRef.current?.selectionStart || 0;
-    const beforeMention = value.substring(0, mentionStart);
-    const afterMention = value.substring(cursorPosition);
     
-    // Format: @[Name](id:type)
+    // Calculate position based on display value
+    const beforeMention = displayValue.substring(0, mentionStart);
+    const afterMention = displayValue.substring(cursorPosition);
+    
+    // Format: @[Name](id:type) for internal value
     const mentionText = `@[${suggestion.name}](${suggestion.id}:${suggestion.type})`;
     const newValue = beforeMention + mentionText + ' ' + afterMention;
     
     onChange(newValue);
     
-    // Update cursor position
+    // Update display value to show only @Name
+    const displayMention = `@${suggestion.name}`;
+    const newDisplayValue = beforeMention + displayMention + ' ' + afterMention;
+    setDisplayValue(newDisplayValue);
+    
+    // Update cursor position based on display text
     setTimeout(() => {
-      const newPosition = beforeMention.length + mentionText.length + 1;
+      const newPosition = beforeMention.length + displayMention.length + 1;
       textareaRef.current?.setSelectionRange(newPosition, newPosition);
       textareaRef.current?.focus();
     }, 0);
@@ -178,7 +213,7 @@ export const MentionTextarea = ({
     <div className="relative">
       <Textarea
         ref={textareaRef}
-        value={value}
+        value={displayValue}
         onChange={handleTextChange}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
