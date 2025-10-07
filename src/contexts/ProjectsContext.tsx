@@ -409,14 +409,22 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           .select('*')
           .order('position', { ascending: true });
         
+        console.log('🔍 Admin view - Total cards fetched:', allBoardCards?.length || 0);
+        
         if (allBoardCards) {
           allCards.push(...allBoardCards.map(transformDBCard));
         }
       } else {
-        // Normal view: only cards from current board
-        for (const list of lists) {
-          const listCards = await cardsHook.fetchAllBoardCards(boardId);
-          allCards.push(...listCards.filter(c => c.list_id === list.id).map(transformDBCard));
+        // Normal view: only cards from current board - fetch once, not per list
+        const boardCards = await cardsHook.fetchAllBoardCards(boardId);
+        console.log('🔍 Board cards fetched for board', boardId, ':', boardCards?.length || 0);
+        console.log('🔍 Cards by list_id:', boardCards?.reduce((acc: any, card: any) => {
+          acc[card.list_id] = (acc[card.list_id] || 0) + 1;
+          return acc;
+        }, {}));
+        
+        if (boardCards) {
+          allCards.push(...boardCards.map(transformDBCard));
         }
       }
 
@@ -466,9 +474,11 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       }
 
       // Group cards by list
-      const listsWithCards = lists.map(list => 
-        transformDBList(list, allCards.filter(card => card.listId === list.id))
-      );
+      const listsWithCards = lists.map(list => {
+        const listCards = allCards.filter(card => card.listId === list.id);
+        console.log(`🔍 List "${list.title}" (${list.id}):`, listCards.length, 'cards');
+        return transformDBList(list, listCards);
+      });
 
       const transformedBoard = transformDBBoard(
         board,
@@ -1055,6 +1065,9 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       state.currentBoard.lists.forEach(list => {
         allCards.push(...list.cards);
       });
+      
+      console.log('🔍 getFilteredCards - Total cards before filters:', allCards.length);
+      console.log('🔍 Active filters:', state.filters);
 
       // Filter out archived cards from main views (unless specifically viewing archived)
       if (!state.filters.archived) {
