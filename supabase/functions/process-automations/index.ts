@@ -157,17 +157,14 @@ serve(async (req) => {
         } else if (recurringCard.frequency === 'weekly') {
           nextCreation.setDate(nextCreation.getDate() + 7);
         } else if (recurringCard.frequency === 'monthly') {
+          // For monthly, preserve the target day of month
+          const targetDay = recurringCard.day_of_month || 1;
           nextCreation.setMonth(nextCreation.getMonth() + 1);
+          nextCreation.setDate(targetDay);
         }
 
         // Set the time AFTER all date calculations to preserve the configured hours
-        // Get the local date components
-        const year = nextCreation.getFullYear();
-        const month = nextCreation.getMonth();
-        const day = nextCreation.getDate();
-        
-        // Create new date with correct time in local timezone
-        nextCreation = new Date(year, month, day, hours, minutes, 0, 0);
+        nextCreation.setHours(hours, minutes, 0, 0);
 
         // Update recurring card
         const { error: updateError } = await supabase
