@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit, Building2, Check, ChevronsUpDown, X } from "lucide-react";
+import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit, Building2, Check, ChevronsUpDown, X, CheckCircle2 } from "lucide-react";
 import { useRecurringCards, RecurringCard } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useClientes } from "@/hooks/useClientes";
@@ -506,7 +506,15 @@ export const RecurringCardsTab = ({
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-base">{card.title}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-base">{card.title}</CardTitle>
+                      {card.last_created_at && (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Executado
+                        </Badge>
+                      )}
+                    </div>
                     {card.description && <CardDescription className="mt-1">{card.description}</CardDescription>}
                   </div>
                   <div className="flex items-center gap-2">
@@ -571,8 +579,15 @@ export const RecurringCardsTab = ({
                         </div>}
                     </>}
                   
-                  <p className="pt-1 border-t">Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
-                  {card.last_created_at && <p>Última criação: {format(new Date(card.last_created_at), 'dd/MM/yyyy HH:mm')}</p>}
+                  <div className="pt-1 border-t space-y-1">
+                    <p>Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
+                    {card.last_created_at && (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="font-medium">Última execução: {format(new Date(card.last_created_at), 'dd/MM/yyyy HH:mm')}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>)}
