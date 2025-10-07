@@ -8,11 +8,12 @@ import { toast } from "sonner";
 import { CreateClienteData, Cliente } from "@/hooks/useClientes";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Save } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
+import { Badge } from "@/components/ui/badge";
 
 interface ClienteFormProps {
   onSubmit: (clienteData: CreateClienteData) => void;
@@ -224,15 +225,50 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
   };
 
   const handleCancel = () => {
-    // Clear localStorage draft when canceling
+    // Only clear draft if user explicitly confirms
     if (!initialData) {
-      localStorage.removeItem(STORAGE_KEY);
+      const hasDraft = localStorage.getItem(STORAGE_KEY);
+      if (hasDraft) {
+        if (window.confirm("Você tem dados não salvos. Deseja descartar o rascunho?")) {
+          localStorage.removeItem(STORAGE_KEY);
+          onCancel();
+        }
+        return;
+      }
     }
     onCancel();
   };
 
+  const handleDiscardDraft = () => {
+    if (window.confirm("Tem certeza que deseja descartar o rascunho?")) {
+      localStorage.removeItem(STORAGE_KEY);
+      toast.success("Rascunho descartado");
+      onCancel();
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Draft Indicator */}
+      {!initialData && (
+        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center gap-2">
+            <Save className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm text-blue-600 dark:text-blue-400">
+              Rascunho salvo automaticamente. Você pode sair e voltar depois!
+            </span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleDiscardDraft}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+          >
+            Descartar
+          </Button>
+        </div>
+      )}
+
       {/* Avatar Upload */}
       <div className="flex justify-center py-4">
         <AvatarUpload
@@ -310,7 +346,10 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="fonte">Fonte Original</Label>
-            <Select onValueChange={(value) => setNovoCliente({...novoCliente, fonte_original: value})}>
+            <Select 
+              value={novoCliente.fonte_original}
+              onValueChange={(value) => setNovoCliente({...novoCliente, fonte_original: value})}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Como nos conheceu?" />
               </SelectTrigger>

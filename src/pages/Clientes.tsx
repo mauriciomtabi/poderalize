@@ -63,7 +63,7 @@ const Clientes = () => {
   };
 
   const handleCloseAddModal = () => {
-    localStorage.removeItem('cliente-form-draft');
+    // Don't remove draft when closing modal - only when explicitly canceling or submitting
     setIsAddModalOpen(false);
   };
 
