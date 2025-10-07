@@ -585,80 +585,107 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
 
     // Card actions
     addCard: async (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt' | 'activities'>) => {
-      if (!user) return false;
+      if (!user || !state.currentBoard) return false;
 
-      // Get current cards count in the list for proper positioning
-      const { data: existingCards } = await supabase
-        .from('project_cards')
-        .select('id')
-        .eq('list_id', listId);
+      try {
+        // Preflight permission check
+        const { data: canManage, error: permError } = await supabase.rpc('user_can_manage_card_on_list', {
+          _user_id: user.id,
+          _list_id: listId
+        });
 
-      const result = await cardsHook.createCard({
-        list_id: listId,
-        title: card.title,
-        description: card.description,
-        status: card.status,
-        priority: card.priority,
-        due_date: card.dueDate,
-        start_date: card.startDate,
-        estimated_hours: card.estimatedHours,
-        actual_hours: card.actualHours,
-        position: existingCards?.length || 0,
-        cover: card.cover,
-        location: card.location,
-        client_id: card.client_id,
-        custom_fields: {
-          ...(card.customFields || {}),
-          checklists: card.checklists || [],
-          comments: card.comments || [],
-          attachments: card.attachments || [],
-          activities: []
-        },
-        archived: card.archived,
-        watching: card.watching,
-        created_by: user.id
-      });
-      
-      if (result && state.currentBoard) {
-        // Insert assignees into project_card_assignees
-        if (card.assignees && card.assignees.length > 0) {
-          const assigneeInserts = card.assignees.map(assignee => ({
-            card_id: result.id,
-            member_id: assignee.id
-          }));
-          
-          await supabase
-            .from('project_card_assignees')
-            .insert(assigneeInserts as any);
+        if (permError) {
+          console.error('Erro ao verificar permissões:', permError);
+          toast({
+            title: 'Erro ao verificar permissões',
+            description: 'Tente novamente em alguns instantes.',
+            variant: 'destructive',
+          });
+          return false;
         }
 
-        // Insert labels into project_card_labels
-        if (card.labels && card.labels.length > 0) {
-          const labelInserts = card.labels.map(label => ({
-            card_id: result.id,
-            label_id: label.id
-          }));
-          
-          await supabase
-            .from('project_card_labels')
-            .insert(labelInserts as any);
+        if (!canManage) {
+          console.warn('Bloqueado por RLS ao criar cartão', { userId: user.id, listId, boardId: state.currentBoard.id });
+          toast({
+            title: 'Acesso necessário',
+            description: 'Você precisa ser membro deste projeto para criar cartões.',
+            variant: 'destructive',
+          });
+          return false;
         }
 
-        // Add activity for card creation
-        if (user) {
-          await supabase
-            .from('project_activities')
-            .insert({
+        // Get current cards count in the list for proper positioning
+        const { data: existingCards } = await supabase
+          .from('project_cards')
+          .select('id')
+          .eq('list_id', listId);
+
+        const result = await cardsHook.createCard({
+          list_id: listId,
+          title: card.title,
+          description: card.description,
+          status: card.status,
+          priority: card.priority,
+          due_date: card.dueDate,
+          start_date: card.startDate,
+          estimated_hours: card.estimatedHours,
+          actual_hours: card.actualHours,
+          position: existingCards?.length || 0,
+          cover: card.cover,
+          location: card.location,
+          client_id: card.client_id,
+          custom_fields: {
+            ...(card.customFields || {}),
+            checklists: card.checklists || [],
+            comments: card.comments || [],
+            attachments: card.attachments || [],
+            activities: []
+          },
+          archived: card.archived,
+          watching: card.watching,
+          created_by: user.id
+        });
+        
+        if (result && state.currentBoard) {
+          // Insert assignees into project_card_assignees
+          if (card.assignees && card.assignees.length > 0) {
+            const assigneeInserts = card.assignees.map(assignee => ({
               card_id: result.id,
-              user_id: user.id,
-              action: 'criou o cartão',
-              details: {}
-            } as any);
+              member_id: assignee.id
+            }));
+            await supabase.from('project_card_assignees').insert(assigneeInserts as any);
+          }
+
+          // Insert labels into project_card_labels
+          if (card.labels && card.labels.length > 0) {
+            const labelInserts = card.labels.map(label => ({
+              card_id: result.id,
+              label_id: label.id
+            }));
+            await supabase.from('project_card_labels').insert(labelInserts as any);
+          }
+
+          // Add activity for card creation
+          await supabase.from('project_activities').insert({
+            card_id: result.id,
+            user_id: user.id,
+            action: 'criou o cartão',
+            details: {}
+          } as any);
+          
+          await loadBoard(state.currentBoard.id);
+          return true;
         }
-        await loadBoard(state.currentBoard.id);
-        return true;
+        return false;
+      } catch (error) {
+        console.error('Erro ao criar cartão:', error);
+        toast({
+          title: 'Erro ao criar cartão',
+          description: 'Ocorreu um erro ao criar o cartão. Tente novamente.',
+          variant: 'destructive',
+        });
+        return false;
       }
-      return false;
     },
 
     updateCard: async (card: ProjectCard) => {

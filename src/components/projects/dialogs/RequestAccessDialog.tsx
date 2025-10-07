@@ -35,7 +35,7 @@ export const RequestAccessDialog = ({
     setIsRequesting(true);
     try {
       // Create notification for board owner
-      const { error } = await supabase.rpc('create_notification', {
+      const { error } = await (supabase as any).rpc('create_notification', {
         p_user_id: boardOwnerId,
         p_type: 'access_request',
         p_title: 'Solicitação de Acesso',

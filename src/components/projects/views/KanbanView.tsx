@@ -21,6 +21,10 @@ import { CardDetailModal } from "../modal/CardDetailModal";
 import { InlineEdit } from "@/components/kanban/InlineEdit";
 import { LoadingOverlay } from "@/components/ui/loading-spinner";
 import { ProjectList, CardStatus, Priority } from "@/types/projects";
+import { BoardAccessBanner } from "../BoardAccessBanner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export const KanbanView = () => {
   const { state, actions } = useProjects();
@@ -31,6 +35,9 @@ export const KanbanView = () => {
   const [selectedList, setSelectedList] = useState<ProjectList | null>(null);
   const [showListActionsDialog, setShowListActionsDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { isAdmin } = useAuthContext();
+  const [hasBoardAccess, setHasBoardAccess] = useState<boolean | null>(null);
 
   // Reset scroll to left when component mounts
   useEffect(() => {
@@ -39,13 +46,33 @@ export const KanbanView = () => {
     }
   }, []);
 
+  // Check board access to show banner/prevent confusion
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!state.currentBoard || !user) {
+        setHasBoardAccess(null);
+        return;
+      }
+      const { data, error } = await supabase.rpc('user_has_board_access', {
+        _user_id: user.id,
+        _board_id: state.currentBoard.id,
+      });
+      if (error) {
+        console.warn('Erro ao verificar acesso ao board:', error);
+        setHasBoardAccess(null);
+      } else {
+        setHasBoardAccess(Boolean(data));
+      }
+    };
+    checkAccess();
+  }, [state.currentBoard?.id, user?.id]);
+
   const onDragStart = (start: any) => {
     actions.setDraggedItem({ 
       type: start.type?.startsWith('list') ? 'list' : 'card', 
       id: start.draggableId 
     });
   };
-
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId, type } = result;
     
@@ -109,6 +136,14 @@ export const KanbanView = () => {
 
   return (
     <LoadingOverlay isLoading={state.isLoading}>
+      {hasBoardAccess === false && (
+        <BoardAccessBanner
+          boardId={state.currentBoard.id}
+          boardTitle={state.currentBoard.title}
+          boardOwnerId={state.currentBoard.createdBy}
+          isUserAdmin={isAdmin}
+        />
+      )}
       <div className="flex h-full min-w-0 min-h-0">
         <div 
           ref={scrollContainerRef}
