@@ -588,32 +588,6 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       if (!user || !state.currentBoard) return false;
 
       try {
-        // Preflight permission check
-        const { data: canManage, error: permError } = await supabase.rpc('user_can_manage_card_on_list', {
-          _user_id: user.id,
-          _list_id: listId
-        });
-
-        if (permError) {
-          console.error('Erro ao verificar permissões:', permError);
-          toast({
-            title: 'Erro ao verificar permissões',
-            description: 'Tente novamente em alguns instantes.',
-            variant: 'destructive',
-          });
-          return false;
-        }
-
-        if (!canManage) {
-          console.warn('Bloqueado por RLS ao criar cartão', { userId: user.id, listId, boardId: state.currentBoard.id });
-          toast({
-            title: 'Acesso necessário',
-            description: 'Você precisa ser membro deste projeto para criar cartões.',
-            variant: 'destructive',
-          });
-          return false;
-        }
-
         // Get current cards count in the list for proper positioning
         const { data: existingCards } = await supabase
           .from('project_cards')
