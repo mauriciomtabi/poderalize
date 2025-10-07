@@ -12,15 +12,23 @@ import { useRecurringCards, RecurringCard } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { format } from "date-fns";
 import type { Priority } from "@/types/projects";
-
 interface RecurringCardsTabProps {
   boardId: string | null;
 }
-
-export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
-  const { state } = useProjects();
-  const { cards, isLoading, createCard, updateCard, deleteCard, toggleEnabled } = useRecurringCards(boardId);
-  
+export const RecurringCardsTab = ({
+  boardId
+}: RecurringCardsTabProps) => {
+  const {
+    state
+  } = useProjects();
+  const {
+    cards,
+    isLoading,
+    createCard,
+    updateCard,
+    deleteCard,
+    toggleEnabled
+  } = useRecurringCards(boardId);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -32,36 +40,35 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
     day_of_month: 1,
     time_of_day: "09:00",
     days_of_week: [] as number[],
-    start_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+    start_date: new Date().toISOString().split('T')[0],
+    // YYYY-MM-DD format
     // Card properties
     priority: "medium" as Priority,
     label_ids: [] as string[],
     assignee_ids: [] as string[],
-    due_date_offset: 0, // Days from creation
-    start_date_offset: 0, // Days from creation
-    estimated_hours: 0,
+    due_date_offset: 0,
+    // Days from creation
+    start_date_offset: 0,
+    // Days from creation
+    estimated_hours: 0
   });
-
   const handleSubmit = async () => {
     if (!boardId || !formData.title || !formData.list_id) return;
     if (formData.frequency === 'daily' && formData.days_of_week.length === 0) return;
-
     const now = new Date();
     const [hours, minutes] = formData.time_of_day.split(':').map(Number);
-    
+
     // Use the selected start date
     let nextCreation = new Date(formData.start_date);
     nextCreation.setHours(hours, minutes, 0, 0);
-
     if (formData.frequency === 'daily') {
       // Find next occurrence based on selected days
       const sortedDays = [...formData.days_of_week].sort((a, b) => a - b);
       const currentDay = nextCreation.getDay();
-      
+
       // Check if the start date's day is in the selected days and if the time hasn't passed yet
       const isStartDaySelected = sortedDays.includes(currentDay);
       const hasTimePassed = nextCreation < now;
-      
       if (isStartDaySelected && !hasTimePassed) {
         // Use the start date as-is since it's valid
         // nextCreation is already set correctly
@@ -104,7 +111,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
     } else if (formData.frequency === 'weekly') {
       const currentDay = nextCreation.getDay();
       const targetDay = formData.day_of_week;
-      
+
       // Check if the start date is already on the target day and hasn't passed
       if (currentDay === targetDay && nextCreation >= now) {
         // Use the start date as-is
@@ -112,7 +119,7 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
         // Calculate days until next occurrence
         const daysUntilNext = (targetDay - currentDay + 7) % 7;
         nextCreation.setDate(nextCreation.getDate() + (daysUntilNext || 7));
-        
+
         // If still in the past, add another week
         if (nextCreation < now) {
           nextCreation.setDate(nextCreation.getDate() + 7);
@@ -122,14 +129,13 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       // Set to the target day of month
       const targetDay = formData.day_of_month;
       nextCreation.setDate(targetDay);
-      
+
       // If in the past, move to next month
       if (nextCreation < now) {
         nextCreation.setMonth(nextCreation.getMonth() + 1);
         nextCreation.setDate(targetDay);
       }
     }
-
     const cardData = {
       board_id: boardId,
       list_id: formData.list_id,
@@ -147,17 +153,15 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
         assignee_ids: formData.assignee_ids,
         due_date_offset: formData.due_date_offset,
         start_date_offset: formData.start_date_offset,
-        estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined,
+        estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined
       },
-      enabled: true,
+      enabled: true
     };
-
     if (editingId) {
       await updateCard(editingId, cardData);
     } else {
       await createCard(cardData);
     }
-
     setShowForm(false);
     setEditingId(null);
     setFormData({
@@ -175,18 +179,14 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       assignee_ids: [],
       due_date_offset: 0,
       start_date_offset: 0,
-      estimated_hours: 0,
+      estimated_hours: 0
     });
   };
-
   const handleEdit = (card: RecurringCard) => {
-    const config = typeof card.template_config === 'object' && card.template_config !== null 
-      ? card.template_config as Record<string, any>
-      : {};
+    const config = typeof card.template_config === 'object' && card.template_config !== null ? card.template_config as Record<string, any> : {};
 
     // Extract date from next_creation_at
     const startDate = new Date(card.next_creation_at).toISOString().split('T')[0];
-
     setEditingId(card.id);
     setShowForm(true);
     setFormData({
@@ -199,65 +199,66 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
       time_of_day: card.time_of_day || "09:00",
       days_of_week: card.days_of_week || [],
       start_date: startDate,
-      priority: (config.priority as Priority) || "medium",
+      priority: config.priority as Priority || "medium",
       label_ids: Array.isArray(config.label_ids) ? config.label_ids : [],
       assignee_ids: Array.isArray(config.assignee_ids) ? config.assignee_ids : [],
       due_date_offset: typeof config.due_date_offset === 'number' ? config.due_date_offset : 0,
       start_date_offset: typeof config.start_date_offset === 'number' ? config.start_date_offset : 0,
-      estimated_hours: typeof config.estimated_hours === 'number' ? config.estimated_hours : 0,
+      estimated_hours: typeof config.estimated_hours === 'number' ? config.estimated_hours : 0
     });
   };
-
   const frequencyLabels = {
     daily: "Diário",
     weekly: "Semanal",
-    monthly: "Mensal",
+    monthly: "Mensal"
   };
-
-  const weekDays = [
-    { value: 0, label: "Domingo" },
-    { value: 1, label: "Segunda" },
-    { value: 2, label: "Terça" },
-    { value: 3, label: "Quarta" },
-    { value: 4, label: "Quinta" },
-    { value: 5, label: "Sexta" },
-    { value: 6, label: "Sábado" },
-  ];
-
+  const weekDays = [{
+    value: 0,
+    label: "Domingo"
+  }, {
+    value: 1,
+    label: "Segunda"
+  }, {
+    value: 2,
+    label: "Terça"
+  }, {
+    value: 3,
+    label: "Quarta"
+  }, {
+    value: 4,
+    label: "Quinta"
+  }, {
+    value: 5,
+    label: "Sexta"
+  }, {
+    value: 6,
+    label: "Sábado"
+  }];
   const priorityLabels = {
     low: "Baixa",
     medium: "Média",
     high: "Alta",
-    urgent: "Urgente",
+    urgent: "Urgente"
   };
-
   const priorityColors = {
     low: "bg-blue-500",
     medium: "bg-yellow-500",
     high: "bg-orange-500",
-    urgent: "bg-red-500",
+    urgent: "bg-red-500"
   };
-
   const toggleLabel = (labelId: string) => {
     setFormData(prev => ({
       ...prev,
-      label_ids: prev.label_ids.includes(labelId)
-        ? prev.label_ids.filter(id => id !== labelId)
-        : [...prev.label_ids, labelId]
+      label_ids: prev.label_ids.includes(labelId) ? prev.label_ids.filter(id => id !== labelId) : [...prev.label_ids, labelId]
     }));
   };
-
   const toggleAssignee = (memberId: string) => {
     setFormData(prev => ({
       ...prev,
-      assignee_ids: prev.assignee_ids.includes(memberId)
-        ? prev.assignee_ids.filter(id => id !== memberId)
-        : [...prev.assignee_ids, memberId]
+      assignee_ids: prev.assignee_ids.includes(memberId) ? prev.assignee_ids.filter(id => id !== memberId) : [...prev.assignee_ids, memberId]
     }));
   };
-
-  return (
-    <div className="space-y-4">
+  return <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
           Crie cards automaticamente em intervalos regulares
@@ -268,63 +269,59 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
         </Button>
       </div>
 
-      {showForm && (
-        <Card>
+      {showForm && <Card>
           <CardHeader>
             <CardTitle>{editingId ? "Editar" : "Novo"} Card Recorrente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Título do Card</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Ex: Reunião semanal da equipe"
-              />
+              <Input id="title" value={formData.title} onChange={e => setFormData({
+            ...formData,
+            title: e.target.value
+          })} placeholder="Ex: Reunião semanal da equipe" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">Descrição (opcional)</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Detalhes do card..."
-                rows={3}
-              />
+              <Textarea id="description" value={formData.description} onChange={e => setFormData({
+            ...formData,
+            description: e.target.value
+          })} placeholder="Detalhes do card..." rows={3} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="list">Lista</Label>
-              <Select value={formData.list_id} onValueChange={(value) => setFormData({ ...formData, list_id: value })}>
+              <Select value={formData.list_id} onValueChange={value => setFormData({
+            ...formData,
+            list_id: value
+          })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma lista" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
-                    {state.currentBoard?.lists.map((list) => (
-                      <SelectItem key={list.id} value={list.id}>
+                    {state.currentBoard?.lists.map(list => <SelectItem key={list.id} value={list.id}>
                         {list.title}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="start_date">Data de Início</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              />
+              <Input id="start_date" type="date" value={formData.start_date} onChange={e => setFormData({
+            ...formData,
+            start_date: e.target.value
+          })} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="frequency">Frequência</Label>
-                <Select value={formData.frequency} onValueChange={(value: any) => setFormData({ ...formData, frequency: value })}>
+                <Select value={formData.frequency} onValueChange={(value: any) => setFormData({
+              ...formData,
+              frequency: value
+            })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -338,74 +335,53 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
 
               <div className="space-y-2">
                 <Label htmlFor="time">Horário</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={formData.time_of_day}
-                  onChange={(e) => setFormData({ ...formData, time_of_day: e.target.value })}
-                />
+                <Input id="time" type="time" value={formData.time_of_day} onChange={e => setFormData({
+              ...formData,
+              time_of_day: e.target.value
+            })} />
               </div>
             </div>
 
-            {formData.frequency === 'daily' && (
-              <div className="space-y-2">
+            {formData.frequency === 'daily' && <div className="space-y-2">
                 <Label>Dias da Semana</Label>
                 <div className="grid grid-cols-7 gap-2">
-                  {weekDays.map((day) => (
-                    <Button
-                      key={day.value}
-                      type="button"
-                      variant={formData.days_of_week.includes(day.value) ? "default" : "outline"}
-                      size="sm"
-                      className="h-10 text-xs"
-                      onClick={() => {
-                        const newDays = formData.days_of_week.includes(day.value)
-                          ? formData.days_of_week.filter(d => d !== day.value)
-                          : [...formData.days_of_week, day.value].sort();
-                        setFormData({ ...formData, days_of_week: newDays });
-                      }}
-                    >
+                  {weekDays.map(day => <Button key={day.value} type="button" variant={formData.days_of_week.includes(day.value) ? "default" : "outline"} size="sm" className="h-10 text-xs" onClick={() => {
+              const newDays = formData.days_of_week.includes(day.value) ? formData.days_of_week.filter(d => d !== day.value) : [...formData.days_of_week, day.value].sort();
+              setFormData({
+                ...formData,
+                days_of_week: newDays
+              });
+            }}>
                       {day.label.substring(0, 3)}
-                    </Button>
-                  ))}
+                    </Button>)}
                 </div>
-                {formData.days_of_week.length === 0 && (
-                  <p className="text-xs text-destructive">Selecione pelo menos um dia</p>
-                )}
-              </div>
-            )}
+                {formData.days_of_week.length === 0 && <p className="text-xs text-destructive">Selecione pelo menos um dia</p>}
+              </div>}
 
-            {formData.frequency === 'weekly' && (
-              <div className="space-y-2">
+            {formData.frequency === 'weekly' && <div className="space-y-2">
                 <Label htmlFor="day_of_week">Dia da Semana</Label>
-                <Select value={String(formData.day_of_week)} onValueChange={(value) => setFormData({ ...formData, day_of_week: Number(value) })}>
+                <Select value={String(formData.day_of_week)} onValueChange={value => setFormData({
+            ...formData,
+            day_of_week: Number(value)
+          })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover z-50">
-                    {weekDays.map((day) => (
-                      <SelectItem key={day.value} value={String(day.value)}>
+                    {weekDays.map(day => <SelectItem key={day.value} value={String(day.value)}>
                         {day.label}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
-            )}
+              </div>}
 
-            {formData.frequency === 'monthly' && (
-              <div className="space-y-2">
+            {formData.frequency === 'monthly' && <div className="space-y-2">
                 <Label htmlFor="day_of_month">Dia do Mês</Label>
-                <Input
-                  id="day_of_month"
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={formData.day_of_month}
-                  onChange={(e) => setFormData({ ...formData, day_of_month: Number(e.target.value) })}
-                />
-              </div>
-            )}
+                <Input id="day_of_month" type="number" min="1" max="31" value={formData.day_of_month} onChange={e => setFormData({
+            ...formData,
+            day_of_month: Number(e.target.value)
+          })} />
+              </div>}
 
             <div className="border-t pt-4 space-y-4">
               <h3 className="font-medium flex items-center gap-2">
@@ -413,65 +389,29 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                 Propriedades do Card
               </h3>
 
-              <div className="space-y-2">
-                <Label htmlFor="priority">Prioridade</Label>
-                <Select value={formData.priority} onValueChange={(value: Priority) => setFormData({ ...formData, priority: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    {Object.entries(priorityLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${priorityColors[value as Priority]}`} />
-                          {label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              
 
-              {state.currentBoard && state.currentBoard.labels.length > 0 && (
-                <div className="space-y-2">
+              {state.currentBoard && state.currentBoard.labels.length > 0 && <div className="space-y-2">
                   <Label>Etiquetas</Label>
                   <div className="flex flex-wrap gap-2">
-                    {state.currentBoard.labels.map((label) => (
-                      <Badge
-                        key={label.id}
-                        variant={formData.label_ids.includes(label.id) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        style={formData.label_ids.includes(label.id) ? {
-                          backgroundColor: label.color,
-                          borderColor: label.color,
-                        } : {}}
-                        onClick={() => toggleLabel(label.id)}
-                      >
+                    {state.currentBoard.labels.map(label => <Badge key={label.id} variant={formData.label_ids.includes(label.id) ? "default" : "outline"} className="cursor-pointer" style={formData.label_ids.includes(label.id) ? {
+                backgroundColor: label.color,
+                borderColor: label.color
+              } : {}} onClick={() => toggleLabel(label.id)}>
                         {label.name}
-                      </Badge>
-                    ))}
+                      </Badge>)}
                   </div>
-                </div>
-              )}
+                </div>}
 
-              {state.currentBoard && state.currentBoard.members.length > 0 && (
-                <div className="space-y-2">
+              {state.currentBoard && state.currentBoard.members.length > 0 && <div className="space-y-2">
                   <Label>Membros</Label>
                   <div className="flex flex-wrap gap-2">
-                    {state.currentBoard.members.map((member) => (
-                      <Badge
-                        key={member.id}
-                        variant={formData.assignee_ids.includes(member.id) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => toggleAssignee(member.id)}
-                      >
+                    {state.currentBoard.members.map(member => <Badge key={member.id} variant={formData.assignee_ids.includes(member.id) ? "default" : "outline"} className="cursor-pointer" onClick={() => toggleAssignee(member.id)}>
                         <Users className="h-3 w-3 mr-1" />
                         {member.name}
-                      </Badge>
-                    ))}
+                      </Badge>)}
                   </div>
-                </div>
-              )}
+                </div>}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -479,14 +419,10 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                     <Calendar className="h-3 w-3" />
                     Início (dias)
                   </Label>
-                  <Input
-                    id="start_date_offset"
-                    type="number"
-                    min="0"
-                    value={formData.start_date_offset}
-                    onChange={(e) => setFormData({ ...formData, start_date_offset: Number(e.target.value) })}
-                    placeholder="0 = mesmo dia"
-                  />
+                  <Input id="start_date_offset" type="number" min="0" value={formData.start_date_offset} onChange={e => setFormData({
+                ...formData,
+                start_date_offset: Number(e.target.value)
+              })} placeholder="0 = mesmo dia" />
                 </div>
 
                 <div className="space-y-2">
@@ -494,14 +430,10 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                     <Calendar className="h-3 w-3" />
                     Vencimento (dias)
                   </Label>
-                  <Input
-                    id="due_date_offset"
-                    type="number"
-                    min="0"
-                    value={formData.due_date_offset}
-                    onChange={(e) => setFormData({ ...formData, due_date_offset: Number(e.target.value) })}
-                    placeholder="0 = sem vencimento"
-                  />
+                  <Input id="due_date_offset" type="number" min="0" value={formData.due_date_offset} onChange={e => setFormData({
+                ...formData,
+                due_date_offset: Number(e.target.value)
+              })} placeholder="0 = sem vencimento" />
                 </div>
               </div>
 
@@ -510,75 +442,43 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                   <Clock className="h-3 w-3" />
                   Horas Estimadas
                 </Label>
-                <Input
-                  id="estimated_hours"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={formData.estimated_hours}
-                  onChange={(e) => setFormData({ ...formData, estimated_hours: Number(e.target.value) })}
-                  placeholder="0 = não especificado"
-                />
+                <Input id="estimated_hours" type="number" min="0" step="0.5" value={formData.estimated_hours} onChange={e => setFormData({
+              ...formData,
+              estimated_hours: Number(e.target.value)
+            })} placeholder="0 = não especificado" />
               </div>
             </div>
 
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" onClick={() => {
-                setShowForm(false);
-                setEditingId(null);
-              }}>
+            setShowForm(false);
+            setEditingId(null);
+          }}>
                 Cancelar
               </Button>
-              <Button 
-                onClick={handleSubmit} 
-                disabled={
-                  !formData.title || 
-                  !formData.list_id || 
-                  (formData.frequency === 'daily' && formData.days_of_week.length === 0)
-                }
-              >
+              <Button onClick={handleSubmit} disabled={!formData.title || !formData.list_id || formData.frequency === 'daily' && formData.days_of_week.length === 0}>
                 {editingId ? "Salvar" : "Criar"}
               </Button>
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       <div className="space-y-3">
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p>
-        ) : cards.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
+        {isLoading ? <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p> : cards.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
             Nenhum card recorrente criado ainda
-          </p>
-        ) : (
-          cards.map((card) => (
-            <Card key={card.id}>
+          </p> : cards.map(card => <Card key={card.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-base">{card.title}</CardTitle>
-                    {card.description && (
-                      <CardDescription className="mt-1">{card.description}</CardDescription>
-                    )}
+                    {card.description && <CardDescription className="mt-1">{card.description}</CardDescription>}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Switch
-                      checked={card.enabled}
-                      onCheckedChange={(checked) => toggleEnabled(card.id, checked)}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(card)}
-                    >
+                    <Switch checked={card.enabled} onCheckedChange={checked => toggleEnabled(card.id, checked)} />
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(card)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteCard(card.id)}
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => deleteCard(card.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -592,55 +492,33 @@ export const RecurringCardsTab = ({ boardId }: RecurringCardsTabProps) => {
                       {priorityLabels[card.template_config?.priority as Priority || 'medium']}
                     </Badge>
                   </div>
-                  {card.frequency === 'daily' && card.days_of_week && card.days_of_week.length > 0 && (
-                    <p>
-                      Dias: {card.days_of_week
-                        .sort((a, b) => a - b)
-                        .map(day => weekDays.find(d => d.value === day)?.label.substring(0, 3))
-                        .join(', ')}
-                    </p>
-                  )}
-                  {card.frequency === 'weekly' && card.day_of_week !== null && card.day_of_week !== undefined && (
-                    <p>Dia: {weekDays.find(d => d.value === card.day_of_week)?.label}</p>
-                  )}
-                  {card.frequency === 'monthly' && card.day_of_month && (
-                    <p>Dia do mês: {card.day_of_month}</p>
-                  )}
+                  {card.frequency === 'daily' && card.days_of_week && card.days_of_week.length > 0 && <p>
+                      Dias: {card.days_of_week.sort((a, b) => a - b).map(day => weekDays.find(d => d.value === day)?.label.substring(0, 3)).join(', ')}
+                    </p>}
+                  {card.frequency === 'weekly' && card.day_of_week !== null && card.day_of_week !== undefined && <p>Dia: {weekDays.find(d => d.value === card.day_of_week)?.label}</p>}
+                  {card.frequency === 'monthly' && card.day_of_month && <p>Dia do mês: {card.day_of_month}</p>}
                   <p>Horário: {card.time_of_day || '09:00'}</p>
                   
-                  {card.template_config && (
-                    <>
-                      {Array.isArray(card.template_config.label_ids) && card.template_config.label_ids.length > 0 && (
-                        <div className="flex items-center gap-1 flex-wrap">
+                  {card.template_config && <>
+                      {Array.isArray(card.template_config.label_ids) && card.template_config.label_ids.length > 0 && <div className="flex items-center gap-1 flex-wrap">
                           <Tag className="h-3 w-3" />
                           {card.template_config.label_ids.length} etiqueta(s)
-                        </div>
-                      )}
-                      {Array.isArray(card.template_config.assignee_ids) && card.template_config.assignee_ids.length > 0 && (
-                        <div className="flex items-center gap-1">
+                        </div>}
+                      {Array.isArray(card.template_config.assignee_ids) && card.template_config.assignee_ids.length > 0 && <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           {card.template_config.assignee_ids.length} membro(s)
-                        </div>
-                      )}
-                      {card.template_config.estimated_hours > 0 && (
-                        <div className="flex items-center gap-1">
+                        </div>}
+                      {card.template_config.estimated_hours > 0 && <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {card.template_config.estimated_hours}h estimadas
-                        </div>
-                      )}
-                    </>
-                  )}
+                        </div>}
+                    </>}
                   
                   <p className="pt-1 border-t">Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
-                  {card.last_created_at && (
-                    <p>Última criação: {format(new Date(card.last_created_at), 'dd/MM/yyyy HH:mm')}</p>
-                  )}
+                  {card.last_created_at && <p>Última criação: {format(new Date(card.last_created_at), 'dd/MM/yyyy HH:mm')}</p>}
                 </div>
               </CardContent>
-            </Card>
-          ))
-        )}
+            </Card>)}
       </div>
-    </div>
-  );
+    </div>;
 };

@@ -8,18 +8,22 @@ import { RulesTab } from "./RulesTab";
 import { ButtonsTab } from "./ButtonsTab";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useAutomationProcessor } from "@/hooks/useAutomationProcessor";
-
 interface AutomationDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-export const AutomationDialog = ({ isOpen, onClose }: AutomationDialogProps) => {
-  const { state } = useProjects();
-  const { processAutomations, isProcessing } = useAutomationProcessor();
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+export const AutomationDialog = ({
+  isOpen,
+  onClose
+}: AutomationDialogProps) => {
+  const {
+    state
+  } = useProjects();
+  const {
+    processAutomations,
+    isProcessing
+  } = useAutomationProcessor();
+  return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between w-full">
@@ -27,16 +31,7 @@ export const AutomationDialog = ({ isOpen, onClose }: AutomationDialogProps) => 
               <span className="text-2xl">⚡</span>
               Automação
             </div>
-            <Button
-              onClick={processAutomations}
-              disabled={isProcessing}
-              size="sm"
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Play className="h-4 w-4" />
-              {isProcessing ? "Processando..." : "Processar Agora"}
-            </Button>
+            
           </DialogTitle>
         </DialogHeader>
 
@@ -65,6 +60,5 @@ export const AutomationDialog = ({ isOpen, onClose }: AutomationDialogProps) => 
           </TabsContent>
         </Tabs>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
