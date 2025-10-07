@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Move } from "lucide-react";
 import { ProjectList } from "@/types/projects";
 import { cn } from "@/lib/utils";
+import { useProjects } from "@/contexts/ProjectsContext";
 
 interface MoveCardDialogProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export const MoveCardDialog = ({
   onMove,
 }: MoveCardDialogProps) => {
   const [selectedListId, setSelectedListId] = useState<string>("");
+  const { actions } = useProjects();
 
   const handleMove = () => {
     if (selectedListId && selectedListId !== currentListId) {
@@ -89,7 +91,7 @@ export const MoveCardDialog = ({
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {list.cards?.filter(card => !card.archived).length || 0} cartões
+                    {actions.getFilteredCards().filter(c => c.listId === list.id).length} cartões
                   </p>
                 </button>
                 ))}
