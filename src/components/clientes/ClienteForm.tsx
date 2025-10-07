@@ -23,6 +23,7 @@ interface ClienteFormProps {
 
 export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProps) => {
   const STORAGE_KEY = 'cliente-form-draft';
+  const SCROLL_KEY = 'cliente-form-scroll';
   
   // Load from localStorage if no initialData (new client form)
   const getInitialFormData = () => {
@@ -129,6 +130,55 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
     }
   }, [novoCliente, avatarUrl, initialData]);
 
+  // Save scroll position on scroll
+  useEffect(() => {
+    if (initialData) return;
+
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && target.scrollTop !== undefined) {
+        try {
+          localStorage.setItem(SCROLL_KEY, target.scrollTop.toString());
+        } catch (error) {
+          console.error('Error saving scroll position:', error);
+        }
+      }
+    };
+
+    // Find the scrollable container (DialogContent)
+    const scrollContainer = document.querySelector('[role="dialog"] [data-radix-scroll-area-viewport]') || 
+                           document.querySelector('[role="dialog"] .overflow-y-auto');
+    
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [initialData]);
+
+  // Restore scroll position when component mounts
+  useEffect(() => {
+    if (initialData) return;
+
+    const restoreScroll = () => {
+      try {
+        const savedScroll = localStorage.getItem(SCROLL_KEY);
+        if (savedScroll) {
+          const scrollContainer = document.querySelector('[role="dialog"] [data-radix-scroll-area-viewport]') || 
+                                 document.querySelector('[role="dialog"] .overflow-y-auto');
+          if (scrollContainer) {
+            scrollContainer.scrollTop = parseInt(savedScroll, 10);
+          }
+        }
+      } catch (error) {
+        console.error('Error restoring scroll position:', error);
+      }
+    };
+
+    // Delay to ensure DOM is ready
+    const timer = setTimeout(restoreScroll, 100);
+    return () => clearTimeout(timer);
+  }, [initialData]);
+
   useEffect(() => {
     if (initialData) {
       setNovoCliente({
@@ -216,9 +266,10 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       observacoes_comportamento: novoCliente.observacoes_comportamento || undefined,
     };
 
-    // Clear localStorage draft after successful submission
+    // Clear localStorage draft and scroll position after successful submission
     if (!initialData) {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SCROLL_KEY);
     }
 
     onSubmit(clienteData);
@@ -231,6 +282,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       if (hasDraft) {
         if (window.confirm("Você tem dados não salvos. Deseja descartar o rascunho?")) {
           localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(SCROLL_KEY);
           onCancel();
         }
         return;
@@ -242,6 +294,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
   const handleDiscardDraft = () => {
     if (window.confirm("Tem certeza que deseja descartar o rascunho?")) {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SCROLL_KEY);
       toast.success("Rascunho descartado");
       onCancel();
     }
