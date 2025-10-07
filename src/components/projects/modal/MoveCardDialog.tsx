@@ -89,7 +89,7 @@ export const MoveCardDialog = ({
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {list.cards?.length || 0} cartões
+                    {list.cards?.filter(card => !card.archived).length || 0} cartões
                   </p>
                 </button>
                 ))}
