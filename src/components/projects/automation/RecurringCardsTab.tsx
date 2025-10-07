@@ -276,7 +276,29 @@ export const RecurringCardsTab = ({
         <p className="text-sm text-muted-foreground">
           Crie cards automaticamente em intervalos regulares
         </p>
-        <Button onClick={() => setShowForm(!showForm)} size="sm">
+        <Button onClick={() => {
+          setEditingId(null);
+          setFormData({
+            title: "",
+            description: "",
+            list_id: "",
+            frequency: "daily",
+            day_of_week: 1,
+            day_of_month: 1,
+            time_of_day: "09:00",
+            days_of_week: [],
+            start_date: new Date().toISOString().split('T')[0],
+            end_date: "",
+            priority: "medium",
+            label_ids: [],
+            assignee_ids: [],
+            client_id: "",
+            due_date_offset: 0,
+            start_date_offset: 0,
+            estimated_hours: 0
+          });
+          setShowForm(!showForm);
+        }} size="sm">
           <Plus className="h-4 w-4 mr-2" />
           Novo Card Recorrente
         </Button>
