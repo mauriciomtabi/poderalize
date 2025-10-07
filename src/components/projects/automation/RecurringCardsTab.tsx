@@ -500,14 +500,24 @@ export const RecurringCardsTab = ({
                   <p>Horário: {card.time_of_day || '09:00'}</p>
                   
                   {card.template_config && <>
-                      {Array.isArray(card.template_config.label_ids) && card.template_config.label_ids.length > 0 && <div className="flex items-center gap-1 flex-wrap">
-                          <Tag className="h-3 w-3" />
-                          {card.template_config.label_ids.length} etiqueta(s)
-                        </div>}
-                      {Array.isArray(card.template_config.assignee_ids) && card.template_config.assignee_ids.length > 0 && <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {card.template_config.assignee_ids.length} membro(s)
-                        </div>}
+                      {Array.isArray(card.template_config.label_ids) && card.template_config.label_ids.length > 0 && (() => {
+                          const selectedLabels = state.currentBoard?.labels.filter(l => card.template_config.label_ids.includes(l.id)) || [];
+                          return selectedLabels.length > 0 && <div className="flex items-center gap-1 flex-wrap">
+                            <Tag className="h-3 w-3" />
+                            {selectedLabels.map(label => <Badge key={label.id} variant="outline" className="text-xs" style={{ backgroundColor: label.color, borderColor: label.color, color: 'white' }}>
+                                {label.name}
+                              </Badge>)}
+                          </div>;
+                        })()}
+                      {Array.isArray(card.template_config.assignee_ids) && card.template_config.assignee_ids.length > 0 && (() => {
+                          const selectedMembers = state.currentBoard?.members.filter(m => card.template_config.assignee_ids.includes(m.id)) || [];
+                          return selectedMembers.length > 0 && <div className="flex items-center gap-1 flex-wrap">
+                            <Users className="h-3 w-3" />
+                            {selectedMembers.map(member => <Badge key={member.id} variant="outline" className="text-xs">
+                                {member.name}
+                              </Badge>)}
+                          </div>;
+                        })()}
                       {card.template_config.estimated_hours > 0 && <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {card.template_config.estimated_hours}h estimadas
