@@ -83,13 +83,22 @@ export const DashboardView = () => {
   // Prepare chart data - distribution by lists (not card status)
   const statusChartData = state.currentBoard.lists
     .filter(list => !list.archived)
-    .map((list, index) => ({
-      name: list.title,
-      value: list.cards.filter(card => !card.archived).length,
-      color: CHART_COLORS[index % CHART_COLORS.length]
-    }))
-    .filter(item => item.value > 0)
+    .map((list, index) => {
+      const activeCards = list.cards.filter(card => !card.archived);
+      console.log(`Lista "${list.title}": ${list.cards.length} total, ${activeCards.length} ativos, ${list.cards.filter(c => c.archived).length} arquivados`);
+      return {
+        name: list.title,
+        value: activeCards.length,
+        color: CHART_COLORS[index % CHART_COLORS.length]
+      };
+    })
+    .filter(item => {
+      console.log(`Filtrando item "${item.name}" com value ${item.value}`);
+      return item.value > 0;
+    })
     .sort((a, b) => b.value - a.value);
+  
+  console.log('Status Chart Data Final:', statusChartData);
   const labelData = (() => {
     const labelCounts: {
       [key: string]: {
