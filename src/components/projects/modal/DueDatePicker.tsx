@@ -66,6 +66,7 @@ export const DueDatePicker = ({
               selected={selectedDate}
               onSelect={setSelectedDate}
               initialFocus
+              locale={ptBR}
               className={cn("p-3 pointer-events-auto")}
             />
           </div>
