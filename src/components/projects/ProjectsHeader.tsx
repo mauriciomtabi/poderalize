@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, Table, Calendar, BarChart3, Search, Filter, Plus, Settings, Users, Star, Zap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { LayoutGrid, Table, Calendar, BarChart3, Search, Filter, Plus, Settings, Users, Star, Zap, Eye } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ViewType } from "@/types/projects";
 import { cn } from "@/lib/utils";
@@ -73,6 +75,20 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
         </div>
 
         <div className="flex items-center space-x-2">
+          {isAdmin && (
+            <div className="flex items-center space-x-2 mr-4 px-3 py-1 bg-muted rounded-lg">
+              <Eye size={16} className="text-muted-foreground" />
+              <Label htmlFor="view-all-cards" className="text-sm cursor-pointer">
+                Ver todos os cards
+              </Label>
+              <Switch
+                id="view-all-cards"
+                checked={state.viewAllCardsAsAdmin}
+                onCheckedChange={actions.setViewAllCardsAsAdmin}
+              />
+            </div>
+          )}
+          
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
             <Input 

@@ -127,7 +127,8 @@ const initialState: ProjectsState = {
   draggedItem: null,
   isLoading: true,
   selectedCard: null,
-  calendarDate: new Date()
+  calendarDate: new Date(),
+  viewAllCardsAsAdmin: false
 };
 
 interface ProjectsContextType {
@@ -139,6 +140,7 @@ interface ProjectsContextType {
     resetFilters: () => void;
     setSelectedCard: (card: ProjectCard | null) => void;
     setDraggedItem: (item: { type: 'card' | 'list'; id: string } | null) => void;
+    setViewAllCardsAsAdmin: (value: boolean) => void;
     
     // Board actions
     setCurrentBoard: (board: ProjectBoard | null) => void;
@@ -233,8 +235,11 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [boardsHook.boards, boardsHook.isLoading, user]);
 
   // Load current board data
-  const loadBoard = async (boardId: string) => {
+  const loadBoard = async (boardId: string, adminViewAll?: boolean) => {
     setState(prev => ({ ...prev, isLoading: true }));
+    
+    // Use the passed parameter or the current state value
+    const viewAllCards = adminViewAll !== undefined ? adminViewAll : state.viewAllCardsAsAdmin;
     
     try {
       const board = boardsHook.boards.find(b => b.id === boardId);
@@ -387,9 +392,32 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       const allCards: ProjectCard[] = [];
       const lists = listsData || [];
       
-      for (const list of lists) {
-        const listCards = await cardsHook.fetchAllBoardCards(boardId);
-        allCards.push(...listCards.filter(c => c.list_id === list.id).map(transformDBCard));
+      // Check if user is admin and wants to view all cards
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', currentUser?.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      const isAdmin = !!userRoles;
+      
+      if (isAdmin && viewAllCards) {
+        // Admin viewing all cards from all boards
+        const { data: allBoardCards } = await supabase
+          .from('project_cards')
+          .select('*')
+          .order('position', { ascending: true });
+        
+        if (allBoardCards) {
+          allCards.push(...allBoardCards.map(transformDBCard));
+        }
+      } else {
+        // Normal view: only cards from current board
+        for (const list of lists) {
+          const listCards = await cardsHook.fetchAllBoardCards(boardId);
+          allCards.push(...listCards.filter(c => c.list_id === list.id).map(transformDBCard));
+        }
       }
 
       // Enrich cards with labels and assignees from linking tables
@@ -527,6 +555,17 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
 
     setDraggedItem: (item: { type: 'card' | 'list'; id: string } | null) => {
       setState(prev => ({ ...prev, draggedItem: item }));
+    },
+
+    setViewAllCardsAsAdmin: (value: boolean) => {
+      setState(prev => {
+        const newState = { ...prev, viewAllCardsAsAdmin: value };
+        // Reload board with the new state value
+        if (newState.currentBoard) {
+          setTimeout(() => loadBoard(newState.currentBoard!.id, value), 0);
+        }
+        return newState;
+      });
     },
 
     // Board actions

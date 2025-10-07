@@ -168,6 +168,7 @@ export interface ProjectsState {
   
   // View-specific states
   calendarDate: Date;
+  viewAllCardsAsAdmin: boolean;
 }
 
 export interface DashboardMetrics {
