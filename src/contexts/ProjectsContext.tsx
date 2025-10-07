@@ -460,6 +460,42 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
     }
   };
 
+  // Realtime subscription for automatic card updates when automation runs
+  useEffect(() => {
+    if (!state.currentBoard?.id) return;
+
+    console.log('🔔 Setting up realtime subscription for board:', state.currentBoard.id);
+
+    // Subscribe to INSERT events on project_cards table
+    const channel = supabase
+      .channel(`project_cards:${state.currentBoard.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'project_cards',
+          filter: `list_id=in.(${state.currentBoard.lists.map(l => l.id).join(',')})`
+        },
+        (payload) => {
+          console.log('🎯 New card detected by automation:', payload);
+          // Reload the board to show the new card
+          toast({
+            title: "Card criado pela automação",
+            description: `"${(payload.new as any).title}" foi adicionado automaticamente`,
+          });
+          loadBoard(state.currentBoard!.id);
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount or board change
+    return () => {
+      console.log('🔕 Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [state.currentBoard?.id]);
+
   // Actions
   const actions = {
     // View actions
