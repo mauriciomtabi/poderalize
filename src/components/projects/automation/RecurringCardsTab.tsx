@@ -16,6 +16,23 @@ import { useClientes } from "@/hooks/useClientes";
 import { format } from "date-fns";
 import type { Priority } from "@/types/projects";
 import { cn } from "@/lib/utils";
+
+// Helper function to format UTC dates without timezone conversion
+const formatUTC = (date: Date, formatStr: string) => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  
+  return formatStr
+    .replace('yyyy', String(year))
+    .replace('MM', month)
+    .replace('dd', day)
+    .replace('HH', hours)
+    .replace('mm', minutes);
+};
+
 interface RecurringCardsTabProps {
   boardId: string | null;
 }
@@ -570,14 +587,14 @@ export const RecurringCardsTab = ({
                   
                   <div className="pt-1 border-t space-y-1">
                     <p>Início: {format(new Date(card.created_at), 'dd/MM/yyyy')}</p>
-                    <p>Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
+                    <p>Próxima criação: {formatUTC(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
                     {card.end_date && (
                       <p className="text-muted-foreground">Término: {format(new Date(card.end_date), 'dd/MM/yyyy')}</p>
                     )}
                     {card.last_created_at && (
                       <div className="flex items-center gap-1 text-green-600">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="font-medium">Última execução: {format(new Date(card.last_created_at), 'dd/MM/yyyy HH:mm')}</span>
+                        <span className="font-medium">Última execução: {formatUTC(new Date(card.last_created_at), 'dd/MM/yyyy HH:mm')}</span>
                       </div>
                     )}
                   </div>
