@@ -326,6 +326,7 @@ export const RecurringCardsTab = ({
                   <SelectContent className="bg-popover z-50">
                     <SelectItem value="daily">Diário</SelectItem>
                     <SelectItem value="weekly">Semanal</SelectItem>
+                    <SelectItem value="biweekly">Quinzenal</SelectItem>
                     <SelectItem value="monthly">Mensal</SelectItem>
                   </SelectContent>
                 </Select>
