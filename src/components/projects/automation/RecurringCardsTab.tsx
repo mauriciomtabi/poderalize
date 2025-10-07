@@ -569,9 +569,10 @@ export const RecurringCardsTab = ({
                     </>}
                   
                   <div className="pt-1 border-t space-y-1">
+                    <p>Início: {format(new Date(card.created_at), 'dd/MM/yyyy')}</p>
                     <p>Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
                     {card.end_date && (
-                      <p className="text-muted-foreground">Encerra em: {format(new Date(card.end_date), 'dd/MM/yyyy')}</p>
+                      <p className="text-muted-foreground">Término: {format(new Date(card.end_date), 'dd/MM/yyyy')}</p>
                     )}
                     {card.last_created_at && (
                       <div className="flex items-center gap-1 text-green-600">
