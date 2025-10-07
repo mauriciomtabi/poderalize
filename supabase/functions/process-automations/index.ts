@@ -138,17 +138,38 @@ serve(async (req) => {
 
         // Add assignees if specified
         if (Array.isArray(config.assignee_ids) && config.assignee_ids.length > 0) {
-          const assigneeInserts = config.assignee_ids.map((memberId: string) => ({
-            card_id: newCard.id,
-            member_id: memberId,
-          }));
+          // First, verify which member IDs actually exist in project_members
+          const { data: existingMembers, error: membersCheckError } = await supabase
+            .from('project_members')
+            .select('id')
+            .in('id', config.assignee_ids);
           
-          const { error: assigneesError } = await supabase
-            .from('project_card_assignees')
-            .insert(assigneeInserts);
+          if (membersCheckError) {
+            console.error('Error checking members:', membersCheckError);
+          } else if (existingMembers && existingMembers.length > 0) {
+            const validMemberIds = existingMembers.map(m => m.id);
+            const assigneeInserts = validMemberIds.map((memberId: string) => ({
+              card_id: newCard.id,
+              member_id: memberId,
+            }));
             
-          if (assigneesError) {
-            console.error('Error adding assignees:', assigneesError);
+            const { error: assigneesError } = await supabase
+              .from('project_card_assignees')
+              .insert(assigneeInserts);
+              
+            if (assigneesError) {
+              console.error('Error adding assignees:', assigneesError);
+            } else {
+              console.log(`Added ${validMemberIds.length} assignees to card`);
+            }
+            
+            // Log if some members were not found
+            const missingMembers = config.assignee_ids.filter((id: string) => !validMemberIds.includes(id));
+            if (missingMembers.length > 0) {
+              console.log(`Warning: ${missingMembers.length} member(s) not found in project_members:`, missingMembers);
+            }
+          } else {
+            console.log('No valid members found for assignment');
           }
         }
 
@@ -359,17 +380,38 @@ serve(async (req) => {
 
         // Add assignees if specified
         if (Array.isArray(config.assignee_ids) && config.assignee_ids.length > 0) {
-          const assigneeInserts = config.assignee_ids.map((memberId: string) => ({
-            card_id: newCard.id,
-            member_id: memberId,
-          }));
+          // First, verify which member IDs actually exist in project_members
+          const { data: existingMembers, error: membersCheckError } = await supabase
+            .from('project_members')
+            .select('id')
+            .in('id', config.assignee_ids);
           
-          const { error: assigneesError } = await supabase
-            .from('project_card_assignees')
-            .insert(assigneeInserts);
+          if (membersCheckError) {
+            console.error('Error checking members:', membersCheckError);
+          } else if (existingMembers && existingMembers.length > 0) {
+            const validMemberIds = existingMembers.map(m => m.id);
+            const assigneeInserts = validMemberIds.map((memberId: string) => ({
+              card_id: newCard.id,
+              member_id: memberId,
+            }));
             
-          if (assigneesError) {
-            console.error('Error adding assignees:', assigneesError);
+            const { error: assigneesError } = await supabase
+              .from('project_card_assignees')
+              .insert(assigneeInserts);
+              
+            if (assigneesError) {
+              console.error('Error adding assignees:', assigneesError);
+            } else {
+              console.log(`Added ${validMemberIds.length} assignees to card`);
+            }
+            
+            // Log if some members were not found
+            const missingMembers = config.assignee_ids.filter((id: string) => !validMemberIds.includes(id));
+            if (missingMembers.length > 0) {
+              console.log(`Warning: ${missingMembers.length} member(s) not found in project_members:`, missingMembers);
+            }
+          } else {
+            console.log('No valid members found for assignment');
           }
         }
 
