@@ -413,40 +413,9 @@ export const RecurringCardsTab = ({
                   </div>
                 </div>}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start_date_offset" className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Início (dias)
-                  </Label>
-                  <Input id="start_date_offset" type="number" min="0" value={formData.start_date_offset} onChange={e => setFormData({
-                ...formData,
-                start_date_offset: Number(e.target.value)
-              })} placeholder="0 = mesmo dia" />
-                </div>
+              
 
-                <div className="space-y-2">
-                  <Label htmlFor="due_date_offset" className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Vencimento (dias)
-                  </Label>
-                  <Input id="due_date_offset" type="number" min="0" value={formData.due_date_offset} onChange={e => setFormData({
-                ...formData,
-                due_date_offset: Number(e.target.value)
-              })} placeholder="0 = sem vencimento" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="estimated_hours" className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Horas Estimadas
-                </Label>
-                <Input id="estimated_hours" type="number" min="0" step="0.5" value={formData.estimated_hours} onChange={e => setFormData({
-              ...formData,
-              estimated_hours: Number(e.target.value)
-            })} placeholder="0 = não especificado" />
-              </div>
+              
             </div>
 
             <div className="flex gap-2 justify-end">
