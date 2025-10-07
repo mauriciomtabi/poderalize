@@ -194,8 +194,8 @@ serve(async (req) => {
           nextCreation.setDate(targetDay);
         }
 
-        // Set the time AFTER all date calculations to preserve the configured hours
-        nextCreation.setHours(hours, minutes, 0, 0);
+        // Set the time AFTER all date calculations using UTC to avoid timezone issues
+        nextCreation.setUTCHours(hours, minutes, 0, 0);
 
         // Update recurring card
         const { error: updateError } = await supabase

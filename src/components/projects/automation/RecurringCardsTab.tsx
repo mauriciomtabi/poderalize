@@ -65,9 +65,9 @@ export const RecurringCardsTab = ({
     const now = new Date();
     const [hours, minutes] = formData.time_of_day.split(':').map(Number);
 
-    // Use the selected start date
+    // Use the selected start date with UTC hours to avoid timezone issues
     let nextCreation = new Date(formData.start_date);
-    nextCreation.setHours(hours, minutes, 0, 0);
+    nextCreation.setUTCHours(hours, minutes, 0, 0);
     if (formData.frequency === 'daily') {
       // Find next occurrence based on selected days
       const sortedDays = [...formData.days_of_week].sort((a, b) => a - b);
@@ -79,7 +79,7 @@ export const RecurringCardsTab = ({
         // Find next valid day starting from start date
         for (let i = 1; i <= 7; i++) {
           const testDate = new Date(formData.start_date);
-          testDate.setHours(hours, minutes, 0, 0);
+          testDate.setUTCHours(hours, minutes, 0, 0);
           testDate.setDate(testDate.getDate() + i);
           
           if (sortedDays.includes(testDate.getDay())) {
