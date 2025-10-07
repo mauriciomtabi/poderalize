@@ -409,19 +409,12 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           .select('*')
           .order('position', { ascending: true });
         
-        console.log('🔍 Admin view - Total cards fetched:', allBoardCards?.length || 0);
-        
         if (allBoardCards) {
           allCards.push(...allBoardCards.map(transformDBCard));
         }
       } else {
         // Normal view: only cards from current board - fetch once, not per list
         const boardCards = await cardsHook.fetchAllBoardCards(boardId);
-        console.log('🔍 Board cards fetched for board', boardId, ':', boardCards?.length || 0);
-        console.log('🔍 Cards by list_id:', boardCards?.reduce((acc: any, card: any) => {
-          acc[card.list_id] = (acc[card.list_id] || 0) + 1;
-          return acc;
-        }, {}));
         
         if (boardCards) {
           allCards.push(...boardCards.map(transformDBCard));
@@ -474,11 +467,38 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       }
 
       // Group cards by list
-      const listsWithCards = lists.map(list => {
-        const listCards = allCards.filter(card => card.listId === list.id);
-        console.log(`🔍 List "${list.title}" (${list.id}):`, listCards.length, 'cards');
-        return transformDBList(list, listCards);
-      });
+      const listsWithCards: ProjectList[] = [];
+      
+      // Check if user is board owner
+      const { data: boardOwner } = await supabase
+        .from('project_boards')
+        .select('user_id')
+        .eq('id', boardId)
+        .single();
+      
+      const isBoardOwner = boardOwner?.user_id === currentUser?.id;
+      
+      for (const list of lists) {
+        let listCards = allCards.filter(card => card.listId === list.id);
+        
+        // If admin is NOT viewing all cards, filter to show only:
+        // - Cards they created
+        // - Cards they are assigned to
+        // - Cards from boards they own (not just member)
+        if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
+          // Not board owner, filter to only cards they created or are assigned to
+          listCards = listCards.filter(card => {
+            const isCreator = card.createdBy === currentUser.id;
+            const isAssigned = card.assignees?.some((a: any) => {
+              // Find the member by user_id since assignees are project_members
+              return members.some(m => m.id === a.id && m.email === user?.email);
+            });
+            return isCreator || isAssigned;
+          });
+        }
+        
+        listsWithCards.push(transformDBList(list, listCards));
+      }
 
       const transformedBoard = transformDBBoard(
         board,
@@ -1065,9 +1085,6 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       state.currentBoard.lists.forEach(list => {
         allCards.push(...list.cards);
       });
-      
-      console.log('🔍 getFilteredCards - Total cards before filters:', allCards.length);
-      console.log('🔍 Active filters:', state.filters);
 
       // Filter out archived cards from main views (unless specifically viewing archived)
       if (!state.filters.archived) {
