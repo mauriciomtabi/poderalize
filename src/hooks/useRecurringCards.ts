@@ -8,7 +8,7 @@ export interface RecurringCard {
   list_id: string;
   title: string;
   description?: string | null;
-  frequency: 'daily' | 'weekly' | 'monthly';
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
   day_of_week?: number | null;
   day_of_month?: number | null;
   time_of_day?: string | null;

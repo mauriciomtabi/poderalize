@@ -185,6 +185,8 @@ serve(async (req) => {
           }
         } else if (recurringCard.frequency === 'weekly') {
           nextCreation.setDate(nextCreation.getDate() + 7);
+        } else if (recurringCard.frequency === 'biweekly') {
+          nextCreation.setDate(nextCreation.getDate() + 14);
         } else if (recurringCard.frequency === 'monthly') {
           // For monthly, preserve the target day of month
           const targetDay = recurringCard.day_of_month || 1;

@@ -41,7 +41,7 @@ export const RecurringCardsTab = ({
     title: "",
     description: "",
     list_id: "",
-    frequency: "daily" as "daily" | "weekly" | "monthly",
+    frequency: "daily" as "daily" | "weekly" | "biweekly" | "monthly",
     day_of_week: 1,
     day_of_month: 1,
     time_of_day: "09:00",
@@ -88,7 +88,7 @@ export const RecurringCardsTab = ({
           }
         }
       }
-    } else if (formData.frequency === 'weekly') {
+    } else if (formData.frequency === 'weekly' || formData.frequency === 'biweekly') {
       const currentDay = nextCreation.getDay();
       const targetDay = formData.day_of_week;
 
@@ -122,7 +122,7 @@ export const RecurringCardsTab = ({
       title: formData.title,
       description: formData.description,
       frequency: formData.frequency,
-      day_of_week: formData.frequency === 'weekly' ? formData.day_of_week : undefined,
+      day_of_week: (formData.frequency === 'weekly' || formData.frequency === 'biweekly') ? formData.day_of_week : undefined,
       day_of_month: formData.frequency === 'monthly' ? formData.day_of_month : undefined,
       time_of_day: formData.time_of_day,
       next_creation_at: nextCreation.toISOString(),
@@ -197,6 +197,7 @@ export const RecurringCardsTab = ({
   const frequencyLabels = {
     daily: "Diário",
     weekly: "Semanal",
+    biweekly: "Quinzenal",
     monthly: "Mensal"
   };
   const weekDays = [{
@@ -355,7 +356,7 @@ export const RecurringCardsTab = ({
                 {formData.days_of_week.length === 0 && <p className="text-xs text-destructive">Selecione pelo menos um dia</p>}
               </div>}
 
-            {formData.frequency === 'weekly' && <div className="space-y-2">
+            {(formData.frequency === 'weekly' || formData.frequency === 'biweekly') && <div className="space-y-2">
                 <Label htmlFor="day_of_week">Dia da Semana</Label>
                 <Select value={String(formData.day_of_week)} onValueChange={value => setFormData({
             ...formData,

@@ -2290,7 +2290,7 @@ export type Database = {
         | "relatorios"
         | "configuracoes"
         | "clientes"
-      recurrence_frequency: "daily" | "weekly" | "monthly"
+      recurrence_frequency: "daily" | "weekly" | "monthly" | "biweekly"
       tipo_discurso: "tecnico" | "emocional" | "inspirador"
       trava_emocional_type:
         | "inseguranca_financeira"
@@ -2477,7 +2477,7 @@ export const Constants = {
         "configuracoes",
         "clientes",
       ],
-      recurrence_frequency: ["daily", "weekly", "monthly"],
+      recurrence_frequency: ["daily", "weekly", "monthly", "biweekly"],
       tipo_discurso: ["tecnico", "emocional", "inspirador"],
       trava_emocional_type: [
         "inseguranca_financeira",
