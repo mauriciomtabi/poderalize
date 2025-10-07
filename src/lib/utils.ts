@@ -44,7 +44,13 @@ export function ensureUrlProtocol(url: string): string {
 
 export function getInstagramUrl(username: string): string {
   if (!username) return '';
-  const cleaned = username.trim().replace(/^@/, '');
+  const trimmed = username.trim();
+  // Check if it's already a URL
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  // Otherwise treat as username
+  const cleaned = trimmed.replace(/^@/, '');
   return `https://instagram.com/${cleaned}`;
 }
 

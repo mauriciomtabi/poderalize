@@ -411,9 +411,14 @@ const Clientes = () => {
                       <label className="text-sm font-medium">Outras Redes Sociais (LinkedIn, TikTok, etc)</label>
                       <p className="text-sm mt-1">
                         {selectedCliente.outras_redes_sociais ? (
-                          <span className="text-muted-foreground whitespace-pre-wrap">
+                          <a 
+                            href={ensureUrlProtocol(selectedCliente.outras_redes_sociais)} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-blue-600 hover:underline whitespace-pre-wrap"
+                          >
                             {selectedCliente.outras_redes_sociais}
-                          </span>
+                          </a>
                         ) : (
                           <span className="text-muted-foreground">Não informado</span>
                         )}
