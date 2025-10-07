@@ -7,11 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit, Building2, Check, ChevronsUpDown, X } from "lucide-react";
 import { useRecurringCards, RecurringCard } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
+import { useClientes } from "@/hooks/useClientes";
 import { format } from "date-fns";
 import type { Priority } from "@/types/projects";
+import { cn } from "@/lib/utils";
 interface RecurringCardsTabProps {
   boardId: string | null;
 }
@@ -29,8 +33,10 @@ export const RecurringCardsTab = ({
     deleteCard,
     toggleEnabled
   } = useRecurringCards(boardId);
+  const { clientes } = useClientes();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [clientePopoverOpen, setClientePopoverOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -46,6 +52,7 @@ export const RecurringCardsTab = ({
     priority: "medium" as Priority,
     label_ids: [] as string[],
     assignee_ids: [] as string[],
+    client_id: "" as string,
     due_date_offset: 0,
     // Days from creation
     start_date_offset: 0,
@@ -151,6 +158,7 @@ export const RecurringCardsTab = ({
         priority: formData.priority,
         label_ids: formData.label_ids,
         assignee_ids: formData.assignee_ids,
+        client_id: formData.client_id || undefined,
         due_date_offset: formData.due_date_offset,
         start_date_offset: formData.start_date_offset,
         estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined
@@ -177,6 +185,7 @@ export const RecurringCardsTab = ({
       priority: "medium",
       label_ids: [],
       assignee_ids: [],
+      client_id: "",
       due_date_offset: 0,
       start_date_offset: 0,
       estimated_hours: 0
@@ -202,6 +211,7 @@ export const RecurringCardsTab = ({
       priority: config.priority as Priority || "medium",
       label_ids: Array.isArray(config.label_ids) ? config.label_ids : [],
       assignee_ids: Array.isArray(config.assignee_ids) ? config.assignee_ids : [],
+      client_id: typeof config.client_id === 'string' ? config.client_id : "",
       due_date_offset: typeof config.due_date_offset === 'number' ? config.due_date_offset : 0,
       start_date_offset: typeof config.start_date_offset === 'number' ? config.start_date_offset : 0,
       estimated_hours: typeof config.estimated_hours === 'number' ? config.estimated_hours : 0
@@ -413,7 +423,64 @@ export const RecurringCardsTab = ({
                   </div>
                 </div>}
 
-              
+              <div className="space-y-2">
+                <Label>Cliente (opcional)</Label>
+                <Popover open={clientePopoverOpen} onOpenChange={setClientePopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={clientePopoverOpen}
+                      className="w-full justify-between"
+                    >
+                      {formData.client_id
+                        ? clientes.find((cliente) => cliente.id === formData.client_id)?.nome
+                        : "Selecione um cliente..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 bg-popover z-50" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar cliente..." />
+                      <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                      <CommandGroup className="max-h-64 overflow-auto">
+                        {clientes.map((cliente) => (
+                          <CommandItem
+                            key={cliente.id}
+                            value={cliente.nome}
+                            onSelect={() => {
+                              setFormData({ ...formData, client_id: cliente.id });
+                              setClientePopoverOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.client_id === cliente.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col">
+                              <span>{cliente.nome}</span>
+                              <span className="text-xs text-muted-foreground">{cliente.empresa}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {formData.client_id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFormData({ ...formData, client_id: "" })}
+                    className="h-6 text-xs"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Remover cliente
+                  </Button>
+                )}
+              </div>
 
               
             </div>
@@ -487,6 +554,15 @@ export const RecurringCardsTab = ({
                             {selectedMembers.map(member => <Badge key={member.id} variant="outline" className="text-xs">
                                 {member.name}
                               </Badge>)}
+                          </div>;
+              })()}
+                      {card.template_config.client_id && (() => {
+                const selectedCliente = clientes.find(c => c.id === card.template_config.client_id);
+                return selectedCliente && <div className="flex items-center gap-1">
+                            <Building2 className="h-3 w-3" />
+                            <Badge variant="outline" className="text-xs">
+                              {selectedCliente.nome}
+                            </Badge>
                           </div>;
               })()}
                       {card.template_config.estimated_hours > 0 && <div className="flex items-center gap-1">
