@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageCircle, Send, User, Users } from "lucide-react";
+import { MessageCircle, Send, User } from "lucide-react";
 import { ProjectCard, Comment } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
-import { useClientes } from "@/hooks/useClientes";
 import { generateId } from "@/hooks/useUuid";
 import { MentionTextarea } from "./MentionTextarea";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,6 @@ export const CommentsSection = ({
   isCreationMode = false 
 }: CommentsSectionProps) => {
   const { actions, state } = useProjects();
-  const { clientes } = useClientes();
   const [newComment, setNewComment] = useState('');
   const [mentions, setMentions] = useState<string[]>([]);
   const currentUser = actions.getCurrentUser();
@@ -142,9 +140,8 @@ export const CommentsSection = ({
           variant="secondary"
           className="mx-1 font-normal inline-flex items-center gap-1"
         >
-          {type === 'member' ? <User className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+          <User className="h-3 w-3" />
           <span>{name}</span>
-          <span className="text-xs opacity-70">({type === 'member' ? 'Membro' : 'Cliente'})</span>
         </Badge>
       );
 
@@ -186,7 +183,6 @@ export const CommentsSection = ({
               onKeyDown={handleKeyDown}
               placeholder="Escrever um comentário... (use @ para mencionar)"
               members={boardMembers}
-              clientes={clientes}
             />
             <div className="flex justify-end">
               <Button 

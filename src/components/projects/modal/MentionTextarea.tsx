@@ -2,9 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Member } from "@/types/projects";
-import { Cliente } from "@/hooks/useClientes";
 import { cn } from "@/lib/utils";
-import { User, Users } from "lucide-react";
+import { User } from "lucide-react";
 
 interface MentionTextareaProps {
   value: string;
@@ -13,14 +12,13 @@ interface MentionTextareaProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   placeholder?: string;
   members: Member[];
-  clientes: Cliente[];
   className?: string;
 }
 
 interface Suggestion {
   id: string;
   name: string;
-  type: 'member' | 'client';
+  type: 'member';
   email?: string;
 }
 
@@ -31,7 +29,6 @@ export const MentionTextarea = ({
   onKeyDown,
   placeholder,
   members,
-  clientes,
   className
 }: MentionTextareaProps) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -60,20 +57,11 @@ export const MentionTextarea = ({
       .map(m => ({
         id: m.id,
         name: m.name,
-        type: 'member',
+        type: 'member' as const,
         email: m.email
       }));
 
-    const clientSuggestions: Suggestion[] = clientes
-      .filter(c => c.nome.toLowerCase().includes(normalizedQuery))
-      .map(c => ({
-        id: c.id,
-        name: c.nome,
-        type: 'client',
-        email: c.email
-      }));
-
-    return [...memberSuggestions, ...clientSuggestions];
+    return memberSuggestions;
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -243,11 +231,7 @@ export const MentionTextarea = ({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm truncate">{suggestion.name}</span>
-                  {suggestion.type === 'member' ? (
-                    <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                  ) : (
-                    <Users className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                  )}
+                  <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                 </div>
                 {suggestion.email && (
                   <span className="text-xs text-muted-foreground truncate block">
@@ -256,7 +240,7 @@ export const MentionTextarea = ({
                 )}
               </div>
               <span className="text-xs text-muted-foreground">
-                {suggestion.type === 'member' ? 'Membro' : 'Cliente'}
+                Membro
               </span>
             </div>
           ))}
@@ -264,7 +248,7 @@ export const MentionTextarea = ({
       )}
       
       <div className="mt-2 text-xs text-muted-foreground">
-        Digite @ para mencionar membros ou clientes
+        Digite @ para mencionar membros da equipe
       </div>
     </div>
   );
