@@ -43,14 +43,14 @@ export const DashboardView = () => {
   if (!state.currentBoard) {
     return <div className="flex items-center justify-center h-full">Nenhum projeto selecionado</div>;
   }
-  const allCards = state.currentBoard.lists.flatMap(list => list.cards);
+  const allCards = state.currentBoard.lists.flatMap(list => list.cards.filter(card => !card.archived));
   const cards = actions.getFilteredCards();
 
   // Calculate metrics - considering only cards in "Executado" list
   const executadoList = state.currentBoard.lists.find(list => 
     list.title.toLowerCase().match(/^(executado|concluído|concluidos|done)$/i)
   );
-  const completedCards = executadoList ? executadoList.cards.length : 0;
+  const completedCards = executadoList ? executadoList.cards.filter(card => !card.archived).length : 0;
   const metrics: DashboardMetrics = {
     totalCards: allCards.length,
     completedCards: completedCards,
@@ -85,7 +85,7 @@ export const DashboardView = () => {
     .filter(list => !list.archived)
     .map((list, index) => ({
       name: list.title,
-      value: list.cards.length,
+      value: list.cards.filter(card => !card.archived).length,
       color: CHART_COLORS[index % CHART_COLORS.length]
     }))
     .filter(item => item.value > 0)
