@@ -1919,6 +1919,7 @@ export type Database = {
           last_created_at: string | null
           list_id: string
           next_creation_at: string
+          start_date: string | null
           template_config: Json
           time_of_day: string | null
           title: string
@@ -1937,6 +1938,7 @@ export type Database = {
           last_created_at?: string | null
           list_id: string
           next_creation_at: string
+          start_date?: string | null
           template_config?: Json
           time_of_day?: string | null
           title: string
@@ -1955,6 +1957,7 @@ export type Database = {
           last_created_at?: string | null
           list_id?: string
           next_creation_at?: string
+          start_date?: string | null
           template_config?: Json
           time_of_day?: string | null
           title?: string

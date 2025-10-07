@@ -163,7 +163,9 @@ serve(async (req) => {
           const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
             ? recurringCard.template_config as Record<string, any>
             : {};
-          const daysOfWeek = Array.isArray(config.days_of_week) ? config.days_of_week : [];
+          const daysOfWeek = Array.isArray((config as any).utc_days_of_week)
+            ? (config as any).utc_days_of_week
+            : (Array.isArray((config as any).days_of_week) ? (config as any).days_of_week : []);
           
           if (daysOfWeek.length > 0) {
             // Find next occurrence based on selected days
@@ -194,8 +196,7 @@ serve(async (req) => {
           nextCreation.setDate(targetDay);
         }
 
-        // Set the time AFTER all date calculations using UTC to avoid timezone issues
-        nextCreation.setUTCHours(hours, minutes, 0, 0);
+        // Preserve the original time of day already in nextCreation to avoid timezone shifts
 
         // Update recurring card
         const { error: updateError } = await supabase

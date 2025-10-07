@@ -15,6 +15,7 @@ export interface RecurringCard {
   last_created_at?: string | null;
   next_creation_at: string;
   end_date?: string | null;
+  start_date?: string | null;
   template_config: any;
   enabled: boolean;
   created_at: string;

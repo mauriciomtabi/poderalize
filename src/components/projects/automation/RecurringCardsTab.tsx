@@ -82,52 +82,48 @@ export const RecurringCardsTab = ({
     const now = new Date();
     const [hours, minutes] = formData.time_of_day.split(':').map(Number);
 
-    // Use the selected start date with UTC hours to avoid timezone issues
-    let nextCreation = new Date(formData.start_date);
-    nextCreation.setUTCHours(hours, minutes, 0, 0);
+    // Monte a data/hora local escolhida (sem UTC) para gerar o próximo agendamento correto
+    let nextCreation = new Date(`${formData.start_date}T${formData.time_of_day}`);
+
     if (formData.frequency === 'daily') {
-      // Find next occurrence based on selected days
+      // Encontrar a próxima ocorrência baseada nos dias selecionados (usando timezone local)
       const sortedDays = [...formData.days_of_week].sort((a, b) => a - b);
-      
-      // If start date/time is in the future and is a valid day, use it
-      if (nextCreation > now && sortedDays.includes(nextCreation.getUTCDay())) {
-        // nextCreation is already correct
+
+      // Se a data/hora inicial está no futuro e é um dia válido, usa-a
+      if (nextCreation > now && sortedDays.includes(nextCreation.getDay())) {
+        // ok
       } else {
-        // Find next valid day starting from start date
-        for (let i = 1; i <= 7; i++) {
-          const testDate = new Date(formData.start_date);
-          testDate.setUTCHours(hours, minutes, 0, 0);
-          testDate.setDate(testDate.getDate() + i);
-          
-          if (sortedDays.includes(testDate.getUTCDay())) {
+        // Procurar o próximo dia válido a partir da data de início
+        for (let i = 0; i < 7; i++) {
+          const testDate = new Date(`${formData.start_date}T${formData.time_of_day}`);
+          testDate.setDate(testDate.getDate() + i + 1);
+          if (sortedDays.includes(testDate.getDay())) {
             nextCreation = testDate;
             break;
           }
         }
       }
     } else if (formData.frequency === 'weekly' || formData.frequency === 'biweekly') {
-      const currentDay = nextCreation.getUTCDay();
+      const currentDay = nextCreation.getDay();
       const targetDay = formData.day_of_week;
 
-      // Check if the start date is already on the target day and hasn't passed
-      if (currentDay === targetDay && nextCreation >= now) {
-        // Use the start date as-is
-      } else {
-        // Calculate days until next occurrence
-        const daysUntilNext = (targetDay - currentDay + 7) % 7;
-        nextCreation.setDate(nextCreation.getDate() + (daysUntilNext || 7));
+      // Calcular dias até a próxima ocorrência
+      const daysUntilNext = (targetDay - currentDay + 7) % 7 || 7;
+      nextCreation.setDate(nextCreation.getDate() + daysUntilNext);
 
-        // If still in the past, add another week
-        if (nextCreation < now) {
-          nextCreation.setDate(nextCreation.getDate() + 7);
-        }
+      // Quinzenal: somar mais 7 dias
+      if (formData.frequency === 'biweekly') {
+        nextCreation.setDate(nextCreation.getDate() + 7);
+      }
+
+      // Se ainda ficou no passado, avança mais um período
+      if (nextCreation < now) {
+        nextCreation.setDate(nextCreation.getDate() + (formData.frequency === 'biweekly' ? 14 : 7));
       }
     } else if (formData.frequency === 'monthly') {
-      // Set to the target day of month
+      // Ajustar para o dia do mês desejado mantendo hora local
       const targetDay = formData.day_of_month;
       nextCreation.setDate(targetDay);
-
-      // If in the past, move to next month
       if (nextCreation < now) {
         nextCreation.setMonth(nextCreation.getMonth() + 1);
         nextCreation.setDate(targetDay);
@@ -143,7 +139,8 @@ export const RecurringCardsTab = ({
       day_of_month: formData.frequency === 'monthly' ? formData.day_of_month : undefined,
       time_of_day: formData.time_of_day,
       next_creation_at: nextCreation.toISOString(),
-      end_date: formData.end_date ? new Date(formData.end_date + 'T23:59:59').toISOString() : undefined,
+      end_date: formData.end_date ? new Date(`${formData.end_date}T23:59:59`).toISOString() : undefined,
+      start_date: new Date(`${formData.start_date}T00:00:00`).toISOString(),
       days_of_week: formData.frequency === 'daily' ? formData.days_of_week : undefined,
       template_config: {
         priority: formData.priority,
@@ -152,7 +149,12 @@ export const RecurringCardsTab = ({
         client_id: formData.client_id || undefined,
         due_date_offset: formData.due_date_offset,
         start_date_offset: formData.start_date_offset,
-        estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined
+        estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined,
+        utc_days_of_week: formData.frequency === 'daily' ? formData.days_of_week.map((localDay) => {
+          const base = new Date(`1970-01-04T${formData.time_of_day}`); // 1970-01-04 is Sunday
+          base.setDate(base.getDate() + localDay);
+          return base.getUTCDay();
+        }) : undefined
       },
       enabled: true
     };
@@ -186,9 +188,15 @@ export const RecurringCardsTab = ({
   const handleEdit = (card: RecurringCard) => {
     const config = typeof card.template_config === 'object' && card.template_config !== null ? card.template_config as Record<string, any> : {};
 
-    // Extract date from next_creation_at
-    const startDate = new Date(card.next_creation_at).toISOString().split('T')[0];
-    const endDate = card.end_date ? new Date(card.end_date).toISOString().split('T')[0] : "";
+    // Preferir start_date salvo; fallback para next_creation_at
+    const toInput = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const startDate = card.start_date ? toInput(new Date(card.start_date)) : toInput(new Date(card.next_creation_at));
+    const endDate = card.end_date ? toInput(new Date(card.end_date)) : "";
     setEditingId(card.id);
     setShowForm(true);
     setFormData({
@@ -586,7 +594,7 @@ export const RecurringCardsTab = ({
                     </>}
                   
                   <div className="pt-1 border-t space-y-1">
-                    <p>Início: {format(new Date(card.created_at), 'dd/MM/yyyy')}</p>
+                    <p>Início: {card.start_date ? format(new Date(card.start_date), 'dd/MM/yyyy') : format(new Date(card.created_at), 'dd/MM/yyyy')}</p>
                     <p>Próxima criação: {formatUTC(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
                     {card.end_date && (
                       <p className="text-muted-foreground">Término: {format(new Date(card.end_date), 'dd/MM/yyyy')}</p>
