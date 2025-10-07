@@ -228,7 +228,7 @@ const Clientes = () => {
         <Dialog open={isAddModalOpen} onOpenChange={(open) => {
           if (!open) handleCloseAddModal();
         }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent id="cliente-add-content" className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Plus className="h-5 w-5" />

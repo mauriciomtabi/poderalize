@@ -146,8 +146,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
     };
 
     // Find the scrollable container (DialogContent)
-    const scrollContainer = document.querySelector('[role="dialog"] [data-radix-scroll-area-viewport]') || 
-                           document.querySelector('[role="dialog"] .overflow-y-auto');
+    const scrollContainer = document.getElementById('cliente-add-content');
     
     if (scrollContainer) {
       scrollContainer.addEventListener('scroll', handleScroll);
@@ -163,10 +162,10 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       try {
         const savedScroll = localStorage.getItem(SCROLL_KEY);
         if (savedScroll) {
-          const scrollContainer = document.querySelector('[role="dialog"] [data-radix-scroll-area-viewport]') || 
-                                 document.querySelector('[role="dialog"] .overflow-y-auto');
+          const scrollContainer = document.getElementById('cliente-add-content') as HTMLElement | null;
           if (scrollContainer) {
-            scrollContainer.scrollTop = parseInt(savedScroll, 10);
+            const to = Math.min(parseInt(savedScroll, 10), scrollContainer.scrollHeight);
+            scrollContainer.scrollTop = to;
           }
         }
       } catch (error) {
