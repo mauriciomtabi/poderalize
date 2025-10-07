@@ -35,6 +35,35 @@ serve(async (req) => {
 
     for (const recurringCard of recurringCards || []) {
       try {
+        // Check if end_date has passed
+        if (recurringCard.end_date) {
+          const endDate = new Date(recurringCard.end_date);
+          if (now > endDate) {
+            console.log(`Recurring card ${recurringCard.id} has passed its end date. Disabling...`);
+            
+            // Disable the recurring card
+            await supabase
+              .from('recurring_cards')
+              .update({ enabled: false })
+              .eq('id', recurringCard.id);
+            
+            // Log the action
+            await supabase.from('automation_logs').insert({
+              board_id: recurringCard.board_id,
+              automation_id: recurringCard.id,
+              automation_type: 'recurring_card',
+              action: 'disabled_by_end_date',
+              status: 'success',
+              metadata: {
+                title: recurringCard.title,
+                end_date: recurringCard.end_date
+              }
+            });
+            
+            continue; // Skip to next card
+          }
+        }
+
         console.log(`Processing recurring card: ${recurringCard.id} - ${recurringCard.title}`);
 
         // Get the next position in the list

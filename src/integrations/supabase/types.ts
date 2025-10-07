@@ -1913,6 +1913,7 @@ export type Database = {
           day_of_week: number | null
           description: string | null
           enabled: boolean
+          end_date: string | null
           frequency: Database["public"]["Enums"]["recurrence_frequency"]
           id: string
           last_created_at: string | null
@@ -1930,6 +1931,7 @@ export type Database = {
           day_of_week?: number | null
           description?: string | null
           enabled?: boolean
+          end_date?: string | null
           frequency: Database["public"]["Enums"]["recurrence_frequency"]
           id?: string
           last_created_at?: string | null
@@ -1947,6 +1949,7 @@ export type Database = {
           day_of_week?: number | null
           description?: string | null
           enabled?: boolean
+          end_date?: string | null
           frequency?: Database["public"]["Enums"]["recurrence_frequency"]
           id?: string
           last_created_at?: string | null

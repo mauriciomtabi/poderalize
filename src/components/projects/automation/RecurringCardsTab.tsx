@@ -47,7 +47,7 @@ export const RecurringCardsTab = ({
     time_of_day: "09:00",
     days_of_week: [] as number[],
     start_date: new Date().toISOString().split('T')[0],
-    // YYYY-MM-DD format
+    end_date: "", // YYYY-MM-DD format or empty for no end date
     // Card properties
     priority: "medium" as Priority,
     label_ids: [] as string[],
@@ -126,6 +126,7 @@ export const RecurringCardsTab = ({
       day_of_month: formData.frequency === 'monthly' ? formData.day_of_month : undefined,
       time_of_day: formData.time_of_day,
       next_creation_at: nextCreation.toISOString(),
+      end_date: formData.end_date ? new Date(formData.end_date + 'T23:59:59').toISOString() : undefined,
       days_of_week: formData.frequency === 'daily' ? formData.days_of_week : undefined,
       template_config: {
         priority: formData.priority,
@@ -155,6 +156,7 @@ export const RecurringCardsTab = ({
       time_of_day: "09:00",
       days_of_week: [],
       start_date: new Date().toISOString().split('T')[0],
+      end_date: "",
       priority: "medium",
       label_ids: [],
       assignee_ids: [],
@@ -169,6 +171,7 @@ export const RecurringCardsTab = ({
 
     // Extract date from next_creation_at
     const startDate = new Date(card.next_creation_at).toISOString().split('T')[0];
+    const endDate = card.end_date ? new Date(card.end_date).toISOString().split('T')[0] : "";
     setEditingId(card.id);
     setShowForm(true);
     setFormData({
@@ -181,6 +184,7 @@ export const RecurringCardsTab = ({
       time_of_day: card.time_of_day || "09:00",
       days_of_week: card.days_of_week || [],
       start_date: startDate,
+      end_date: endDate,
       priority: config.priority as Priority || "medium",
       label_ids: Array.isArray(config.label_ids) ? config.label_ids : [],
       assignee_ids: Array.isArray(config.assignee_ids) ? config.assignee_ids : [],
@@ -290,12 +294,22 @@ export const RecurringCardsTab = ({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Data de Início</Label>
-              <Input id="start_date" type="date" value={formData.start_date} onChange={e => setFormData({
-            ...formData,
-            start_date: e.target.value
-          })} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start_date">Data de Início</Label>
+                <Input id="start_date" type="date" value={formData.start_date} onChange={e => setFormData({
+              ...formData,
+              start_date: e.target.value
+            })} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="end_date">Data de Término (opcional)</Label>
+                <Input id="end_date" type="date" value={formData.end_date} min={formData.start_date} onChange={e => setFormData({
+              ...formData,
+              end_date: e.target.value
+            })} />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -554,6 +568,9 @@ export const RecurringCardsTab = ({
                   
                   <div className="pt-1 border-t space-y-1">
                     <p>Próxima criação: {format(new Date(card.next_creation_at), 'dd/MM/yyyy HH:mm')}</p>
+                    {card.end_date && (
+                      <p className="text-muted-foreground">Encerra em: {format(new Date(card.end_date), 'dd/MM/yyyy')}</p>
+                    )}
                     {card.last_created_at && (
                       <div className="flex items-center gap-1 text-green-600">
                         <CheckCircle2 className="h-3.5 w-3.5" />
