@@ -72,7 +72,7 @@ export const ProjectsHeader = ({
         <div className="flex items-center space-x-2">
           {isAdmin && <div className="flex items-center space-x-2 mr-4 px-3 py-1 bg-muted rounded-lg">
               <Eye size={16} className="text-muted-foreground" />
-              <Label htmlFor="view-all-cards" className="text-sm cursor-pointer">Ver todos</Label>
+              
               <Switch id="view-all-cards" checked={state.viewAllCardsAsAdmin} onCheckedChange={actions.setViewAllCardsAsAdmin} />
             </div>}
           
