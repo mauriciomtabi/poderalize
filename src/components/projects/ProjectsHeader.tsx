@@ -100,24 +100,28 @@ export const ProjectsHeader = ({ onToggleFilters }: { onToggleFilters?: () => vo
             </PopoverContent>
           </Popover>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAutomation(true)}
-            title="Automação"
-          >
-            <Zap size={16} className="mr-1" />
-            Automação
-          </Button>
+          {isAdmin && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAutomation(true)}
+                title="Automação"
+              >
+                <Zap size={16} className="mr-1" />
+                Automação
+              </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowSettings(true)}
-          >
-            <Settings size={16} className="mr-1" />
-            Configurações
-          </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(true)}
+              >
+                <Settings size={16} className="mr-1" />
+                Configurações
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
