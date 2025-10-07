@@ -230,11 +230,6 @@ export function useColaboradores() {
         }
 
         if (targetUserId) {
-          // Evitar excluir o usuário autenticado por engano
-          if (currentUser?.user?.id === targetUserId) {
-            throw new Error('Não é possível remover o usuário atualmente autenticado. Peça a outro admin para realizar esta ação.');
-          }
-
           const { data, error } = await supabase.rpc('remove_user_completely', {
             _user_id: targetUserId
           });
