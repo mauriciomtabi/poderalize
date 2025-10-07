@@ -196,9 +196,41 @@ serve(async (req) => {
           nextCreation.setDate(targetDay);
         }
 
-        // Preserve the original time of day already in nextCreation to avoid timezone shifts
+        // Check if next_creation_at would be after end_date
+        if (recurringCard.end_date) {
+          const endDate = new Date(recurringCard.end_date);
+          if (nextCreation > endDate) {
+            console.log(`Next creation ${nextCreation.toISOString()} is after end_date ${endDate.toISOString()}. Disabling automation.`);
+            
+            // Disable the recurring card instead of scheduling another run
+            await supabase
+              .from('recurring_cards')
+              .update({ 
+                enabled: false,
+                last_created_at: now.toISOString()
+              })
+              .eq('id', recurringCard.id);
+            
+            // Log the action
+            await supabase.from('automation_logs').insert({
+              board_id: recurringCard.board_id,
+              automation_id: recurringCard.id,
+              automation_type: 'recurring_card',
+              action: 'disabled_by_end_date',
+              status: 'success',
+              metadata: {
+                title: recurringCard.title,
+                end_date: recurringCard.end_date,
+                last_card_created: newCard.id
+              }
+            });
+            
+            console.log(`Successfully processed and disabled recurring card: ${recurringCard.id}`);
+            continue;
+          }
+        }
 
-        // Update recurring card
+        // Update recurring card with next creation time
         const { error: updateError } = await supabase
           .from('recurring_cards')
           .update({

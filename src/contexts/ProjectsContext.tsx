@@ -462,39 +462,49 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
 
   // Realtime subscription for automatic card updates when automation runs
   useEffect(() => {
-    if (!state.currentBoard?.id) return;
+    if (!state.currentBoard?.id || state.currentBoard.lists.length === 0) return;
 
     console.log('🔔 Setting up realtime subscription for board:', state.currentBoard.id);
 
-    // Subscribe to INSERT events on project_cards table
+    const listIds = state.currentBoard.lists.map(l => l.id);
+    
+    // Subscribe to INSERT events on project_cards table for any list in this board
     const channel = supabase
-      .channel(`project_cards:${state.currentBoard.id}`)
+      .channel(`board-cards:${state.currentBoard.id}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'project_cards',
-          filter: `list_id=in.(${state.currentBoard.lists.map(l => l.id).join(',')})`
+          table: 'project_cards'
         },
         (payload) => {
-          console.log('🎯 New card detected by automation:', payload);
-          // Reload the board to show the new card
-          toast({
-            title: "Card criado pela automação",
-            description: `"${(payload.new as any).title}" foi adicionado automaticamente`,
-          });
-          loadBoard(state.currentBoard!.id);
+          const newCard = payload.new as any;
+          // Check if the card belongs to one of this board's lists
+          if (listIds.includes(newCard.list_id)) {
+            console.log('🎯 New card detected by automation:', newCard);
+            
+            // Show notification
+            toast({
+              title: "Card criado pela automação",
+              description: `"${newCard.title}" foi adicionado automaticamente`,
+            });
+            
+            // Reload the board to show the new card
+            loadBoard(state.currentBoard!.id);
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+      });
 
     // Cleanup subscription on unmount or board change
     return () => {
       console.log('🔕 Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [state.currentBoard?.id]);
+  }, [state.currentBoard?.id, state.currentBoard?.lists.length]);
 
   // Actions
   const actions = {
