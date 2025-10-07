@@ -73,7 +73,7 @@ export const RecurringCardsTab = ({
       const sortedDays = [...formData.days_of_week].sort((a, b) => a - b);
       
       // If start date/time is in the future and is a valid day, use it
-      if (nextCreation > now && sortedDays.includes(nextCreation.getDay())) {
+      if (nextCreation > now && sortedDays.includes(nextCreation.getUTCDay())) {
         // nextCreation is already correct
       } else {
         // Find next valid day starting from start date
@@ -82,14 +82,14 @@ export const RecurringCardsTab = ({
           testDate.setUTCHours(hours, minutes, 0, 0);
           testDate.setDate(testDate.getDate() + i);
           
-          if (sortedDays.includes(testDate.getDay())) {
+          if (sortedDays.includes(testDate.getUTCDay())) {
             nextCreation = testDate;
             break;
           }
         }
       }
     } else if (formData.frequency === 'weekly' || formData.frequency === 'biweekly') {
-      const currentDay = nextCreation.getDay();
+      const currentDay = nextCreation.getUTCDay();
       const targetDay = formData.day_of_week;
 
       // Check if the start date is already on the target day and hasn't passed

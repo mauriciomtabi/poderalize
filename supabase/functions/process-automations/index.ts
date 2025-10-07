@@ -174,7 +174,7 @@ serve(async (req) => {
               const testDate = new Date(nextCreation);
               testDate.setDate(testDate.getDate() + i);
               
-              if (sortedDays.includes(testDate.getDay())) {
+              if (sortedDays.includes(testDate.getUTCDay())) {
                 nextCreation = testDate;
                 break;
               }
