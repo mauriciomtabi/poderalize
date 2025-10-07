@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ interface ClienteFormProps {
 export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProps) => {
   const STORAGE_KEY = 'cliente-form-draft';
   const SCROLL_KEY = 'cliente-form-scroll';
+  const isRestoringScroll = useRef(false);
   
   // Load from localStorage if no initialData (new client form)
   const getInitialFormData = () => {
@@ -130,52 +131,65 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
     }
   }, [novoCliente, avatarUrl, initialData]);
 
-  // Save scroll position on scroll
+  // Save scroll position periodically
   useEffect(() => {
     if (initialData) return;
 
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target && target.scrollTop !== undefined) {
-        try {
-          localStorage.setItem(SCROLL_KEY, target.scrollTop.toString());
-        } catch (error) {
-          console.error('Error saving scroll position:', error);
-        }
+    const saveScroll = () => {
+      const scrollContainer = document.getElementById('cliente-add-content')?.querySelector('.overflow-y-auto');
+      if (scrollContainer && !isRestoringScroll.current) {
+        const scrollTop = scrollContainer.scrollTop;
+        localStorage.setItem(SCROLL_KEY, scrollTop.toString());
       }
     };
 
-    // Find the scrollable container (DialogContent)
-    const scrollContainer = document.getElementById('cliente-add-content');
-    
+    const scrollContainer = document.getElementById('cliente-add-content')?.querySelector('.overflow-y-auto');
     if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+      scrollContainer.addEventListener('scroll', saveScroll, { passive: true });
+      
+      return () => {
+        scrollContainer.removeEventListener('scroll', saveScroll);
+      };
     }
   }, [initialData]);
 
-  // Restore scroll position when component mounts
+  // Restore scroll position - multiple attempts to ensure it works
   useEffect(() => {
     if (initialData) return;
 
     const restoreScroll = () => {
       try {
         const savedScroll = localStorage.getItem(SCROLL_KEY);
-        if (savedScroll) {
-          const scrollContainer = document.getElementById('cliente-add-content') as HTMLElement | null;
-          if (scrollContainer) {
-            const to = Math.min(parseInt(savedScroll, 10), scrollContainer.scrollHeight);
-            scrollContainer.scrollTop = to;
-          }
+        const scrollContainer = document.getElementById('cliente-add-content')?.querySelector('.overflow-y-auto');
+        
+        if (savedScroll && scrollContainer) {
+          isRestoringScroll.current = true;
+          const scrollValue = parseInt(savedScroll, 10);
+          
+          // Multiple restore attempts with increasing delays
+          const attempts = [0, 50, 100, 200, 300, 500];
+          attempts.forEach(delay => {
+            setTimeout(() => {
+              const container = document.getElementById('cliente-add-content')?.querySelector('.overflow-y-auto');
+              if (container) {
+                container.scrollTop = scrollValue;
+              }
+            }, delay);
+          });
+          
+          setTimeout(() => {
+            isRestoringScroll.current = false;
+          }, 600);
         }
       } catch (error) {
-        console.error('Error restoring scroll position:', error);
+        console.error('Error restoring scroll:', error);
       }
     };
 
-    // Delay to ensure DOM is ready
-    const timer = setTimeout(restoreScroll, 100);
-    return () => clearTimeout(timer);
+    // Use requestAnimationFrame for better timing
+    requestAnimationFrame(() => {
+      requestAnimationFrame(restoreScroll);
+    });
   }, [initialData]);
 
   useEffect(() => {
@@ -300,7 +314,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-6 pb-6">
       {/* Draft Indicator */}
       {!initialData && (
         <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">

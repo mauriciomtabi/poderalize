@@ -228,18 +228,20 @@ const Clientes = () => {
         <Dialog open={isAddModalOpen} onOpenChange={(open) => {
           if (!open) handleCloseAddModal();
         }}>
-          <DialogContent id="cliente-add-content" className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent id="cliente-add-content" className="max-w-4xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Plus className="h-5 w-5" />
                 Adicionar Novo Cliente
               </DialogTitle>
             </DialogHeader>
-            <ClienteForm 
-              key={isAddModalOpen ? Date.now() : 'closed'}
-              onSubmit={handleAddCliente}
-              onCancel={handleCloseAddModal}
-            />
+            <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
+              <ClienteForm 
+                key={isAddModalOpen ? Date.now() : 'closed'}
+                onSubmit={handleAddCliente}
+                onCancel={handleCloseAddModal}
+              />
+            </div>
           </DialogContent>
         </Dialog>
 
