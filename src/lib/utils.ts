@@ -32,3 +32,30 @@ export function formatPhone(phone: string): string {
   }
   return phone;
 }
+
+export function ensureUrlProtocol(url: string): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+}
+
+export function getInstagramUrl(username: string): string {
+  if (!username) return '';
+  const cleaned = username.trim().replace(/^@/, '');
+  return `https://instagram.com/${cleaned}`;
+}
+
+export function getFacebookUrl(urlOrUsername: string): string {
+  if (!urlOrUsername) return '';
+  const trimmed = urlOrUsername.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  if (trimmed.includes('facebook.com/')) {
+    return `https://${trimmed}`;
+  }
+  return `https://facebook.com/${trimmed}`;
+}

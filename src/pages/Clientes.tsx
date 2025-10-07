@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus, Pencil, User, Trash2, FileText } from 'lucide-react';
-import { formatCNPJ, formatPhone } from '@/lib/utils';
+import { formatCNPJ, formatPhone, ensureUrlProtocol, getInstagramUrl, getFacebookUrl } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -352,19 +352,73 @@ const Clientes = () => {
                 </div>
 
                 {/* Digital Presence */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Site</label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {selectedCliente.site ? <a href={selectedCliente.site} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
-                          <Globe className="h-4 w-4" />
-                          {selectedCliente.site}
-                        </a> : 'Não informado'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Instagram</label>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedCliente.instagram || 'Não informado'}</p>
+                <div>
+                  <h3 className="text-sm font-semibold text-primary mb-3">PRESENÇA DIGITAL</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Site</label>
+                      <p className="text-sm mt-1">
+                        {selectedCliente.site ? (
+                          <a 
+                            href={ensureUrlProtocol(selectedCliente.site)} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-blue-600 hover:underline flex items-center gap-1"
+                          >
+                            <Globe className="h-4 w-4" />
+                            {selectedCliente.site}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">Não informado</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Instagram</label>
+                      <p className="text-sm mt-1">
+                        {selectedCliente.instagram ? (
+                          <a 
+                            href={getInstagramUrl(selectedCliente.instagram)} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-blue-600 hover:underline"
+                          >
+                            {selectedCliente.instagram}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">Não informado</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Facebook</label>
+                      <p className="text-sm mt-1">
+                        {selectedCliente.facebook ? (
+                          <a 
+                            href={getFacebookUrl(selectedCliente.facebook)} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-blue-600 hover:underline"
+                          >
+                            {selectedCliente.facebook}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">Não informado</span>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Outras Redes Sociais (LinkedIn, TikTok, etc)</label>
+                      <p className="text-sm mt-1">
+                        {selectedCliente.outras_redes_sociais ? (
+                          <span className="text-muted-foreground whitespace-pre-wrap">
+                            {selectedCliente.outras_redes_sociais}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Não informado</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
