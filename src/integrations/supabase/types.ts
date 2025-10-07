@@ -1656,6 +1656,7 @@ export type Database = {
       project_checklist_items: {
         Row: {
           assignee: string | null
+          assignee_id: string | null
           checklist_id: string
           completed: boolean
           created_at: string
@@ -1667,6 +1668,7 @@ export type Database = {
         }
         Insert: {
           assignee?: string | null
+          assignee_id?: string | null
           checklist_id: string
           completed?: boolean
           created_at?: string
@@ -1678,6 +1680,7 @@ export type Database = {
         }
         Update: {
           assignee?: string | null
+          assignee_id?: string | null
           checklist_id?: string
           completed?: boolean
           created_at?: string
@@ -1688,6 +1691,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_checklist_items_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "project_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_checklist_items_checklist_id_fkey"
             columns: ["checklist_id"]
