@@ -18,7 +18,10 @@ import logo from "@/assets/poderalize-logo.png";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import type { PagePermission } from "@/hooks/useUserPermissions";
-import versionData from "@/version.json";
+
+// Gera versão automaticamente baseada na data de build
+const BUILD_DATE = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+const VERSION = `${BUILD_DATE}`;
 
 const menuItems = [
   { icon: Users, label: "Colaboradores", href: "/colaboradores", page: "colaboradores" as PagePermission, adminOnly: true },
@@ -155,7 +158,7 @@ export const Sidebar = () => {
       <div className="p-4 border-t border-secondary/20">
         {!collapsed && (
           <div className="text-xs text-secondary-foreground/60 text-center">
-            v{versionData.version} - Poderalize
+            v{VERSION} - Poderalize
           </div>
         )}
       </div>
