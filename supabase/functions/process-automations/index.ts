@@ -76,6 +76,7 @@ serve(async (req) => {
             start_date: startDate?.toISOString(),
             due_date: dueDate?.toISOString(),
             estimated_hours: config.estimated_hours || null,
+            client_id: config.client_id || null,
             archived: false,
             watching: false,
             created_by: '00000000-0000-0000-0000-000000000000',
@@ -136,26 +137,18 @@ serve(async (req) => {
           const daysOfWeek = Array.isArray(config.days_of_week) ? config.days_of_week : [];
           
           if (daysOfWeek.length > 0) {
-            // Move to next day first
-            nextCreation.setDate(nextCreation.getDate() + 1);
-            
             // Find next occurrence based on selected days
             const sortedDays = [...daysOfWeek].sort((a: number, b: number) => a - b);
-            let foundNextDay = false;
             
-            // Try to find the next valid day within the next 7 days
-            for (let i = 0; i < 7; i++) {
-              if (sortedDays.includes(nextCreation.getDay())) {
-                foundNextDay = true;
+            // Try to find the next valid day starting from tomorrow
+            for (let i = 1; i <= 7; i++) {
+              const testDate = new Date(nextCreation);
+              testDate.setDate(testDate.getDate() + i);
+              
+              if (sortedDays.includes(testDate.getDay())) {
+                nextCreation = testDate;
                 break;
               }
-              nextCreation.setDate(nextCreation.getDate() + 1);
-            }
-            
-            if (!foundNextDay) {
-              // Fallback: just add 7 days from original
-              nextCreation = new Date(recurringCard.next_creation_at);
-              nextCreation.setDate(nextCreation.getDate() + 7);
             }
           } else {
             // No specific days configured, create daily
@@ -274,6 +267,7 @@ serve(async (req) => {
             start_date: startDate?.toISOString(),
             due_date: dueDate?.toISOString(),
             estimated_hours: config.estimated_hours || null,
+            client_id: config.client_id || null,
             archived: false,
             watching: false,
             created_by: '00000000-0000-0000-0000-000000000000',

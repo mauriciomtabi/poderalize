@@ -71,47 +71,20 @@ export const RecurringCardsTab = ({
     if (formData.frequency === 'daily') {
       // Find next occurrence based on selected days
       const sortedDays = [...formData.days_of_week].sort((a, b) => a - b);
-      const currentDay = nextCreation.getDay();
-
-      // Check if the start date's day is in the selected days and if the time hasn't passed yet
-      const isStartDaySelected = sortedDays.includes(currentDay);
-      const hasTimePassed = nextCreation < now;
-      if (isStartDaySelected && !hasTimePassed) {
-        // Use the start date as-is since it's valid
-        // nextCreation is already set correctly
+      
+      // If start date/time is in the future and is a valid day, use it
+      if (nextCreation > now && sortedDays.includes(nextCreation.getDay())) {
+        // nextCreation is already correct
       } else {
-        // Need to find the next valid day
-        if (hasTimePassed && isStartDaySelected) {
-          // Same day but time has passed, find next occurrence
-          let foundNextDay = false;
-          for (let i = 1; i <= 7; i++) {
-            const testDate = new Date(nextCreation);
-            testDate.setDate(testDate.getDate() + i);
-            if (sortedDays.includes(testDate.getDay())) {
-              nextCreation = testDate;
-              foundNextDay = true;
-              break;
-            }
-          }
-          if (!foundNextDay) {
-            // Fallback: add 7 days
-            nextCreation.setDate(nextCreation.getDate() + 7);
-          }
-        } else {
-          // Start day is not in selected days, find next valid day
-          let foundNextDay = false;
-          for (let i = 1; i <= 7; i++) {
-            const testDate = new Date(nextCreation);
-            testDate.setDate(testDate.getDate() + i);
-            if (sortedDays.includes(testDate.getDay())) {
-              nextCreation = testDate;
-              foundNextDay = true;
-              break;
-            }
-          }
-          if (!foundNextDay) {
-            // Fallback: use first selected day of next week
-            nextCreation.setDate(nextCreation.getDate() + 7);
+        // Find next valid day starting from start date
+        for (let i = 1; i <= 7; i++) {
+          const testDate = new Date(formData.start_date);
+          testDate.setHours(hours, minutes, 0, 0);
+          testDate.setDate(testDate.getDate() + i);
+          
+          if (sortedDays.includes(testDate.getDay())) {
+            nextCreation = testDate;
+            break;
           }
         }
       }
