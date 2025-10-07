@@ -2127,6 +2127,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_deletion_audit: {
+        Row: {
+          deleted_at: string
+          deleted_by_email: string
+          deleted_by_user_id: string
+          deleted_user_email: string
+          deleted_user_id: string
+          deleted_user_name: string | null
+          deletion_reason: string | null
+          had_admin_role: boolean
+          id: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by_email: string
+          deleted_by_user_id: string
+          deleted_user_email: string
+          deleted_user_id: string
+          deleted_user_name?: string | null
+          deletion_reason?: string | null
+          had_admin_role?: boolean
+          id?: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by_email?: string
+          deleted_by_user_id?: string
+          deleted_user_email?: string
+          deleted_user_id?: string
+          deleted_user_name?: string | null
+          deletion_reason?: string | null
+          had_admin_role?: boolean
+          id?: string
+        }
+        Relationships: []
+      }
       user_permissions: {
         Row: {
           created_at: string
