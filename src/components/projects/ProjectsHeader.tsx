@@ -58,8 +58,8 @@ export const ProjectsHeader = ({
       {/* View Selector and Search */}
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center space-x-3">
-          {/* Board Selector - only for admins with multiple boards */}
-          {isAdmin && state.boards.length > 1 && (
+          {/* Board Selector - only for admins with multiple boards and when not viewing all */}
+          {isAdmin && !state.viewAllCardsAsAdmin && state.boards.length > 1 && (
             <Select 
               value={state.currentBoard?.id || ''} 
               onValueChange={(boardId) => {
