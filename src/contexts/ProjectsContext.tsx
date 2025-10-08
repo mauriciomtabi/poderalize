@@ -319,15 +319,12 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const allCards: ProjectCard[] = [];
       const lists = listsData || [];
       
-      // Check if user is admin
-      const { data: userRoles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', currentUser?.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-      
-      const isAdmin = !!userRoles;
+      // Check if user is admin using SECURITY DEFINER function to avoid RLS issues
+      const { data: isAdminFn } = await supabase.rpc('has_role', {
+        _user_id: currentUser?.id,
+        _role: 'admin'
+      });
+      const isAdmin = !!isAdminFn;
       
       console.log(`🔍 Loading cards for board ${boardId}. Admin: ${isAdmin}, ViewAll: ${viewAllCards}`);
       
