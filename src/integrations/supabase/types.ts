@@ -1465,6 +1465,7 @@ export type Database = {
         Row: {
           background: Json | null
           created_at: string
+          default_labels_created: boolean | null
           description: string | null
           id: string
           settings: Json
@@ -1476,6 +1477,7 @@ export type Database = {
         Insert: {
           background?: Json | null
           created_at?: string
+          default_labels_created?: boolean | null
           description?: string | null
           id?: string
           settings?: Json
@@ -1487,6 +1489,7 @@ export type Database = {
         Update: {
           background?: Json | null
           created_at?: string
+          default_labels_created?: boolean | null
           description?: string | null
           id?: string
           settings?: Json
@@ -2253,6 +2256,31 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      get_all_cards_admin: {
+        Args: { _user_id: string }
+        Returns: {
+          actual_hours: number | null
+          archived: boolean
+          client_id: string | null
+          cover: string | null
+          created_at: string
+          created_by: string
+          custom_fields: Json | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          list_id: string
+          location: Json | null
+          position: number
+          priority: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          watching: boolean
+        }[]
       }
       has_role: {
         Args: {

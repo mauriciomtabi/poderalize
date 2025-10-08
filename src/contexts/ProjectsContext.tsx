@@ -266,126 +266,104 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       let labels = labelsResponse.data?.map(transformDBLabel) || [];
       
-// Ensure ALL active colaboradores are available as project members for this board
-const { data: colaboradoresData, error: colaboradoresError } = await supabase
-  .from('colaboradores')
-  .select('*')
-  .eq('status', 'ativo');
+      // Ensure ALL active colaboradores are available as project members for this board
+      const { data: colaboradoresData, error: colaboradoresError } = await supabase
+        .from('colaboradores')
+        .select('*')
+        .eq('status', 'ativo');
 
-if (colaboradoresError) {
-  console.error('Error fetching colaboradores:', colaboradoresError);
-}
-
-// Current auth user
-const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-// Fetch existing project members for this board
-const { data: existingMembers } = await supabase
-  .from('project_members')
-  .select('*')
-  .eq('board_id', boardId);
-
-// Determine which colaboradores are missing in project_members and insert them
-const existingUserIds = new Set((existingMembers || []).map(m => m.user_id));
-const colaboradorUserIds = new Set((colaboradoresData || []).map(c => c.user_id).filter(Boolean));
-
-// Insert missing colaboradores
-const toInsert = (colaboradoresData || [])
-  .filter(c => c.user_id && !existingUserIds.has(c.user_id))
-  .map(c => ({
-    board_id: boardId,
-    user_id: c.user_id,
-    name: c.nome,
-    email: c.email,
-    role: 'member',
-    added_by: currentUser?.id || null,
-  }));
-
-// Remove members whose colaborador was deleted
-const toRemove = (existingMembers || []).filter(m => 
-  m.user_id && !colaboradorUserIds.has(m.user_id)
-);
-
-if (toInsert.length > 0) {
-  const { error: insertMembersError } = await supabase
-    .from('project_members')
-    .insert(toInsert as any);
-  if (insertMembersError) {
-    console.error('Error inserting missing project members:', insertMembersError);
-  }
-}
-
-if (toRemove.length > 0) {
-  const memberIdsToRemove = toRemove.map(m => m.id);
-  const { error: removeMembersError } = await supabase
-    .from('project_members')
-    .delete()
-    .in('id', memberIdsToRemove);
-  if (removeMembersError) {
-    console.error('Error removing deleted project members:', removeMembersError);
-  }
-}
-
-// Re-fetch project members after potential insertions
-const { data: projectMembers } = await supabase
-  .from('project_members')
-  .select('*')
-  .eq('board_id', boardId);
-
-// Fetch profiles to enrich with avatar/name
-const userIds = (projectMembers || []).map(pm => pm.user_id);
-const { data: profilesData } = await supabase
-  .from('profiles')
-  .select('user_id, avatar_url, full_name, email')
-  .in('user_id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
-
-// Build members list aligned to project_members.id (required by project_card_assignees)
-let members: Member[] = (projectMembers || []).map(pm => {
-  const profile = profilesData?.find(p => p.user_id === pm.user_id);
-  const colab = (colaboradoresData || []).find(c => c.user_id === pm.user_id);
-  return {
-    id: pm.id, // IMPORTANT: use project_members.id for linking
-    name: colab?.nome || pm.name || profile?.full_name || profile?.email || 'Usuário',
-    email: colab?.email || pm.email || profile?.email || '',
-    avatar: profile?.avatar_url || pm.avatar,
-    role: (pm.role as any) || 'member'
-  };
-});
-
-// Also include the current user if somehow missing
-if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === currentUser.id)) {
-  members.push({
-    id: currentUser.id,
-    name: (currentUser as any).user_metadata?.full_name || currentUser.email || 'Você',
-    email: currentUser.email || '',
-    avatar: profilesData?.find(p => p.user_id === currentUser.id)?.avatar_url,
-    role: 'owner' as const
-  });
-}
-
-      // Auto-create default labels if none exist
-      if (labels.length === 0 && user) {
-        const defaultLabels = [
-          { name: 'Crítico', color: '#ef4444', description: 'Prioridade crítica' },
-          { name: 'Alta', color: '#f97316', description: 'Prioridade alta' },
-          { name: 'Média', color: '#f59e0b', description: 'Prioridade média' },
-          { name: 'Baixa', color: '#22c55e', description: 'Prioridade baixa' },
-        ];
-
-        const insertPromises = defaultLabels.map(label =>
-          supabase.from('project_labels').insert({
-            board_id: boardId,
-            name: label.name,
-            color: label.color,
-            description: label.description,
-          }).select().single()
-        );
-
-        const results = await Promise.all(insertPromises);
-        labels = results
-          .filter(r => r.data)
-          .map(r => transformDBLabel(r.data!));
+      if (colaboradoresError) {
+        console.error('Error fetching colaboradores:', colaboradoresError);
       }
+
+      // Current auth user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      // Fetch existing project members for this board
+      const { data: existingMembers } = await supabase
+        .from('project_members')
+        .select('*')
+        .eq('board_id', boardId);
+
+      // Determine which colaboradores are missing in project_members and insert them
+      const existingUserIds = new Set((existingMembers || []).map(m => m.user_id));
+      const colaboradorUserIds = new Set((colaboradoresData || []).map(c => c.user_id).filter(Boolean));
+
+      // Insert missing colaboradores
+      const toInsert = (colaboradoresData || [])
+        .filter(c => c.user_id && !existingUserIds.has(c.user_id))
+        .map(c => ({
+          board_id: boardId,
+          user_id: c.user_id,
+          name: c.nome,
+          email: c.email,
+          role: 'member',
+          added_by: currentUser?.id || null,
+        }));
+
+      // Remove members whose colaborador was deleted
+      const toRemove = (existingMembers || []).filter(m => 
+        m.user_id && !colaboradorUserIds.has(m.user_id)
+      );
+
+      if (toInsert.length > 0) {
+        const { error: insertMembersError } = await supabase
+          .from('project_members')
+          .insert(toInsert as any);
+        if (insertMembersError) {
+          console.error('Error inserting missing project members:', insertMembersError);
+        }
+      }
+
+      if (toRemove.length > 0) {
+        const memberIdsToRemove = toRemove.map(m => m.id);
+        const { error: removeMembersError } = await supabase
+          .from('project_members')
+          .delete()
+          .in('id', memberIdsToRemove);
+        if (removeMembersError) {
+          console.error('Error removing deleted project members:', removeMembersError);
+        }
+      }
+
+      // Re-fetch project members after potential insertions
+      const { data: projectMembers } = await supabase
+        .from('project_members')
+        .select('*')
+        .eq('board_id', boardId);
+
+      // Fetch profiles to enrich with avatar/name
+      const userIds = (projectMembers || []).map(pm => pm.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, avatar_url, full_name, email')
+        .in('user_id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
+
+      // Build members list aligned to project_members.id (required by project_card_assignees)
+      let members: Member[] = (projectMembers || []).map(pm => {
+        const profile = profilesData?.find(p => p.user_id === pm.user_id);
+        const colab = (colaboradoresData || []).find(c => c.user_id === pm.user_id);
+        return {
+          id: pm.id, // IMPORTANT: use project_members.id for linking
+          name: colab?.nome || pm.name || profile?.full_name || profile?.email || 'Usuário',
+          email: colab?.email || pm.email || profile?.email || '',
+          avatar: profile?.avatar_url || pm.avatar,
+          role: (pm.role as any) || 'member'
+        };
+      });
+
+      // Also include the current user if somehow missing
+      if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === currentUser.id)) {
+        members.push({
+          id: currentUser.id,
+          name: (currentUser as any).user_metadata?.full_name || currentUser.email || 'Você',
+          email: currentUser.email || '',
+          avatar: profilesData?.find(p => p.user_id === currentUser.id)?.avatar_url,
+          role: 'owner' as const
+        });
+      }
+
+      // NEVER auto-create labels - they should only be created when board is created
 
 
       // Load cards for all lists
@@ -621,6 +599,39 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       });
       
       if (result) {
+        // Create default labels ONLY when creating a new board
+        const { data: boardData } = await supabase
+          .from('project_boards')
+          .select('default_labels_created')
+          .eq('id', result.id)
+          .single();
+
+        if (boardData && !boardData.default_labels_created) {
+          const defaultLabels = [
+            { name: 'Crítico', color: '#ef4444', description: 'Prioridade crítica' },
+            { name: 'Alta', color: '#f97316', description: 'Prioridade alta' },
+            { name: 'Média', color: '#f59e0b', description: 'Prioridade média' },
+            { name: 'Baixa', color: '#22c55e', description: 'Prioridade baixa' },
+          ];
+
+          const insertPromises = defaultLabels.map(label =>
+            supabase.from('project_labels').insert({
+              board_id: result.id,
+              name: label.name,
+              color: label.color,
+              description: label.description,
+            })
+          );
+
+          await Promise.all(insertPromises);
+
+          // Mark labels as created
+          await supabase
+            .from('project_boards')
+            .update({ default_labels_created: true })
+            .eq('id', result.id);
+        }
+
         await loadBoard(result.id);
         return true;
       }
