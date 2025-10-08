@@ -49,10 +49,10 @@ export const AttachmentManager = ({
   const [linkUrl, setLinkUrl] = useState("");
   const [linkName, setLinkName] = useState("");
 
-  const handleFileUpload = (files: FileList) => {
-    Array.from(files).forEach((file) => {
+  const handleFileUpload = async (files: FileList) => {
+    for (const file of Array.from(files)) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const attachment: Attachment = {
           id: `attachment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: file.name,
@@ -66,20 +66,15 @@ export const AttachmentManager = ({
         if (isCreationMode && onAttachmentsChange) {
           onAttachmentsChange([...currentAttachments, attachment]);
         } else if (card) {
-          const updatedCard = {
-            ...card,
-            attachments: [...(card.attachments || []), attachment]
-          };
-          
-          actions.updateCard(updatedCard);
+          await actions.addAttachment(card.id, attachment);
           actions.addActivity(card.id, 'attachment', `anexou "${attachment.name}"`);
         }
       };
       reader.readAsDataURL(file);
-    });
+    }
   };
 
-  const handleAddLink = () => {
+  const handleAddLink = async () => {
     if (linkUrl.trim()) {
       const attachment: Attachment = {
         id: `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -94,12 +89,7 @@ export const AttachmentManager = ({
       if (isCreationMode && onAttachmentsChange) {
         onAttachmentsChange([...currentAttachments, attachment]);
       } else if (card) {
-        const updatedCard = {
-          ...card,
-          attachments: [...(card.attachments || []), attachment]
-        };
-        
-        actions.updateCard(updatedCard);
+        await actions.addAttachment(card.id, attachment);
         actions.addActivity(card.id, 'attachment', `anexou link "${attachment.name}"`);
       }
       
@@ -109,17 +99,13 @@ export const AttachmentManager = ({
     }
   };
 
-  const handleRemoveAttachment = (attachmentId: string) => {
+  const handleRemoveAttachment = async (attachmentId: string) => {
     const attachment = currentAttachments.find(a => a.id === attachmentId);
     
     if (isCreationMode && onAttachmentsChange) {
       onAttachmentsChange(currentAttachments.filter(a => a.id !== attachmentId));
     } else if (card) {
-      const updatedCard = {
-        ...card,
-        attachments: (card.attachments || []).filter(a => a.id !== attachmentId)
-      };
-      actions.updateCard(updatedCard);
+      await actions.removeAttachment(card.id, attachmentId);
       
       if (attachment) {
         actions.addActivity(card.id, 'attachment', `removeu anexo "${attachment.name}"`);

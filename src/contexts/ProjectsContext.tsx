@@ -179,6 +179,8 @@ interface ProjectsContextType {
     getFilteredCards: () => ProjectCard[];
     addActivity: (cardId: string, type: string, description: string, metadata?: any) => Promise<boolean>;
     loadCardActivities: (cardId: string) => Promise<any[]>;
+    addAttachment: (cardId: string, attachment: any) => Promise<boolean>;
+    removeAttachment: (cardId: string, attachmentId: string) => Promise<boolean>;
   };
 }
 
@@ -442,8 +444,15 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           .select('card_id, member_id')
           .in('card_id', cardIds);
 
+        // Load card attachments
+        const { data: cardAttachments } = await supabase
+          .from('project_attachments')
+          .select('*')
+          .in('card_id', cardIds);
+
         const labelsByCard = new Map<string, any[]>();
         const assigneesByCard = new Map<string, any[]>();
+        const attachmentsByCard = new Map<string, any[]>();
 
         (cardLabelLinks || []).forEach(link => {
           const lbl = labelMap.get(link.label_id);
@@ -461,10 +470,25 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           assigneesByCard.set(link.card_id, arr);
         });
 
+        (cardAttachments || []).forEach(attachment => {
+          const arr = attachmentsByCard.get(attachment.card_id) || [];
+          arr.push({
+            id: attachment.id,
+            name: attachment.name,
+            url: attachment.url,
+            type: attachment.type,
+            size: attachment.size,
+            uploadedBy: attachment.uploaded_by,
+            uploadedAt: attachment.uploaded_at
+          });
+          attachmentsByCard.set(attachment.card_id, arr);
+        });
+
         // Attach to card objects
         allCards.forEach(c => {
           (c as any).labels = labelsByCard.get(c.id) || [];
           (c as any).assignees = assigneesByCard.get(c.id) || [];
+          (c as any).attachments = attachmentsByCard.get(c.id) || [];
         });
       }
 
@@ -1280,6 +1304,70 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       } catch (error) {
         console.error('Error loading activities:', error);
         return [];
+      }
+    },
+
+    addAttachment: async (cardId: string, attachment: any) => {
+      try {
+        if (!user) return false;
+        
+        const { error } = await supabase
+          .from('project_attachments')
+          .insert({
+            card_id: cardId,
+            name: attachment.name,
+            url: attachment.url,
+            type: attachment.type,
+            size: attachment.size,
+            uploaded_by: user.id
+          });
+          
+        if (error) {
+          console.error('Error adding attachment:', error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível adicionar o anexo",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        if (state.currentBoard) {
+          await loadBoard(state.currentBoard.id);
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Error adding attachment:', error);
+        return false;
+      }
+    },
+
+    removeAttachment: async (cardId: string, attachmentId: string) => {
+      try {
+        const { error } = await supabase
+          .from('project_attachments')
+          .delete()
+          .eq('id', attachmentId);
+          
+        if (error) {
+          console.error('Error removing attachment:', error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível remover o anexo",
+            variant: "destructive",
+          });
+          return false;
+        }
+        
+        if (state.currentBoard) {
+          await loadBoard(state.currentBoard.id);
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Error removing attachment:', error);
+        return false;
       }
     }
   };
