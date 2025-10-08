@@ -2244,6 +2244,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consolidate_user_boards: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_notification: {
         Args: {
           p_description: string
