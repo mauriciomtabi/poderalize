@@ -692,10 +692,52 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
     },
 
     moveList: async (listId: string, newPosition: number) => {
+      if (!state.currentBoard) return false;
+
+      // Optimistic update: Update local state immediately for smooth UI
+      setState(prev => {
+        if (!prev.currentBoard) return prev;
+        
+        const newLists = [...prev.currentBoard.lists];
+        const listIndex = newLists.findIndex(l => l.id === listId);
+        
+        if (listIndex === -1) return prev;
+        
+        // Remove list from old position
+        const [movedList] = newLists.splice(listIndex, 1);
+        
+        // Insert at new position
+        newLists.splice(newPosition, 0, movedList);
+        
+        // Update positions for all lists
+        newLists.forEach((list, idx) => {
+          list.position = idx;
+        });
+        
+        return {
+          ...prev,
+          currentBoard: {
+            ...prev.currentBoard,
+            lists: newLists
+          }
+        };
+      });
+
+      // Update database in background
       const result = await listsHook.updateList(listId, { position: newPosition });
+      
       if (result && state.currentBoard) {
+        // Reload board after a small delay to ensure database is synced
+        setTimeout(() => {
+          if (state.currentBoard) {
+            loadBoard(state.currentBoard.id);
+          }
+        }, 300);
+      } else {
+        // If update failed, reload to revert optimistic update
         await loadBoard(state.currentBoard.id);
       }
+      
       return result;
     },
 
@@ -895,28 +937,85 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
     },
 
     moveCard: async (cardId: string, sourceListId: string, destListId: string, newPosition: number) => {
-      const result = await cardsHook.updateCard(cardId, {
-        list_id: destListId,
-        position: newPosition
-      } as any);
-      
-      if (result && state.currentBoard) {
-        // Add activity for card move
-        const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
-        const destList = state.currentBoard.lists.find(l => l.id === destListId);
-        if (sourceList && destList && sourceListId !== destListId && user) {
-          await supabase
-            .from('project_activities')
-            .insert({
-              card_id: cardId,
-              user_id: user.id,
-              action: `moveu de "${sourceList.title}" para "${destList.title}"`,
-              details: { sourceListId, destListId }
-            } as any);
+      if (!state.currentBoard) return false;
+
+      // Optimistic update: Update local state immediately for smooth UI
+      setState(prev => {
+        if (!prev.currentBoard) return prev;
+        
+        const newLists = prev.currentBoard.lists.map(list => ({ ...list, cards: [...list.cards] }));
+        const sourceList = newLists.find(l => l.id === sourceListId);
+        const destList = newLists.find(l => l.id === destListId);
+        
+        if (!sourceList || !destList) return prev;
+        
+        // Find and remove card from source list
+        const cardIndex = sourceList.cards.findIndex(c => c.id === cardId);
+        if (cardIndex === -1) return prev;
+        
+        const [movedCard] = sourceList.cards.splice(cardIndex, 1);
+        
+        // Update card's listId
+        movedCard.listId = destListId;
+        movedCard.position = newPosition;
+        
+        // Insert card into destination list at new position
+        destList.cards.splice(newPosition, 0, movedCard);
+        
+        // Update positions for all cards in destination list
+        destList.cards.forEach((card, idx) => {
+          card.position = idx;
+        });
+        
+        return {
+          ...prev,
+          currentBoard: {
+            ...prev.currentBoard,
+            lists: newLists
+          }
+        };
+      });
+
+      // Update database in background
+      try {
+        const result = await cardsHook.updateCard(cardId, {
+          list_id: destListId,
+          position: newPosition
+        } as any);
+        
+        if (result) {
+          // Add activity for card move
+          const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
+          const destList = state.currentBoard.lists.find(l => l.id === destListId);
+          if (sourceList && destList && sourceListId !== destListId && user) {
+            await supabase
+              .from('project_activities')
+              .insert({
+                card_id: cardId,
+                user_id: user.id,
+                action: `moveu de "${sourceList.title}" para "${destList.title}"`,
+                details: { sourceListId, destListId }
+              } as any);
+          }
+          
+          // Reload board after a small delay to ensure database is synced
+          setTimeout(() => {
+            if (state.currentBoard) {
+              loadBoard(state.currentBoard.id);
+            }
+          }, 300);
+        } else {
+          // If update failed, reload to revert optimistic update
+          await loadBoard(state.currentBoard.id);
         }
+        
+        return result;
+      } catch (error) {
+        console.error('Error moving card:', error);
+        // Reload board to revert optimistic update
         await loadBoard(state.currentBoard.id);
+        return false;
       }
-      return result;
     },
 
     duplicateCard: async (cardId: string) => {
