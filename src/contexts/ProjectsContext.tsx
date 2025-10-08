@@ -266,71 +266,20 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       let labels = labelsResponse.data?.map(transformDBLabel) || [];
       
-      // Ensure ALL active colaboradores are available as project members for this board
-      const { data: colaboradoresData, error: colaboradoresError } = await supabase
-        .from('colaboradores')
-        .select('*')
-        .eq('status', 'ativo');
-
-      if (colaboradoresError) {
-        console.error('Error fetching colaboradores:', colaboradoresError);
-      }
-
       // Current auth user
       const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-      // Fetch existing project members for this board
-      const { data: existingMembers } = await supabase
-        .from('project_members')
-        .select('*')
-        .eq('board_id', boardId);
-
-      // Determine which colaboradores are missing in project_members and insert them
-      const existingUserIds = new Set((existingMembers || []).map(m => m.user_id));
-      const colaboradorUserIds = new Set((colaboradoresData || []).map(c => c.user_id).filter(Boolean));
-
-      // Insert missing colaboradores
-      const toInsert = (colaboradoresData || [])
-        .filter(c => c.user_id && !existingUserIds.has(c.user_id))
-        .map(c => ({
-          board_id: boardId,
-          user_id: c.user_id,
-          name: c.nome,
-          email: c.email,
-          role: 'member',
-          added_by: currentUser?.id || null,
-        }));
-
-      // Remove members whose colaborador was deleted
-      const toRemove = (existingMembers || []).filter(m => 
-        m.user_id && !colaboradorUserIds.has(m.user_id)
-      );
-
-      if (toInsert.length > 0) {
-        const { error: insertMembersError } = await supabase
-          .from('project_members')
-          .insert(toInsert as any);
-        if (insertMembersError) {
-          console.error('Error inserting missing project members:', insertMembersError);
-        }
-      }
-
-      if (toRemove.length > 0) {
-        const memberIdsToRemove = toRemove.map(m => m.id);
-        const { error: removeMembersError } = await supabase
-          .from('project_members')
-          .delete()
-          .in('id', memberIdsToRemove);
-        if (removeMembersError) {
-          console.error('Error removing deleted project members:', removeMembersError);
-        }
-      }
-
-      // Re-fetch project members after potential insertions
+      // Fetch existing project members for this board (no auto-sync)
       const { data: projectMembers } = await supabase
         .from('project_members')
         .select('*')
         .eq('board_id', boardId);
+
+      // Fetch colaboradores for enrichment only
+      const { data: colaboradoresData } = await supabase
+        .from('colaboradores')
+        .select('*')
+        .eq('status', 'ativo');
 
       // Fetch profiles to enrich with avatar/name
       const userIds = (projectMembers || []).map(pm => pm.user_id);
@@ -366,11 +315,11 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       // NEVER auto-create labels - they should only be created when board is created
 
 
-      // Load cards for all lists
+      // Load cards for all lists - ALWAYS from current board
       const allCards: ProjectCard[] = [];
       const lists = listsData || [];
       
-      // Check if user is admin and wants to view all cards
+      // Check if user is admin
       const { data: userRoles } = await supabase
         .from('user_roles')
         .select('role')
@@ -380,23 +329,14 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       const isAdmin = !!userRoles;
       
-      if (isAdmin && viewAllCards) {
-        // Admin viewing all cards from all boards
-        const { data: allBoardCards } = await supabase
-          .from('project_cards')
-          .select('*')
-          .order('position', { ascending: true });
-        
-        if (allBoardCards) {
-          allCards.push(...allBoardCards.map(transformDBCard));
-        }
-      } else {
-        // Normal view: only cards from current board - fetch once, not per list
-        const boardCards = await cardsHook.fetchAllBoardCards(boardId);
-        
-        if (boardCards) {
-          allCards.push(...boardCards.map(transformDBCard));
-        }
+      console.log(`🔍 Loading cards for board ${boardId}. Admin: ${isAdmin}, ViewAll: ${viewAllCards}`);
+      
+      // Fetch all cards from current board (no special admin path)
+      const boardCards = await cardsHook.fetchAllBoardCards(boardId);
+      
+      if (boardCards) {
+        allCards.push(...boardCards.map(transformDBCard));
+        console.log(`📦 Loaded ${boardCards.length} cards from board`);
       }
 
       // Enrich cards with labels and assignees from linking tables
@@ -459,20 +399,19 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       for (const list of lists) {
         let listCards = allCards.filter(card => card.listId === list.id);
         
-        // If admin is NOT viewing all cards, filter to show only:
-        // - Cards they created
-        // - Cards they are assigned to
-        // - Cards from boards they own (not just member)
+        // Apply filtering based on admin toggle and ownership
         if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
-          // Not board owner, filter to only cards they created or are assigned to
+          // Admin with toggle OFF and not board owner: filter to only their cards
           listCards = listCards.filter(card => {
             const isCreator = card.createdBy === currentUser.id;
             const isAssigned = card.assignees?.some((a: any) => {
-              // Find the member by user_id since assignees are project_members
               return members.some(m => m.id === a.id && m.email === user?.email);
             });
             return isCreator || isAssigned;
           });
+          console.log(`🔒 Filtered ${list.title}: ${listCards.length} cards (admin, toggle OFF)`);
+        } else {
+          console.log(`🔓 Showing all cards in ${list.title}: ${listCards.length} cards`);
         }
         
         listsWithCards.push(transformDBList(list, listCards));

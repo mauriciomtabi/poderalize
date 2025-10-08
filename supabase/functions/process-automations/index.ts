@@ -173,6 +173,68 @@ serve(async (req) => {
           }
         }
 
+        // Add checklist from template if specified
+        if (config.checklist_template_id) {
+          console.log(`Creating checklist from template: ${config.checklist_template_id}`);
+          
+          // Fetch the template
+          const { data: template, error: templateError } = await supabase
+            .from('checklist_templates')
+            .select('id, title')
+            .eq('id', config.checklist_template_id)
+            .single();
+          
+          if (templateError) {
+            console.error('Error fetching checklist template:', templateError);
+          } else if (template) {
+            // Create the checklist
+            const { data: newChecklist, error: checklistError } = await supabase
+              .from('project_checklists')
+              .insert({
+                card_id: newCard.id,
+                title: template.title,
+                position: 0,
+              })
+              .select()
+              .single();
+            
+            if (checklistError) {
+              console.error('Error creating checklist:', checklistError);
+            } else {
+              console.log(`Created checklist: ${newChecklist.id}`);
+              
+              // Fetch template items
+              const { data: templateItems, error: itemsError } = await supabase
+                .from('checklist_template_items')
+                .select('*')
+                .eq('template_id', template.id)
+                .order('position', { ascending: true });
+              
+              if (itemsError) {
+                console.error('Error fetching template items:', itemsError);
+              } else if (templateItems && templateItems.length > 0) {
+                // Create checklist items
+                const itemInserts = templateItems.map((item: any) => ({
+                  checklist_id: newChecklist.id,
+                  text: item.text,
+                  position: item.position,
+                  completed: false,
+                }));
+                
+                const { error: itemsInsertError } = await supabase
+                  .from('project_checklist_items')
+                  .insert(itemInserts);
+                
+                if (itemsInsertError) {
+                  console.error('Error creating checklist items:', itemsInsertError);
+                } else {
+                  console.log(`Created ${itemInserts.length} checklist items`);
+                }
+              }
+            }
+          }
+        }
+
         // Calculate next creation time
         let nextCreation = new Date(recurringCard.next_creation_at);
         
@@ -412,6 +474,68 @@ serve(async (req) => {
             }
           } else {
             console.log('No valid members found for assignment');
+          }
+        }
+
+        // Add checklist from template if specified
+        if (config.checklist_template_id) {
+          console.log(`Creating checklist from template: ${config.checklist_template_id}`);
+          
+          // Fetch the template
+          const { data: template, error: templateError } = await supabase
+            .from('checklist_templates')
+            .select('id, title')
+            .eq('id', config.checklist_template_id)
+            .single();
+          
+          if (templateError) {
+            console.error('Error fetching checklist template:', templateError);
+          } else if (template) {
+            // Create the checklist
+            const { data: newChecklist, error: checklistError } = await supabase
+              .from('project_checklists')
+              .insert({
+                card_id: newCard.id,
+                title: template.title,
+                position: 0,
+              })
+              .select()
+              .single();
+            
+            if (checklistError) {
+              console.error('Error creating checklist:', checklistError);
+            } else {
+              console.log(`Created checklist: ${newChecklist.id}`);
+              
+              // Fetch template items
+              const { data: templateItems, error: itemsError } = await supabase
+                .from('checklist_template_items')
+                .select('*')
+                .eq('template_id', template.id)
+                .order('position', { ascending: true });
+              
+              if (itemsError) {
+                console.error('Error fetching template items:', itemsError);
+              } else if (templateItems && templateItems.length > 0) {
+                // Create checklist items
+                const itemInserts = templateItems.map((item: any) => ({
+                  checklist_id: newChecklist.id,
+                  text: item.text,
+                  position: item.position,
+                  completed: false,
+                }));
+                
+                const { error: itemsInsertError } = await supabase
+                  .from('project_checklist_items')
+                  .insert(itemInserts);
+                
+                if (itemsInsertError) {
+                  console.error('Error creating checklist items:', itemsInsertError);
+                } else {
+                  console.log(`Created ${itemInserts.length} checklist items`);
+                }
+              }
+            }
           }
         }
 

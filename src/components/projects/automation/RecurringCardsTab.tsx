@@ -13,6 +13,7 @@ import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit, Building2, Check, Chev
 import { useRecurringCards, RecurringCard } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useClientes } from "@/hooks/useClientes";
+import { useChecklistTemplates } from "@/hooks/useChecklistTemplates";
 import { format } from "date-fns";
 import type { Priority } from "@/types/projects";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ export const RecurringCardsTab = ({
     toggleEnabled
   } = useRecurringCards(boardId);
   const { clientes } = useClientes();
+  const { templates } = useChecklistTemplates(boardId || undefined);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [clientePopoverOpen, setClientePopoverOpen] = useState(false);
@@ -74,7 +76,8 @@ export const RecurringCardsTab = ({
     // Days from creation
     start_date_offset: 0,
     // Days from creation
-    estimated_hours: 0
+    estimated_hours: 0,
+    checklist_template_id: "" as string
   });
   const handleSubmit = async () => {
     if (!boardId || !formData.title || !formData.list_id) return;
@@ -150,6 +153,7 @@ export const RecurringCardsTab = ({
         due_date_offset: formData.due_date_offset,
         start_date_offset: formData.start_date_offset,
         estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined,
+        checklist_template_id: formData.checklist_template_id || undefined,
         utc_days_of_week: formData.frequency === 'daily' ? formData.days_of_week.map((localDay) => {
           const base = new Date(`1970-01-04T${formData.time_of_day}`); // 1970-01-04 is Sunday
           base.setDate(base.getDate() + localDay);
@@ -182,7 +186,8 @@ export const RecurringCardsTab = ({
       client_id: "",
       due_date_offset: 0,
       start_date_offset: 0,
-      estimated_hours: 0
+      estimated_hours: 0,
+      checklist_template_id: ""
     });
   };
   const handleEdit = (card: RecurringCard) => {
@@ -216,7 +221,8 @@ export const RecurringCardsTab = ({
       client_id: typeof config.client_id === 'string' ? config.client_id : "",
       due_date_offset: typeof config.due_date_offset === 'number' ? config.due_date_offset : 0,
       start_date_offset: typeof config.start_date_offset === 'number' ? config.start_date_offset : 0,
-      estimated_hours: typeof config.estimated_hours === 'number' ? config.estimated_hours : 0
+      estimated_hours: typeof config.estimated_hours === 'number' ? config.estimated_hours : 0,
+      checklist_template_id: typeof config.checklist_template_id === 'string' ? config.checklist_template_id : ""
     });
   };
   const frequencyLabels = {
@@ -295,7 +301,8 @@ export const RecurringCardsTab = ({
             client_id: "",
             due_date_offset: 0,
             start_date_offset: 0,
-            estimated_hours: 0
+            estimated_hours: 0,
+            checklist_template_id: ""
           });
           setShowForm(!showForm);
         }} size="sm">
@@ -434,6 +441,27 @@ export const RecurringCardsTab = ({
                 <Tag className="h-4 w-4" />
                 Propriedades do Card
               </h3>
+
+              {templates.length > 0 && <div className="space-y-2">
+                  <Label htmlFor="checklist_template">Template de Checklist (opcional)</Label>
+                  <Select value={formData.checklist_template_id} onValueChange={value => setFormData({
+                ...formData,
+                checklist_template_id: value
+              })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um template" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="">Nenhum</SelectItem>
+                      {templates.map(template => <SelectItem key={template.id} value={template.id}>
+                          {template.title}
+                          {template.description && <span className="text-xs text-muted-foreground ml-2">
+                              {template.description}
+                            </span>}
+                        </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>}
 
               
 
