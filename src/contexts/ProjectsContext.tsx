@@ -331,12 +331,20 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       console.log(`🔍 Loading cards for board ${boardId}. Admin: ${isAdmin}, ViewAll: ${viewAllCards}`);
       
-      // Fetch all cards from current board (no special admin path)
-      const boardCards = await cardsHook.fetchAllBoardCards(boardId);
-      
-      if (boardCards) {
-        allCards.push(...boardCards.map(transformDBCard));
-        console.log(`📦 Loaded ${boardCards.length} cards from board`);
+      // Fetch cards: use admin RPC when toggle is ON, else board-only query
+      if (isAdmin && viewAllCards) {
+        const { data: allCardsAdmin } = await supabase.rpc('get_all_cards_admin', { _user_id: currentUser?.id });
+        const listIds = new Set((lists || []).map(l => l.id));
+        const filtered = (allCardsAdmin || []).filter((c: any) => listIds.has(c.list_id));
+        const mapped = (filtered as any[]).map((c) => transformDBCard(c as any));
+        allCards.push(...(mapped as ProjectCard[]));
+        console.log(`📦 Loaded ${mapped.length} cards from admin RPC`);
+      } else {
+        const boardCards = await cardsHook.fetchAllBoardCards(boardId);
+        if (boardCards) {
+          allCards.push(...boardCards.map(transformDBCard));
+          console.log(`📦 Loaded ${boardCards.length} cards from board`);
+        }
       }
 
       // Enrich cards with labels and assignees from linking tables

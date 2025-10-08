@@ -444,15 +444,15 @@ export const RecurringCardsTab = ({
 
               {templates.length > 0 && <div className="space-y-2">
                   <Label htmlFor="checklist_template">Template de Checklist (opcional)</Label>
-                  <Select value={formData.checklist_template_id} onValueChange={value => setFormData({
+                  <Select value={formData.checklist_template_id || 'none'} onValueChange={value => setFormData({
                 ...formData,
-                checklist_template_id: value
+                checklist_template_id: value === 'none' ? '' : value
               })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um template" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
-                      <SelectItem value="">Nenhum</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {templates.map(template => <SelectItem key={template.id} value={template.id}>
                           {template.title}
                           {template.description && <span className="text-xs text-muted-foreground ml-2">
