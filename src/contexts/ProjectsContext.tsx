@@ -219,8 +219,23 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             setState(prev => ({ ...prev, isLoading: false }));
           }
         } else if (!state.currentBoard) {
-          // Boards exist, load the first one
-          loadBoard(boardsHook.boards[0].id);
+          // Boards exist, load the correct one
+          // 1. Try to load from localStorage
+          const lastBoardId = localStorage.getItem('lastBoardId');
+          const savedBoard = lastBoardId ? boardsHook.boards.find(b => b.id === lastBoardId) : null;
+          
+          if (savedBoard) {
+            loadBoard(savedBoard.id);
+          } else {
+            // 2. Prioritize user's own board
+            const userBoard = boardsHook.boards.find(b => b.user_id === user.id);
+            if (userBoard) {
+              loadBoard(userBoard.id);
+            } else {
+              // 3. Fallback to first available board
+              loadBoard(boardsHook.boards[0].id);
+            }
+          }
         }
       }
       
@@ -524,6 +539,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     setCurrentBoard: (board: ProjectBoard | null) => {
       setState(prev => ({ ...prev, currentBoard: board }));
       if (board) {
+        // Save to localStorage for persistence
+        localStorage.setItem('lastBoardId', board.id);
         loadBoard(board.id);
       }
     },

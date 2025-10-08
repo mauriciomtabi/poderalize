@@ -9,6 +9,7 @@ import { useProjects } from "@/contexts/ProjectsContext";
 import { ViewType } from "@/types/projects";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProjectsFilters } from "@/components/projects/ProjectsFilters";
 import { ProjectsSettings } from "@/components/projects/ProjectsSettings";
 import { AutomationDialog } from "./automation/AutomationDialog";
@@ -56,7 +57,30 @@ export const ProjectsHeader = ({
   return <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       {/* View Selector and Search */}
       <div className="flex items-center justify-between px-4 pb-4">
-        <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">
+        <div className="flex items-center space-x-3">
+          {/* Board Selector - only for admins with multiple boards */}
+          {isAdmin && state.boards.length > 1 && (
+            <Select 
+              value={state.currentBoard?.id || ''} 
+              onValueChange={(boardId) => {
+                const board = state.boards.find(b => b.id === boardId);
+                if (board) actions.setCurrentBoard(board);
+              }}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Selecione o quadro" />
+              </SelectTrigger>
+              <SelectContent>
+                {state.boards.map((board) => (
+                  <SelectItem key={board.id} value={board.id}>
+                    {board.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
+          <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">
           {Object.entries(viewIcons).map(([view, Icon]) => {
           // Only admins can see dashboard view
           if (view === 'dashboard' && !isAdmin) {
@@ -67,6 +91,7 @@ export const ProjectsHeader = ({
                 {viewLabels[view as ViewType]}
               </Button>;
         })}
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">
