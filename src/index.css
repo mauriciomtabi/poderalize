@@ -200,7 +200,7 @@
   }
 
   .kanban-drag-preview {
-    @apply opacity-80 shadow-2xl;
+    @apply shadow-2xl;
     transition: none !important;
     filter: drop-shadow(0 10px 25px hsl(var(--primary) / 0.25));
   }

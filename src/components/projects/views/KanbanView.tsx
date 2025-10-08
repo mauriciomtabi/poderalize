@@ -77,10 +77,8 @@ export const KanbanView = () => {
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId, type } = result;
     
-    // Clear dragged item with a slight delay to prevent visual glitches
-    setTimeout(() => {
-      actions.setDraggedItem(null);
-    }, 50);
+    // Clear dragged item immediately
+    actions.setDraggedItem(null);
 
     if (!destination) return;
 
