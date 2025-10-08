@@ -14,6 +14,8 @@ import { useRecurringCards, RecurringCard } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useClientes } from "@/hooks/useClientes";
 import { useChecklistTemplates } from "@/hooks/useChecklistTemplates";
+import { useProjectLabels } from "@/hooks/useProjectLabels";
+import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { format } from "date-fns";
 import type { Priority } from "@/types/projects";
 import { cn } from "@/lib/utils";
@@ -53,6 +55,8 @@ export const RecurringCardsTab = ({
   } = useRecurringCards(boardId);
   const { clientes } = useClientes();
   const { templates } = useChecklistTemplates(boardId || undefined);
+  const { labels } = useProjectLabels(boardId || undefined);
+  const { members } = useProjectMembers(boardId || undefined);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [clientePopoverOpen, setClientePopoverOpen] = useState(false);
@@ -465,10 +469,10 @@ export const RecurringCardsTab = ({
 
               
 
-              {state.currentBoard && state.currentBoard.labels.length > 0 && <div className="space-y-2">
+              {labels.length > 0 && <div className="space-y-2">
                   <Label>Etiquetas</Label>
                   <div className="flex flex-wrap gap-2">
-                    {state.currentBoard.labels.map(label => <Badge key={label.id} variant={formData.label_ids.includes(label.id) ? "default" : "outline"} className="cursor-pointer" style={formData.label_ids.includes(label.id) ? {
+                    {labels.map(label => <Badge key={label.id} variant={formData.label_ids.includes(label.id) ? "default" : "outline"} className="cursor-pointer" style={formData.label_ids.includes(label.id) ? {
                 backgroundColor: label.color,
                 borderColor: label.color
               } : {}} onClick={() => toggleLabel(label.id)}>
@@ -477,10 +481,10 @@ export const RecurringCardsTab = ({
                   </div>
                 </div>}
 
-              {state.currentBoard && state.currentBoard.members.length > 0 && <div className="space-y-2">
+              {members.length > 0 && <div className="space-y-2">
                   <Label>Membros</Label>
                   <div className="flex flex-wrap gap-2">
-                    {state.currentBoard.members.map(member => <Badge key={member.id} variant={formData.assignee_ids.includes(member.id) ? "default" : "outline"} className="cursor-pointer" onClick={() => toggleAssignee(member.id)}>
+                    {members.map(member => <Badge key={member.id} variant={formData.assignee_ids.includes(member.id) ? "default" : "outline"} className="cursor-pointer" onClick={() => toggleAssignee(member.id)}>
                         <Users className="h-3 w-3 mr-1" />
                         {member.name}
                       </Badge>)}
@@ -607,7 +611,7 @@ export const RecurringCardsTab = ({
                   
                   {card.template_config && <>
                       {Array.isArray(card.template_config.label_ids) && card.template_config.label_ids.length > 0 && (() => {
-                const selectedLabels = state.currentBoard?.labels.filter(l => card.template_config.label_ids.includes(l.id)) || [];
+                const selectedLabels = labels.filter(l => card.template_config.label_ids.includes(l.id)) || [];
                 return selectedLabels.length > 0 && <div className="flex items-center gap-1 flex-wrap">
                             <Tag className="h-3 w-3" />
                             {selectedLabels.map(label => <Badge key={label.id} variant="outline" className="text-xs" style={{
@@ -620,7 +624,7 @@ export const RecurringCardsTab = ({
                           </div>;
               })()}
                       {Array.isArray(card.template_config.assignee_ids) && card.template_config.assignee_ids.length > 0 && (() => {
-                const selectedMembers = state.currentBoard?.members.filter(m => card.template_config.assignee_ids.includes(m.id)) || [];
+                const selectedMembers = members.filter(m => card.template_config.assignee_ids.includes(m.id)) || [];
                 return selectedMembers.length > 0 && <div className="flex items-center gap-1 flex-wrap">
                             <Users className="h-3 w-3" />
                             {selectedMembers.map(member => <Badge key={member.id} variant="outline" className="text-xs">
