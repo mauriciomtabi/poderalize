@@ -212,12 +212,12 @@ export const KanbanView = () => {
                                     </div>
                                   </CardHeader>
 
-                                  <Droppable droppableId={list.id}>
+                                   <Droppable droppableId={list.id}>
                                     {(provided, snapshot) => (
                                       <CardContent
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto ${
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden ${
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >

@@ -195,21 +195,20 @@
 
   /* Kanban específico */
   .kanban-column {
-    @apply border border-white/20 shadow-md;
+    @apply border border-white/20 shadow-md overflow-hidden;
     /* Background color will be set inline via style attribute */
   }
 
-.kanban-drag-preview {
-    @apply scale-105 shadow-xl border border-primary/30 opacity-95;
-    transform: rotate(2deg);
+  .kanban-drag-preview {
+    @apply opacity-80 shadow-2xl;
     transition: none !important;
     filter: drop-shadow(0 10px 25px hsl(var(--primary) / 0.25));
   }
 
   .kanban-drop-zone {
-    @apply bg-primary/5 border-2 border-dashed border-primary/20 rounded-lg;
-    transition: all 0.2s ease;
-    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.1), 0 4px 12px -4px hsl(var(--primary) / 0.15);
+    @apply bg-primary/5 rounded-lg;
+    outline: 2px dashed hsl(var(--primary) / 0.5);
+    outline-offset: -2px;
   }
 
   .kanban-card-dragging {
