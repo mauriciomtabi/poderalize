@@ -402,15 +402,17 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       
       const isAdmin = !!userRoles;
       
-      if (isAdmin && viewAllCards) {
-        // Admin viewing all cards from all boards
+      if (isAdmin && viewAllCards && currentUser?.id) {
+        // Admin viewing all cards - use RPC function to bypass RLS
         const { data: allBoardCards } = await supabase
-          .from('project_cards')
-          .select('*')
-          .order('position', { ascending: true });
+          .rpc('get_all_cards_admin', { _user_id: currentUser.id });
         
         if (allBoardCards) {
-          allCards.push(...allBoardCards.map(transformDBCard));
+          // Filter only cards from current board's lists
+          const listIds = lists.map(l => l.id);
+          allCards.push(...allBoardCards
+            .filter(card => listIds.includes(card.list_id))
+            .map(transformDBCard));
         }
       } else {
         // Normal view: only cards from current board - fetch once, not per list
@@ -479,24 +481,7 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       const isBoardOwner = boardOwner?.user_id === currentUser?.id;
       
       for (const list of lists) {
-        let listCards = allCards.filter(card => card.listId === list.id);
-        
-        // If admin is NOT viewing all cards, filter to show only:
-        // - Cards they created
-        // - Cards they are assigned to
-        // - Cards from boards they own (not just member)
-        if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
-          // Not board owner, filter to only cards they created or are assigned to
-          listCards = listCards.filter(card => {
-            const isCreator = card.createdBy === currentUser.id;
-            const isAssigned = card.assignees?.some((a: any) => {
-              // Find the member by user_id since assignees are project_members
-              return members.some(m => m.id === a.id && m.email === user?.email);
-            });
-            return isCreator || isAssigned;
-          });
-        }
-        
+        const listCards = allCards.filter(card => card.listId === list.id);
         listsWithCards.push(transformDBList(list, listCards));
       }
 

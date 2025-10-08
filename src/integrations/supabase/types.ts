@@ -2254,6 +2254,31 @@ export type Database = {
         }
         Returns: string
       }
+      get_all_cards_admin: {
+        Args: { _user_id: string }
+        Returns: {
+          actual_hours: number | null
+          archived: boolean
+          client_id: string | null
+          cover: string | null
+          created_at: string
+          created_by: string
+          custom_fields: Json | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          list_id: string
+          location: Json | null
+          position: number
+          priority: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          watching: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
