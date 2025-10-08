@@ -343,19 +343,20 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       console.log(`🔍 Loading cards for board ${boardId}. Admin: ${isAdmin}, ViewAll: ${viewAllCards}`);
       
-      // Fetch cards: use admin RPC when toggle is ON, else board-only query
+      // Fetch cards: use admin RPC when toggle is ON (ALL BOARDS), else board-only query
       if (isAdmin && viewAllCards) {
+        // Admin with "view all" ON: Load cards from ALL boards, not just current one
         const { data: allCardsAdmin } = await supabase.rpc('get_all_cards_admin', { _user_id: currentUser?.id });
-        const listIds = new Set((lists || []).map(l => l.id));
-        const filtered = (allCardsAdmin || []).filter((c: any) => listIds.has(c.list_id));
-        const mapped = (filtered as any[]).map((c) => transformDBCard(c as any));
+        const mapped = (allCardsAdmin || []).map((c: any) => transformDBCard(c as any));
         allCards.push(...(mapped as ProjectCard[]));
-        console.log(`📦 Loaded ${mapped.length} cards from admin RPC`);
+        console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin view)`);
       } else {
+        // Regular view: only cards from current board
+        const listIds = new Set((lists || []).map(l => l.id));
         const boardCards = await cardsHook.fetchAllBoardCards(boardId);
         if (boardCards) {
           allCards.push(...boardCards.map(transformDBCard));
-          console.log(`📦 Loaded ${boardCards.length} cards from board`);
+          console.log(`📦 Loaded ${boardCards.length} cards from current board`);
         }
       }
 
@@ -416,25 +417,45 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       const isBoardOwner = boardOwner?.user_id === currentUser?.id;
       
-      for (const list of lists) {
-        let listCards = allCards.filter(card => card.listId === list.id);
+      if (isAdmin && viewAllCards) {
+        // Admin viewing all: We need to show cards from ALL boards
+        // Fetch ALL lists from ALL boards to group the cards properly
+        const { data: allListsData } = await supabase
+          .from('project_lists')
+          .select('*')
+          .order('position', { ascending: true });
         
-        // Apply filtering based on admin toggle and ownership
-        if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
-          // Admin with toggle OFF and not board owner: filter to only their cards
-          listCards = listCards.filter(card => {
-            const isCreator = card.createdBy === currentUser.id;
-            const isAssigned = card.assignees?.some((a: any) => {
-              return members.some(m => m.id === a.id && m.email === user?.email);
-            });
-            return isCreator || isAssigned;
-          });
-          console.log(`🔒 Filtered ${list.title}: ${listCards.length} cards (admin, toggle OFF)`);
-        } else {
-          console.log(`🔓 Showing all cards in ${list.title}: ${listCards.length} cards`);
+        const allLists = allListsData || [];
+        
+        for (const list of allLists) {
+          const listCards = allCards.filter(card => card.listId === list.id);
+          if (listCards.length > 0) {
+            listsWithCards.push(transformDBList(list, listCards));
+          }
         }
-        
-        listsWithCards.push(transformDBList(list, listCards));
+        console.log(`🔓 Admin view: Showing ${listsWithCards.length} lists with cards from all boards`);
+      } else {
+        // Regular view: only show lists from current board
+        for (const list of lists) {
+          let listCards = allCards.filter(card => card.listId === list.id);
+          
+          // Apply filtering based on admin toggle and ownership
+          if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
+            // Admin with toggle OFF and not board owner: filter to only their cards
+            listCards = listCards.filter(card => {
+              const isCreator = card.createdBy === currentUser.id;
+              const isAssigned = card.assignees?.some((a: any) => {
+                return members.some(m => m.id === a.id && m.email === user?.email);
+              });
+              return isCreator || isAssigned;
+            });
+            console.log(`🔒 Filtered ${list.title}: ${listCards.length} cards (admin, toggle OFF)`);
+          } else {
+            console.log(`🔓 Showing all cards in ${list.title}: ${listCards.length} cards`);
+          }
+          
+          listsWithCards.push(transformDBList(list, listCards));
+        }
       }
 
       const transformedBoard = transformDBBoard(
