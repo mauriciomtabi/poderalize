@@ -419,29 +419,56 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       if (isAdmin && viewAllCards) {
         // Admin viewing all: Group ALL cards by list title into current board's lists
-        // Fetch ALL lists from ALL boards to map by title
+        // Fetch ALL lists from ALL boards to map by title and position index per board
         const { data: allListsData } = await supabase
           .from('project_lists')
-          .select('*')
+          .select('id, title, position, board_id')
           .order('position', { ascending: true });
         
         const allLists = allListsData || [];
         
-        // Create a map of list titles to list IDs across all boards
-        const listTitleMap = new Map<string, string[]>();
-        allLists.forEach(list => {
-          const ids = listTitleMap.get(list.title.toLowerCase()) || [];
-          ids.push(list.id);
-          listTitleMap.set(list.title.toLowerCase(), ids);
+        // Helpers
+        const normalize = (s: string) => (s || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .trim();
+        
+        // Map list title -> ids (across all boards)
+        const titleToIds = new Map<string, string[]>();
+        // Map board_id -> lists ordered by position
+        const boardToLists = new Map<string, { id: string; title: string }[]>();
+        
+        allLists.forEach((l: any) => {
+          const key = normalize(l.title);
+          const ids = titleToIds.get(key) || [];
+          ids.push(l.id);
+          titleToIds.set(key, ids);
+          
+          const arr = boardToLists.get(l.board_id) || [];
+          arr.push({ id: l.id, title: l.title });
+          boardToLists.set(l.board_id, arr);
         });
         
-        // For each list in the CURRENT board, gather cards from all boards with matching title
-        for (const list of lists) {
-          const matchingListIds = listTitleMap.get(list.title.toLowerCase()) || [list.id];
-          const listCards = allCards.filter(card => matchingListIds.includes(card.listId));
+        // Ensure arrays per board are ordered by position already due to query order
+        
+        for (let i = 0; i < lists.length; i++) {
+          const list = lists[i];
+          const key = normalize(list.title);
+          let matchingListIds = titleToIds.get(key) || [];
           
-          console.log(`🔓 Admin view: ${list.title} has ${listCards.length} cards from ${matchingListIds.length} boards`);
+          // Fallback: if no title matches found, aggregate by same index across boards
+          if (matchingListIds.length === 0) {
+            const fallbackIds: string[] = [];
+            boardToLists.forEach((arr) => {
+              if (i < arr.length) fallbackIds.push(arr[i].id);
+            });
+            matchingListIds = fallbackIds.length ? fallbackIds : [list.id];
+          }
+          
+          const listCards = allCards.filter(card => matchingListIds.includes(card.listId));
           listsWithCards.push(transformDBList(list, listCards));
+          console.log(`🔓 Admin view: ${list.title} => ${listCards.length} cards (matched ${matchingListIds.length} lists)`);
         }
       } else {
         // Regular view: only show lists from current board
