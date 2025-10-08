@@ -147,7 +147,7 @@ export const KanbanView = () => {
       <div className="flex h-full min-w-0 min-h-0">
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-x-auto overflow-y-hidden min-w-0"
+          className="flex-1 overflow-x-auto overflow-y-hidden min-w-0 kanban-scroll"
         >
           <div className="h-full">
             <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
@@ -170,7 +170,7 @@ export const KanbanView = () => {
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
+                                className="flex-shrink-0 w-80"
                               >
                                 <Card 
                                   className="flex flex-col kanban-column max-h-[calc(100vh-12rem)]"
