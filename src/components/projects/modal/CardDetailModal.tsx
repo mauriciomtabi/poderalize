@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2, Link } from "lucide-react";
+import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2 } from "lucide-react";
 import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment, Attachment, CardStatus, Priority } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ChecklistManager } from "./ChecklistManager";
@@ -550,57 +550,6 @@ export const CardDetailModal = ({
                 ) : latestCard ? (
                   <ChecklistManager card={latestCard} />
                 ) : null}
-
-                {/* Attachments Display */}
-                {!isCreationMode && latestCard && latestCard.attachments && latestCard.attachments.length > 0 && (
-                  <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Paperclip className="h-4 w-4" />
-                      <h3 className="font-medium">Anexos ({latestCard.attachments.length})</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {latestCard.attachments.map((attachment) => (
-                        <a
-                          key={attachment.id}
-                          href={attachment.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors group"
-                        >
-                          <div className="flex items-center gap-2 flex-1">
-                            {attachment.type.startsWith('image/') ? (
-                              <img 
-                                src={attachment.url} 
-                                alt={attachment.name}
-                                className="h-10 w-10 object-cover rounded"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                                {attachment.type === 'link' ? (
-                                  <Link className="h-5 w-5" />
-                                ) : (
-                                  <Paperclip className="h-5 w-5" />
-                                )}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate group-hover:text-primary">{attachment.name}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                {attachment.size > 0 && (
-                                  <>
-                                    <span>{(attachment.size / 1024).toFixed(0)} KB</span>
-                                    <span>•</span>
-                                  </>
-                                )}
-                                <span>{new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Comments */}
                 {isCreationMode ? (

@@ -179,8 +179,6 @@ interface ProjectsContextType {
     getFilteredCards: () => ProjectCard[];
     addActivity: (cardId: string, type: string, description: string, metadata?: any) => Promise<boolean>;
     loadCardActivities: (cardId: string) => Promise<any[]>;
-    addAttachment: (cardId: string, attachment: any) => Promise<boolean>;
-    removeAttachment: (cardId: string, attachmentId: string) => Promise<boolean>;
   };
 }
 
@@ -404,17 +402,15 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       
       const isAdmin = !!userRoles;
       
-      if (isAdmin && viewAllCards && currentUser?.id) {
-        // Admin viewing all cards - use RPC function to bypass RLS
+      if (isAdmin && viewAllCards) {
+        // Admin viewing all cards from all boards
         const { data: allBoardCards } = await supabase
-          .rpc('get_all_cards_admin', { _user_id: currentUser.id });
+          .from('project_cards')
+          .select('*')
+          .order('position', { ascending: true });
         
         if (allBoardCards) {
-          // Filter only cards from current board's lists
-          const listIds = lists.map(l => l.id);
-          allCards.push(...allBoardCards
-            .filter(card => listIds.includes(card.list_id))
-            .map(transformDBCard));
+          allCards.push(...allBoardCards.map(transformDBCard));
         }
       } else {
         // Normal view: only cards from current board - fetch once, not per list
@@ -444,15 +440,8 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           .select('card_id, member_id')
           .in('card_id', cardIds);
 
-        // Load card attachments
-        const { data: cardAttachments } = await supabase
-          .from('project_attachments')
-          .select('*')
-          .in('card_id', cardIds);
-
         const labelsByCard = new Map<string, any[]>();
         const assigneesByCard = new Map<string, any[]>();
-        const attachmentsByCard = new Map<string, any[]>();
 
         (cardLabelLinks || []).forEach(link => {
           const lbl = labelMap.get(link.label_id);
@@ -470,25 +459,10 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
           assigneesByCard.set(link.card_id, arr);
         });
 
-        (cardAttachments || []).forEach(attachment => {
-          const arr = attachmentsByCard.get(attachment.card_id) || [];
-          arr.push({
-            id: attachment.id,
-            name: attachment.name,
-            url: attachment.url,
-            type: attachment.type,
-            size: attachment.size,
-            uploadedBy: attachment.uploaded_by,
-            uploadedAt: attachment.uploaded_at
-          });
-          attachmentsByCard.set(attachment.card_id, arr);
-        });
-
         // Attach to card objects
         allCards.forEach(c => {
           (c as any).labels = labelsByCard.get(c.id) || [];
           (c as any).assignees = assigneesByCard.get(c.id) || [];
-          (c as any).attachments = attachmentsByCard.get(c.id) || [];
         });
       }
 
@@ -505,7 +479,24 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       const isBoardOwner = boardOwner?.user_id === currentUser?.id;
       
       for (const list of lists) {
-        const listCards = allCards.filter(card => card.listId === list.id);
+        let listCards = allCards.filter(card => card.listId === list.id);
+        
+        // If admin is NOT viewing all cards, filter to show only:
+        // - Cards they created
+        // - Cards they are assigned to
+        // - Cards from boards they own (not just member)
+        if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
+          // Not board owner, filter to only cards they created or are assigned to
+          listCards = listCards.filter(card => {
+            const isCreator = card.createdBy === currentUser.id;
+            const isAssigned = card.assignees?.some((a: any) => {
+              // Find the member by user_id since assignees are project_members
+              return members.some(m => m.id === a.id && m.email === user?.email);
+            });
+            return isCreator || isAssigned;
+          });
+        }
+        
         listsWithCards.push(transformDBList(list, listCards));
       }
 
@@ -692,52 +683,10 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
     },
 
     moveList: async (listId: string, newPosition: number) => {
-      if (!state.currentBoard) return false;
-
-      // Optimistic update: Update local state immediately for smooth UI
-      setState(prev => {
-        if (!prev.currentBoard) return prev;
-        
-        const newLists = [...prev.currentBoard.lists];
-        const listIndex = newLists.findIndex(l => l.id === listId);
-        
-        if (listIndex === -1) return prev;
-        
-        // Remove list from old position
-        const [movedList] = newLists.splice(listIndex, 1);
-        
-        // Insert at new position
-        newLists.splice(newPosition, 0, movedList);
-        
-        // Update positions for all lists
-        newLists.forEach((list, idx) => {
-          list.position = idx;
-        });
-        
-        return {
-          ...prev,
-          currentBoard: {
-            ...prev.currentBoard,
-            lists: newLists
-          }
-        };
-      });
-
-      // Update database in background
       const result = await listsHook.updateList(listId, { position: newPosition });
-      
       if (result && state.currentBoard) {
-        // Reload board after a small delay to ensure database is synced
-        setTimeout(() => {
-          if (state.currentBoard) {
-            loadBoard(state.currentBoard.id);
-          }
-        }, 300);
-      } else {
-        // If update failed, reload to revert optimistic update
         await loadBoard(state.currentBoard.id);
       }
-      
       return result;
     },
 
@@ -937,85 +886,28 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
     },
 
     moveCard: async (cardId: string, sourceListId: string, destListId: string, newPosition: number) => {
-      if (!state.currentBoard) return false;
-
-      // Optimistic update: Update local state immediately for smooth UI
-      setState(prev => {
-        if (!prev.currentBoard) return prev;
-        
-        const newLists = prev.currentBoard.lists.map(list => ({ ...list, cards: [...list.cards] }));
-        const sourceList = newLists.find(l => l.id === sourceListId);
-        const destList = newLists.find(l => l.id === destListId);
-        
-        if (!sourceList || !destList) return prev;
-        
-        // Find and remove card from source list
-        const cardIndex = sourceList.cards.findIndex(c => c.id === cardId);
-        if (cardIndex === -1) return prev;
-        
-        const [movedCard] = sourceList.cards.splice(cardIndex, 1);
-        
-        // Update card's listId
-        movedCard.listId = destListId;
-        movedCard.position = newPosition;
-        
-        // Insert card into destination list at new position
-        destList.cards.splice(newPosition, 0, movedCard);
-        
-        // Update positions for all cards in destination list
-        destList.cards.forEach((card, idx) => {
-          card.position = idx;
-        });
-        
-        return {
-          ...prev,
-          currentBoard: {
-            ...prev.currentBoard,
-            lists: newLists
-          }
-        };
-      });
-
-      // Update database in background
-      try {
-        const result = await cardsHook.updateCard(cardId, {
-          list_id: destListId,
-          position: newPosition
-        } as any);
-        
-        if (result) {
-          // Add activity for card move
-          const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
-          const destList = state.currentBoard.lists.find(l => l.id === destListId);
-          if (sourceList && destList && sourceListId !== destListId && user) {
-            await supabase
-              .from('project_activities')
-              .insert({
-                card_id: cardId,
-                user_id: user.id,
-                action: `moveu de "${sourceList.title}" para "${destList.title}"`,
-                details: { sourceListId, destListId }
-              } as any);
-          }
-          
-          // Reload board after a small delay to ensure database is synced
-          setTimeout(() => {
-            if (state.currentBoard) {
-              loadBoard(state.currentBoard.id);
-            }
-          }, 300);
-        } else {
-          // If update failed, reload to revert optimistic update
-          await loadBoard(state.currentBoard.id);
+      const result = await cardsHook.updateCard(cardId, {
+        list_id: destListId,
+        position: newPosition
+      } as any);
+      
+      if (result && state.currentBoard) {
+        // Add activity for card move
+        const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
+        const destList = state.currentBoard.lists.find(l => l.id === destListId);
+        if (sourceList && destList && sourceListId !== destListId && user) {
+          await supabase
+            .from('project_activities')
+            .insert({
+              card_id: cardId,
+              user_id: user.id,
+              action: `moveu de "${sourceList.title}" para "${destList.title}"`,
+              details: { sourceListId, destListId }
+            } as any);
         }
-        
-        return result;
-      } catch (error) {
-        console.error('Error moving card:', error);
-        // Reload board to revert optimistic update
         await loadBoard(state.currentBoard.id);
-        return false;
       }
+      return result;
     },
 
     duplicateCard: async (cardId: string) => {
@@ -1403,70 +1295,6 @@ if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === current
       } catch (error) {
         console.error('Error loading activities:', error);
         return [];
-      }
-    },
-
-    addAttachment: async (cardId: string, attachment: any) => {
-      try {
-        if (!user) return false;
-        
-        const { error } = await supabase
-          .from('project_attachments')
-          .insert({
-            card_id: cardId,
-            name: attachment.name,
-            url: attachment.url,
-            type: attachment.type,
-            size: attachment.size,
-            uploaded_by: user.id
-          });
-          
-        if (error) {
-          console.error('Error adding attachment:', error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível adicionar o anexo",
-            variant: "destructive",
-          });
-          return false;
-        }
-        
-        if (state.currentBoard) {
-          await loadBoard(state.currentBoard.id);
-        }
-        
-        return true;
-      } catch (error) {
-        console.error('Error adding attachment:', error);
-        return false;
-      }
-    },
-
-    removeAttachment: async (cardId: string, attachmentId: string) => {
-      try {
-        const { error } = await supabase
-          .from('project_attachments')
-          .delete()
-          .eq('id', attachmentId);
-          
-        if (error) {
-          console.error('Error removing attachment:', error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível remover o anexo",
-            variant: "destructive",
-          });
-          return false;
-        }
-        
-        if (state.currentBoard) {
-          await loadBoard(state.currentBoard.id);
-        }
-        
-        return true;
-      } catch (error) {
-        console.error('Error removing attachment:', error);
-        return false;
       }
     }
   };

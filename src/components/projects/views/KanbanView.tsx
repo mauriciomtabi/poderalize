@@ -25,7 +25,6 @@ import { BoardAccessBanner } from "../BoardAccessBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { DragPortal } from "@/components/ui/drag-portal";
 
 export const KanbanView = () => {
   const { state, actions } = useProjects();
@@ -77,8 +76,10 @@ export const KanbanView = () => {
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId, type } = result;
     
-    // Clear dragged item immediately
-    actions.setDraggedItem(null);
+    // Clear dragged item with a slight delay to prevent visual glitches
+    setTimeout(() => {
+      actions.setDraggedItem(null);
+    }, 50);
 
     if (!destination) return;
 
@@ -210,40 +211,33 @@ export const KanbanView = () => {
                                     </div>
                                   </CardHeader>
 
-                                   <Droppable droppableId={list.id}>
+                                  <Droppable droppableId={list.id}>
                                     {(provided, snapshot) => (
                                       <CardContent
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden ${
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto ${
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >
                                         {filteredCards.map((card, index) => (
                                           <Draggable key={card.id} draggableId={card.id} index={index}>
-                                            {(provided, snapshot) => {
-                                              const content = (
-                                                <div
-                                                  ref={provided.innerRef}
-                                                  {...provided.draggableProps}
-                                                  {...provided.dragHandleProps}
-                                                  className={snapshot.isDragging ? "kanban-drag-preview" : ""}
-                                                >
-                                                  <EnhancedProjectCard
-                                                    card={card}
-                                                    onEdit={() => handleEditCard(card)}
-                                                    onDelete={() => actions.deleteCard(card.id)}
-                                                    onDuplicate={() => actions.duplicateCard(card.id)}
-                                                    onClick={() => handleCardClick(card)}
-                                                  />
-                                                </div>
-                                              );
-                                              return snapshot.isDragging ? (
-                                                <DragPortal>{content}</DragPortal>
-                                              ) : (
-                                                content
-                                              );
-                                            }}
+                                            {(provided, snapshot) => (
+                                              <div
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                {...provided.dragHandleProps}
+                                                className={snapshot.isDragging ? "kanban-drag-preview" : ""}
+                                              >
+                                                <EnhancedProjectCard
+                                                  card={card}
+                                                  onEdit={() => handleEditCard(card)}
+                                                  onDelete={() => actions.deleteCard(card.id)}
+                                                  onDuplicate={() => actions.duplicateCard(card.id)}
+                                                  onClick={() => handleCardClick(card)}
+                                                />
+                                              </div>
+                                            )}
                                           </Draggable>
                                         ))}
                                         {provided.placeholder}
