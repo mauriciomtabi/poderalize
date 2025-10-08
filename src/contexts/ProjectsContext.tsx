@@ -418,8 +418,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const isBoardOwner = boardOwner?.user_id === currentUser?.id;
       
       if (isAdmin && viewAllCards) {
-        // Admin viewing all: We need to show cards from ALL boards
-        // Fetch ALL lists from ALL boards to group the cards properly
+        // Admin viewing all: Group ALL cards by list title into current board's lists
+        // Fetch ALL lists from ALL boards to map by title
         const { data: allListsData } = await supabase
           .from('project_lists')
           .select('*')
@@ -427,13 +427,22 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         const allLists = allListsData || [];
         
-        for (const list of allLists) {
-          const listCards = allCards.filter(card => card.listId === list.id);
-          if (listCards.length > 0) {
-            listsWithCards.push(transformDBList(list, listCards));
-          }
+        // Create a map of list titles to list IDs across all boards
+        const listTitleMap = new Map<string, string[]>();
+        allLists.forEach(list => {
+          const ids = listTitleMap.get(list.title.toLowerCase()) || [];
+          ids.push(list.id);
+          listTitleMap.set(list.title.toLowerCase(), ids);
+        });
+        
+        // For each list in the CURRENT board, gather cards from all boards with matching title
+        for (const list of lists) {
+          const matchingListIds = listTitleMap.get(list.title.toLowerCase()) || [list.id];
+          const listCards = allCards.filter(card => matchingListIds.includes(card.listId));
+          
+          console.log(`🔓 Admin view: ${list.title} has ${listCards.length} cards from ${matchingListIds.length} boards`);
+          listsWithCards.push(transformDBList(list, listCards));
         }
-        console.log(`🔓 Admin view: Showing ${listsWithCards.length} lists with cards from all boards`);
       } else {
         // Regular view: only show lists from current board
         for (const list of lists) {
