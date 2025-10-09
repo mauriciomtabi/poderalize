@@ -837,10 +837,28 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const membersToAdd = newMemberIds.filter(id => !prevMemberIds.includes(id));
         const membersToRemove = prevMemberIds.filter(id => !newMemberIds.includes(id));
 
+        console.log('🔍 Assignee sync:', { 
+          prevMemberIds, 
+          newMemberIds, 
+          membersToAdd, 
+          membersToRemove,
+          cardId: card.id
+        });
+
         if (membersToAdd.length > 0) {
-          await supabase
+          const insertData = membersToAdd.map(id => ({ card_id: card.id, member_id: id }));
+          console.log('➕ Inserting assignees:', insertData);
+          
+          const { data: insertResult, error: insertError } = await supabase
             .from('project_card_assignees')
-            .insert(membersToAdd.map(id => ({ card_id: card.id, member_id: id })) as any);
+            .insert(insertData as any)
+            .select();
+          
+          if (insertError) {
+            console.error('❌ Error inserting assignees:', insertError);
+          } else {
+            console.log('✅ Assignees inserted successfully:', insertResult);
+          }
           
           // Create notifications for newly added members
           for (const memberId of membersToAdd) {
@@ -866,11 +884,19 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
         }
         if (membersToRemove.length > 0) {
-          await supabase
+          console.log('➖ Removing assignees:', membersToRemove);
+          
+          const { error: deleteError } = await supabase
             .from('project_card_assignees')
             .delete()
             .eq('card_id', card.id)
             .in('member_id', membersToRemove as any);
+          
+          if (deleteError) {
+            console.error('❌ Error removing assignees:', deleteError);
+          } else {
+            console.log('✅ Assignees removed successfully');
+          }
         }
 
         // Update main card fields
