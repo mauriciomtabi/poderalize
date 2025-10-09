@@ -66,7 +66,8 @@ export const RecurringCardsTab = ({
     list_id: "",
     frequency: "daily" as "daily" | "weekly" | "biweekly" | "monthly",
     day_of_week: 1,
-    biweekly_second_day: 4,
+    biweekly_first_day: 5,
+    biweekly_second_day: 20,
     day_of_month: 1,
     time_of_day: "09:00",
     days_of_week: [] as number[],
@@ -111,7 +112,7 @@ export const RecurringCardsTab = ({
           }
         }
       }
-    } else if (formData.frequency === 'weekly' || formData.frequency === 'biweekly') {
+    } else if (formData.frequency === 'weekly') {
       const currentDay = nextCreation.getDay();
       const targetDay = formData.day_of_week;
 
@@ -119,14 +120,39 @@ export const RecurringCardsTab = ({
       const daysUntilNext = (targetDay - currentDay + 7) % 7 || 7;
       nextCreation.setDate(nextCreation.getDate() + daysUntilNext);
 
-      // Quinzenal: somar mais 7 dias
-      if (formData.frequency === 'biweekly') {
+      // Se ainda ficou no passado, avança mais uma semana
+      if (nextCreation < now) {
         nextCreation.setDate(nextCreation.getDate() + 7);
       }
-
-      // Se ainda ficou no passado, avança mais um período
+    } else if (formData.frequency === 'biweekly') {
+      // Para quinzenal, encontrar o próximo dia do mês (primeiro ou segundo)
+      const currentMonth = nextCreation.getMonth();
+      const currentYear = nextCreation.getFullYear();
+      const currentDay = nextCreation.getDate();
+      
+      const firstDay = formData.biweekly_first_day;
+      const secondDay = formData.biweekly_second_day;
+      
+      // Determinar qual é o próximo dia válido
+      if (currentDay < firstDay) {
+        nextCreation.setDate(firstDay);
+      } else if (currentDay < secondDay) {
+        nextCreation.setDate(secondDay);
+      } else {
+        // Próximo mês, primeiro dia
+        nextCreation.setMonth(currentMonth + 1);
+        nextCreation.setDate(firstDay);
+      }
+      
+      // Se ainda ficou no passado, avançar
       if (nextCreation < now) {
-        nextCreation.setDate(nextCreation.getDate() + (formData.frequency === 'biweekly' ? 14 : 7));
+        const testDay = nextCreation.getDate();
+        if (testDay === firstDay) {
+          nextCreation.setDate(secondDay);
+        } else {
+          nextCreation.setMonth(nextCreation.getMonth() + 1);
+          nextCreation.setDate(firstDay);
+        }
       }
     } else if (formData.frequency === 'monthly') {
       // Ajustar para o dia do mês desejado mantendo hora local
@@ -159,6 +185,7 @@ export const RecurringCardsTab = ({
         start_date_offset: formData.start_date_offset,
         estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined,
         checklist_template_id: formData.checklist_template_id || undefined,
+        biweekly_first_day: formData.frequency === 'biweekly' ? formData.biweekly_first_day : undefined,
         biweekly_second_day: formData.frequency === 'biweekly' ? formData.biweekly_second_day : undefined,
         utc_days_of_week: formData.frequency === 'daily' ? formData.days_of_week.map((localDay) => {
           const base = new Date(`1970-01-04T${formData.time_of_day}`); // 1970-01-04 is Sunday
@@ -181,7 +208,8 @@ export const RecurringCardsTab = ({
       list_id: "",
       frequency: "daily",
       day_of_week: 1,
-      biweekly_second_day: 4,
+      biweekly_first_day: 5,
+      biweekly_second_day: 20,
       day_of_month: 1,
       time_of_day: "09:00",
       days_of_week: [],
@@ -217,7 +245,8 @@ export const RecurringCardsTab = ({
       list_id: card.list_id,
       frequency: card.frequency,
       day_of_week: card.day_of_week || 1,
-      biweekly_second_day: typeof config.biweekly_second_day === 'number' ? config.biweekly_second_day : 4,
+      biweekly_first_day: typeof config.biweekly_first_day === 'number' ? config.biweekly_first_day : 5,
+      biweekly_second_day: typeof config.biweekly_second_day === 'number' ? config.biweekly_second_day : 20,
       day_of_month: card.day_of_month || 1,
       time_of_day: card.time_of_day || "09:00",
       days_of_week: card.days_of_week || [],
@@ -298,7 +327,8 @@ export const RecurringCardsTab = ({
             list_id: "",
             frequency: "daily",
             day_of_week: 1,
-            biweekly_second_day: 4,
+            biweekly_first_day: 5,
+            biweekly_second_day: 20,
             day_of_month: 1,
             time_of_day: "09:00",
             days_of_week: [],
@@ -438,41 +468,40 @@ export const RecurringCardsTab = ({
               </div>}
 
             {formData.frequency === 'biweekly' && <div className="space-y-2">
-                <Label>Dias da Semana</Label>
+                <Label>Dias do Mês</Label>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first_day" className="text-xs text-muted-foreground">Primeira Semana</Label>
-                    <Select value={String(formData.day_of_week)} onValueChange={value => setFormData({
-                ...formData,
-                day_of_week: Number(value)
-              })}>
-                      <SelectTrigger id="first_day">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover z-50">
-                        {weekDays.map(day => <SelectItem key={day.value} value={String(day.value)}>
-                            {day.label}
-                          </SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="first_day" className="text-xs text-muted-foreground">Primeiro Dia</Label>
+                    <Input 
+                      id="first_day" 
+                      type="number" 
+                      min="1" 
+                      max="31" 
+                      value={formData.biweekly_first_day} 
+                      onChange={e => setFormData({
+                        ...formData,
+                        biweekly_first_day: Number(e.target.value)
+                      })} 
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="second_day" className="text-xs text-muted-foreground">Segunda Semana</Label>
-                    <Select value={String(formData.biweekly_second_day)} onValueChange={value => setFormData({
-                ...formData,
-                biweekly_second_day: Number(value)
-              })}>
-                      <SelectTrigger id="second_day">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover z-50">
-                        {weekDays.map(day => <SelectItem key={day.value} value={String(day.value)}>
-                            {day.label}
-                          </SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="second_day" className="text-xs text-muted-foreground">Segundo Dia</Label>
+                    <Input 
+                      id="second_day" 
+                      type="number" 
+                      min="1" 
+                      max="31" 
+                      value={formData.biweekly_second_day} 
+                      onChange={e => setFormData({
+                        ...formData,
+                        biweekly_second_day: Number(e.target.value)
+                      })} 
+                    />
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Ex: Dia 5 e dia 20 de cada mês
+                </p>
               </div>}
 
             {formData.frequency === 'monthly' && <div className="space-y-2">
