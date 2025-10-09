@@ -93,20 +93,24 @@ export const MemberPicker = ({
           }
         }
 
-        // Fetch all project_members with their IDs to ensure we have the correct IDs
+        // Fetch all project_members with their IDs for this board (not filtered by userIds)
         const { data: projectMembers, error: fetchError } = await supabase
           .from('project_members')
           .select('*')
-          .eq('board_id', state.currentBoard.id)
-          .in('user_id', userIds);
+          .eq('board_id', state.currentBoard.id);
 
         if (fetchError) {
           console.error('Error fetching project members:', fetchError);
+          // Log specific error details
+          console.error('Fetch error details:', fetchError.message, fetchError.details, fetchError.hint);
           setAllMembers([]);
           return;
         }
 
+        console.log('Fetched project members:', projectMembers?.length, 'for board:', state.currentBoard.id);
+
         if (!projectMembers || projectMembers.length === 0) {
+          console.log('No project members found for board, setting empty list');
           setAllMembers([]);
           return;
         }
