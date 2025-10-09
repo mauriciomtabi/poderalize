@@ -44,57 +44,89 @@ export const MemberPicker = ({
           .select('*')
           .eq('status', 'ativo');
 
-        if (!colaboradoresData || colaboradoresData.length === 0) return;
+        if (!colaboradoresData || colaboradoresData.length === 0) {
+          setAllMembers([]);
+          return;
+        }
 
-        // Fetch profiles
+        // Fetch profiles for avatar URLs
         const userIds = colaboradoresData.map(c => c.user_id).filter(Boolean);
         const { data: profilesData } = await supabase
           .from('profiles')
           .select('user_id, avatar_url, full_name, email')
           .in('user_id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
 
-        // Upsert all colaboradores as project members to ensure they exist in the board
+        // Prepare members to upsert
         const membersToUpsert = colaboradoresData
           .filter(c => c.user_id)
           .map(c => {
             const profile = profilesData?.find(p => p.user_id === c.user_id);
+            // Get the full URL for avatar (from colaborador or profile)
+            let avatarUrl = c.avatar_url || profile?.avatar_url;
+            // Ensure it's a valid URL (add Supabase storage URL if needed)
+            if (avatarUrl && !avatarUrl.startsWith('http')) {
+              avatarUrl = `https://xkxufwubibaxlrayoqrn.supabase.co/storage/v1/object/public/avatars/${avatarUrl}`;
+            }
+            
             return {
               board_id: state.currentBoard!.id,
               user_id: c.user_id,
               name: c.nome || profile?.full_name || profile?.email || 'Usuário',
               email: c.email || profile?.email || '',
-              avatar: profile?.avatar_url,
+              avatar: avatarUrl,
               role: 'member',
               added_by: currentUser.id
             };
           });
 
-        // Upsert all members (insert if not exists, update if exists)
+        // Upsert all members (this ensures they exist in project_members)
         if (membersToUpsert.length > 0) {
-          await supabase
+          const { error: upsertError } = await supabase
             .from('project_members')
             .upsert(membersToUpsert, { 
               onConflict: 'board_id,user_id',
               ignoreDuplicates: false 
             });
+          
+          if (upsertError) {
+            console.error('Error upserting members:', upsertError);
+          }
         }
 
-        // Now fetch all project_members with correct IDs
-        const { data: projectMembers } = await supabase
+        // Fetch all project_members with their IDs to ensure we have the correct IDs
+        const { data: projectMembers, error: fetchError } = await supabase
           .from('project_members')
           .select('*')
-          .eq('board_id', state.currentBoard.id);
+          .eq('board_id', state.currentBoard.id)
+          .in('user_id', userIds);
 
-        if (!projectMembers) return;
+        if (fetchError) {
+          console.error('Error fetching project members:', fetchError);
+          setAllMembers([]);
+          return;
+        }
 
-        // Build members list using project_members.id
-        const members: Member[] = projectMembers.map(pm => ({
-          id: pm.id, // Always use project_members.id
-          name: pm.name,
-          email: pm.email,
-          avatar: pm.avatar || undefined,
-          role: pm.role as any
-        }));
+        if (!projectMembers || projectMembers.length === 0) {
+          setAllMembers([]);
+          return;
+        }
+
+        // Build members list using project_members.id (the correct ID for assignees)
+        const members: Member[] = projectMembers.map(pm => {
+          // Ensure avatar is a full URL
+          let avatarUrl = pm.avatar;
+          if (avatarUrl && !avatarUrl.startsWith('http')) {
+            avatarUrl = `https://xkxufwubibaxlrayoqrn.supabase.co/storage/v1/object/public/avatars/${avatarUrl}`;
+          }
+          
+          return {
+            id: pm.id, // This is the project_members.id, used in project_card_assignees
+            name: pm.name,
+            email: pm.email,
+            avatar: avatarUrl,
+            role: pm.role as any
+          };
+        });
 
         setAllMembers(members);
       } catch (error) {
