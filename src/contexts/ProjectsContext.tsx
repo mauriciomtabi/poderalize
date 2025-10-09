@@ -202,40 +202,29 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [state.currentBoard?.id]);
 
-  // Load all boards and set initial board, create one if none exists
+  // Load the single unified board (after consolidation)
   useEffect(() => {
     const handleBoardsLoaded = async () => {
       if (!boardsHook.isLoading && user) {
-        if (boardsHook.boards.length === 0) {
-          // No boards exist, create initial board
+        // Find the single active board (should be only one after consolidation)
+        const activeBoard = boardsHook.boards.find(b => b.status === 'active');
+        
+        if (!activeBoard) {
+          // No active board exists, this shouldn't happen after consolidation
+          console.warn('No active board found. Creating one...');
           setState(prev => ({ ...prev, isLoading: true }));
           const { createInitialBoard } = await import('@/utils/projectMigration');
           const newBoard = await createInitialBoard(user.id, user.email, user.full_name);
           
           if (newBoard) {
-            // Refresh boards after creation
             await boardsHook.fetchBoards();
           } else {
             setState(prev => ({ ...prev, isLoading: false }));
           }
         } else if (!state.currentBoard) {
-          // Boards exist, load the correct one
-          // 1. Try to load from localStorage
-          const lastBoardId = localStorage.getItem('lastBoardId');
-          const savedBoard = lastBoardId ? boardsHook.boards.find(b => b.id === lastBoardId) : null;
-          
-          if (savedBoard) {
-            loadBoard(savedBoard.id);
-          } else {
-            // 2. Prioritize user's own board
-            const userBoard = boardsHook.boards.find(b => b.user_id === user.id);
-            if (userBoard) {
-              loadBoard(userBoard.id);
-            } else {
-              // 3. Fallback to first available board
-              loadBoard(boardsHook.boards[0].id);
-            }
-          }
+          // Load the single active board for everyone
+          console.log('Loading unified board:', activeBoard.id);
+          loadBoard(activeBoard.id);
         }
       }
       
