@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, Edit, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Edit, GripVertical } from "lucide-react";
 import { useChecklistTemplates } from "@/hooks/useChecklistTemplates";
 import { ChecklistTemplate } from "@/types/projects";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,8 @@ export const ChecklistTemplateManager = ({
     templates,
     createTemplate,
     updateTemplate,
-    deleteTemplate
+    deleteTemplate,
+    reorderTemplates
   } = useChecklistTemplates(boardId);
   const [isCreating, setIsCreating] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ChecklistTemplate | null>(null);
@@ -103,22 +105,31 @@ export const ChecklistTemplateManager = ({
     }));
   };
 
-  const handleMoveUp = (index: number) => {
-    if (index === 0) return;
-    setFormData(prev => {
-      const newItems = [...prev.items];
-      [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
-      return { ...prev, items: newItems };
-    });
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(formData.items);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setFormData(prev => ({
+      ...prev,
+      items
+    }));
   };
 
-  const handleMoveDown = (index: number) => {
-    if (index === formData.items.length - 1) return;
-    setFormData(prev => {
-      const newItems = [...prev.items];
-      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-      return { ...prev, items: newItems };
-    });
+  const handleTemplateDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const reorderedTemplates = Array.from(templates);
+    const [movedTemplate] = reorderedTemplates.splice(result.source.index, 1);
+    reorderedTemplates.splice(result.destination.index, 0, movedTemplate);
+
+    // Update positions in the database
+    reorderTemplates(reorderedTemplates.map((t, index) => ({
+      id: t.id,
+      position: index
+    })));
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
@@ -133,34 +144,68 @@ export const ChecklistTemplateManager = ({
             </Button>
 
             <ScrollArea className="h-[300px] pr-4">
-              <div className="space-y-2">
-                {templates.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
-                    Nenhum template criado ainda
-                  </p> : templates.map(template => <div key={template.id} className="p-4 border rounded-lg space-y-2 hover:bg-accent/50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{template.title}</h4>
-                            {template.isGlobal}
-                          </div>
-                          {template.description && <p className="text-sm text-muted-foreground mt-1">
-                              {template.description}
-                            </p>}
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {template.items.length} {template.items.length === 1 ? 'item' : 'itens'}
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(template)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteTemplate(template.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>)}
-              </div>
+              <DragDropContext onDragEnd={handleTemplateDragEnd}>
+                <Droppable droppableId="templates-list">
+                  {(provided) => (
+                    <div 
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="space-y-2"
+                    >
+                      {templates.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          Nenhum template criado ainda
+                        </p>
+                      ) : (
+                        templates.map((template, index) => (
+                          <Draggable key={template.id} draggableId={template.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`p-4 border rounded-lg space-y-2 hover:bg-accent/50 transition-colors ${
+                                  snapshot.isDragging ? 'shadow-lg opacity-80' : ''
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-start gap-3 flex-1">
+                                    <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing pt-1">
+                                      <GripVertical className="w-5 h-5 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-medium">{template.title}</h4>
+                                        {template.isGlobal}
+                                      </div>
+                                      {template.description && (
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                          {template.description}
+                                        </p>
+                                      )}
+                                      <p className="text-xs text-muted-foreground mt-2">
+                                        {template.items.length} {template.items.length === 1 ? 'item' : 'itens'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(template)}>
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => deleteTemplate(template.id)}>
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
+                      )}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             </ScrollArea>
           </div> : <div className="space-y-4">
             <div className="space-y-2">
@@ -197,37 +242,53 @@ export const ChecklistTemplateManager = ({
               </div>
 
               <ScrollArea className="h-[160px] border rounded-lg p-2">
-                <div className="space-y-2 pr-2">
-                  {formData.items.map((item, index) => <div key={index} className="flex items-center gap-2">
-                      <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <Input value={item} onChange={e => handleItemChange(index, e.target.value)} placeholder={`Item ${index + 1}`} className="flex-1" />
-                      <div className="flex gap-1 flex-shrink-0">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleMoveUp(index)}
-                          disabled={index === 0}
-                          className="h-8 w-8"
-                        >
-                          <ChevronUp className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleMoveDown(index)}
-                          disabled={index === formData.items.length - 1}
-                          className="h-8 w-8"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </Button>
-                        {formData.items.length > 1 && <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} className="h-8 w-8">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>}
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="checklist-items">
+                    {(provided) => (
+                      <div 
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-2 pr-2"
+                      >
+                        {formData.items.map((item, index) => (
+                          <Draggable key={`item-${index}`} draggableId={`item-${index}`} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`flex items-center gap-2 ${
+                                  snapshot.isDragging ? 'opacity-50' : ''
+                                }`}
+                              >
+                                <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing">
+                                  <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                </div>
+                                <Input 
+                                  value={item} 
+                                  onChange={e => handleItemChange(index, e.target.value)} 
+                                  placeholder={`Item ${index + 1}`} 
+                                  className="flex-1" 
+                                />
+                                {formData.items.length > 1 && (
+                                  <Button 
+                                    type="button" 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    onClick={() => handleRemoveItem(index)} 
+                                    className="h-8 w-8 flex-shrink-0"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
                       </div>
-                    </div>)}
-                </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </ScrollArea>
             </div>
 

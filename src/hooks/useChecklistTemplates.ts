@@ -24,6 +24,7 @@ export const useChecklistTemplates = (boardId?: string) => {
         .from('checklist_templates')
         .select('*')
         .or(orFilters.join(','))
+        .order('position', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (templatesError) throw templatesError;
@@ -241,12 +242,37 @@ export const useChecklistTemplates = (boardId?: string) => {
     }
   };
 
+  const reorderTemplates = async (reorderedTemplates: Array<{ id: string; position: number }>) => {
+    try {
+      // Update positions in batch
+      const updates = reorderedTemplates.map(({ id, position }) =>
+        supabase
+          .from('checklist_templates')
+          .update({ position })
+          .eq('id', id)
+      );
+
+      await Promise.all(updates);
+
+      // Refresh templates to reflect new order
+      await fetchTemplates();
+    } catch (error) {
+      console.error('Error reordering templates:', error);
+      toast({
+        title: "Erro ao reordenar templates",
+        description: "Não foi possível reordenar os templates.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     templates,
     isLoading,
     createTemplate,
     updateTemplate,
     deleteTemplate,
+    reorderTemplates,
     refreshTemplates: fetchTemplates,
   };
 };
