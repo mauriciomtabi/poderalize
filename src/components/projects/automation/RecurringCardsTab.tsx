@@ -66,6 +66,7 @@ export const RecurringCardsTab = ({
     list_id: "",
     frequency: "daily" as "daily" | "weekly" | "biweekly" | "monthly",
     day_of_week: 1,
+    biweekly_second_day: 4,
     day_of_month: 1,
     time_of_day: "09:00",
     days_of_week: [] as number[],
@@ -158,6 +159,7 @@ export const RecurringCardsTab = ({
         start_date_offset: formData.start_date_offset,
         estimated_hours: formData.estimated_hours > 0 ? formData.estimated_hours : undefined,
         checklist_template_id: formData.checklist_template_id || undefined,
+        biweekly_second_day: formData.frequency === 'biweekly' ? formData.biweekly_second_day : undefined,
         utc_days_of_week: formData.frequency === 'daily' ? formData.days_of_week.map((localDay) => {
           const base = new Date(`1970-01-04T${formData.time_of_day}`); // 1970-01-04 is Sunday
           base.setDate(base.getDate() + localDay);
@@ -179,6 +181,7 @@ export const RecurringCardsTab = ({
       list_id: "",
       frequency: "daily",
       day_of_week: 1,
+      biweekly_second_day: 4,
       day_of_month: 1,
       time_of_day: "09:00",
       days_of_week: [],
@@ -214,6 +217,7 @@ export const RecurringCardsTab = ({
       list_id: card.list_id,
       frequency: card.frequency,
       day_of_week: card.day_of_week || 1,
+      biweekly_second_day: typeof config.biweekly_second_day === 'number' ? config.biweekly_second_day : 4,
       day_of_month: card.day_of_month || 1,
       time_of_day: card.time_of_day || "09:00",
       days_of_week: card.days_of_week || [],
@@ -294,6 +298,7 @@ export const RecurringCardsTab = ({
             list_id: "",
             frequency: "daily",
             day_of_week: 1,
+            biweekly_second_day: 4,
             day_of_month: 1,
             time_of_day: "09:00",
             days_of_week: [],
@@ -415,7 +420,7 @@ export const RecurringCardsTab = ({
                 {formData.days_of_week.length === 0 && <p className="text-xs text-destructive">Selecione pelo menos um dia</p>}
               </div>}
 
-            {(formData.frequency === 'weekly' || formData.frequency === 'biweekly') && <div className="space-y-2">
+            {formData.frequency === 'weekly' && <div className="space-y-2">
                 <Label htmlFor="day_of_week">Dia da Semana</Label>
                 <Select value={String(formData.day_of_week)} onValueChange={value => setFormData({
             ...formData,
@@ -430,6 +435,44 @@ export const RecurringCardsTab = ({
                       </SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>}
+
+            {formData.frequency === 'biweekly' && <div className="space-y-2">
+                <Label>Dias da Semana</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first_day" className="text-xs text-muted-foreground">Primeira Semana</Label>
+                    <Select value={String(formData.day_of_week)} onValueChange={value => setFormData({
+                ...formData,
+                day_of_week: Number(value)
+              })}>
+                      <SelectTrigger id="first_day">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        {weekDays.map(day => <SelectItem key={day.value} value={String(day.value)}>
+                            {day.label}
+                          </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="second_day" className="text-xs text-muted-foreground">Segunda Semana</Label>
+                    <Select value={String(formData.biweekly_second_day)} onValueChange={value => setFormData({
+                ...formData,
+                biweekly_second_day: Number(value)
+              })}>
+                      <SelectTrigger id="second_day">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        {weekDays.map(day => <SelectItem key={day.value} value={String(day.value)}>
+                            {day.label}
+                          </SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>}
 
             {formData.frequency === 'monthly' && <div className="space-y-2">
