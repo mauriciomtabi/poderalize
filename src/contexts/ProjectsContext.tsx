@@ -721,12 +721,24 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (!user || !state.currentBoard) return false;
 
       try {
-        // Get current cards count in the list for proper positioning
+        // Increment position of all existing cards to make room at the top
         const { data: existingCards } = await supabase
           .from('project_cards')
-          .select('id')
+          .select('id, position')
           .eq('list_id', listId);
 
+        // Update positions of existing cards
+        if (existingCards && existingCards.length > 0) {
+          const updates = existingCards.map(c => 
+            supabase
+              .from('project_cards')
+              .update({ position: c.position + 1 })
+              .eq('id', c.id)
+          );
+          await Promise.all(updates);
+        }
+
+        // Create new card at position 0 (top)
         const result = await cardsHook.createCard({
           list_id: listId,
           title: card.title,
@@ -737,7 +749,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           start_date: card.startDate,
           estimated_hours: card.estimatedHours,
           actual_hours: card.actualHours,
-          position: existingCards?.length || 0,
+          position: 0,
           cover: card.cover,
           location: card.location,
           client_id: card.client_id,

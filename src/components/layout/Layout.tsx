@@ -2,6 +2,7 @@ import { ReactNode, createContext, useContext, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { DueCardAlert } from "@/components/projects/DueCardAlert";
 
 interface SidebarContextType {
   collapsed: boolean;
@@ -51,6 +52,7 @@ export const Layout = () => {
             <Outlet />
           </main>
         </div>
+        <DueCardAlert />
       </div>
     </SidebarContext.Provider>
   );
