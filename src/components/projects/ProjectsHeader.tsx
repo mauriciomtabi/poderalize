@@ -58,28 +58,6 @@ export const ProjectsHeader = ({
       {/* View Selector and Search */}
       <div className="flex items-center justify-between px-4 pb-4">
         <div className="flex items-center space-x-3">
-          {/* Board Selector - only for admins with multiple boards and when not viewing all */}
-          {isAdmin && !state.viewAllCardsAsAdmin && state.boards.length > 1 && (
-            <Select 
-              value={state.currentBoard?.id || ''} 
-              onValueChange={(boardId) => {
-                const board = state.boards.find(b => b.id === boardId);
-                if (board) actions.setCurrentBoard(board);
-              }}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Selecione o quadro" />
-              </SelectTrigger>
-              <SelectContent>
-                {state.boards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          
           <div className="flex items-center space-x-1 bg-muted rounded-lg p-1">
           {Object.entries(viewIcons).map(([view, Icon]) => {
           // Only admins can see dashboard view
