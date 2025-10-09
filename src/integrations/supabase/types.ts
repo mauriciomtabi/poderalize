@@ -2300,6 +2300,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      sync_board_members: {
+        Args: { p_board_id: string }
+        Returns: undefined
+      }
       user_can_manage_card_on_list: {
         Args: { _list_id: string; _user_id: string }
         Returns: boolean

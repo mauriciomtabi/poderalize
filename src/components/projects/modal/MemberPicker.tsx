@@ -34,66 +34,18 @@ export const MemberPicker = ({
       if (!isOpen || !state.currentBoard?.id) return;
 
       try {
-        // Get current user
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        if (!currentUser) return;
+        // Sync all active collaborators to project_members for this board
+        const { error: syncError } = await supabase.rpc('sync_board_members', {
+          p_board_id: state.currentBoard.id
+        });
 
-        // Fetch all active colaboradores
-        const { data: colaboradoresData } = await supabase
-          .from('colaboradores')
-          .select('*')
-          .eq('status', 'ativo');
-
-        if (!colaboradoresData || colaboradoresData.length === 0) {
+        if (syncError) {
+          console.error('Error syncing board members:', syncError);
           setAllMembers([]);
           return;
         }
 
-        // Fetch profiles for avatar URLs
-        const userIds = colaboradoresData.map(c => c.user_id).filter(Boolean);
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('user_id, avatar_url, full_name, email')
-          .in('user_id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
-
-        // Prepare members to upsert
-        const membersToUpsert = colaboradoresData
-          .filter(c => c.user_id)
-          .map(c => {
-            const profile = profilesData?.find(p => p.user_id === c.user_id);
-            // Get the full URL for avatar (from colaborador or profile)
-            let avatarUrl = c.avatar_url || profile?.avatar_url;
-            // Ensure it's a valid URL (add Supabase storage URL if needed)
-            if (avatarUrl && !avatarUrl.startsWith('http')) {
-              avatarUrl = `https://xkxufwubibaxlrayoqrn.supabase.co/storage/v1/object/public/avatars/${avatarUrl}`;
-            }
-            
-            return {
-              board_id: state.currentBoard!.id,
-              user_id: c.user_id,
-              name: c.nome || profile?.full_name || profile?.email || 'Usuário',
-              email: c.email || profile?.email || '',
-              avatar: avatarUrl,
-              role: 'member',
-              added_by: currentUser.id
-            };
-          });
-
-        // Upsert all members (this ensures they exist in project_members)
-        if (membersToUpsert.length > 0) {
-          const { error: upsertError } = await supabase
-            .from('project_members')
-            .upsert(membersToUpsert, { 
-              onConflict: 'board_id,user_id',
-              ignoreDuplicates: false 
-            });
-          
-          if (upsertError) {
-            console.error('Error upserting members:', upsertError);
-          }
-        }
-
-        // Fetch all project_members with their IDs for this board (not filtered by userIds)
+        // Fetch all project_members for this board
         const { data: projectMembers, error: fetchError } = await supabase
           .from('project_members')
           .select('*')
@@ -101,33 +53,48 @@ export const MemberPicker = ({
 
         if (fetchError) {
           console.error('Error fetching project members:', fetchError);
-          // Log specific error details
-          console.error('Fetch error details:', fetchError.message, fetchError.details, fetchError.hint);
           setAllMembers([]);
           return;
         }
-
-        console.log('Fetched project members:', projectMembers?.length, 'for board:', state.currentBoard.id);
 
         if (!projectMembers || projectMembers.length === 0) {
-          console.log('No project members found for board, setting empty list');
           setAllMembers([]);
           return;
         }
+
+        // Enrich with profiles to get full avatar URLs
+        const userIds = projectMembers.map(m => m.user_id).filter(Boolean);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, avatar_url')
+          .in('user_id', userIds);
+
+        const avatarMap = new Map(
+          profiles?.map(p => [p.user_id, p.avatar_url]) || []
+        );
+
+        // Normalize avatar URLs to full Supabase storage URLs
+        const SUPABASE_URL = "https://xkxufwubibaxlrayoqrn.supabase.co";
+        const normalizeAvatarUrl = (url: string | null) => {
+          if (!url) return null;
+          if (url.startsWith('http')) return url;
+          // Handle relative paths like /storage/v1/object/public/...
+          if (url.startsWith('/')) return `${SUPABASE_URL}${url}`;
+          // Handle paths like storage/v1/object/public/...
+          if (url.startsWith('storage/')) return `${SUPABASE_URL}/${url}`;
+          return url;
+        };
 
         // Build members list using project_members.id (the correct ID for assignees)
         const members: Member[] = projectMembers.map(pm => {
-          // Ensure avatar is a full URL
-          let avatarUrl = pm.avatar;
-          if (avatarUrl && !avatarUrl.startsWith('http')) {
-            avatarUrl = `https://xkxufwubibaxlrayoqrn.supabase.co/storage/v1/object/public/avatars/${avatarUrl}`;
-          }
+          const profileAvatar = avatarMap.get(pm.user_id);
+          const finalAvatar = normalizeAvatarUrl(profileAvatar || pm.avatar);
           
           return {
             id: pm.id, // This is the project_members.id, used in project_card_assignees
             name: pm.name,
             email: pm.email,
-            avatar: avatarUrl,
+            avatar: finalAvatar,
             role: pm.role as any
           };
         });
