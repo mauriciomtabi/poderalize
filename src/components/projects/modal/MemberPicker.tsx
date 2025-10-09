@@ -34,64 +34,67 @@ export const MemberPicker = ({
       if (!isOpen || !state.currentBoard?.id) return;
 
       try {
+        // Get current user
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser) return;
+
         // Fetch all active colaboradores
         const { data: colaboradoresData } = await supabase
           .from('colaboradores')
           .select('*')
           .eq('status', 'ativo');
 
-        if (!colaboradoresData) return;
-
-        // Get current user
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-        // Fetch project members for this board to get their IDs
-        const { data: projectMembers } = await supabase
-          .from('project_members')
-          .select('*')
-          .eq('board_id', state.currentBoard.id);
+        if (!colaboradoresData || colaboradoresData.length === 0) return;
 
         // Fetch profiles
-        const userIds = (colaboradoresData || []).map(c => c.user_id).filter(Boolean);
+        const userIds = colaboradoresData.map(c => c.user_id).filter(Boolean);
         const { data: profilesData } = await supabase
           .from('profiles')
           .select('user_id, avatar_url, full_name, email')
           .in('user_id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
 
-        // Build members list from ALL active colaboradores
-        const members: Member[] = (colaboradoresData || [])
+        // Upsert all colaboradores as project members to ensure they exist in the board
+        const membersToUpsert = colaboradoresData
           .filter(c => c.user_id)
           .map(c => {
             const profile = profilesData?.find(p => p.user_id === c.user_id);
-            const projectMember = projectMembers?.find(pm => pm.user_id === c.user_id);
             return {
-              id: projectMember?.id || c.user_id, // Use project_member.id if available
+              board_id: state.currentBoard!.id,
+              user_id: c.user_id,
               name: c.nome || profile?.full_name || profile?.email || 'Usuário',
               email: c.email || profile?.email || '',
               avatar: profile?.avatar_url,
-              role: (projectMember?.role as any) || 'member'
+              role: 'member',
+              added_by: currentUser.id
             };
           });
 
-        // Include current user if not in the list
-        if (currentUser?.id) {
-          const currentUserExists = members.some(m => 
-            m.id === currentUser.id || 
-            projectMembers?.some(pm => pm.user_id === currentUser.id && pm.id === m.id)
-          );
-
-          if (!currentUserExists) {
-            const currentProfile = profilesData?.find(p => p.user_id === currentUser.id);
-            const currentProjectMember = projectMembers?.find(pm => pm.user_id === currentUser.id);
-            members.push({
-              id: currentProjectMember?.id || currentUser.id,
-              name: (currentUser as any).user_metadata?.full_name || currentProfile?.full_name || currentUser.email || 'Você',
-              email: currentUser.email || '',
-              avatar: currentProfile?.avatar_url,
-              role: 'owner' as const
+        // Upsert all members (insert if not exists, update if exists)
+        if (membersToUpsert.length > 0) {
+          await supabase
+            .from('project_members')
+            .upsert(membersToUpsert, { 
+              onConflict: 'board_id,user_id',
+              ignoreDuplicates: false 
             });
-          }
         }
+
+        // Now fetch all project_members with correct IDs
+        const { data: projectMembers } = await supabase
+          .from('project_members')
+          .select('*')
+          .eq('board_id', state.currentBoard.id);
+
+        if (!projectMembers) return;
+
+        // Build members list using project_members.id
+        const members: Member[] = projectMembers.map(pm => ({
+          id: pm.id, // Always use project_members.id
+          name: pm.name,
+          email: pm.email,
+          avatar: pm.avatar || undefined,
+          role: pm.role as any
+        }));
 
         setAllMembers(members);
       } catch (error) {
@@ -104,7 +107,7 @@ export const MemberPicker = ({
       setTempSelected(selectedMembers);
       loadAllMembers();
     }
-  }, [isOpen, selectedMembers, state.currentBoard?.id]);
+  }, [isOpen, selectedMembers, state.currentBoard?.id, availableMembers]);
 
   const handleToggleMember = (member: Member) => {
     const isSelected = tempSelected.some(m => m.id === member.id);
