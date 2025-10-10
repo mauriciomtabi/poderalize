@@ -125,33 +125,40 @@ export const RecurringCardsTab = ({
         nextCreation.setDate(nextCreation.getDate() + 7);
       }
     } else if (formData.frequency === 'biweekly') {
-      // Para quinzenal, encontrar o próximo dia do mês (primeiro ou segundo)
-      const currentMonth = nextCreation.getMonth();
-      const currentYear = nextCreation.getFullYear();
-      const currentDay = nextCreation.getDate();
-      
       const firstDay = formData.biweekly_first_day;
       const secondDay = formData.biweekly_second_day;
       
-      // Determinar qual é o próximo dia válido
-      if (currentDay < firstDay) {
-        nextCreation.setDate(firstDay);
-      } else if (currentDay < secondDay) {
-        nextCreation.setDate(secondDay);
-      } else {
-        // Próximo mês, primeiro dia
-        nextCreation.setMonth(currentMonth + 1);
-        nextCreation.setDate(firstDay);
-      }
-      
-      // Se ainda ficou no passado, avançar
-      if (nextCreation < now) {
-        const testDay = nextCreation.getDate();
-        if (testDay === firstDay) {
+      // Se a data de início está no futuro, use-a como base
+      if (nextCreation > now) {
+        // Ajustar para o primeiro dia válido a partir da data de início
+        const startDay = nextCreation.getDate();
+        if (startDay <= firstDay) {
+          nextCreation.setDate(firstDay);
+        } else if (startDay <= secondDay) {
           nextCreation.setDate(secondDay);
         } else {
+          // Já passou ambos os dias neste mês, próximo é primeiro dia do mês seguinte
           nextCreation.setMonth(nextCreation.getMonth() + 1);
           nextCreation.setDate(firstDay);
+        }
+      } else {
+        // Data de início no passado - encontrar próxima data válida
+        const currentDay = now.getDate();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        if (currentDay < firstDay) {
+          // Próximo é primeiro dia do mês atual
+          nextCreation = new Date(currentYear, currentMonth, firstDay);
+          nextCreation.setHours(Number(hours), Number(minutes), 0, 0);
+        } else if (currentDay < secondDay) {
+          // Próximo é segundo dia do mês atual
+          nextCreation = new Date(currentYear, currentMonth, secondDay);
+          nextCreation.setHours(Number(hours), Number(minutes), 0, 0);
+        } else {
+          // Já passou ambos, próximo é primeiro dia do próximo mês
+          nextCreation = new Date(currentYear, currentMonth + 1, firstDay);
+          nextCreation.setHours(Number(hours), Number(minutes), 0, 0);
         }
       }
     } else if (formData.frequency === 'monthly') {

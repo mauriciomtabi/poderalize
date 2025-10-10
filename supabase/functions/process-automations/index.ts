@@ -271,7 +271,36 @@ serve(async (req) => {
         } else if (recurringCard.frequency === 'weekly') {
           nextCreation.setDate(nextCreation.getDate() + 7);
         } else if (recurringCard.frequency === 'biweekly') {
-          nextCreation.setDate(nextCreation.getDate() + 14);
+          // Buscar os dias configurados do template_config
+          const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
+            ? recurringCard.template_config as Record<string, any>
+            : {};
+          
+          const firstDay = typeof config.biweekly_first_day === 'number' ? config.biweekly_first_day : 5;
+          const secondDay = typeof config.biweekly_second_day === 'number' ? config.biweekly_second_day : 20;
+          
+          const currentDay = nextCreation.getDate();
+          const currentMonth = nextCreation.getMonth();
+          
+          // Alternar entre primeiro e segundo dia
+          if (currentDay === firstDay) {
+            // Próxima criação: segundo dia do mesmo mês
+            nextCreation.setDate(secondDay);
+          } else if (currentDay === secondDay) {
+            // Próxima criação: primeiro dia do próximo mês
+            nextCreation.setMonth(currentMonth + 1);
+            nextCreation.setDate(firstDay);
+          } else {
+            // Caso inesperado: calcular próximo dia válido
+            if (currentDay < firstDay) {
+              nextCreation.setDate(firstDay);
+            } else if (currentDay < secondDay) {
+              nextCreation.setDate(secondDay);
+            } else {
+              nextCreation.setMonth(currentMonth + 1);
+              nextCreation.setDate(firstDay);
+            }
+          }
         } else if (recurringCard.frequency === 'monthly') {
           // For monthly, preserve the target day of month
           const targetDay = recurringCard.day_of_month || 1;
