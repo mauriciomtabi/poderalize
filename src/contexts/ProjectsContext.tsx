@@ -298,6 +298,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const colab = (colaboradoresData || []).find(c => c.user_id === pm.user_id);
         return {
           id: pm.id, // IMPORTANT: use project_members.id for linking
+          user_id: pm.user_id, // Adicionado para permitir filtro por colaboradores ativos
           name: colab?.nome || pm.name || profile?.full_name || profile?.email || 'Usuário',
           email: colab?.email || pm.email || profile?.email || '',
           avatar: profile?.avatar_url || pm.avatar,
@@ -309,6 +310,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === currentUser.id)) {
         members.push({
           id: currentUser.id,
+          user_id: currentUser.id, // Adicionado para permitir filtro por colaboradores ativos
           name: (currentUser as any).user_metadata?.full_name || currentUser.email || 'Você',
           email: currentUser.email || '',
           avatar: profilesData?.find(p => p.user_id === currentUser.id)?.avatar_url,

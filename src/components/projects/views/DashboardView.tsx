@@ -8,6 +8,7 @@ import { DashboardMetrics, Priority, CardStatus } from "@/types/projects";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Colaborador } from "@/types/colaboradores";
 const PRIORITY_COLORS = {
   low: '#3b82f6',
   medium: '#f59e0b',
@@ -39,6 +40,22 @@ export const DashboardView = () => {
     state,
     actions
   } = useProjects();
+  const [activeColaboradores, setActiveColaboradores] = useState<Colaborador[]>([]);
+  
+  useEffect(() => {
+    const fetchActiveColaboradores = async () => {
+      const { data } = await supabase
+        .from('colaboradores')
+        .select('*')
+        .eq('status', 'ativo');
+      
+      if (data) {
+        setActiveColaboradores(data);
+      }
+    };
+    
+    fetchActiveColaboradores();
+  }, []);
   
   if (!state.currentBoard) {
     return <div className="flex items-center justify-center h-full">Nenhum projeto selecionado</div>;
@@ -277,7 +294,12 @@ export const DashboardView = () => {
           <CardTitle className="text-lg">Membros da Equipe</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {state.currentBoard.members.map(member => {
+          {state.currentBoard.members
+            .filter(member => {
+              // Apenas mostrar membros que são colaboradores ativos
+              return activeColaboradores.some(colab => colab.user_id === member.user_id);
+            })
+            .map(member => {
             // Get all cards from all lists
             const allCards = state.currentBoard.lists.flatMap(list => list.cards);
             

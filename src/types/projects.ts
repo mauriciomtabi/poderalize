@@ -12,6 +12,7 @@ export interface Label {
 
 export interface Member {
   id: string;
+  user_id?: string; // Adicionado para permitir filtro por colaboradores ativos
   name: string;
   email: string;
   avatar?: string;
