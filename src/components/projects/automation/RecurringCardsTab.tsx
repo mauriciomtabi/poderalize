@@ -16,6 +16,7 @@ import { useClientes } from "@/hooks/useClientes";
 import { useChecklistTemplates } from "@/hooks/useChecklistTemplates";
 import { useProjectLabels } from "@/hooks/useProjectLabels";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { format } from "date-fns";
 import type { Priority } from "@/types/projects";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,8 @@ export const RecurringCardsTab = ({
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [clientePopoverOpen, setClientePopoverOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -669,7 +672,10 @@ export const RecurringCardsTab = ({
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(card)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteCard(card.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => {
+                      setCardToDelete(card.id);
+                      setDeleteConfirmOpen(true);
+                    }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -743,5 +749,23 @@ export const RecurringCardsTab = ({
               </CardContent>
             </Card>)}
       </div>
+
+      <ConfirmationDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setCardToDelete(null);
+        }}
+        onConfirm={() => {
+          if (cardToDelete) {
+            deleteCard(cardToDelete);
+          }
+        }}
+        title="Excluir card recorrente"
+        description="Tem certeza que deseja excluir este card de automação? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+      />
     </div>;
 };
