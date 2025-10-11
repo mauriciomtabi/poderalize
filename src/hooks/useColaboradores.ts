@@ -96,6 +96,7 @@ export function useColaboradores() {
         telefone: validatedData.telefone || null,
         departamento: validatedData.departamento,
         status: validatedData.status || 'ativo',
+        salario: formData.salario || null,
         user_id: finalUserId || userData.user.id // Use colaborador's user_id or fallback to admin's
       };
 
@@ -162,6 +163,9 @@ export function useColaboradores() {
       if (formData.status !== undefined) {
         normalizedData.status = formData.status && STATUS_DISPONIVEIS.includes(formData.status as any) 
           ? formData.status : 'ativo';
+      }
+      if (formData.salario !== undefined) {
+        normalizedData.salario = formData.salario;
       }
 
       const { data, error } = await supabase
