@@ -1,35 +1,196 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useClientes } from "@/hooks/useClientes";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useDespesas } from "@/hooks/useDespesas";
+import { useReceitas } from "@/hooks/useReceitas";
+import { usePagamentosClientes } from "@/hooks/usePagamentosClientes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { format } from "date-fns";
+import { format, isAfter, isBefore, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DespesaForm } from "@/components/financeiro/DespesaForm";
+import { ReceitaForm } from "@/components/financeiro/ReceitaForm";
+import { ConfirmPaymentDialog } from "@/components/financeiro/ConfirmPaymentDialog";
 import { CreateDespesaData } from "@/hooks/useDespesas";
+import { CreateReceitaData } from "@/hooks/useReceitas";
+import { Cliente } from "@/hooks/useClientes";
 
 const Financeiro = () => {
   const { clientes, isLoading: loadingClientes } = useClientes();
   const { colaboradores, loading: loadingColaboradores } = useColaboradores();
   const { despesas, isLoading: loadingDespesas, addDespesa, deleteDespesa } = useDespesas();
+  const { receitas, isLoading: loadingReceitas, addReceita, deleteReceita } = useReceitas();
+  const { pagamentos, registrarPagamento, getPagamentoByPeriodo } = usePagamentosClientes();
+  
   const [isAddDespesaOpen, setIsAddDespesaOpen] = useState(false);
+  const [isAddReceitaOpen, setIsAddReceitaOpen] = useState(false);
+  const [isConfirmPaymentOpen, setIsConfirmPaymentOpen] = useState(false);
+  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
 
-  const loading = loadingClientes || loadingColaboradores || loadingDespesas;
+  // Filtros de período
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth.toString());
 
-  // Calculate totals
-  const totalReceitas = clientes.reduce((sum, cliente) => sum + (cliente.valor_fechamento || 0), 0);
-  const totalSalarios = colaboradores
-    .filter(c => c.status === "ativo")
-    .reduce((sum, colaborador) => sum + (colaborador.salario || 0), 0);
-  const totalDespesasOutras = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
+  const loading = loadingClientes || loadingColaboradores || loadingDespesas || loadingReceitas;
+
+  // Anos disponíveis (últimos 5 anos + próximos 2)
+  const availableYears = Array.from({ length: 8 }, (_, i) => currentYear - 5 + i);
+
+  // Meses
+  const months = [
+    { value: "all", label: "Todos os meses" },
+    { value: "1", label: "Janeiro" },
+    { value: "2", label: "Fevereiro" },
+    { value: "3", label: "Março" },
+    { value: "4", label: "Abril" },
+    { value: "5", label: "Maio" },
+    { value: "6", label: "Junho" },
+    { value: "7", label: "Julho" },
+    { value: "8", label: "Agosto" },
+    { value: "9", label: "Setembro" },
+    { value: "10", label: "Outubro" },
+    { value: "11", label: "Novembro" },
+    { value: "12", label: "Dezembro" },
+  ];
+
+  // Função para filtrar por período
+  const filterByPeriod = <T extends { [key: string]: any }>(items: T[], dateField: string): T[] => {
+    return items.filter(item => {
+      const itemDate = new Date(item[dateField]);
+      const itemYear = itemDate.getFullYear();
+      const itemMonth = itemDate.getMonth() + 1;
+
+      if (selectedYear !== 'all' && itemYear !== parseInt(selectedYear)) {
+        return false;
+      }
+
+      if (selectedMonth !== 'all' && itemMonth !== parseInt(selectedMonth)) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
+  // Verificar status de pagamento do cliente
+  const getPaymentStatus = (cliente: Cliente): 'pago' | 'pendente' | 'atrasado' => {
+    if (!cliente.pagamento_mensal) return 'pago'; // Clientes sem pagamento mensal são considerados pagos
+
+    const ano = parseInt(selectedYear);
+    const mes = parseInt(selectedMonth);
+    const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
+
+    if (pagamento?.status === 'pago') return 'pago';
+
+    // Verificar se está atrasado
+    const today = new Date();
+    const dueDay = cliente.dia_pagamento || 5;
+    const dueDate = new Date(ano, mes - 1, dueDay);
+
+    if (isAfter(today, dueDate) && !pagamento) {
+      return 'atrasado';
+    }
+
+    return 'pendente';
+  };
+
+  // Dados filtrados
+  const filteredClientes = useMemo(() => {
+    if (selectedMonth === 'all') return clientes;
+    return clientes; // Clientes não são filtrados por período, só seu pagamento
+  }, [clientes, selectedMonth]);
+
+  const filteredReceitas = useMemo(() => 
+    filterByPeriod(receitas, 'data'), 
+    [receitas, selectedYear, selectedMonth]
+  );
+
+  const filteredDespesas = useMemo(() => 
+    filterByPeriod(despesas, 'data'), 
+    [despesas, selectedYear, selectedMonth]
+  );
+
+  // Calcular totais considerando filtros
+  const totalReceitasClientes = useMemo(() => {
+    return filteredClientes.reduce((sum, cliente) => {
+      if (!cliente.pagamento_mensal) {
+        // Para clientes sem pagamento mensal, considerar apenas se a data está no período
+        const filtered = filterByPeriod([{ data_fechamento: cliente.data_fechamento }], 'data_fechamento');
+        if (filtered.length > 0) {
+          return sum + (cliente.valor_fechamento || 0);
+        }
+        return sum;
+      } else {
+        // Para clientes com pagamento mensal, considerar o valor pago no período
+        const ano = parseInt(selectedYear);
+        const mes = parseInt(selectedMonth);
+        const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
+        
+        if (selectedMonth === 'all') {
+          // Se for "todos os meses", contar todos os pagamentos do ano
+          const pagamentosAno = pagamentos.filter(p => 
+            p.cliente_id === cliente.id && 
+            p.ano === ano &&
+            p.status === 'pago'
+          );
+          return sum + pagamentosAno.reduce((s, p) => s + p.valor_pago, 0);
+        } else {
+          return sum + (pagamento?.status === 'pago' ? pagamento.valor_pago : 0);
+        }
+      }
+    }, 0);
+  }, [filteredClientes, pagamentos, selectedYear, selectedMonth, getPagamentoByPeriodo]);
+
+  const totalReceitasManuais = useMemo(() => 
+    filteredReceitas.reduce((sum, receita) => sum + receita.valor, 0),
+    [filteredReceitas]
+  );
+
+  const totalReceitas = totalReceitasClientes + totalReceitasManuais;
+
+  const totalSalarios = useMemo(() => {
+    const activeColaboradores = colaboradores.filter(c => c.status === "ativo");
+    if (selectedMonth === 'all') {
+      // Se for "todos os meses", multiplicar pelo número de meses
+      const monthCount = 12;
+      return activeColaboradores.reduce((sum, colaborador) => sum + (colaborador.salario || 0), 0) * monthCount;
+    }
+    return activeColaboradores.reduce((sum, colaborador) => sum + (colaborador.salario || 0), 0);
+  }, [colaboradores, selectedMonth]);
+
+  const totalDespesasOutras = useMemo(() => 
+    filteredDespesas.reduce((sum, despesa) => sum + despesa.valor, 0),
+    [filteredDespesas]
+  );
+
   const totalDespesas = totalSalarios + totalDespesasOutras;
   const saldo = totalReceitas - totalDespesas;
+
+  // Indicadores de contratos
+  const { contratosPagos, contratosPendentes, contratosAtrasados } = useMemo(() => {
+    if (selectedMonth === 'all' || !selectedMonth) {
+      return { contratosPagos: 0, contratosPendentes: 0, contratosAtrasados: 0 };
+    }
+
+    const clientesMensais = filteredClientes.filter(c => c.pagamento_mensal);
+    const pagos = clientesMensais.filter(c => getPaymentStatus(c) === 'pago').length;
+    const atrasados = clientesMensais.filter(c => getPaymentStatus(c) === 'atrasado').length;
+    const pendentes = clientesMensais.filter(c => getPaymentStatus(c) === 'pendente').length;
+
+    return {
+      contratosPagos: pagos,
+      contratosPendentes: pendentes,
+      contratosAtrasados: atrasados,
+    };
+  }, [filteredClientes, selectedYear, selectedMonth, pagamentos, getPagamentoByPeriodo]);
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -46,10 +207,51 @@ const Financeiro = () => {
     }
   };
 
+  const handleAddReceita = async (receitaData: CreateReceitaData) => {
+    try {
+      await addReceita(receitaData);
+      setIsAddReceitaOpen(false);
+    } catch (error) {
+      // Error já tratado no hook
+    }
+  };
+
   const handleDeleteDespesa = async (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir esta despesa?")) {
       await deleteDespesa(id);
     }
+  };
+
+  const handleDeleteReceita = async (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir esta receita?")) {
+      await deleteReceita(id);
+    }
+  };
+
+  const handleOpenConfirmPayment = (cliente: Cliente) => {
+    setSelectedCliente(cliente);
+    setIsConfirmPaymentOpen(true);
+  };
+
+  const handleConfirmPayment = async (data: {
+    valor_pago: number;
+    data_pagamento: string;
+    observacoes?: string;
+  }) => {
+    if (!selectedCliente) return;
+
+    const ano = parseInt(selectedYear);
+    const mes = parseInt(selectedMonth);
+
+    await registrarPagamento({
+      cliente_id: selectedCliente.id,
+      ano,
+      mes,
+      valor_pago: data.valor_pago,
+      data_pagamento: data.data_pagamento,
+      status: 'pago',
+      observacoes: data.observacoes,
+    });
   };
 
   if (loading) {
@@ -62,8 +264,61 @@ const Financeiro = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Filtros de Período */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar size={20} />
+            Filtros de Período
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-[150px]">
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex-1 min-w-[180px]">
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map(month => (
+                    <SelectItem key={month.value} value={month.value}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSelectedYear(currentYear.toString());
+                setSelectedMonth(currentMonth.toString());
+              }}
+            >
+              Limpar filtros
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Resumo Financeiro */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="card-interactive hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -76,7 +331,7 @@ const Financeiro = () => {
               {formatCurrency(totalReceitas)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'}
+              Clientes + Outras receitas
             </p>
           </CardContent>
         </Card>
@@ -114,6 +369,44 @@ const Financeiro = () => {
             </p>
           </CardContent>
         </Card>
+
+        {selectedMonth !== 'all' && (
+          <>
+            <Card className="card-interactive hover-lift border-green-500/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-green-600" />
+                  Contratos Pagos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {contratosPagos}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  pagamentos confirmados
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-interactive hover-lift border-orange-500/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Clock size={16} className="text-orange-600" />
+                  Pendentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-600">
+                  {contratosPendentes + contratosAtrasados}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {contratosAtrasados > 0 && `${contratosAtrasados} atrasado(s)`}
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Receitas - Clientes */}
@@ -125,7 +418,7 @@ const Financeiro = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {clientes.length === 0 ? (
+          {filteredClientes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Nenhum cliente cadastrado
             </div>
@@ -137,30 +430,133 @@ const Financeiro = () => {
                     <TableHead>Cliente</TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Data/Dia Pagamento</TableHead>
+                    <TableHead>Status Pagamento</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {clientes.map((cliente) => (
-                    <TableRow key={cliente.id}>
-                      <TableCell className="font-medium">{cliente.nome}</TableCell>
-                      <TableCell>{cliente.empresa}</TableCell>
+                  {filteredClientes.map((cliente) => {
+                    const status = getPaymentStatus(cliente);
+                    const ano = parseInt(selectedYear);
+                    const mes = parseInt(selectedMonth);
+                    const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
+
+                    return (
+                      <TableRow key={cliente.id}>
+                        <TableCell className="font-medium">{cliente.nome}</TableCell>
+                        <TableCell>{cliente.empresa}</TableCell>
+                        <TableCell>
+                          {cliente.pagamento_mensal ? (
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-blue-600" />
+                              <Badge variant="outline" className="text-blue-600 border-blue-600">
+                                Todo dia {cliente.dia_pagamento}
+                              </Badge>
+                            </div>
+                          ) : (
+                            format(new Date(cliente.data_fechamento), "dd/MM/yyyy", { locale: ptBR })
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {cliente.pagamento_mensal && selectedMonth !== 'all' ? (
+                            status === 'pago' ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Pago {pagamento && `em ${format(new Date(pagamento.data_pagamento), 'dd/MM')}`}
+                              </Badge>
+                            ) : status === 'atrasado' ? (
+                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Atrasado
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
+                                <Clock className="h-3 w-3 mr-1" />
+                                Pendente
+                              </Badge>
+                            )
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className="text-green-600 border-green-600">
+                            {formatCurrency(pagamento?.valor_pago || cliente.valor_fechamento || 0)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {cliente.pagamento_mensal && selectedMonth !== 'all' && status !== 'pago' && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleOpenConfirmPayment(cliente)}
+                            >
+                              Confirmar
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Outras Receitas */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp size={20} />
+            Outras Receitas
+          </CardTitle>
+          <Button onClick={() => setIsAddReceitaOpen(true)} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Lançar Receita
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {filteredReceitas.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma receita lançada no período selecionado
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="w-[80px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredReceitas.map((receita) => (
+                    <TableRow key={receita.id}>
+                      <TableCell className="font-medium">{receita.descricao}</TableCell>
                       <TableCell>
-                        {cliente.pagamento_mensal ? (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-blue-600" />
-                            <Badge variant="outline" className="text-blue-600 border-blue-600">
-                              Todo dia {cliente.dia_pagamento}
-                            </Badge>
-                          </div>
-                        ) : (
-                          format(new Date(cliente.data_fechamento), "dd/MM/yyyy", { locale: ptBR })
-                        )}
+                        <Badge variant="secondary">{receita.categoria}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(receita.data), "dd/MM/yyyy", { locale: ptBR })}
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="outline" className="text-green-600 border-green-600">
-                          {formatCurrency(cliente.valor_fechamento || 0)}
+                          {formatCurrency(receita.valor)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteReceita(receita.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -192,7 +588,8 @@ const Financeiro = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead>Função</TableHead>
                     <TableHead>Departamento</TableHead>
-                    <TableHead className="text-right">Salário</TableHead>
+                    <TableHead className="text-right">Salário Mensal</TableHead>
+                    {selectedMonth === 'all' && <TableHead className="text-right">Total Anual</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -214,6 +611,13 @@ const Financeiro = () => {
                             {formatCurrency(colaborador.salario || 0)}
                           </Badge>
                         </TableCell>
+                        {selectedMonth === 'all' && (
+                          <TableCell className="text-right">
+                            <Badge variant="outline" className="text-red-600 border-red-600">
+                              {formatCurrency((colaborador.salario || 0) * 12)}
+                            </Badge>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                 </TableBody>
@@ -236,9 +640,9 @@ const Financeiro = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          {despesas.length === 0 ? (
+          {filteredDespesas.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhuma despesa lançada
+              Nenhuma despesa lançada no período selecionado
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -253,7 +657,7 @@ const Financeiro = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {despesas.map((despesa) => (
+                  {filteredDespesas.map((despesa) => (
                     <TableRow key={despesa.id}>
                       <TableCell className="font-medium">{despesa.descricao}</TableCell>
                       <TableCell>
@@ -285,7 +689,7 @@ const Financeiro = () => {
         </CardContent>
       </Card>
 
-      {/* Dialog para Adicionar Despesa */}
+      {/* Dialogs */}
       <Dialog open={isAddDespesaOpen} onOpenChange={setIsAddDespesaOpen}>
         <DialogContent>
           <DialogHeader>
@@ -297,6 +701,25 @@ const Financeiro = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isAddReceitaOpen} onOpenChange={setIsAddReceitaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lançar Nova Receita</DialogTitle>
+          </DialogHeader>
+          <ReceitaForm 
+            onSubmit={handleAddReceita}
+            onCancel={() => setIsAddReceitaOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmPaymentDialog
+        isOpen={isConfirmPaymentOpen}
+        onClose={() => setIsConfirmPaymentOpen(false)}
+        cliente={selectedCliente}
+        onConfirm={handleConfirmPayment}
+      />
     </div>
   );
 };

@@ -1397,6 +1397,56 @@ export type Database = {
         }
         Relationships: []
       }
+      pagamentos_clientes: {
+        Row: {
+          ano: number
+          cliente_id: string
+          created_at: string
+          data_pagamento: string
+          id: string
+          mes: number
+          observacoes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valor_pago: number
+        }
+        Insert: {
+          ano: number
+          cliente_id: string
+          created_at?: string
+          data_pagamento: string
+          id?: string
+          mes: number
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor_pago: number
+        }
+        Update: {
+          ano?: number
+          cliente_id?: string
+          created_at?: string
+          data_pagamento?: string
+          id?: string
+          mes?: number
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1965,6 +2015,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      receitas: {
+        Row: {
+          categoria: string
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          data?: string
+          descricao: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
       }
       recurring_cards: {
         Row: {
