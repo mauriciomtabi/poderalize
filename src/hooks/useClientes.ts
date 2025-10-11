@@ -39,7 +39,22 @@ const clienteSchema = z.object({
   vendedor_id: z.string().optional(),
   vendedor_nome: z.string().trim().optional(),
   lead_id: z.string().uuid().optional(),
-});
+  
+  // Pagamento mensal
+  pagamento_mensal: z.boolean().optional(),
+  dia_pagamento: z.number().min(1).max(31).optional(),
+}).refine(
+  (data) => {
+    if (data.pagamento_mensal && !data.dia_pagamento) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Dia do pagamento é obrigatório quando pagamento mensal está ativo",
+    path: ["dia_pagamento"],
+  }
+);
 
 export interface Cliente {
   id: string;
@@ -76,6 +91,10 @@ export interface Cliente {
   fonte_original?: string;
   vendedor_id?: string;
   vendedor_nome?: string;
+  
+  // Pagamento mensal
+  pagamento_mensal?: boolean;
+  dia_pagamento?: number;
   
   created_at: string;
   updated_at: string;

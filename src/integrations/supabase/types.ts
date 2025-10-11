@@ -660,6 +660,7 @@ export type Database = {
           cnpj: string | null
           created_at: string
           data_fechamento: string
+          dia_pagamento: number | null
           email: string
           empresa: string
           equipe_atual: string | null
@@ -677,6 +678,7 @@ export type Database = {
           observacoes: string | null
           observacoes_comportamento: string | null
           outras_redes_sociais: string | null
+          pagamento_mensal: boolean | null
           site: string | null
           telefone: string | null
           updated_at: string
@@ -690,6 +692,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           data_fechamento?: string
+          dia_pagamento?: number | null
           email: string
           empresa: string
           equipe_atual?: string | null
@@ -707,6 +710,7 @@ export type Database = {
           observacoes?: string | null
           observacoes_comportamento?: string | null
           outras_redes_sociais?: string | null
+          pagamento_mensal?: boolean | null
           site?: string | null
           telefone?: string | null
           updated_at?: string
@@ -720,6 +724,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           data_fechamento?: string
+          dia_pagamento?: number | null
           email?: string
           empresa?: string
           equipe_atual?: string | null
@@ -737,6 +742,7 @@ export type Database = {
           observacoes?: string | null
           observacoes_comportamento?: string | null
           outras_redes_sociais?: string | null
+          pagamento_mensal?: boolean | null
           site?: string | null
           telefone?: string | null
           updated_at?: string
@@ -837,6 +843,42 @@ export type Database = {
           tipo_conta?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      despesas: {
+        Row: {
+          categoria: string
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          data?: string
+          descricao: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
         }
         Relationships: []
       }

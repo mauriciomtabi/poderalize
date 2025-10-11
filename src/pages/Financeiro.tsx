@@ -1,80 +1,55 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useClientes } from "@/hooks/useClientes";
+import { useColaboradores } from "@/hooks/useColaboradores";
+import { useDespesas } from "@/hooks/useDespesas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { DollarSign, TrendingUp, TrendingDown, Building, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface Cliente {
-  id: string;
-  nome: string;
-  empresa: string;
-  valor_fechamento: number;
-  data_fechamento: string;
-}
-
-interface Colaborador {
-  id: string;
-  nome: string;
-  funcao: string;
-  departamento: string | null;
-  salario: number | null;
-  status: string;
-}
+import { DespesaForm } from "@/components/financeiro/DespesaForm";
+import { CreateDespesaData } from "@/hooks/useDespesas";
 
 const Financeiro = () => {
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { clientes, isLoading: loadingClientes } = useClientes();
+  const { colaboradores, loading: loadingColaboradores } = useColaboradores();
+  const { despesas, isLoading: loadingDespesas, addDespesa, deleteDespesa } = useDespesas();
+  const [isAddDespesaOpen, setIsAddDespesaOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const loading = loadingClientes || loadingColaboradores || loadingDespesas;
 
-        // Buscar clientes
-        const { data: clientesData, error: clientesError } = await supabase
-          .from('clientes')
-          .select('id, nome, empresa, valor_fechamento, data_fechamento')
-          .order('data_fechamento', { ascending: false });
-
-        if (clientesError) throw clientesError;
-
-        // Buscar colaboradores ativos com salário
-        const { data: colaboradoresData, error: colaboradoresError } = await supabase
-          .from('colaboradores')
-          .select('id, nome, funcao, departamento, salario, status')
-          .eq('status', 'ativo')
-          .order('nome', { ascending: true });
-
-        if (colaboradoresError) throw colaboradoresError;
-
-        setClientes(clientesData || []);
-        setColaboradores(colaboradoresData || []);
-      } catch (error) {
-        console.error('Erro ao carregar dados financeiros:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
+  // Calculate totals
   const totalReceitas = clientes.reduce((sum, cliente) => sum + (cliente.valor_fechamento || 0), 0);
-  const totalDespesas = colaboradores.reduce((sum, colab) => sum + (colab.salario || 0), 0);
+  const totalSalarios = colaboradores
+    .filter(c => c.status === "ativo")
+    .reduce((sum, colaborador) => sum + (colaborador.salario || 0), 0);
+  const totalDespesasOutras = despesas.reduce((sum, despesa) => sum + despesa.valor, 0);
+  const totalDespesas = totalSalarios + totalDespesasOutras;
   const saldo = totalReceitas - totalDespesas;
 
+  // Format currency
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
+  const handleAddDespesa = async (despesaData: CreateDespesaData) => {
+    const success = await addDespesa(despesaData);
+    if (success) {
+      setIsAddDespesaOpen(false);
+    }
+  };
+
+  const handleDeleteDespesa = async (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir esta despesa?")) {
+      await deleteDespesa(id);
+    }
   };
 
   if (loading) {
@@ -118,7 +93,7 @@ const Financeiro = () => {
               {formatCurrency(totalDespesas)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {colaboradores.length} {colaboradores.length === 1 ? 'colaborador' : 'colaboradores'}
+              Salários + Outras despesas
             </p>
           </CardContent>
         </Card>
@@ -141,7 +116,7 @@ const Financeiro = () => {
         </Card>
       </div>
 
-      {/* Tabela de Receitas */}
+      {/* Receitas - Clientes */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -152,7 +127,7 @@ const Financeiro = () => {
         <CardContent>
           {clientes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhuma receita registrada
+              Nenhum cliente cadastrado
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -161,7 +136,7 @@ const Financeiro = () => {
                   <TableRow>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Empresa</TableHead>
-                    <TableHead>Data Fechamento</TableHead>
+                    <TableHead>Data/Dia Pagamento</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -171,7 +146,16 @@ const Financeiro = () => {
                       <TableCell className="font-medium">{cliente.nome}</TableCell>
                       <TableCell>{cliente.empresa}</TableCell>
                       <TableCell>
-                        {format(new Date(cliente.data_fechamento), 'dd/MM/yyyy', { locale: ptBR })}
+                        {cliente.pagamento_mensal ? (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                            <Badge variant="outline" className="text-blue-600 border-blue-600">
+                              Todo dia {cliente.dia_pagamento}
+                            </Badge>
+                          </div>
+                        ) : (
+                          format(new Date(cliente.data_fechamento), "dd/MM/yyyy", { locale: ptBR })
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Badge variant="outline" className="text-green-600 border-green-600">
@@ -187,25 +171,25 @@ const Financeiro = () => {
         </CardContent>
       </Card>
 
-      {/* Tabela de Despesas */}
+      {/* Despesas - Salários */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users size={20} />
-            Despesas - Salários
+            Despesas - Salários dos Colaboradores
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {colaboradores.filter(c => c.salario && c.salario > 0).length === 0 ? (
+          {colaboradores.filter(c => c.status === "ativo" && c.salario && c.salario > 0).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhuma despesa registrada
+              Nenhum colaborador ativo com salário
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Colaborador</TableHead>
+                    <TableHead>Nome</TableHead>
                     <TableHead>Função</TableHead>
                     <TableHead>Departamento</TableHead>
                     <TableHead className="text-right">Salário</TableHead>
@@ -213,7 +197,7 @@ const Financeiro = () => {
                 </TableHeader>
                 <TableBody>
                   {colaboradores
-                    .filter(c => c.salario && c.salario > 0)
+                    .filter(c => c.status === "ativo" && c.salario && c.salario > 0)
                     .map((colaborador) => (
                       <TableRow key={colaborador.id}>
                         <TableCell className="font-medium">{colaborador.nome}</TableCell>
@@ -238,6 +222,81 @@ const Financeiro = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Outras Despesas */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingDown size={20} />
+            Outras Despesas
+          </CardTitle>
+          <Button onClick={() => setIsAddDespesaOpen(true)} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Lançar Despesa
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {despesas.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma despesa lançada
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="w-[80px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {despesas.map((despesa) => (
+                    <TableRow key={despesa.id}>
+                      <TableCell className="font-medium">{despesa.descricao}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{despesa.categoria}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(despesa.data), "dd/MM/yyyy", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline" className="text-red-600 border-red-600">
+                          {formatCurrency(despesa.valor)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteDespesa(despesa.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Dialog para Adicionar Despesa */}
+      <Dialog open={isAddDespesaOpen} onOpenChange={setIsAddDespesaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lançar Nova Despesa</DialogTitle>
+          </DialogHeader>
+          <DespesaForm 
+            onSubmit={handleAddDespesa}
+            onCancel={() => setIsAddDespesaOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

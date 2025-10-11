@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ClienteFormProps {
   onSubmit: (clienteData: CreateClienteData) => void;
@@ -50,6 +51,8 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
         indicador_potencial: initialData.indicador_potencial || "",
         equipe_atual: initialData.equipe_atual || "",
         observacoes_comportamento: initialData.observacoes_comportamento || "",
+        pagamento_mensal: initialData.pagamento_mensal || false,
+        dia_pagamento: initialData.dia_pagamento?.toString() || "",
       };
     }
     
@@ -84,6 +87,8 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       indicador_potencial: "",
       equipe_atual: "",
       observacoes_comportamento: "",
+      pagamento_mensal: false,
+      dia_pagamento: "",
     };
   };
 
@@ -215,6 +220,8 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
         indicador_potencial: initialData.indicador_potencial || "",
         equipe_atual: initialData.equipe_atual || "",
         observacoes_comportamento: initialData.observacoes_comportamento || "",
+        pagamento_mensal: initialData.pagamento_mensal || false,
+        dia_pagamento: initialData.dia_pagamento?.toString() || "",
       });
       setDate(initialData.data_fechamento ? parseISO(initialData.data_fechamento) : new Date());
     }
@@ -277,6 +284,8 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       indicador_potencial: novoCliente.indicador_potencial || undefined,
       equipe_atual: novoCliente.equipe_atual || undefined,
       observacoes_comportamento: novoCliente.observacoes_comportamento || undefined,
+      pagamento_mensal: novoCliente.pagamento_mensal || false,
+      dia_pagamento: novoCliente.dia_pagamento ? parseInt(novoCliente.dia_pagamento) : undefined,
     };
 
     // Clear localStorage draft and scroll position after successful submission
@@ -476,6 +485,49 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
               </PopoverContent>
             </Popover>
           </div>
+        </div>
+
+        {/* Pagamento Mensal */}
+        <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="pagamento_mensal"
+              checked={novoCliente.pagamento_mensal}
+              onCheckedChange={(checked) => 
+                setNovoCliente({
+                  ...novoCliente, 
+                  pagamento_mensal: checked as boolean,
+                  dia_pagamento: checked ? novoCliente.dia_pagamento : ""
+                })
+              }
+            />
+            <Label htmlFor="pagamento_mensal" className="font-semibold cursor-pointer">
+              Pagamento Mensal Recorrente
+            </Label>
+          </div>
+
+          {novoCliente.pagamento_mensal && (
+            <div>
+              <Label htmlFor="dia_pagamento">Dia do Pagamento (1-31)</Label>
+              <Select
+                value={novoCliente.dia_pagamento}
+                onValueChange={(value) => 
+                  setNovoCliente({...novoCliente, dia_pagamento: value})
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o dia" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({length: 31}, (_, i) => i + 1).map(dia => (
+                    <SelectItem key={dia} value={dia.toString()}>
+                      Dia {dia}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 

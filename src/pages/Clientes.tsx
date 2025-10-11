@@ -207,14 +207,23 @@ const Clientes = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      {format(parseISO(cliente.data_fechamento), 'dd/MM/yyyy', {
-                locale: ptBR
-              })}
-                    </span>
-                  </div>
+                  {cliente.pagamento_mensal ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                      <Badge variant="outline" className="text-blue-600 border-blue-600">
+                        Mensal - Dia {cliente.dia_pagamento}
+                      </Badge>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        {format(parseISO(cliente.data_fechamento), 'dd/MM/yyyy', {
+                  locale: ptBR
+                })}
+                      </span>
+                    </div>
+                  )}
 
                   {cliente.fonte_original && <div className="flex items-center gap-2 text-sm">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
