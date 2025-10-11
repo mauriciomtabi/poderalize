@@ -4,6 +4,7 @@ import { useColaboradores } from "@/hooks/useColaboradores";
 import { useDespesas } from "@/hooks/useDespesas";
 import { useReceitas } from "@/hooks/useReceitas";
 import { usePagamentosClientes } from "@/hooks/usePagamentosClientes";
+import { usePagamentosSalarios } from "@/hooks/usePagamentosSalarios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,11 @@ import { ptBR } from "date-fns/locale";
 import { DespesaForm } from "@/components/financeiro/DespesaForm";
 import { ReceitaForm } from "@/components/financeiro/ReceitaForm";
 import { ConfirmPaymentDialog } from "@/components/financeiro/ConfirmPaymentDialog";
+import { ConfirmSalaryPaymentDialog } from "@/components/financeiro/ConfirmSalaryPaymentDialog";
 import { CreateDespesaData } from "@/hooks/useDespesas";
 import { CreateReceitaData } from "@/hooks/useReceitas";
 import { Cliente } from "@/hooks/useClientes";
+import { Colaborador } from "@/types/colaboradores";
 
 const Financeiro = () => {
   const { clientes, isLoading: loadingClientes } = useClientes();
@@ -27,11 +30,14 @@ const Financeiro = () => {
   const { despesas, isLoading: loadingDespesas, addDespesa, deleteDespesa } = useDespesas();
   const { receitas, isLoading: loadingReceitas, addReceita, deleteReceita } = useReceitas();
   const { pagamentos, registrarPagamento, getPagamentoByPeriodo } = usePagamentosClientes();
+  const { pagamentosSalarios, addPagamentoSalario } = usePagamentosSalarios();
   
   const [isAddDespesaOpen, setIsAddDespesaOpen] = useState(false);
   const [isAddReceitaOpen, setIsAddReceitaOpen] = useState(false);
   const [isConfirmPaymentOpen, setIsConfirmPaymentOpen] = useState(false);
+  const [isConfirmSalaryPaymentOpen, setIsConfirmSalaryPaymentOpen] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
+  const [selectedColaborador, setSelectedColaborador] = useState<Colaborador | null>(null);
 
   // Filtros de período
   const currentYear = new Date().getFullYear();
@@ -156,15 +162,33 @@ const Financeiro = () => {
 
   const totalReceitas = totalReceitasClientes + totalReceitasManuais;
 
+  // Função para verificar se salário foi pago
+  const getSalaryPaymentStatus = (colaboradorId: string): 'pago' | 'pendente' => {
+    if (selectedMonth === 'all') return 'pendente';
+    
+    const ano = parseInt(selectedYear);
+    const mes = parseInt(selectedMonth);
+    const pagamento = pagamentosSalarios.find(
+      p => p.colaborador_id === colaboradorId && p.ano === ano && p.mes === mes
+    );
+    
+    return pagamento ? 'pago' : 'pendente';
+  };
+
   const totalSalarios = useMemo(() => {
     const activeColaboradores = colaboradores.filter(c => c.status === "ativo");
     if (selectedMonth === 'all') {
-      // Se for "todos os meses", multiplicar pelo número de meses
-      const monthCount = 12;
-      return activeColaboradores.reduce((sum, colaborador) => sum + (colaborador.salario || 0), 0) * monthCount;
+      // Se for "todos os meses", somar todos os pagamentos registrados
+      const pagamentosAno = pagamentosSalarios.filter(p => p.ano === parseInt(selectedYear));
+      return pagamentosAno.reduce((sum, p) => sum + p.valor_pago, 0);
+    } else {
+      // Para mês específico, somar apenas pagamentos confirmados
+      const ano = parseInt(selectedYear);
+      const mes = parseInt(selectedMonth);
+      const pagamentosMes = pagamentosSalarios.filter(p => p.ano === ano && p.mes === mes);
+      return pagamentosMes.reduce((sum, p) => sum + p.valor_pago, 0);
     }
-    return activeColaboradores.reduce((sum, colaborador) => sum + (colaborador.salario || 0), 0);
-  }, [colaboradores, selectedMonth]);
+  }, [colaboradores, pagamentosSalarios, selectedMonth, selectedYear]);
 
   const totalDespesasOutras = useMemo(() => 
     filteredDespesas.reduce((sum, despesa) => sum + despesa.valor, 0),
@@ -245,6 +269,32 @@ const Financeiro = () => {
 
     await registrarPagamento({
       cliente_id: selectedCliente.id,
+      ano,
+      mes,
+      valor_pago: data.valor_pago,
+      data_pagamento: data.data_pagamento,
+      status: 'pago',
+      observacoes: data.observacoes,
+    });
+  };
+
+  const handleOpenConfirmSalaryPayment = (colaborador: Colaborador) => {
+    setSelectedColaborador(colaborador);
+    setIsConfirmSalaryPaymentOpen(true);
+  };
+
+  const handleConfirmSalaryPayment = async (data: {
+    valor_pago: number;
+    data_pagamento: string;
+    observacoes?: string;
+  }) => {
+    if (!selectedColaborador) return;
+
+    const ano = parseInt(selectedYear);
+    const mes = parseInt(selectedMonth);
+
+    await addPagamentoSalario({
+      colaborador_id: selectedColaborador.id,
       ano,
       mes,
       valor_pago: data.valor_pago,
@@ -589,37 +639,77 @@ const Financeiro = () => {
                     <TableHead>Função</TableHead>
                     <TableHead>Departamento</TableHead>
                     <TableHead className="text-right">Salário Mensal</TableHead>
-                    {selectedMonth === 'all' && <TableHead className="text-right">Total Anual</TableHead>}
+                    {selectedMonth !== 'all' && <TableHead>Status Pagamento</TableHead>}
+                    {selectedMonth !== 'all' && <TableHead className="w-[100px]">Ações</TableHead>}
+                    {selectedMonth === 'all' && <TableHead className="text-right">Total Pago no Ano</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {colaboradores
                     .filter(c => c.status === "ativo" && c.salario && c.salario > 0)
-                    .map((colaborador) => (
-                      <TableRow key={colaborador.id}>
-                        <TableCell className="font-medium">{colaborador.nome}</TableCell>
-                        <TableCell>{colaborador.funcao}</TableCell>
-                        <TableCell>
-                          {colaborador.departamento ? (
-                            <Badge variant="secondary">{colaborador.departamento}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="outline" className="text-red-600 border-red-600">
-                            {formatCurrency(colaborador.salario || 0)}
-                          </Badge>
-                        </TableCell>
-                        {selectedMonth === 'all' && (
+                    .map((colaborador) => {
+                      const status = getSalaryPaymentStatus(colaborador.id);
+                      const ano = parseInt(selectedYear);
+                      const pagamentosAno = pagamentosSalarios.filter(
+                        p => p.colaborador_id === colaborador.id && p.ano === ano
+                      );
+                      const totalPagoAno = pagamentosAno.reduce((sum, p) => sum + p.valor_pago, 0);
+
+                      return (
+                        <TableRow key={colaborador.id}>
+                          <TableCell className="font-medium">{colaborador.nome}</TableCell>
+                          <TableCell>{colaborador.funcao}</TableCell>
+                          <TableCell>
+                            {colaborador.departamento ? (
+                              <Badge variant="secondary">{colaborador.departamento}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <Badge variant="outline" className="text-red-600 border-red-600">
-                              {formatCurrency((colaborador.salario || 0) * 12)}
+                              {formatCurrency(colaborador.salario || 0)}
                             </Badge>
                           </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
+                          {selectedMonth !== 'all' && (
+                            <>
+                              <TableCell>
+                                {status === 'pago' ? (
+                                  <Badge className="bg-green-600 hover:bg-green-700">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    Pago
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-orange-600 border-orange-600">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Pendente
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {status === 'pendente' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleOpenConfirmSalaryPayment(colaborador)}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                                    Confirmar
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </>
+                          )}
+                          {selectedMonth === 'all' && (
+                            <TableCell className="text-right">
+                              <Badge variant="outline" className="text-red-600 border-red-600">
+                                {formatCurrency(totalPagoAno)}
+                              </Badge>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </div>
@@ -719,6 +809,15 @@ const Financeiro = () => {
         onClose={() => setIsConfirmPaymentOpen(false)}
         cliente={selectedCliente}
         onConfirm={handleConfirmPayment}
+      />
+
+      <ConfirmSalaryPaymentDialog
+        isOpen={isConfirmSalaryPaymentOpen}
+        onClose={() => setIsConfirmSalaryPaymentOpen(false)}
+        colaborador={selectedColaborador}
+        onConfirm={handleConfirmSalaryPayment}
+        ano={parseInt(selectedYear)}
+        mes={parseInt(selectedMonth)}
       />
     </div>
   );

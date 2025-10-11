@@ -1447,6 +1447,56 @@ export type Database = {
           },
         ]
       }
+      pagamentos_salarios: {
+        Row: {
+          ano: number
+          colaborador_id: string
+          created_at: string
+          data_pagamento: string
+          id: string
+          mes: number
+          observacoes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valor_pago: number
+        }
+        Insert: {
+          ano: number
+          colaborador_id: string
+          created_at?: string
+          data_pagamento: string
+          id?: string
+          mes: number
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor_pago: number
+        }
+        Update: {
+          ano?: number
+          colaborador_id?: string
+          created_at?: string
+          data_pagamento?: string
+          id?: string
+          mes?: number
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_salarios_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
