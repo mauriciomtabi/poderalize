@@ -11,7 +11,8 @@ const colaboradorSchema = z.object({
   funcao: z.string().trim().min(1, "Função é obrigatória"),
   telefone: z.string().trim().optional(),
   departamento: z.enum(['RH', 'TI', 'Vendas', 'Marketing', 'Financeiro', 'Operações'] as const).nullable().optional(),
-  status: z.enum(['ativo', 'inativo', 'afastado'] as const).optional()
+  status: z.enum(['ativo', 'inativo', 'afastado'] as const).optional(),
+  salario: z.number().nonnegative("Salário deve ser maior ou igual a zero").optional()
 });
 
 export function useColaboradores() {

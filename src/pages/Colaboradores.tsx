@@ -70,7 +70,8 @@ const Colaboradores = () => {
     telefone: "",
     funcao: "",
     departamento: "",
-    status: "ativo"
+    status: "ativo",
+    salario: ""
   });
   const [editingColaborador, setEditingColaborador] = useState({
     nome: "",
@@ -78,7 +79,8 @@ const Colaboradores = () => {
     telefone: "",
     funcao: "",
     departamento: "",
-    status: ""
+    status: "",
+    salario: ""
   });
   const {
     profiles: approvedProfiles
@@ -144,7 +146,8 @@ const Colaboradores = () => {
     }
     try {
       await addColaborador({
-        ...novoColaborador
+        ...novoColaborador,
+        salario: novoColaborador.salario ? parseFloat(novoColaborador.salario as any) : undefined
       });
       setNovoColaborador({
         nome: "",
@@ -152,7 +155,8 @@ const Colaboradores = () => {
         telefone: "",
         funcao: "",
         departamento: "",
-        status: "ativo"
+        status: "ativo",
+        salario: ""
       });
       setIsDialogOpen(false);
     } catch (error) {
@@ -168,7 +172,8 @@ const Colaboradores = () => {
       funcao: colaborador.funcao,
       // Normalizar departamento - se não estiver na lista válida, usar string vazia
       departamento: colaborador.departamento && DEPARTAMENTOS_DISPONIVEIS.includes(colaborador.departamento as any) ? colaborador.departamento : "",
-      status: colaborador.status
+      status: colaborador.status,
+      salario: colaborador.salario?.toString() || ""
     });
     setIsEditing(false);
     setIsDetailsOpen(true);
@@ -187,7 +192,10 @@ const Colaboradores = () => {
         const existingColaborador = colaboradores.find(c => c.email === editingColaborador.email);
         if (existingColaborador) {
           // Se já existe, apenas atualiza
-          const updated = await updateColaborador(existingColaborador.id, editingColaborador);
+          const updated = await updateColaborador(existingColaborador.id, {
+            ...editingColaborador,
+            salario: editingColaborador.salario ? parseFloat(editingColaborador.salario as any) : undefined
+          });
           setSelectedColaborador(updated);
           setIsEditing(false);
           return;
@@ -200,13 +208,17 @@ const Colaboradores = () => {
           telefone: editingColaborador.telefone || undefined,
           funcao: editingColaborador.funcao,
           departamento: editingColaborador.departamento || undefined,
-          status: editingColaborador.status || 'ativo'
+          status: editingColaborador.status || 'ativo',
+          salario: editingColaborador.salario ? parseFloat(editingColaborador.salario as any) : undefined
         });
         setSelectedColaborador(created);
         setIsEditing(false);
         return;
       }
-      const updated = await updateColaborador(selectedColaborador.id, editingColaborador);
+      const updated = await updateColaborador(selectedColaborador.id, {
+        ...editingColaborador,
+        salario: editingColaborador.salario ? parseFloat(editingColaborador.salario as any) : undefined
+      });
       setSelectedColaborador(updated);
       setIsEditing(false);
     } catch (error) {
@@ -221,7 +233,8 @@ const Colaboradores = () => {
         telefone: selectedColaborador.telefone || "",
         funcao: selectedColaborador.funcao,
         departamento: selectedColaborador.departamento || "",
-        status: selectedColaborador.status
+        status: selectedColaborador.status,
+        salario: selectedColaborador.salario?.toString() || ""
       });
     }
     setIsEditing(false);
@@ -399,6 +412,20 @@ const Colaboradores = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div>
+                    <Label htmlFor="salario">Salário Mensal (R$)</Label>
+                    <Input 
+                      id="salario" 
+                      type="number" 
+                      step="0.01" 
+                      value={novoColaborador.salario} 
+                      onChange={e => setNovoColaborador({
+                        ...novoColaborador,
+                        salario: e.target.value
+                      })} 
+                      placeholder="Ex: 5000.00" 
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -456,6 +483,11 @@ const Colaboradores = () => {
                    {colaborador.departamento && <div>
                        <Badge variant="secondary" className={`${getBadgeColor(colaborador.departamento)} text-white`}>
                          {colaborador.departamento}
+                       </Badge>
+                     </div>}
+                   {colaborador.salario && colaborador.salario > 0 && <div>
+                       <Badge variant="outline" className="text-green-600 border-green-600">
+                         R$ {colaborador.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                        </Badge>
                      </div>}
                 </div>
@@ -627,6 +659,25 @@ const Colaboradores = () => {
                             {selectedColaborador.departamento}
                           </Badge> : <p className="text-sm text-muted-foreground">Não informado</p>}
                       </div>}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-semibold text-muted-foreground">Salário Mensal</Label>
+                    {isEditing ? <Input 
+                      type="number" 
+                      step="0.01" 
+                      value={editingColaborador.salario} 
+                      onChange={e => setEditingColaborador({
+                        ...editingColaborador,
+                        salario: e.target.value
+                      })} 
+                      className="mt-1" 
+                      placeholder="0.00"
+                    /> : <p className="mt-1 text-sm">
+                      {selectedColaborador.salario && selectedColaborador.salario > 0 
+                        ? `R$ ${selectedColaborador.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : "Não informado"}
+                    </p>}
                   </div>
                   
                 </div>

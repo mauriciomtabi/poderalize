@@ -31,7 +31,8 @@ const getPageTitle = (pathname: string): string => {
     '/acompanhamento': 'Acompanhamento',
     '/relatorios': 'Relatórios',
     '/configuracoes': 'Configurações',
-    '/colaboradores': 'Colaboradores'
+    '/colaboradores': 'Colaboradores',
+    '/financeiro': 'Financeiro'
   };
   
   return titles[pathname] || 'Sistema Poderalize';

@@ -9,6 +9,7 @@ export interface Colaborador {
   status: string;
   data_contratacao?: string | null;
   avatar_url?: string | null;
+  salario?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +21,7 @@ export interface ColaboradorFormData {
   telefone?: string;
   departamento?: string;
   status?: string;
+  salario?: number;
 }
 
 export const DEPARTAMENTOS_DISPONIVEIS = [

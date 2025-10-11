@@ -757,6 +757,7 @@ export type Database = {
           funcao: string
           id: string
           nome: string
+          salario: number | null
           status: string
           telefone: string | null
           updated_at: string
@@ -771,6 +772,7 @@ export type Database = {
           funcao: string
           id?: string
           nome: string
+          salario?: number | null
           status?: string
           telefone?: string | null
           updated_at?: string
@@ -785,6 +787,7 @@ export type Database = {
           funcao?: string
           id?: string
           nome?: string
+          salario?: number | null
           status?: string
           telefone?: string | null
           updated_at?: string

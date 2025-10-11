@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Target,
   PieChart,
-  UserCheck
+  UserCheck,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const menuItems = [
   { icon: PieChart, label: "CRM", href: "/crm", page: "crm" as PagePermission },
   { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
   { icon: UserCheck, label: "Clientes", href: "/clientes", page: "clientes" as PagePermission },
+  { icon: DollarSign, label: "Financeiro", href: "/financeiro", page: "financeiro" as PagePermission, adminOnly: true },
 ];
 
 export const Sidebar = () => {
