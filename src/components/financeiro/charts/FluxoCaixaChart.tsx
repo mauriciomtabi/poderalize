@@ -9,6 +9,24 @@ interface FluxoCaixaChartProps {
 }
 
 export const FluxoCaixaChart = ({ data }: FluxoCaixaChartProps) => {
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Waves size={20} />
+            Fluxo de Caixa Acumulado
+          </CardTitle>
+          <CardDescription>Evolução do saldo ao longo do tempo</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[350px]">
+          <Waves className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+          <p className="text-muted-foreground text-sm">Nenhum dado disponível para este período</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const chartData = data.map(item => ({
     mes: item.mes,
     valor: item.valor,
@@ -31,7 +49,7 @@ export const FluxoCaixaChart = ({ data }: FluxoCaixaChartProps) => {
         <CardDescription>Evolução do saldo ao longo do tempo</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[400px] w-full">
+        <ChartContainer config={chartConfig} className="h-[350px] sm:h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
               <defs>

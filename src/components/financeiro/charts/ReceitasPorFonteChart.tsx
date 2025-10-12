@@ -9,7 +9,25 @@ interface ReceitasPorFonteChartProps {
 }
 
 export const ReceitasPorFonteChart = ({ data }: ReceitasPorFonteChartProps) => {
-  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign size={20} />
+            Receitas por Fonte
+          </CardTitle>
+          <CardDescription>Origem das receitas</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center h-[350px]">
+          <DollarSign className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+          <p className="text-muted-foreground text-sm">Nenhuma receita registrada neste período</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const COLORS = ['hsl(142, 76%, 36%)', 'hsl(221, 83%, 53%)'];
 
   const chartData = data.map((item, index) => ({
     name: item.fonte,
@@ -37,7 +55,7 @@ export const ReceitasPorFonteChart = ({ data }: ReceitasPorFonteChartProps) => {
         <CardDescription>Origem das receitas</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[400px] w-full">
+        <ChartContainer config={chartConfig} className="h-[350px] sm:h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <ChartTooltip 
@@ -51,8 +69,8 @@ export const ReceitasPorFonteChart = ({ data }: ReceitasPorFonteChartProps) => {
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={80}
-                outerRadius={120}
+                innerRadius={60}
+                outerRadius={100}
                 fill="#8884d8"
                 paddingAngle={5}
                 dataKey="value"

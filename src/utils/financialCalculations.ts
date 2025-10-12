@@ -29,24 +29,80 @@ export const FINANCIAL_COLORS = {
     light: 'hsl(var(--destructive) / 0.6)',
   },
   categories: [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
+    'hsl(142, 76%, 36%)',  // Green
+    'hsl(221, 83%, 53%)',  // Blue
+    'hsl(262, 83%, 58%)',  // Purple
+    'hsl(48, 96%, 53%)',   // Yellow
+    'hsl(199, 89%, 48%)',  // Cyan
+    'hsl(346, 77%, 50%)',  // Pink
+    'hsl(24, 95%, 53%)',   // Orange
+    'hsl(142, 71%, 45%)',  // Teal
+    'hsl(280, 73%, 55%)',  // Violet
+    'hsl(36, 100%, 50%)',  // Amber
   ],
 };
 
-// Agregar dados por mês
+// Filtrar dados por período
+export const filterDataByPeriod = <T extends { [key: string]: any }>(
+  data: T[],
+  dateField: string,
+  year?: string,
+  month?: string
+): T[] => {
+  if (!data || data.length === 0) return [];
+  
+  return data.filter(item => {
+    if (!item[dateField]) return false;
+    
+    const date = new Date(item[dateField]);
+    if (isNaN(date.getTime())) return false;
+    
+    const itemYear = date.getFullYear();
+    const itemMonth = date.getMonth() + 1;
+    
+    // Se tem ano e mês específicos
+    if (year && month && month !== 'all') {
+      return itemYear === parseInt(year) && itemMonth === parseInt(month);
+    }
+    
+    // Se tem só ano
+    if (year && (!month || month === 'all')) {
+      return itemYear === parseInt(year);
+    }
+    
+    return true;
+  });
+};
+
+// Agregar dados por mês com suporte a filtros
 export const aggregateByMonth = <T extends { [key: string]: any }>(
   data: T[],
   dateField: string,
   valueField: string,
-  months: number = 12
+  year?: string,
+  month?: string
 ): MonthlyData[] => {
-  const today = new Date();
-  const startDate = subMonths(startOfMonth(today), months - 1);
-  const monthsRange = eachMonthOfInterval({ start: startDate, end: today });
+  if (!data || data.length === 0) return [];
+  
+  let monthsRange: Date[];
+  
+  // Se tem mês específico, mostrar só aquele mês
+  if (year && month && month !== 'all') {
+    const specificDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    monthsRange = [specificDate];
+  } 
+  // Se tem ano, mostrar 12 meses do ano
+  else if (year && (!month || month === 'all')) {
+    const yearStart = new Date(parseInt(year), 0, 1);
+    const yearEnd = new Date(parseInt(year), 11, 31);
+    monthsRange = eachMonthOfInterval({ start: yearStart, end: yearEnd });
+  }
+  // Senão, últimos 12 meses
+  else {
+    const today = new Date();
+    const startDate = subMonths(startOfMonth(today), 11);
+    monthsRange = eachMonthOfInterval({ start: startDate, end: today });
+  }
 
   const monthlyMap = new Map<string, number>();
 
@@ -58,10 +114,14 @@ export const aggregateByMonth = <T extends { [key: string]: any }>(
 
   // Agregar valores
   data.forEach(item => {
+    if (!item[dateField]) return;
     const date = new Date(item[dateField]);
+    if (isNaN(date.getTime())) return;
+    
     const key = format(date, 'yyyy-MM');
     if (monthlyMap.has(key)) {
-      monthlyMap.set(key, monthlyMap.get(key)! + Number(item[valueField]));
+      const value = Number(item[valueField]) || 0;
+      monthlyMap.set(key, monthlyMap.get(key)! + value);
     }
   });
 
@@ -101,12 +161,15 @@ export const aggregateByCategory = <T extends { [key: string]: any }>(
   categoryField: string,
   valueField: string
 ): CategoryData[] => {
+  if (!data || data.length === 0) return [];
+  
   const categoryMap = new Map<string, number>();
 
   data.forEach(item => {
     const category = item[categoryField] || 'Sem categoria';
+    const value = Number(item[valueField]) || 0;
     const currentValue = categoryMap.get(category) || 0;
-    categoryMap.set(category, currentValue + Number(item[valueField]));
+    categoryMap.set(category, currentValue + value);
   });
 
   return Array.from(categoryMap.entries())
@@ -115,6 +178,7 @@ export const aggregateByCategory = <T extends { [key: string]: any }>(
       valor,
       cor: FINANCIAL_COLORS.categories[index % FINANCIAL_COLORS.categories.length],
     }))
+    .filter(item => item.valor > 0)
     .sort((a, b) => b.valor - a.valor);
 };
 

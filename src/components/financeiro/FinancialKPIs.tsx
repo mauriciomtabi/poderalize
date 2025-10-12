@@ -18,8 +18,14 @@ export const FinancialKPIs = ({ metrics }: FinancialKPIsProps) => {
     return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
+  const getTrendIcon = (value: number) => {
+    if (value > 5) return <TrendingUp className="w-3 h-3 text-green-600" />;
+    if (value < -5) return <TrendingDown className="w-3 h-3 text-destructive" />;
+    return null;
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Ticket Médio */}
       <Card className="card-interactive hover-lift">
         <CardHeader className="pb-3">
@@ -29,8 +35,11 @@ export const FinancialKPIs = ({ metrics }: FinancialKPIsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-foreground">
-            {formatCurrency(metrics.ticketMedio)}
+          <div className="flex items-baseline gap-2">
+            <div className="text-2xl font-bold text-foreground">
+              {formatCurrency(metrics.ticketMedio)}
+            </div>
+            {getTrendIcon(metrics.crescimentoMoM)}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             por cliente/mês
@@ -65,8 +74,11 @@ export const FinancialKPIs = ({ metrics }: FinancialKPIsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${metrics.margemOperacional > 30 ? 'text-green-600' : 'text-foreground'}`}>
-            {metrics.margemOperacional.toFixed(1)}%
+          <div className="flex items-baseline gap-2">
+            <div className={`text-2xl font-bold ${metrics.margemOperacional > 30 ? 'text-green-600' : 'text-foreground'}`}>
+              {metrics.margemOperacional.toFixed(1)}%
+            </div>
+            {metrics.margemOperacional > 30 && <span className="text-green-600 text-sm">✓</span>}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             {metrics.margemOperacional > 30 ? 'Meta atingida!' : 'Meta: 30%'}
