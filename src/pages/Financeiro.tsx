@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle, BarChart3, FileText } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { format, isAfter, isBefore, startOfMonth, endOfMonth } from "date-fns";
@@ -19,6 +20,7 @@ import { DespesaForm } from "@/components/financeiro/DespesaForm";
 import { ReceitaForm } from "@/components/financeiro/ReceitaForm";
 import { ConfirmPaymentDialog } from "@/components/financeiro/ConfirmPaymentDialog";
 import { ConfirmSalaryPaymentDialog } from "@/components/financeiro/ConfirmSalaryPaymentDialog";
+import { DashboardView } from "@/components/financeiro/DashboardView";
 import { CreateDespesaData } from "@/hooks/useDespesas";
 import { CreateReceitaData } from "@/hooks/useReceitas";
 import { Cliente } from "@/hooks/useClientes";
@@ -366,6 +368,25 @@ const Financeiro = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tabs para Dashboard e Detalhado */}
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <BarChart3 size={16} />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="detalhado" className="flex items-center gap-2">
+            <FileText size={16} />
+            Detalhado
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="mt-6">
+          <DashboardView selectedYear={selectedYear} selectedMonth={selectedMonth} />
+        </TabsContent>
+
+        <TabsContent value="detalhado" className="mt-6 space-y-6">
 
       {/* Resumo Financeiro */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -819,6 +840,8 @@ const Financeiro = () => {
         ano={parseInt(selectedYear)}
         mes={parseInt(selectedMonth)}
       />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
