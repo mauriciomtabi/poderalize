@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2 } from "lucide-react";
+import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2, File, Image, Link } from "lucide-react";
 import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment, Attachment, CardStatus, Priority } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ChecklistManager } from "./ChecklistManager";
@@ -393,16 +393,16 @@ export const CardDetailModal = ({
   const cardDueDate = isCreationMode ? selectedDueDate : latestCard?.dueDate;
   
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0" onClick={(e) => e.stopPropagation()}>
+      <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <DialogTitle className="sr-only">
           {isCreationMode ? 'Descrição da Tarefa' : 'Detalhes do cartão'}
         </DialogTitle>
         <DialogDescription className="sr-only">
           {isCreationMode ? 'Preencha as informações da nova tarefa' : 'Visualize e edite as informações do cartão.'}
         </DialogDescription>
-        <div className="flex h-full min-h-[70vh]">
+        <div className="flex h-full min-h-[70vh] overflow-hidden">
           {/* Main Content with ScrollArea */}
-          <div className="flex-1 min-w-0 basis-0">
+          <div className="flex-1 min-w-0 basis-0 overflow-hidden">
             <ScrollArea className="h-[80vh] p-6">
               <div className="space-y-6">
                 {/* Header with title */}
@@ -551,6 +551,55 @@ export const CardDetailModal = ({
                   <ChecklistManager card={latestCard} />
                 ) : null}
 
+                {/* Attachments */}
+                {(() => {
+                  const currentAttachments = isCreationMode ? tempAttachments : (latestCard?.attachments || []);
+                  if (currentAttachments.length > 0) {
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="h-4 w-4" />
+                          <h3 className="font-medium">Anexos</h3>
+                          <span className="text-sm text-muted-foreground">({currentAttachments.length})</span>
+                        </div>
+                        <div className="space-y-2 overflow-hidden">
+                          {currentAttachments.map((attachment) => (
+                            <div
+                              key={attachment.id}
+                              className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors overflow-hidden"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
+                                {attachment.type === 'link' ? (
+                                  <Link className="h-4 w-4 flex-shrink-0" />
+                                ) : attachment.type.startsWith('image/') ? (
+                                  <Image className="h-4 w-4 flex-shrink-0" />
+                                ) : (
+                                  <File className="h-4 w-4 flex-shrink-0" />
+                                )}
+                                <div className="flex-1 min-w-0 overflow-hidden">
+                                  <a
+                                    href={attachment.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-sm text-primary hover:underline truncate block"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {attachment.name}
+                                  </a>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {/* Comments */}
                 {isCreationMode ? (
                   <CommentsSection 
@@ -581,7 +630,7 @@ export const CardDetailModal = ({
           </div>
 
           {/* Sidebar */}
-          <div className="w-64 border-l bg-muted/30 flex-shrink-0">
+          <div className="w-64 border-l bg-muted/30 flex-shrink-0 overflow-hidden">
             <ScrollArea className="h-[80vh] p-4">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
