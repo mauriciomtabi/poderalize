@@ -402,7 +402,7 @@ export const CardDetailModal = ({
         </DialogDescription>
         <div className="flex h-full min-h-[70vh]">
           {/* Main Content with ScrollArea */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 basis-0">
             <ScrollArea className="h-[80vh] p-6">
               <div className="space-y-6">
                 {/* Header with title */}
