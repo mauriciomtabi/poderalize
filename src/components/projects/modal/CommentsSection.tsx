@@ -215,7 +215,7 @@ export const CommentsSection = ({
                 </span>
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
-                <div className="text-sm whitespace-pre-wrap flex flex-wrap items-center gap-1">
+                <div className="text-sm whitespace-pre-wrap break-words flex flex-wrap items-center gap-1">
                   {formatCommentText(comment.text)}
                 </div>
               </div>
