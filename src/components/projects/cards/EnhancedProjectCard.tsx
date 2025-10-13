@@ -203,10 +203,25 @@ export const EnhancedProjectCard = ({
 
           {/* Attachments */}
           {card.attachments.length > 0 && (
-            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <Paperclip size={12} />
-              <span>{card.attachments.length}</span>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 hover:bg-primary/10 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Abrir o primeiro anexo
+                const firstAttachment = card.attachments[0];
+                if (firstAttachment) {
+                  window.open(firstAttachment.url, '_blank', 'noopener,noreferrer');
+                }
+              }}
+              title={`Abrir: ${card.attachments[0]?.name || 'anexo'}`}
+            >
+              <div className="flex items-center space-x-1 text-xs">
+                <Paperclip size={12} />
+                <span>{card.attachments.length}</span>
+              </div>
+            </Button>
           )}
 
           {/* No longer showing priority icon here since it's in the header */}
