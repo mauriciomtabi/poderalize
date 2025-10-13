@@ -209,10 +209,21 @@ export const EnhancedProjectCard = ({
               className="h-6 px-2 hover:bg-primary/10 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-                // Abrir o primeiro anexo
                 const firstAttachment = card.attachments[0];
                 if (firstAttachment) {
-                  window.open(firstAttachment.url, '_blank', 'noopener,noreferrer');
+                  // Para data URLs (PDFs em base64), criar link temporário
+                  if (firstAttachment.url.startsWith('data:')) {
+                    const link = document.createElement('a');
+                    link.href = firstAttachment.url;
+                    link.target = '_blank';
+                    link.download = firstAttachment.name || 'anexo';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  } else {
+                    // Para URLs normais, usar window.open
+                    window.open(firstAttachment.url, '_blank', 'noopener,noreferrer');
+                  }
                 }
               }}
               title={`Abrir: ${card.attachments[0]?.name || 'anexo'}`}
