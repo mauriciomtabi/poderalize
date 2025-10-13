@@ -393,17 +393,17 @@ export const CardDetailModal = ({
   const cardDueDate = isCreationMode ? selectedDueDate : latestCard?.dueDate;
   
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] p-0 flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0" onClick={(e) => e.stopPropagation()}>
         <DialogTitle className="sr-only">
           {isCreationMode ? 'Descrição da Tarefa' : 'Detalhes do cartão'}
         </DialogTitle>
         <DialogDescription className="sr-only">
           {isCreationMode ? 'Preencha as informações da nova tarefa' : 'Visualize e edite as informações do cartão.'}
         </DialogDescription>
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex h-full min-h-[70vh]">
           {/* Main Content with ScrollArea */}
           <div className="flex-1">
-            <ScrollArea className="flex-1 max-h-full p-6">
+            <ScrollArea className="h-[80vh] p-6">
               <div className="space-y-6">
                 {/* Header with title */}
                 <div className="flex items-start justify-between">
@@ -581,8 +581,8 @@ export const CardDetailModal = ({
           </div>
 
           {/* Sidebar */}
-          <div className="w-64 lg:w-72 border-l bg-muted/30 flex-shrink-0 hidden sm:block">
-            <ScrollArea className="flex-1 max-h-full p-4">
+          <div className="w-64 border-l bg-muted/30 flex-shrink-0">
+            <ScrollArea className="h-[80vh] p-4">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
                 
