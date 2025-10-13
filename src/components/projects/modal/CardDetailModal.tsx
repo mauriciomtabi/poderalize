@@ -402,7 +402,8 @@ export const CardDetailModal = ({
         </DialogDescription>
         <div className="flex flex-1 overflow-hidden">
           {/* Main Content with ScrollArea */}
-          <div className="flex-1">
+            <div className={cn("flex-1", latestCard?.title === "Certificare: Quinzenal" ? "min-w-0" : undefined)}>
+
             <ScrollArea className="flex-1 max-h-full p-6">
               <div className="space-y-6">
                 {/* Header with title */}
