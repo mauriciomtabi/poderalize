@@ -51,6 +51,7 @@ export const ChecklistManager = ({
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [newItemTexts, setNewItemTexts] = useState<Record<string, string>>({});
   const [showNewItemForms, setShowNewItemForms] = useState<Record<string, boolean>>({});
+  const [openAssigneePopovers, setOpenAssigneePopovers] = useState<Record<string, boolean>>({});
 
   const handleAddChecklist = (title?: string, items?: string[]) => {
     const checklistTitle = title || newChecklistTitle.trim();
@@ -190,6 +191,10 @@ export const ChecklistManager = ({
   };
 
   const handleAssigneeChange = (checklistId: string, itemId: string, assigneeId: string | null) => {
+    // Close popover immediately for better UX
+    const popoverKey = `${checklistId}-${itemId}`;
+    setOpenAssigneePopovers(prev => ({ ...prev, [popoverKey]: false }));
+
     const updatedChecklists = currentChecklists.map(cl => 
       cl.id === checklistId 
         ? {
@@ -204,6 +209,7 @@ export const ChecklistManager = ({
     if (isCreationMode && onChecklistsChange) {
       onChecklistsChange(updatedChecklists);
     } else if (card) {
+      // Optimistic update - update immediately without waiting
       actions.updateCard({
         ...card,
         checklists: updatedChecklists
@@ -266,6 +272,7 @@ export const ChecklistManager = ({
           <div className="space-y-2 pl-6">
             {checklist.items.map(item => {
               const assignee = getAssigneeInfo(item.assignee);
+              const popoverKey = `${checklist.id}-${item.id}`;
               return (
                 <div key={item.id} className="flex items-center gap-2 group" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
@@ -289,7 +296,10 @@ export const ChecklistManager = ({
                   )}
                   
                   {/* Assignee selector - aparece no hover */}
-                  <Popover>
+                  <Popover 
+                    open={openAssigneePopovers[popoverKey]}
+                    onOpenChange={(open) => setOpenAssigneePopovers(prev => ({ ...prev, [popoverKey]: open }))}
+                  >
                     <PopoverTrigger asChild>
                       <Button 
                         variant="ghost" 
