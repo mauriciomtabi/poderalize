@@ -4,11 +4,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, TrendingUp, Users, Clock, CheckCircle2, AlertTriangle, Calendar, Target } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
-import { DashboardMetrics, Priority, CardStatus } from "@/types/projects";
+import { DashboardMetrics, Priority, CardStatus, ProjectCard } from "@/types/projects";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Colaborador } from "@/types/colaboradores";
+import { OverdueCardsModal } from "../OverdueCardsModal";
+import { CardDetailModal } from "../modal/CardDetailModal";
 const PRIORITY_COLORS = {
   low: '#3b82f6',
   medium: '#f59e0b',
@@ -41,6 +43,9 @@ export const DashboardView = () => {
     actions
   } = useProjects();
   const [activeColaboradores, setActiveColaboradores] = useState<Colaborador[]>([]);
+  const [showOverdueModal, setShowOverdueModal] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<ProjectCard | undefined>(undefined);
+  const [showCardModal, setShowCardModal] = useState(false);
   
   useEffect(() => {
     const fetchActiveColaboradores = async () => {
@@ -62,6 +67,11 @@ export const DashboardView = () => {
   }
   const allCards = state.currentBoard.lists.flatMap(list => list.cards.filter(card => !card.archived));
   const cards = actions.getFilteredCards();
+
+  // Get overdue cards
+  const overdueCards = allCards.filter(card => 
+    card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done'
+  );
 
   // Calculate metrics - considering only cards in "Executado" list
   const executadoList = state.currentBoard.lists.find(list => 
@@ -179,7 +189,10 @@ export const DashboardView = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors" 
+          onClick={() => setShowOverdueModal(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Em Atraso</CardTitle>
             <AlertTriangle size={16} className="text-red-500" />
@@ -416,5 +429,28 @@ export const DashboardView = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Overdue Cards Modal */}
+      <OverdueCardsModal
+        isOpen={showOverdueModal}
+        onClose={() => setShowOverdueModal(false)}
+        cards={overdueCards}
+        onCardClick={(card) => {
+          setSelectedCard(card);
+          setShowCardModal(true);
+        }}
+      />
+
+      {/* Card Detail Modal */}
+      {selectedCard && (
+        <CardDetailModal
+          card={selectedCard}
+          isOpen={showCardModal}
+          onClose={() => {
+            setShowCardModal(false);
+            setSelectedCard(undefined);
+          }}
+        />
+      )}
     </div>;
 };
