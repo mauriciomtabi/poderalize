@@ -63,11 +63,7 @@ export const useProjectCards = (listId?: string) => {
     try {
       const { data, error } = await supabase
         .from('project_cards')
-        .select(`
-          *,
-          project_lists!inner(board_id)
-        `)
-        .eq('project_lists.board_id', boardId)
+        .select(`*`)
         .order('position', { ascending: true });
 
       if (error) {
@@ -78,6 +74,27 @@ export const useProjectCards = (listId?: string) => {
       return data || [];
     } catch (error) {
       console.error('Error fetching board cards:', error);
+      return [];
+    }
+  };
+
+  // Novo: buscar cartões por múltiplas listas (evita JOIN pesado)
+  const fetchCardsByListIds = async (listIds: string[]) => {
+    if (!listIds || listIds.length === 0) return [];
+    try {
+      const { data, error } = await supabase
+        .from('project_cards')
+        .select('*')
+        .in('list_id', listIds)
+        .order('position', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching cards by list ids:', error);
+        return [];
+      }
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching cards by list ids:', error);
       return [];
     }
   };
@@ -174,6 +191,7 @@ export const useProjectCards = (listId?: string) => {
     isLoading,
     fetchCards,
     fetchAllBoardCards,
+    fetchCardsByListIds,
     createCard,
     updateCard,
     deleteCard,

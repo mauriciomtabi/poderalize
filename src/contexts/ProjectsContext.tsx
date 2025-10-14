@@ -365,8 +365,9 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         allCards.push(...(mapped as ProjectCard[]));
         console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin view)`);
       } else {
-        // Regular view: only cards from current board
-        const boardCards = await cardsHook.fetchAllBoardCards(boardId);
+        // Regular view: only cards from current board (sem JOIN)
+        const listIds = (lists || []).map(l => l.id);
+        const boardCards = await cardsHook.fetchCardsByListIds(listIds);
         if (boardCards) {
           allCards.push(...boardCards.map(transformDBCard));
           console.log(`📦 Loaded ${boardCards.length} cards from current board`);
