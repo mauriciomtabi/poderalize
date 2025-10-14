@@ -249,12 +249,32 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const board = boardsHook.boards.find(b => b.id === boardId);
       if (!board) return;
 
-      // Create a temporary lists hook for this specific board
-      const { data: listsData, error: listsError } = await supabase
-        .from('project_lists')
-        .select('*')
-        .eq('board_id', boardId)
-        .order('position', { ascending: true });
+      // FASE 1: Queries Paralelas - Execute todas as queries simultaneamente
+      const [
+        { data: listsData, error: listsError },
+        labelsResponse,
+        { data: projectMembers },
+        { data: profilesData },
+        { data: { user: currentUser } }
+      ] = await Promise.all([
+        supabase
+          .from('project_lists')
+          .select('*')
+          .eq('board_id', boardId)
+          .order('position', { ascending: true }),
+        supabase
+          .from('project_labels')
+          .select('*')
+          .eq('board_id', boardId),
+        supabase
+          .from('project_members')
+          .select('*')
+          .eq('board_id', boardId),
+        supabase
+          .from('profiles')
+          .select('user_id, avatar_url, full_name, email'),
+        supabase.auth.getUser()
+      ]);
 
       if (listsError) {
         console.error('Error fetching lists:', listsError);
@@ -262,45 +282,19 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         return;
       }
 
-      // Fetch labels and members directly from Supabase for reliability
-      const labelsResponse = await supabase
-        .from('project_labels')
-        .select('*')
-        .eq('board_id', boardId);
-
       let labels = labelsResponse.data?.map(transformDBLabel) || [];
-      
-      // Current auth user
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-      // Fetch existing project members for this board (no auto-sync)
-      const { data: projectMembers } = await supabase
-        .from('project_members')
-        .select('*')
-        .eq('board_id', boardId);
-
-      // Fetch colaboradores for enrichment only
-      const { data: colaboradoresData } = await supabase
-        .from('colaboradores')
-        .select('*')
-        .eq('status', 'ativo');
-
-      // Fetch profiles to enrich with avatar/name
-      const userIds = (projectMembers || []).map(pm => pm.user_id);
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('user_id, avatar_url, full_name, email')
-        .in('user_id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
+      // FASE 2: Usar Map ao invés de .find() para O(n) ao invés de O(n²)
+      const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
 
       // Build members list aligned to project_members.id (required by project_card_assignees)
       let members: Member[] = (projectMembers || []).map(pm => {
-        const profile = profilesData?.find(p => p.user_id === pm.user_id);
-        const colab = (colaboradoresData || []).find(c => c.user_id === pm.user_id);
+        const profile = profileMap.get(pm.user_id);
         return {
           id: pm.id, // IMPORTANT: use project_members.id for linking
-          user_id: pm.user_id, // Adicionado para permitir filtro por colaboradores ativos
-          name: colab?.nome || pm.name || profile?.full_name || profile?.email || 'Usuário',
-          email: colab?.email || pm.email || profile?.email || '',
+          user_id: pm.user_id,
+          name: pm.name || profile?.full_name || profile?.email || 'Usuário',
+          email: pm.email || profile?.email || '',
           avatar: profile?.avatar_url || pm.avatar,
           role: (pm.role as any) || 'member'
         };
@@ -308,15 +302,24 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       // Also include the current user if somehow missing
       if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === currentUser.id)) {
+        const currentProfile = profileMap.get(currentUser.id);
         members.push({
           id: currentUser.id,
-          user_id: currentUser.id, // Adicionado para permitir filtro por colaboradores ativos
+          user_id: currentUser.id,
           name: (currentUser as any).user_metadata?.full_name || currentUser.email || 'Você',
           email: currentUser.email || '',
-          avatar: profilesData?.find(p => p.user_id === currentUser.id)?.avatar_url,
+          avatar: currentProfile?.avatar_url,
           role: 'owner' as const
         });
       }
+
+      // FASE 7: Pré-carregar avatares em cache do browser
+      members.forEach(member => {
+        if (member.avatar) {
+          const img = new Image();
+          img.src = member.avatar;
+        }
+      });
 
       // NEVER auto-create labels - they should only be created when board is created
 
@@ -409,7 +412,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const isBoardOwner = boardOwner?.user_id === currentUser?.id;
       
       if (isAdmin && viewAllCards) {
-        // Admin viewing all: Group ALL cards by list title into current board's lists
+        // FASE 4: Admin ViewAll Otimizado - Reduzir complexidade de O(n² × m) para O(n + m)
         // Fetch ALL lists from ALL boards to map by title and position index per board
         const { data: allListsData } = await supabase
           .from('project_lists')
@@ -441,8 +444,15 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           boardToLists.set(l.board_id, arr);
         });
         
-        // Ensure arrays per board are ordered by position already due to query order
+        // Agrupar cards uma única vez por listId
+        const cardsByListId = new Map<string, ProjectCard[]>();
+        allCards.forEach(card => {
+          const existing = cardsByListId.get(card.listId) || [];
+          existing.push(card);
+          cardsByListId.set(card.listId, existing);
+        });
         
+        // Mapear listas para cards usando lookup direto
         for (let i = 0; i < lists.length; i++) {
           const list = lists[i];
           const key = normalize(list.title);
@@ -457,7 +467,13 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             matchingListIds = fallbackIds.length ? fallbackIds : [list.id];
           }
           
-          const listCards = allCards.filter(card => matchingListIds.includes(card.listId));
+          // Combinar cards de todas as listas matching
+          const listCards: ProjectCard[] = [];
+          matchingListIds.forEach(id => {
+            const cards = cardsByListId.get(id);
+            if (cards) listCards.push(...cards);
+          });
+          
           listsWithCards.push(transformDBList(list, listCards));
           console.log(`🔓 Admin view: ${list.title} => ${listCards.length} cards (matched ${matchingListIds.length} lists)`);
         }

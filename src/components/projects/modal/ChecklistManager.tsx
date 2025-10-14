@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,6 +52,9 @@ export const ChecklistManager = ({
   const [newItemTexts, setNewItemTexts] = useState<Record<string, string>>({});
   const [showNewItemForms, setShowNewItemForms] = useState<Record<string, boolean>>({});
   const [openAssigneePopovers, setOpenAssigneePopovers] = useState<Record<string, boolean>>({});
+  
+  // FASE 6: Ref para debounce de updates
+  const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleAddChecklist = (title?: string, items?: string[]) => {
     const checklistTitle = title || newChecklistTitle.trim();
@@ -209,11 +212,19 @@ export const ChecklistManager = ({
     if (isCreationMode && onChecklistsChange) {
       onChecklistsChange(updatedChecklists);
     } else if (card) {
-      // Optimistic update - update immediately without waiting
-      actions.updateCard({
-        ...card,
-        checklists: updatedChecklists
-      });
+      // FASE 6: Debounce database update para reduzir chamadas
+      // Clear timeout anterior
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      // Update com debounce de 300ms
+      updateTimeoutRef.current = setTimeout(() => {
+        actions.updateCard({
+          ...card,
+          checklists: updatedChecklists
+        });
+      }, 300);
     }
   };
 
