@@ -1,18 +1,22 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface MigrationStats {
-  totalCards: number;
-  cardsProcessed: number;
-  attachmentsMigrated: number;
-  errors: string[];
+interface Attachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+  uploadedBy: string;
 }
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,201 +26,152 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify admin user
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Check if user is admin
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!roleData || roleData.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Admin access required' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     console.log('Starting attachment migration...');
-    
-    const stats: MigrationStats = {
-      totalCards: 0,
-      cardsProcessed: 0,
-      attachmentsMigrated: 0,
-      errors: [],
-    };
 
-    // Fetch all cards with attachments (in batches)
-    const batchSize = 50;
-    let offset = 0;
-    let hasMore = true;
+    // Buscar todos os cartões com attachments em base64
+    const { data: cards, error: fetchError } = await supabase
+      .from('project_cards')
+      .select('id, list_id, custom_fields')
+      .not('custom_fields->attachments', 'is', null);
 
-    while (hasMore) {
-      const { data: cards, error: fetchError } = await supabase
-        .from('project_cards')
-        .select('id, list_id, custom_fields')
-        .not('custom_fields->attachments', 'is', null)
-        .range(offset, offset + batchSize - 1);
+    if (fetchError) {
+      throw fetchError;
+    }
 
-      if (fetchError) {
-        console.error('Error fetching cards:', fetchError);
-        stats.errors.push(`Fetch error: ${fetchError.message}`);
-        break;
-      }
+    console.log(`Found ${cards?.length || 0} cards with attachments`);
 
-      if (!cards || cards.length === 0) {
-        hasMore = false;
-        break;
-      }
+    let migratedCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
 
-      stats.totalCards += cards.length;
+    for (const card of cards || []) {
+      try {
+        const attachments = (card.custom_fields as any)?.attachments || [];
+        let hasChanges = false;
+        const updatedAttachments: Attachment[] = [];
 
-      // Process each card
-      for (const card of cards) {
-        try {
-          const customFields = card.custom_fields as any;
-          const attachments = customFields?.attachments || [];
-          
-          if (!Array.isArray(attachments) || attachments.length === 0) {
-            continue;
-          }
+        for (const attachment of attachments) {
+          // Verificar se é um data URL (base64)
+          if (attachment.url && attachment.url.startsWith('data:')) {
+            try {
+              console.log(`Migrating attachment ${attachment.name} from card ${card.id}`);
 
-          let migratedCount = 0;
-          const updatedAttachments = [];
+              // Extrair dados do data URL
+              const matches = attachment.url.match(/^data:([^;]+);base64,(.+)$/);
+              if (!matches) {
+                console.error(`Invalid data URL format for ${attachment.name}`);
+                errorCount++;
+                updatedAttachments.push(attachment);
+                continue;
+              }
 
-          for (const attachment of attachments) {
-            // Check if it's a data URL that needs migration
-            if (attachment.url && attachment.url.startsWith('data:')) {
-              try {
-                // Extract base64 data
-                const matches = attachment.url.match(/^data:([^;]+);base64,(.+)$/);
-                if (!matches) {
-                  stats.errors.push(`Invalid data URL in card ${card.id}`);
-                  updatedAttachments.push(attachment);
-                  continue;
-                }
+              const [, mimeType, base64Data] = matches;
+              
+              // Decodificar base64
+              const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-                const mimeType = matches[1];
-                const base64Data = matches[2];
-                
-                // Convert base64 to blob
-                const binaryString = atob(base64Data);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
-                }
-                const blob = new Blob([bytes], { type: mimeType });
+              // Gerar caminho único no storage
+              const fileExt = attachment.name.split('.').pop() || 'bin';
+              const fileName = `${crypto.randomUUID()}.${fileExt}`;
+              const filePath = `projects/${card.list_id}/${card.id}/${fileName}`;
 
-                // Generate file path
-                const fileExt = attachment.name?.split('.').pop() || 'bin';
-                const fileName = `${crypto.randomUUID()}.${fileExt}`;
-                const filePath = `projects/${card.list_id}/${card.id}/${fileName}`;
-
-                // Upload to storage
-                const { error: uploadError } = await supabase.storage
-                  .from('project-attachments')
-                  .upload(filePath, blob, {
-                    contentType: mimeType,
-                    cacheControl: '3600',
-                    upsert: false,
-                  });
-
-                if (uploadError) {
-                  console.error(`Upload error for card ${card.id}:`, uploadError);
-                  stats.errors.push(`Upload failed for ${attachment.name} in card ${card.id}`);
-                  updatedAttachments.push(attachment);
-                  continue;
-                }
-
-                // Get public URL
-                const { data: { publicUrl } } = supabase.storage
-                  .from('project-attachments')
-                  .getPublicUrl(filePath);
-
-                // Update attachment with new URL
-                updatedAttachments.push({
-                  ...attachment,
-                  url: publicUrl,
+              // Upload para Supabase Storage
+              const { error: uploadError } = await supabase.storage
+                .from('project-attachments')
+                .upload(filePath, binaryData, {
+                  contentType: mimeType,
+                  cacheControl: '3600',
+                  upsert: false
                 });
 
-                migratedCount++;
-                stats.attachmentsMigrated++;
-                console.log(`Migrated: ${attachment.name} -> ${publicUrl}`);
-              } catch (err) {
-                console.error(`Error migrating attachment in card ${card.id}:`, err);
-                stats.errors.push(`Migration error: ${err.message}`);
+              if (uploadError) {
+                console.error(`Upload error for ${attachment.name}:`, uploadError);
+                errorCount++;
                 updatedAttachments.push(attachment);
+                continue;
               }
-            } else {
-              // Keep non-data URL attachments as-is
+
+              // Obter URL pública
+              const { data: { publicUrl } } = supabase.storage
+                .from('project-attachments')
+                .getPublicUrl(filePath);
+
+              // Atualizar attachment com nova URL
+              updatedAttachments.push({
+                ...attachment,
+                url: publicUrl,
+                type: mimeType || attachment.type
+              });
+
+              hasChanges = true;
+              migratedCount++;
+              console.log(`✓ Migrated ${attachment.name} to ${publicUrl}`);
+            } catch (err) {
+              console.error(`Error migrating attachment ${attachment.name}:`, err);
+              errorCount++;
               updatedAttachments.push(attachment);
             }
+          } else {
+            // Já é URL do storage ou link externo, manter como está
+            updatedAttachments.push(attachment);
+            skippedCount++;
           }
-
-          // Update card if any attachments were migrated
-          if (migratedCount > 0) {
-            const { error: updateError } = await supabase
-              .from('project_cards')
-              .update({
-                custom_fields: {
-                  ...customFields,
-                  attachments: updatedAttachments,
-                },
-              })
-              .eq('id', card.id);
-
-            if (updateError) {
-              console.error(`Error updating card ${card.id}:`, updateError);
-              stats.errors.push(`Update failed for card ${card.id}`);
-            } else {
-              stats.cardsProcessed++;
-              console.log(`Card ${card.id}: migrated ${migratedCount} attachments`);
-            }
-          }
-        } catch (err) {
-          console.error(`Error processing card ${card.id}:`, err);
-          stats.errors.push(`Card ${card.id}: ${err.message}`);
         }
-      }
 
-      offset += batchSize;
+        // Atualizar o cartão se houve mudanças
+        if (hasChanges) {
+          const updatedCustomFields = {
+            ...(card.custom_fields as any),
+            attachments: updatedAttachments
+          };
+
+          const { error: updateError } = await supabase
+            .from('project_cards')
+            .update({ custom_fields: updatedCustomFields })
+            .eq('id', card.id);
+
+          if (updateError) {
+            console.error(`Error updating card ${card.id}:`, updateError);
+            errorCount++;
+          } else {
+            console.log(`✓ Updated card ${card.id} with ${updatedAttachments.length} attachments`);
+          }
+        }
+      } catch (err) {
+        console.error(`Error processing card ${card.id}:`, err);
+        errorCount++;
+      }
     }
 
-    console.log('Migration completed:', stats);
-
-    return new Response(JSON.stringify({
+    const result = {
       success: true,
-      stats,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      message: `Migration completed: ${migratedCount} attachments migrated, ${skippedCount} skipped, ${errorCount} errors`,
+      stats: {
+        totalCards: cards?.length || 0,
+        migratedAttachments: migratedCount,
+        skippedAttachments: skippedCount,
+        errors: errorCount
+      }
+    };
+
+    console.log('Migration result:', result);
+
+    return new Response(
+      JSON.stringify(result),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
     console.error('Migration error:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message,
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        message: 'Failed to migrate attachments'
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
 });

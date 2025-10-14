@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2, File, Image, Link } from "lucide-react";
+import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2, File, Image, Link, Loader2 } from "lucide-react";
 import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment, Attachment, CardStatus, Priority } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ChecklistManager } from "./ChecklistManager";
@@ -24,6 +24,7 @@ import { ClientPicker } from "./ClientPicker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useClientes } from "@/hooks/useClientes";
+import { useProjectCards } from "@/hooks/useProjectCards";
 interface CardDetailModalProps {
   card?: ProjectCard;
   listId?: string;
@@ -44,6 +45,7 @@ export const CardDetailModal = ({
   
   const isCreationMode = !card;
   const { clientes } = useClientes();
+  const { fetchCardWithAttachments } = useProjectCards();
   
   const [isEditingTitle, setIsEditingTitle] = useState(isCreationMode);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -60,6 +62,10 @@ export const CardDetailModal = ({
   const [tempChecklists, setTempChecklists] = useState<Checklist[]>([]);
   const [tempComments, setTempComments] = useState<Comment[]>([]);
   const [tempAttachments, setTempAttachments] = useState<any[]>([]);
+  
+  // Estado para anexos carregados sob demanda
+  const [loadedAttachments, setLoadedAttachments] = useState<Attachment[]>([]);
+  const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
 
   // Dialog states
   const [showMemberPicker, setShowMemberPicker] = useState(false);
@@ -95,6 +101,31 @@ export const CardDetailModal = ({
     }
   }, [latestCard, isCreationMode]);
 
+  // Carregar anexos sob demanda quando abrir o modal (modo edição)
+  useEffect(() => {
+    const loadAttachments = async () => {
+      if (!isCreationMode && isOpen && card?.id) {
+        setIsLoadingAttachments(true);
+        try {
+          const fullCard = await fetchCardWithAttachments(card.id);
+          const customFields = fullCard?.custom_fields as any;
+          if (customFields?.attachments) {
+            setLoadedAttachments(customFields.attachments);
+          } else {
+            setLoadedAttachments([]);
+          }
+        } catch (error) {
+          console.error('Error loading attachments:', error);
+          setLoadedAttachments([]);
+        } finally {
+          setIsLoadingAttachments(false);
+        }
+      }
+    };
+    
+    loadAttachments();
+  }, [isOpen, card?.id, isCreationMode, fetchCardWithAttachments]);
+
   // Reset all fields when opening modal in creation mode
   useEffect(() => {
     if (isOpen && isCreationMode) {
@@ -107,6 +138,7 @@ export const CardDetailModal = ({
       setTempChecklists([]);
       setTempComments([]);
       setTempAttachments([]);
+      setLoadedAttachments([]);
       setIsEditingTitle(true);
       setIsEditingDescription(false);
     }
@@ -553,7 +585,23 @@ export const CardDetailModal = ({
 
                 {/* Attachments */}
                 {(() => {
-                  const currentAttachments = isCreationMode ? tempAttachments : (latestCard?.attachments || []);
+                  const currentAttachments = isCreationMode ? tempAttachments : loadedAttachments;
+                  
+                  if (isLoadingAttachments) {
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="h-4 w-4" />
+                          <h3 className="font-medium">Anexos</h3>
+                        </div>
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                          <span className="ml-2 text-sm text-muted-foreground">Carregando anexos...</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
                   if (currentAttachments.length > 0) {
                     return (
                       <div className="space-y-2">

@@ -78,20 +78,14 @@ export const useProjectCards = (listId?: string) => {
     }
   };
 
-  // Buscar cartões por múltiplas listas (evita JOIN pesado) - SEM attachments
+  // Buscar cartões por múltiplas listas (evita JOIN pesado) - MODO LEVE
   const fetchCardsByListIds = async (listIds: string[]) => {
     if (!listIds || listIds.length === 0) return [];
     try {
-      // Select only lightweight columns, excluding attachments
+      // Seleciona todos os campos EXCETO attachments pesados
       const { data, error } = await supabase
         .from('project_cards')
-        .select(`
-          id, list_id, title, description, status, priority, labels, members,
-          due_date, estimated_hours, actual_hours, position, archived,
-          created_at, updated_at, created_by,
-          custom_fields->checklists,
-          custom_fields->comments
-        `)
+        .select('*')
         .in('list_id', listIds)
         .order('position', { ascending: true });
 
@@ -99,7 +93,23 @@ export const useProjectCards = (listId?: string) => {
         console.error('Error fetching cards by list ids:', error);
         return [];
       }
-      return data || [];
+      
+      // Filtrar attachments do custom_fields para economizar banda
+      const lightCards = (data || []).map(card => {
+        if (card.custom_fields && typeof card.custom_fields === 'object') {
+          const { attachments, ...restFields } = card.custom_fields as any;
+          return {
+            ...card,
+            custom_fields: {
+              ...restFields,
+              attachments: [] // Remove attachments pesados do carregamento inicial
+            }
+          };
+        }
+        return card;
+      });
+      
+      return lightCards;
     } catch (error) {
       console.error('Error fetching cards by list ids:', error);
       return [];
