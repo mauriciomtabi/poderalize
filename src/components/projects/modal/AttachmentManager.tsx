@@ -8,7 +8,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { 
   Paperclip, 
   Upload, 
@@ -16,12 +15,12 @@ import {
   Image, 
   Download,
   Trash2,
-  Plus,
   Link
 } from "lucide-react";
 import { ProjectCard, Attachment } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AttachmentManagerProps {
   isOpen: boolean;
@@ -41,42 +40,92 @@ export const AttachmentManager = ({
   isCreationMode = false
 }: AttachmentManagerProps) => {
   const { actions } = useProjects();
+  const { toast } = useToast();
   
-  // Use either card attachments or provided attachments
   const currentAttachments = isCreationMode ? (attachments || []) : (card?.attachments || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddingLink, setIsAddingLink] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkName, setLinkName] = useState("");
 
-  const handleFileUpload = (files: FileList) => {
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
+  const handleFileUpload = async (files: FileList) => {
+    const newAttachments: Attachment[] = [];
+    
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Generate unique file path
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `projects/${card?.listId || 'temp'}/${card?.id || 'new'}/${fileName}`;
+        
+        // Upload to Supabase Storage
+        const { error: uploadError } = await supabase.storage
+          .from('project-attachments')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast({
+            title: "Erro ao enviar arquivo",
+            description: `Falha ao enviar ${file.name}`,
+            variant: "destructive",
+          });
+          continue;
+        }
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('project-attachments')
+          .getPublicUrl(filePath);
+        
         const attachment: Attachment = {
           id: `attachment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: file.name,
-          url: e.target?.result as string,
           type: file.type,
           size: file.size,
+          url: publicUrl,
           uploadedAt: new Date().toISOString(),
-          uploadedBy: "user-1" // TODO: Get from current user
+          uploadedBy: "user-1"
         };
         
+        newAttachments.push(attachment);
+      }
+      
+      if (newAttachments.length > 0) {
         if (isCreationMode && onAttachmentsChange) {
-          onAttachmentsChange([...currentAttachments, attachment]);
+          onAttachmentsChange([...currentAttachments, ...newAttachments]);
         } else if (card) {
           const updatedCard = {
             ...card,
-            attachments: [...(card.attachments || []), attachment]
+            attachments: [...(card.attachments || []), ...newAttachments]
           };
           
           actions.updateCard(updatedCard);
-          actions.addActivity(card.id, 'attachment', `anexou "${attachment.name}"`);
+          actions.addActivity(card.id, 'attachment', `anexou ${newAttachments.length} arquivo(s)`);
         }
-      };
-      reader.readAsDataURL(file);
-    });
+        
+        toast({
+          title: "Anexos adicionados",
+          description: `${newAttachments.length} arquivo(s) foram anexados.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast({
+        title: "Erro ao enviar arquivos",
+        description: "Ocorreu um erro ao processar os arquivos.",
+        variant: "destructive",
+      });
+    }
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleAddLink = () => {
@@ -88,7 +137,7 @@ export const AttachmentManager = ({
         type: "link",
         size: 0,
         uploadedAt: new Date().toISOString(),
-        uploadedBy: "user-1" // TODO: Get from current user
+        uploadedBy: "user-1"
       };
       
       if (isCreationMode && onAttachmentsChange) {
@@ -109,8 +158,23 @@ export const AttachmentManager = ({
     }
   };
 
-  const handleRemoveAttachment = (attachmentId: string) => {
+  const handleRemoveAttachment = async (attachmentId: string) => {
     const attachment = currentAttachments.find(a => a.id === attachmentId);
+    
+    // Delete from storage if it's a storage URL (not data URL or external link)
+    if (attachment && attachment.url.includes('project-attachments')) {
+      try {
+        const urlParts = attachment.url.split('/project-attachments/');
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1].split('?')[0];
+          await supabase.storage
+            .from('project-attachments')
+            .remove([filePath]);
+        }
+      } catch (error) {
+        console.error('Error deleting file from storage:', error);
+      }
+    }
     
     if (isCreationMode && onAttachmentsChange) {
       onAttachmentsChange(currentAttachments.filter(a => a.id !== attachmentId));
@@ -125,6 +189,11 @@ export const AttachmentManager = ({
         actions.addActivity(card.id, 'attachment', `removeu anexo "${attachment.name}"`);
       }
     }
+    
+    toast({
+      title: "Anexo removido",
+      description: "O anexo foi removido com sucesso.",
+    });
   };
 
   const getFileIcon = (type: string) => {
@@ -152,7 +221,6 @@ export const AttachmentManager = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Upload Actions */}
           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
             <Button
               variant="outline"
@@ -182,7 +250,6 @@ export const AttachmentManager = ({
             onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
           />
 
-          {/* Add Link Form */}
           {isAddingLink && (
             <div className="p-4 border rounded-md space-y-3" onClick={(e) => e.stopPropagation()}>
               <Input
@@ -215,7 +282,6 @@ export const AttachmentManager = ({
             </div>
           )}
 
-          {/* Attachments List */}
           <ScrollArea className="max-h-60">
             <div className="space-y-2">
               {currentAttachments.length === 0 && (

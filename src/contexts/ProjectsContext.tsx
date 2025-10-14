@@ -48,20 +48,24 @@ const transformDBList = (dbList: DBProjectList, cards: ProjectCard[]): ProjectLi
   };
 };
 
-const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
+const transformDBCard = (dbCard: any): ProjectCard => {
+  // Handle both full cards and lightweight cards (from selective queries)
   const cf = (dbCard.custom_fields as any) || {};
-  const checklists = Array.isArray(cf.checklists) ? cf.checklists : [];
-  const comments = Array.isArray(cf.comments) ? cf.comments : [];
+  
+  // If checklists/comments come as separate columns (from lightweight query)
+  const checklists = dbCard.checklists || (Array.isArray(cf.checklists) ? cf.checklists : []);
+  const comments = dbCard.comments || (Array.isArray(cf.comments) ? cf.comments : []);
+  
+  // Attachments are only loaded on-demand (not in lightweight queries)
   const attachments = Array.isArray(cf.attachments) ? cf.attachments : [];
-  // Activities will be loaded separately from the database
   const activities: any[] = [];
 
   return {
     id: dbCard.id,
-    title: dbCard.title,
-    description: dbCard.description,
-    status: dbCard.status as CardStatus,
-    priority: dbCard.priority as Priority,
+    title: dbCard.title || '',
+    description: dbCard.description || '',
+    status: (dbCard.status as CardStatus) || 'todo',
+    priority: (dbCard.priority as Priority) || 'medium',
     labels: [],
     assignees: [],
     dueDate: dbCard.due_date,
@@ -72,7 +76,7 @@ const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
     attachments,
     comments,
     activities,
-    position: dbCard.position,
+    position: dbCard.position || 0,
     listId: dbCard.list_id,
     createdBy: dbCard.created_by,
     createdAt: dbCard.created_at,
@@ -80,8 +84,8 @@ const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
     cover: dbCard.cover,
     location: dbCard.location,
     customFields: cf,
-    archived: dbCard.archived,
-    watching: dbCard.watching,
+    archived: dbCard.archived || false,
+    watching: dbCard.watching || false,
     client_id: dbCard.client_id
   };
 };

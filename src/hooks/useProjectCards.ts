@@ -78,13 +78,20 @@ export const useProjectCards = (listId?: string) => {
     }
   };
 
-  // Novo: buscar cartões por múltiplas listas (evita JOIN pesado)
+  // Buscar cartões por múltiplas listas (evita JOIN pesado) - SEM attachments
   const fetchCardsByListIds = async (listIds: string[]) => {
     if (!listIds || listIds.length === 0) return [];
     try {
+      // Select only lightweight columns, excluding attachments
       const { data, error } = await supabase
         .from('project_cards')
-        .select('*')
+        .select(`
+          id, list_id, title, description, status, priority, labels, members,
+          due_date, estimated_hours, actual_hours, position, archived,
+          created_at, updated_at, created_by,
+          custom_fields->checklists,
+          custom_fields->comments
+        `)
         .in('list_id', listIds)
         .order('position', { ascending: true });
 
@@ -96,6 +103,26 @@ export const useProjectCards = (listId?: string) => {
     } catch (error) {
       console.error('Error fetching cards by list ids:', error);
       return [];
+    }
+  };
+
+  // Buscar um cartão completo (com attachments) - para o modal
+  const fetchCardWithAttachments = async (cardId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('project_cards')
+        .select('*')
+        .eq('id', cardId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching card with attachments:', error);
+        return null;
+      }
+      return data;
+    } catch (error) {
+      console.error('Error fetching card with attachments:', error);
+      return null;
     }
   };
 
@@ -192,6 +219,7 @@ export const useProjectCards = (listId?: string) => {
     fetchCards,
     fetchAllBoardCards,
     fetchCardsByListIds,
+    fetchCardWithAttachments,
     createCard,
     updateCard,
     deleteCard,
