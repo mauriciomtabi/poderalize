@@ -65,3 +65,41 @@ export function getFacebookUrl(urlOrUsername: string): string {
   }
   return `https://facebook.com/${trimmed}`;
 }
+
+/**
+ * Compara se uma data é anterior ao dia atual (ignorando horas)
+ */
+export function isDateOverdue(date: Date | string): boolean {
+  const dueDate = new Date(date);
+  const today = new Date();
+  
+  // Zerar horas para comparar apenas datas
+  dueDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  
+  return dueDate < today;
+}
+
+/**
+ * Verifica se uma data é hoje
+ */
+export function isDateToday(date: Date | string): boolean {
+  const dueDate = new Date(date);
+  const today = new Date();
+  
+  // Zerar horas para comparar apenas datas
+  dueDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  
+  return dueDate.getTime() === today.getTime();
+}
+
+/**
+ * Retorna a classe de cor apropriada para a data de vencimento
+ */
+export function getDueDateColorClass(date: Date | string, isCompleted: boolean = false): string {
+  if (isCompleted) return "text-muted-foreground";
+  if (isDateOverdue(date)) return "text-red-500";
+  if (isDateToday(date)) return "text-orange-500";
+  return "text-muted-foreground";
+}

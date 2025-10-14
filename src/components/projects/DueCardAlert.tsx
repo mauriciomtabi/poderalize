@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { isDateOverdue } from '@/lib/utils';
 
 export const DueCardAlert = () => {
   const { dueCards } = useDueCardNotifications();
@@ -45,7 +46,14 @@ export const DueCardAlert = () => {
 
   const currentCard = dueCards[currentCardIndex];
   const dueDate = new Date(currentCard.due_date);
-  const daysOverdue = Math.floor((Date.now() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Calcular dias de atraso apenas se estiver realmente vencido
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDateOnly = new Date(dueDate);
+  dueDateOnly.setHours(0, 0, 0, 0);
+  
+  const daysOverdue = Math.max(0, Math.floor((today.getTime() - dueDateOnly.getTime()) / (1000 * 60 * 60 * 24)));
 
   return (
     <AlertDialog open={showAlert} onOpenChange={setShowAlert}>

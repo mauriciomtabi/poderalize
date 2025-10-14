@@ -27,7 +27,7 @@ import { useProjects } from "@/contexts/ProjectsContext";
 import { ProjectCard, Priority } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { CardDetailModal } from "@/components/projects/modal/CardDetailModal";
-import { cn } from "@/lib/utils";
+import { cn, getDueDateColorClass } from "@/lib/utils";
 
 const priorityConfig = {
   low: { label: 'Baixa', icon: Clock, className: 'text-blue-500' },
@@ -247,7 +247,7 @@ export const TableView = () => {
                     {card.dueDate && (
                       <div className={cn(
                         "text-xs",
-                        new Date(card.dueDate) < new Date() ? "text-red-500" : "text-muted-foreground"
+                        getDueDateColorClass(card.dueDate, card.status === 'done')
                       )}>
                         <Calendar size={12} className="inline mr-1" />
                         {formatDate(card.dueDate)}

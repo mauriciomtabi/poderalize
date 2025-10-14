@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Colaborador } from "@/types/colaboradores";
 import { OverdueCardsModal } from "../OverdueCardsModal";
 import { CardDetailModal } from "../modal/CardDetailModal";
+import { cn, isDateOverdue } from "@/lib/utils";
 const PRIORITY_COLORS = {
   low: '#3b82f6',
   medium: '#f59e0b',
@@ -68,9 +69,9 @@ export const DashboardView = () => {
   const allCards = state.currentBoard.lists.flatMap(list => list.cards.filter(card => !card.archived));
   const cards = actions.getFilteredCards();
 
-  // Get overdue cards
+  // Get overdue cards (apenas cards com data ANTERIOR a hoje, não incluindo hoje)
   const overdueCards = allCards.filter(card => 
-    card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done'
+    card.dueDate && isDateOverdue(card.dueDate) && card.status !== 'done'
   );
 
   // Calculate metrics - considering only cards in "Executado" list
@@ -81,7 +82,7 @@ export const DashboardView = () => {
   const metrics: DashboardMetrics = {
     totalCards: allCards.length,
     completedCards: completedCards,
-    overdue: allCards.filter(card => card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done').length,
+    overdue: allCards.filter(card => card.dueDate && isDateOverdue(card.dueDate) && card.status !== 'done').length,
     completionRate: allCards.length > 0 ? (completedCards / allCards.length) * 100 : 0,
     averageTimeToComplete: 0,
     cardsByStatus: cards.reduce((acc, card) => {

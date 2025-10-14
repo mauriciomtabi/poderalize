@@ -19,7 +19,7 @@ import {
 import { ProjectCard } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { cn } from "@/lib/utils";
+import { cn, getDueDateColorClass } from "@/lib/utils";
 
 export const ArchivedView = () => {
   const { state, actions } = useProjects();
@@ -173,9 +173,7 @@ export const ArchivedView = () => {
                           {card.dueDate && (
                             <div className="flex items-center gap-2 text-xs">
                               <Calendar className="h-3 w-3" />
-                              <span className={cn(
-                                new Date(card.dueDate) < new Date() ? "text-red-500" : "text-muted-foreground"
-                              )}>
+                              <span className={getDueDateColorClass(card.dueDate, card.status === 'done')}>
                                 {formatDate(card.dueDate)}
                               </span>
                             </div>

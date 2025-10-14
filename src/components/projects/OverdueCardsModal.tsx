@@ -6,6 +6,7 @@ import { Calendar, AlertTriangle } from "lucide-react";
 import { ProjectCard } from "@/types/projects";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn, isDateOverdue, isDateToday } from "@/lib/utils";
 
 interface OverdueCardsModalProps {
   isOpen: boolean;
@@ -33,9 +34,13 @@ export const OverdueCardsModal = ({ isOpen, onClose, cards, onCardClick }: Overd
               </div>
             ) : (
               cards.map((card) => {
-                const daysOverdue = card.dueDate 
-                  ? Math.floor((Date.now() - new Date(card.dueDate).getTime()) / (1000 * 60 * 60 * 24))
-                  : 0;
+                // Calcular dias de atraso apenas se estiver realmente vencido
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const cardDueDate = new Date(card.dueDate!);
+                cardDueDate.setHours(0, 0, 0, 0);
+                
+                const daysOverdue = Math.max(0, Math.floor((today.getTime() - cardDueDate.getTime()) / (1000 * 60 * 60 * 24)));
 
                 return (
                   <div
@@ -52,14 +57,25 @@ export const OverdueCardsModal = ({ isOpen, onClose, cards, onCardClick }: Overd
                         
                         <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
                           {card.dueDate && (
-                            <div className="flex items-center gap-1 text-red-600">
+                            <div className={cn(
+                              "flex items-center gap-1 font-medium",
+                              isDateOverdue(card.dueDate) ? "text-red-600" : 
+                              isDateToday(card.dueDate) ? "text-orange-500" : "text-muted-foreground"
+                            )}>
                               <Calendar className="h-3 w-3" />
-                              <span className="font-medium">
+                              <span>
                                 {format(new Date(card.dueDate), "dd/MM/yyyy", { locale: ptBR })}
                               </span>
-                              <span className="text-xs text-red-500">
-                                ({daysOverdue} dia{daysOverdue !== 1 ? 's' : ''} de atraso)
-                              </span>
+                              {isDateOverdue(card.dueDate) && (
+                                <span className="text-xs text-red-500">
+                                  ({daysOverdue} dia{daysOverdue !== 1 ? 's' : ''} de atraso)
+                                </span>
+                              )}
+                              {isDateToday(card.dueDate) && (
+                                <span className="text-xs text-orange-500">
+                                  (vence hoje)
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>

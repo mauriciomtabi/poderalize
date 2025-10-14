@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ProjectCard } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { cn, getInitials } from "@/lib/utils";
+import { cn, getInitials, isDateOverdue, getDueDateColorClass } from "@/lib/utils";
 import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
 
@@ -71,7 +71,7 @@ export const EnhancedProjectCard = ({
   );
   const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   
-  const isOverdue = card.dueDate && new Date(card.dueDate) < new Date() && card.status !== 'done';
+  const isOverdue = card.dueDate && isDateOverdue(card.dueDate) && card.status !== 'done';
   
   const cardColorClass = cardColorStyles[state.currentBoard?.cardColor as keyof typeof cardColorStyles] || cardColorStyles.default;
 
@@ -181,7 +181,7 @@ export const EnhancedProjectCard = ({
           {card.dueDate && (
             <div className={cn(
               "flex items-center space-x-1 text-xs",
-              isOverdue ? "text-red-500" : "text-muted-foreground"
+              getDueDateColorClass(card.dueDate, card.status === 'done')
             )}>
               <Calendar size={12} />
               <span>
