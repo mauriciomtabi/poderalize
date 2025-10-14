@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -52,7 +53,8 @@ interface EnhancedProjectCardProps {
   onClick?: () => void;
 }
 
-export const EnhancedProjectCard = ({ 
+// FASE 4: Componente base
+const EnhancedProjectCardComponent = ({ 
   card, 
   onEdit, 
   onDelete, 
@@ -278,3 +280,6 @@ export const EnhancedProjectCard = ({
     </Card>
   );
 };
+
+// FASE 4: Export com memo para evitar re-renders
+export const EnhancedProjectCard = memo(EnhancedProjectCardComponent);

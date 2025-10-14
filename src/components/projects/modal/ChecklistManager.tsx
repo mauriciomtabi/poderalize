@@ -212,18 +212,18 @@ export const ChecklistManager = ({
     if (isCreationMode && onChecklistsChange) {
       onChecklistsChange(updatedChecklists);
     } else if (card) {
-      // FASE 6: Debounce database update para reduzir chamadas
+      // FASE 2 & 6: Update leve (somente custom_fields) + debounce
       // Clear timeout anterior
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current);
       }
       
-      // Update com debounce de 300ms
+      // Update com debounce de 300ms usando lightweightUpdate
       updateTimeoutRef.current = setTimeout(() => {
         actions.updateCard({
           ...card,
           checklists: updatedChecklists
-        });
+        }, { lightweightUpdate: true });
       }, 300);
     }
   };
