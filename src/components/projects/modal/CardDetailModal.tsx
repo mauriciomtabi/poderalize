@@ -460,9 +460,9 @@ export const CardDetailModal = ({
         </DialogDescription>
         <div className="flex h-full min-h-[70vh] overflow-hidden">
           {/* Main Content with ScrollArea */}
-          <div className="flex-1 min-w-0 basis-0 overflow-hidden">
+          <div className="flex-1 min-w-0 basis-0">
             <ScrollArea className="h-[80vh] p-6">
-              <div className="space-y-6">
+              <div className="space-y-6 pr-2">
                 {/* Header with title */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1 mr-4">
@@ -628,7 +628,7 @@ export const CardDetailModal = ({
                               key={attachment.id}
                               className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors overflow-hidden"
                             >
-                              <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
+                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                 {attachment.type === 'link' ? (
                                   <Link className="h-4 w-4 flex-shrink-0" />
                                 ) : attachment.type.startsWith('image/') ? (
@@ -641,7 +641,7 @@ export const CardDetailModal = ({
                                     href={attachment.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="font-medium text-sm text-primary hover:underline break-all whitespace-normal block"
+                                    className="font-medium text-sm text-primary hover:underline break-words whitespace-normal block"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     {attachment.name}

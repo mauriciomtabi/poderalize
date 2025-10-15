@@ -174,7 +174,7 @@ export const CommentsSection = ({
               {currentUser.name.split(' ').map(n => n[0]).join('')}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 min-w-0 space-y-2">
             <div className="text-sm font-medium">{currentUser.name}</div>
             <MentionTextarea
               value={newComment}
@@ -184,11 +184,12 @@ export const CommentsSection = ({
               placeholder="Escrever um comentário... (use @ para mencionar)"
               members={boardMembers}
             />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
               <Button 
                 onClick={(e) => { e.stopPropagation(); handleAddComment(); }}
                 disabled={!newComment.trim()}
                 size="sm"
+                className="flex-shrink-0"
               >
                 <Send className="h-4 w-4 mr-2" />
                 Comentar
@@ -207,15 +208,15 @@ export const CommentsSection = ({
                 {comment.authorName.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 space-y-1 min-w-0 overflow-hidden">
-              <div className="flex items-center gap-2">
+            <div className="flex-1 space-y-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">{comment.authorName}</span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(comment.createdAt)}
                 </span>
               </div>
-              <div className="bg-muted/50 rounded-lg p-3 overflow-hidden">
-                <div className="text-sm whitespace-pre-wrap break-all">
+              <div className="bg-muted/50 rounded-lg p-3">
+                <div className="text-sm whitespace-pre-wrap break-words">
                   {formatCommentText(comment.text)}
                 </div>
               </div>
