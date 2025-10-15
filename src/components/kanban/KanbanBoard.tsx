@@ -20,7 +20,7 @@ import { EditCardDialog } from "./EditCardDialog";
 import { InlineEdit } from "./InlineEdit";
 import { LoadingOverlay } from "@/components/ui/loading-spinner";
 import { useKanban } from "@/contexts/KanbanContext";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ListActionsDialog } from "./ListActionsDialog";
 
 export interface Task {
@@ -50,6 +50,7 @@ export const KanbanBoard = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [listActionsOpen, setListActionsOpen] = useState(false);
   const [selectedList, setSelectedList] = useState<Column | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const onDragStart = (start: any) => {
     actions.setDraggedItem(start.draggableId);
@@ -80,10 +81,10 @@ export const KanbanBoard = () => {
     
     // Force repaint to remove ghost elements
     requestAnimationFrame(() => {
-      const scrollContainer = document.querySelector('.overflow-x-auto');
+      const scrollContainer = scrollContainerRef.current;
       if (scrollContainer) {
         const currentScroll = scrollContainer.scrollLeft;
-        scrollContainer.scrollLeft = currentScroll + 0.1;
+        scrollContainer.scrollLeft = currentScroll + 1;
         requestAnimationFrame(() => {
           scrollContainer.scrollLeft = currentScroll;
         });
@@ -135,7 +136,7 @@ export const KanbanBoard = () => {
     <LoadingOverlay isLoading={state.isLoading}>
       <div className="h-full">
         <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
-          <div className="flex space-x-6 h-full overflow-x-auto pb-6">
+          <div ref={scrollContainerRef} className="flex space-x-6 h-full overflow-x-auto pb-6">
             {state.columns.map((column) => (
               <div key={column.id} className="flex-shrink-0 w-80">
                 <Card className={`h-full flex flex-col kanban-column`}>

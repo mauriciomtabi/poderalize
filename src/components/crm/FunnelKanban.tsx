@@ -7,7 +7,7 @@ import { useCRM } from "@/contexts/CRMContext";
 import { LeadCard } from "./LeadCard";
 import { AddLeadToFunnelDialog } from "./AddLeadToFunnelDialog";
 import { TrendingUp, Users, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface FunnelKanbanProps {
   funnel: CustomFunnel;
@@ -19,6 +19,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
     open: false,
     stageId: ""
   });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -31,10 +32,10 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
     
     // Force repaint to remove ghost elements
     requestAnimationFrame(() => {
-      const scrollContainer = document.querySelector('.overflow-x-auto');
+      const scrollContainer = scrollContainerRef.current;
       if (scrollContainer) {
         const currentScroll = scrollContainer.scrollLeft;
-        scrollContainer.scrollLeft = currentScroll + 0.1;
+        scrollContainer.scrollLeft = currentScroll + 1;
         requestAnimationFrame(() => {
           scrollContainer.scrollLeft = currentScroll;
         });
@@ -67,7 +68,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
+        <div ref={scrollContainerRef} className="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
           {funnel.stages.map((stage, index) => (
             <div key={stage.id} className="flex-shrink-0 w-72">
               <Card 

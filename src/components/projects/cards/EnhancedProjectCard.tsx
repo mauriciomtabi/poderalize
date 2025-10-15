@@ -89,7 +89,7 @@ export const EnhancedProjectCard = ({
     <Card className={cn("card-kanban group", cardColorClass)} onClick={onClick}>
       {/* Header: title + assignees + labels + priority */}
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-medium text-sm cursor-pointer line-clamp-1 flex-1">
+        <h3 className="font-medium text-sm cursor-pointer whitespace-normal break-words flex-1 leading-snug">
           {card.title}
         </h3>
         <div className="flex items-center gap-2">

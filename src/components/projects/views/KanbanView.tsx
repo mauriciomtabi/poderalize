@@ -172,10 +172,9 @@ export const KanbanView = () => {
       )}
       <div className="flex h-full min-w-0 min-h-0">
         <div 
-          ref={scrollContainerRef}
           className="flex-1 min-w-0"
         >
-          <div className="h-full overflow-x-auto overflow-y-hidden">
+          <div ref={scrollContainerRef} className="h-full overflow-x-auto overflow-y-hidden">
             <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
               <Droppable droppableId="board" type="LIST" direction="horizontal">
                 {(provided) => (
