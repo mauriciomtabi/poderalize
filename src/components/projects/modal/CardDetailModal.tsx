@@ -690,7 +690,7 @@ export const CardDetailModal = ({
           </div>
 
           {/* Sidebar */}
-          <div className="w-64 border-l bg-muted/30 flex-shrink-0 overflow-hidden">
+          <div className="w-64 border-l bg-muted/30 flex-shrink-0">
             <ScrollArea className="h-[80vh] p-4">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
