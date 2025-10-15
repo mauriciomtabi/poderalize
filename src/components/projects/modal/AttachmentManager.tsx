@@ -147,7 +147,7 @@ export const AttachmentManager = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Paperclip className="h-4 w-4" />
-            Anexos
+            Anexos {currentAttachments.length > 0 && <Badge variant="secondary" className="ml-1">{currentAttachments.length}</Badge>}
           </DialogTitle>
         </DialogHeader>
         
@@ -161,7 +161,7 @@ export const AttachmentManager = ({
               className="flex-1"
             >
               <Upload className="h-4 w-4 mr-2" />
-              Carregar arquivo
+              Carregar arquivos
             </Button>
             <Button
               variant="outline"
@@ -169,8 +169,8 @@ export const AttachmentManager = ({
               onClick={(e) => { e.stopPropagation(); setIsAddingLink(!isAddingLink); }}
               className="flex-1"
             >
-              <Link className="h-4 w-4 mr-2" />
-              Adicionar link
+              <Plus className="h-4 w-4 mr-2" />
+              {currentAttachments.some(a => a.type === 'link') ? 'Adicionar outro link' : 'Adicionar link'}
             </Button>
           </div>
 
@@ -196,7 +196,12 @@ export const AttachmentManager = ({
                 onChange={(e) => setLinkName(e.target.value)}
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); handleAddLink(); }} disabled={!linkUrl.trim()}>
+                <Button size="sm" onClick={(e) => { 
+                  e.stopPropagation(); 
+                  handleAddLink();
+                  setLinkUrl("");
+                  setLinkName("");
+                }} disabled={!linkUrl.trim()}>
                   Adicionar
                 </Button>
                 <Button 
@@ -209,7 +214,7 @@ export const AttachmentManager = ({
                     setLinkName("");
                   }}
                 >
-                  Cancelar
+                  Fechar
                 </Button>
               </div>
             </div>
@@ -232,10 +237,10 @@ export const AttachmentManager = ({
                   <div className="flex items-center gap-2 flex-1">
                     {getFileIcon(attachment.type)}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{attachment.name}</p>
+                      <p className="font-medium text-sm break-all whitespace-normal">{attachment.name}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{formatFileSize(attachment.size)}</span>
-                        <span>•</span>
+                        {attachment.size > 0 && <span>•</span>}
                         <span>{new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </div>

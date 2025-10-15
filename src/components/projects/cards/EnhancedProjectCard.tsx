@@ -95,7 +95,7 @@ export const EnhancedProjectCard = ({
       </div>
 
       {/* Description */}
-      {card.description && <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+      {card.description && <p className="text-xs text-muted-foreground mb-2 line-clamp-2 break-words">
           {card.description}
         </p>}
 
@@ -104,7 +104,7 @@ export const EnhancedProjectCard = ({
           <div className="flex items-start gap-2">
             <CheckSquare size={14} className="text-muted-foreground mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground line-clamp-2">
+              <p className="text-xs text-muted-foreground line-clamp-2 break-words">
                 {firstIncompleteTask.text}
               </p>
             </div>

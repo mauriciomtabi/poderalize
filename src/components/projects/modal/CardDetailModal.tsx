@@ -636,12 +636,12 @@ export const CardDetailModal = ({
                                 ) : (
                                   <File className="h-4 w-4 flex-shrink-0" />
                                 )}
-                                <div className="flex-1 min-w-0 overflow-hidden">
+                                <div className="flex-1 min-w-0">
                                   <a
                                     href={attachment.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="font-medium text-sm text-primary hover:underline truncate block"
+                                    className="font-medium text-sm text-primary hover:underline break-all whitespace-normal block"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     {attachment.name}
