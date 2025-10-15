@@ -32,12 +32,16 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
     
     // Force repaint to remove ghost elements
     requestAnimationFrame(() => {
-      const scrollContainer = scrollContainerRef.current;
-      if (scrollContainer) {
-        const currentScroll = scrollContainer.scrollLeft;
-        scrollContainer.scrollLeft = currentScroll + 1;
+      const container = scrollContainerRef.current;
+      if (container) {
+        const targetEl = container.querySelector(`[data-stage-id="${destination.droppableId}"]`) as HTMLElement | null;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        }
+        const currentScroll = container.scrollLeft;
+        container.scrollLeft = currentScroll + 1;
         requestAnimationFrame(() => {
-          scrollContainer.scrollLeft = currentScroll;
+          container.scrollLeft = currentScroll;
         });
       }
     });
@@ -70,7 +74,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
       <DragDropContext onDragEnd={handleDragEnd}>
         <div ref={scrollContainerRef} className="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
           {funnel.stages.map((stage, index) => (
-            <div key={stage.id} className="flex-shrink-0 w-72">
+            <div key={stage.id} data-stage-id={stage.id} className="flex-shrink-0 w-72">
               <Card 
                 className="h-[calc(100vh-16rem)] flex flex-col"
                 style={{ 

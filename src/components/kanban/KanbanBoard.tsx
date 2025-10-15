@@ -81,12 +81,16 @@ export const KanbanBoard = () => {
     
     // Force repaint to remove ghost elements
     requestAnimationFrame(() => {
-      const scrollContainer = scrollContainerRef.current;
-      if (scrollContainer) {
-        const currentScroll = scrollContainer.scrollLeft;
-        scrollContainer.scrollLeft = currentScroll + 1;
+      const container = scrollContainerRef.current;
+      if (container) {
+        const targetEl = container.querySelector(`[data-column-id="${destination.droppableId}"]`) as HTMLElement | null;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        }
+        const currentScroll = container.scrollLeft;
+        container.scrollLeft = currentScroll + 1;
         requestAnimationFrame(() => {
-          scrollContainer.scrollLeft = currentScroll;
+          container.scrollLeft = currentScroll;
         });
       }
     });
@@ -138,7 +142,7 @@ export const KanbanBoard = () => {
         <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
           <div ref={scrollContainerRef} className="flex space-x-6 h-full overflow-x-auto pb-6">
             {state.columns.map((column) => (
-              <div key={column.id} className="flex-shrink-0 w-80">
+              <div key={column.id} data-column-id={column.id} className="flex-shrink-0 w-80">
                 <Card className={`h-full flex flex-col kanban-column`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">

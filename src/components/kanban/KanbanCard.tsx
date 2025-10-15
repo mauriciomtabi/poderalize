@@ -88,11 +88,11 @@ export const KanbanCard = ({ task, onEdit, onDelete, onDuplicate, onUpdateTitle 
           <InlineEdit
             value={task.title}
             onSave={(newTitle) => onUpdateTitle(task.id, newTitle)}
-            className="font-medium text-sm text-foreground leading-tight"
+            className="font-medium text-sm text-foreground leading-tight whitespace-normal break-words"
             placeholder="Título do cartão"
           />
         ) : (
-          <h3 className="font-medium text-sm text-foreground leading-tight">
+          <h3 className="font-medium text-sm text-foreground leading-tight whitespace-normal break-words">
             {task.title}
           </h3>
         )}

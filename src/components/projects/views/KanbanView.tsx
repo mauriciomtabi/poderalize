@@ -119,13 +119,16 @@ export const KanbanView = () => {
     
     // Force repaint to remove ghost elements
     requestAnimationFrame(() => {
-      if (scrollContainerRef.current) {
-        const currentScroll = scrollContainerRef.current.scrollLeft;
-        scrollContainerRef.current.scrollLeft = currentScroll + 0.1;
+      const container = scrollContainerRef.current;
+      if (container) {
+        const targetEl = container.querySelector(`[data-list-id="${destination.droppableId}"]`) as HTMLElement | null;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        }
+        const currentScroll = container.scrollLeft;
+        container.scrollLeft = currentScroll + 1;
         requestAnimationFrame(() => {
-          if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollLeft = currentScroll;
-          }
+          container.scrollLeft = currentScroll;
         });
       }
     });
@@ -200,6 +203,7 @@ export const KanbanView = () => {
                                   pointerEvents: snapshot.isDragging ? 'none' : undefined
                                 }}
                                 className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
+                                data-list-id={list.id}
                               >
                                 <Card 
                                   className="flex flex-col kanban-column h-[calc(100vh-12rem)]"
