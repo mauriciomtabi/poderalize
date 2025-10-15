@@ -1003,28 +1003,88 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     moveCard: async (cardId: string, sourceListId: string, destListId: string, newPosition: number) => {
-      const result = await cardsHook.updateCard(cardId, {
-        list_id: destListId,
-        position: newPosition
-      } as any);
+      // 1. ATUALIZAÇÃO OTIMISTA DO ESTADO LOCAL (instantâneo)
+      setState(prev => {
+        if (!prev.currentBoard) return prev;
+        
+        const newLists = prev.currentBoard.lists.map(list => {
+          if (list.id === sourceListId) {
+            // Remove card da lista de origem
+            return {
+              ...list,
+              cards: list.cards.filter(c => c.id !== cardId)
+            };
+          }
+          if (list.id === destListId) {
+            // Encontra o card e adiciona na lista de destino
+            const cardToMove = prev.currentBoard!.lists
+              .find(l => l.id === sourceListId)
+              ?.cards.find(c => c.id === cardId);
+            
+            if (!cardToMove) return list;
+            
+            const updatedCard = { ...cardToMove, listId: destListId };
+            const newCards = [...list.cards];
+            newCards.splice(newPosition, 0, updatedCard);
+            
+            return {
+              ...list,
+              cards: newCards
+            };
+          }
+          return list;
+        });
+        
+        return {
+          ...prev,
+          currentBoard: {
+            ...prev.currentBoard,
+            lists: newLists
+          }
+        };
+      });
       
-      if (result && state.currentBoard) {
-        // Add activity for card move
-        const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
-        const destList = state.currentBoard.lists.find(l => l.id === destListId);
-        if (sourceList && destList && sourceListId !== destListId && user) {
-          await supabase
-            .from('project_activities')
-            .insert({
-              card_id: cardId,
-              user_id: user.id,
-              action: `moveu de "${sourceList.title}" para "${destList.title}"`,
-              details: { sourceListId, destListId }
-            } as any);
+      // 2. UPDATE NO BANCO EM BACKGROUND
+      try {
+        const result = await cardsHook.updateCard(cardId, {
+          list_id: destListId,
+          position: newPosition
+        } as any);
+        
+        if (!result) {
+          // Se falhar, recarrega para sincronizar
+          if (state.currentBoard) {
+            await loadBoard(state.currentBoard.id);
+          }
+          return false;
         }
-        await loadBoard(state.currentBoard.id);
+        
+        // 3. ADICIONA ATIVIDADE (se mudou de lista)
+        if (state.currentBoard && sourceListId !== destListId && user) {
+          const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
+          const destList = state.currentBoard.lists.find(l => l.id === destListId);
+          
+          if (sourceList && destList) {
+            await supabase
+              .from('project_activities')
+              .insert({
+                card_id: cardId,
+                user_id: user.id,
+                action: `moveu de "${sourceList.title}" para "${destList.title}"`,
+                details: { sourceListId, destListId }
+              } as any);
+          }
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('Erro ao mover card:', error);
+        // Recarrega em caso de erro
+        if (state.currentBoard) {
+          await loadBoard(state.currentBoard.id);
+        }
+        return false;
       }
-      return result;
     },
 
     duplicateCard: async (cardId: string) => {
