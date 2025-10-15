@@ -53,6 +53,7 @@ export const EnhancedProjectCard = ({
 }: EnhancedProjectCardProps) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAttachmentSelector, setShowAttachmentSelector] = useState(false);
+  const [loadedAttachments, setLoadedAttachments] = useState<any[]>([]);
   const {
     state
   } = useProjects();
@@ -165,6 +166,9 @@ export const EnhancedProjectCard = ({
           } = await (await import("@/integrations/supabase/client")).supabase.from('project_cards').select('custom_fields').eq('id', card.id).single();
           const attachments = (data?.custom_fields as any)?.attachments || [];
           
+          // Armazenar os anexos carregados
+          setLoadedAttachments(attachments);
+          
           // Se houver múltiplos anexos, abrir o seletor
           if (attachments.length > 1) {
             setShowAttachmentSelector(true);
@@ -234,7 +238,7 @@ export const EnhancedProjectCard = ({
       <AttachmentSelectorDialog
         isOpen={showAttachmentSelector}
         onClose={() => setShowAttachmentSelector(false)}
-        attachments={card.attachments || []}
+        attachments={loadedAttachments}
       />
     </Card>;
 };
