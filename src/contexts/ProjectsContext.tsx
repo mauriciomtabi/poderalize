@@ -129,7 +129,6 @@ const initialState: ProjectsState = {
   draggedItem: null,
   isLoading: true,
   selectedCard: null,
-  dragKey: 0,
   calendarDate: new Date(),
   viewAllCardsAsAdmin: false
 };
@@ -1038,7 +1037,6 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         return {
           ...prev,
-          dragKey: prev.dragKey + 1, // Incrementa para forçar re-render do DnD
           currentBoard: {
             ...prev.currentBoard,
             lists: newLists

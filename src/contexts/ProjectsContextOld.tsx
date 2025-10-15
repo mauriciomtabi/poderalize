@@ -232,7 +232,6 @@ const initialState: ProjectsState = {
   draggedItem: null,
   isLoading: false,
   selectedCard: null,
-  dragKey: 0,
   calendarDate: new Date(),
   viewAllCardsAsAdmin: false
 };
