@@ -45,6 +45,7 @@ export const KanbanView = () => {
   const { user } = useAuth();
   const { isAdmin } = useAuthContext();
   const [hasBoardAccess, setHasBoardAccess] = useState<boolean | null>(null);
+  const [dndKey, setDndKey] = useState(0);
 
   // Reset scroll to left when component mounts
   useEffect(() => {
@@ -73,6 +74,24 @@ export const KanbanView = () => {
     };
     checkAccess();
   }, [state.currentBoard?.id, user?.id]);
+
+  // Ensure real repaint even at scroll edges
+  const directionAwareMicroScroll = (sc: HTMLDivElement | null) => {
+    if (!sc) return;
+    const atStart = sc.scrollLeft <= 0;
+    const atEnd = sc.scrollLeft >= sc.scrollWidth - sc.clientWidth - 1;
+    const delta = atEnd ? -1 : 1;
+    sc.scrollBy({ left: delta, behavior: 'auto' });
+    requestAnimationFrame(() => sc.scrollBy({ left: -delta, behavior: 'auto' }));
+  };
+
+  const forcePaint = (sc: HTMLDivElement | null) => {
+    if (!sc) return;
+    const prev = sc.style.transform;
+    sc.style.transform = 'translateZ(0)';
+    void sc.offsetHeight; // reflow
+    sc.style.transform = prev;
+  };
 
   const onDragStart = (start: any) => {
     actions.setDraggedItem({ 
@@ -124,17 +143,11 @@ export const KanbanView = () => {
       requestAnimationFrame(() => {
         cleanupGlobalDnD();
         void document.body.offsetHeight; // Global reflow
-        
-        // Real scroll para forçar repaint
         const sc = scrollContainerRef.current;
-        if (sc) {
-          sc.scrollBy({ left: 3, behavior: 'auto' });
-          requestAnimationFrame(() => {
-            sc.scrollBy({ left: -3, behavior: 'auto' });
-          });
-        }
-        
+        directionAwareMicroScroll(sc);
+        forcePaint(sc);
         window.dispatchEvent(new Event('resize'));
+        setTimeout(() => setDndKey(k => k + 1), 0);
       });
       return;
     }
@@ -152,16 +165,11 @@ export const KanbanView = () => {
       cleanupGlobalDnD();
       void document.body.offsetHeight; // Global reflow
       
-      // Real scroll para forçar repaint
       const sc = scrollContainerRef.current;
-      if (sc) {
-        sc.scrollBy({ left: 3, behavior: 'auto' });
-        requestAnimationFrame(() => {
-          sc.scrollBy({ left: -3, behavior: 'auto' });
-        });
-      }
-      
+      directionAwareMicroScroll(sc);
+      forcePaint(sc);
       window.dispatchEvent(new Event('resize'));
+      setTimeout(() => setDndKey(k => k + 1), 0);
       
       // Auto-scroll para lista de destino DEPOIS do cleanup
       setTimeout(() => {
@@ -217,7 +225,7 @@ export const KanbanView = () => {
           className="flex-1 min-w-0"
         >
           <div ref={scrollContainerRef} className="h-full overflow-x-auto overflow-y-hidden">
-            <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
+            <DragDropContext key={dndKey} onDragEnd={onDragEnd} onDragStart={onDragStart}>
               <Droppable droppableId="board" type="LIST" direction="horizontal">
                 {(provided) => (
                   <div

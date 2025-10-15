@@ -27,6 +27,25 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
     stageId: ""
   });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [dndKey, setDndKey] = useState(0);
+
+  // Ensure real repaint even at scroll edges
+  const directionAwareMicroScroll = (sc: HTMLDivElement | null) => {
+    if (!sc) return;
+    const atStart = sc.scrollLeft <= 0;
+    const atEnd = sc.scrollLeft >= sc.scrollWidth - sc.clientWidth - 1;
+    const delta = atEnd ? -1 : 1;
+    sc.scrollBy({ left: delta, behavior: 'auto' });
+    requestAnimationFrame(() => sc.scrollBy({ left: -delta, behavior: 'auto' }));
+  };
+
+  const forcePaint = (sc: HTMLDivElement | null) => {
+    if (!sc) return;
+    const prev = sc.style.transform;
+    sc.style.transform = 'translateZ(0)';
+    void sc.offsetHeight; // reflow
+    sc.style.transform = prev;
+  };
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;

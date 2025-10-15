@@ -58,6 +58,25 @@ export const KanbanBoard = () => {
   const [listActionsOpen, setListActionsOpen] = useState(false);
   const [selectedList, setSelectedList] = useState<Column | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [dndKey, setDndKey] = useState(0);
+
+  // Ensure real repaint even at scroll edges
+  const directionAwareMicroScroll = (sc: HTMLDivElement | null) => {
+    if (!sc) return;
+    const atStart = sc.scrollLeft <= 0;
+    const atEnd = sc.scrollLeft >= sc.scrollWidth - sc.clientWidth - 1;
+    const delta = atEnd ? -1 : 1;
+    sc.scrollBy({ left: delta, behavior: 'auto' });
+    requestAnimationFrame(() => sc.scrollBy({ left: -delta, behavior: 'auto' }));
+  };
+
+  const forcePaint = (sc: HTMLDivElement | null) => {
+    if (!sc) return;
+    const prev = sc.style.transform;
+    sc.style.transform = 'translateZ(0)';
+    void sc.offsetHeight; // reflow
+    sc.style.transform = prev;
+  };
 
   const onDragStart = (start: any) => {
     actions.setDraggedItem(start.draggableId);
@@ -111,14 +130,10 @@ export const KanbanBoard = () => {
       
       // Real scroll para forçar repaint
       const sc = scrollContainerRef.current;
-      if (sc) {
-        sc.scrollBy({ left: 3, behavior: 'auto' });
-        requestAnimationFrame(() => {
-          sc.scrollBy({ left: -3, behavior: 'auto' });
-        });
-      }
-      
+      directionAwareMicroScroll(sc);
+      forcePaint(sc);
       window.dispatchEvent(new Event('resize'));
+      setTimeout(() => setDndKey(k => k + 1), 0);
       
       // Auto-scroll para coluna de destino DEPOIS do cleanup
       setTimeout(() => {
@@ -173,7 +188,7 @@ export const KanbanBoard = () => {
   return (
     <LoadingOverlay isLoading={state.isLoading}>
       <div className="h-full">
-        <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
+        <DragDropContext key={dndKey} onDragEnd={onDragEnd} onDragStart={onDragStart}>
           <div ref={scrollContainerRef} className="flex space-x-6 h-full overflow-x-auto pb-6">
             {state.columns.map((column) => (
               <div key={column.id} data-column-id={column.id} className="flex-shrink-0 w-80">
