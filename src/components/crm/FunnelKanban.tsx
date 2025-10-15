@@ -13,6 +13,13 @@ interface FunnelKanbanProps {
   funnel: CustomFunnel;
 }
 
+// Helper to disable drop animation and prevent style artifacts
+const getDropStyle = (style: any, snapshot: any) => {
+  if (!style) return style;
+  if (!snapshot.isDropAnimating) return style;
+  return { ...style, transitionDuration: '0.001s' };
+};
+
 export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
   const { moveLead } = useCRM();
   const [addLeadDialog, setAddLeadDialog] = useState<{ open: boolean; stageId: string }>({
@@ -30,36 +37,47 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
 
     moveLead(draggableId, destination.droppableId);
     
-    // Synchronous cleanup of DnD transforms and force reflow
-    const container = scrollContainerRef.current;
-    if (container) {
-      const draggables = container.querySelectorAll('[data-rbd-draggable-id]');
-      draggables.forEach((el) => {
+    // Global cleanup function to remove ALL DnD artifacts
+    const cleanupGlobalDnD = () => {
+      const selectors = '[data-rbd-draggable-id], [data-rbd-drag-handle-draggable-id], [data-rbd-droppable-id]';
+      document.querySelectorAll(selectors).forEach((el) => {
         const node = el as HTMLElement;
         node.style.transform = '';
         node.style.transition = '';
         node.style.willChange = '';
       });
-      void container.offsetHeight; // force reflow
-    }
+      
+      document.querySelectorAll('[data-rbd-placeholder-context-id]').forEach((el) => {
+        const node = el as HTMLElement;
+        node.style.transform = '';
+        node.style.height = '';
+        node.style.width = '';
+      });
+    };
     
-    // Auto-scroll to destination stage after cleanup
+    // Cleanup global após mover lead
     requestAnimationFrame(() => {
+      cleanupGlobalDnD();
+      void document.body.offsetHeight; // Global reflow
+      
+      // Real scroll para forçar repaint
+      const sc = scrollContainerRef.current;
+      if (sc) {
+        sc.scrollBy({ left: 3, behavior: 'auto' });
+        requestAnimationFrame(() => {
+          sc.scrollBy({ left: -3, behavior: 'auto' });
+        });
+      }
+      
+      window.dispatchEvent(new Event('resize'));
+      
+      // Auto-scroll para stage de destino DEPOIS do cleanup
       setTimeout(() => {
-        const container = scrollContainerRef.current;
-        if (container) {
-          const targetEl = container.querySelector(`[data-stage-id="${destination.droppableId}"]`) as HTMLElement | null;
-          if (targetEl) {
-            targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-          }
-          // micro scroll to ensure repaint
-          const currentScroll = container.scrollLeft;
-          container.scrollLeft = currentScroll + 1;
-          requestAnimationFrame(() => {
-            container.scrollLeft = currentScroll;
-          });
+        const targetEl = sc?.querySelector(`[data-stage-id="${destination.droppableId}"]`) as HTMLElement | null;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
         }
-      }, 50);
+      }, 100);
     });
   };
 
@@ -162,10 +180,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              style={{
-                                ...provided.draggableProps.style,
-                                pointerEvents: snapshot.isDragging ? 'none' : undefined
-                              }}
+                              style={getDropStyle(provided.draggableProps.style, snapshot)}
                               className={`${
                                 snapshot.isDragging 
                                   ? 'rotate-2 scale-105 shadow-xl opacity-95' 

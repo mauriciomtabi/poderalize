@@ -26,6 +26,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthContext } from "@/contexts/AuthContext";
 
+// Helper to disable drop animation and prevent style artifacts
+const getDropStyle = (style: any, snapshot: any) => {
+  if (!style) return style;
+  if (!snapshot.isDropAnimating) return style;
+  return { ...style, transitionDuration: '0.001s' };
+};
+
 export const KanbanView = () => {
   const { state, actions } = useProjects();
   const [selectedListId, setSelectedListId] = useState<string>("");
@@ -90,34 +97,44 @@ export const KanbanView = () => {
       return;
     }
 
+    // Global cleanup function to remove ALL DnD artifacts
+    const cleanupGlobalDnD = () => {
+      // Clean all draggable elements globally
+      const selectors = '[data-rbd-draggable-id], [data-rbd-drag-handle-draggable-id], [data-rbd-droppable-id]';
+      document.querySelectorAll(selectors).forEach((el) => {
+        const node = el as HTMLElement;
+        node.style.transform = '';
+        node.style.transition = '';
+        node.style.willChange = '';
+      });
+      
+      // Clean placeholder artifacts
+      document.querySelectorAll('[data-rbd-placeholder-context-id]').forEach((el) => {
+        const node = el as HTMLElement;
+        node.style.transform = '';
+        node.style.height = '';
+        node.style.width = '';
+      });
+    };
+
     // Handle list drag and drop
     if (type === 'LIST') {
       actions.moveList(draggableId, destination.index);
       
-      // Synchronous cleanup of DnD transforms and force reflow
-      const container = scrollContainerRef.current;
-      if (container) {
-        const draggables = container.querySelectorAll('[data-rbd-draggable-id]');
-        draggables.forEach((el) => {
-          const node = el as HTMLElement;
-          node.style.transform = '';
-          node.style.transition = '';
-          node.style.willChange = '';
-        });
-        void container.offsetHeight; // force reflow
-      }
-      
-      // Ensure any ghost artifacts are cleared
       requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          const currentScroll = scrollContainerRef.current.scrollLeft;
-          scrollContainerRef.current.scrollLeft = currentScroll + 1;
+        cleanupGlobalDnD();
+        void document.body.offsetHeight; // Global reflow
+        
+        // Real scroll para forçar repaint
+        const sc = scrollContainerRef.current;
+        if (sc) {
+          sc.scrollBy({ left: 3, behavior: 'auto' });
           requestAnimationFrame(() => {
-            if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollLeft = currentScroll;
-            }
+            sc.scrollBy({ left: -3, behavior: 'auto' });
           });
         }
+        
+        window.dispatchEvent(new Event('resize'));
       });
       return;
     }
@@ -130,36 +147,29 @@ export const KanbanView = () => {
       destination.index
     );
     
-    // Synchronous cleanup of DnD transforms and force reflow
-    const container = scrollContainerRef.current;
-    if (container) {
-      const draggables = container.querySelectorAll('[data-rbd-draggable-id]');
-      draggables.forEach((el) => {
-        const node = el as HTMLElement;
-        node.style.transform = '';
-        node.style.transition = '';
-        node.style.willChange = '';
-      });
-      void container.offsetHeight; // force reflow
-    }
-    
-    // Auto-scroll to destination list after cleanup
+    // Cleanup global após mover card
     requestAnimationFrame(() => {
+      cleanupGlobalDnD();
+      void document.body.offsetHeight; // Global reflow
+      
+      // Real scroll para forçar repaint
+      const sc = scrollContainerRef.current;
+      if (sc) {
+        sc.scrollBy({ left: 3, behavior: 'auto' });
+        requestAnimationFrame(() => {
+          sc.scrollBy({ left: -3, behavior: 'auto' });
+        });
+      }
+      
+      window.dispatchEvent(new Event('resize'));
+      
+      // Auto-scroll para lista de destino DEPOIS do cleanup
       setTimeout(() => {
-        const container = scrollContainerRef.current;
-        if (container) {
-          const targetEl = container.querySelector(`[data-list-id="${destination.droppableId}"]`) as HTMLElement | null;
-          if (targetEl) {
-            targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-          }
-          // micro scroll to ensure repaint
-          const currentScroll = container.scrollLeft;
-          container.scrollLeft = currentScroll + 1;
-          requestAnimationFrame(() => {
-            container.scrollLeft = currentScroll;
-          });
+        const targetEl = sc?.querySelector(`[data-list-id="${destination.droppableId}"]`) as HTMLElement | null;
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
         }
-      }, 50);
+      }, 100);
     });
   };
 
@@ -227,10 +237,7 @@ export const KanbanView = () => {
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                style={{
-                                  ...provided.draggableProps.style,
-                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
-                                }}
+                                style={getDropStyle(provided.draggableProps.style, snapshot)}
                                 className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
                                 data-list-id={list.id}
                               >
@@ -282,17 +289,14 @@ export const KanbanView = () => {
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >
-                                        {filteredCards.map((card, index) => (
+                        {filteredCards.map((card, index) => (
                           <Draggable key={card.id} draggableId={card.id} index={index}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                style={{
-                                  ...provided.draggableProps.style,
-                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
-                                }}
+                                style={getDropStyle(provided.draggableProps.style, snapshot)}
                                 className={snapshot.isDragging ? "kanban-drag-preview" : ""}
                               >
                                                 <EnhancedProjectCard
