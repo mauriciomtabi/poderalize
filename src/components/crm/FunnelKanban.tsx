@@ -30,20 +30,36 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
 
     moveLead(draggableId, destination.droppableId);
     
-    // Force repaint to remove ghost elements
+    // Synchronous cleanup of DnD transforms and force reflow
+    const container = scrollContainerRef.current;
+    if (container) {
+      const draggables = container.querySelectorAll('[data-rbd-draggable-id]');
+      draggables.forEach((el) => {
+        const node = el as HTMLElement;
+        node.style.transform = '';
+        node.style.transition = '';
+        node.style.willChange = '';
+      });
+      void container.offsetHeight; // force reflow
+    }
+    
+    // Auto-scroll to destination stage after cleanup
     requestAnimationFrame(() => {
-      const container = scrollContainerRef.current;
-      if (container) {
-        const targetEl = container.querySelector(`[data-stage-id="${destination.droppableId}"]`) as HTMLElement | null;
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      setTimeout(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+          const targetEl = container.querySelector(`[data-stage-id="${destination.droppableId}"]`) as HTMLElement | null;
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+          }
+          // micro scroll to ensure repaint
+          const currentScroll = container.scrollLeft;
+          container.scrollLeft = currentScroll + 1;
+          requestAnimationFrame(() => {
+            container.scrollLeft = currentScroll;
+          });
         }
-        const currentScroll = container.scrollLeft;
-        container.scrollLeft = currentScroll + 1;
-        requestAnimationFrame(() => {
-          container.scrollLeft = currentScroll;
-        });
-      }
+      }, 50);
     });
   };
 
@@ -129,7 +145,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-1 p-4 space-y-3 min-h-[200px] overflow-y-auto pr-2 transition-colors ${
+                      className={`flex-1 p-4 space-y-3 min-h-[200px] overflow-y-auto overflow-x-hidden pr-2 transition-colors ${
                         snapshot.isDraggingOver 
                           ? 'kanban-drop-zone' 
                           : ''

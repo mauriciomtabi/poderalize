@@ -94,11 +94,24 @@ export const KanbanView = () => {
     if (type === 'LIST') {
       actions.moveList(draggableId, destination.index);
       
-      // Force repaint to remove ghost elements
+      // Synchronous cleanup of DnD transforms and force reflow
+      const container = scrollContainerRef.current;
+      if (container) {
+        const draggables = container.querySelectorAll('[data-rbd-draggable-id]');
+        draggables.forEach((el) => {
+          const node = el as HTMLElement;
+          node.style.transform = '';
+          node.style.transition = '';
+          node.style.willChange = '';
+        });
+        void container.offsetHeight; // force reflow
+      }
+      
+      // Ensure any ghost artifacts are cleared
       requestAnimationFrame(() => {
         if (scrollContainerRef.current) {
           const currentScroll = scrollContainerRef.current.scrollLeft;
-          scrollContainerRef.current.scrollLeft = currentScroll + 0.1;
+          scrollContainerRef.current.scrollLeft = currentScroll + 1;
           requestAnimationFrame(() => {
             if (scrollContainerRef.current) {
               scrollContainerRef.current.scrollLeft = currentScroll;
@@ -117,20 +130,36 @@ export const KanbanView = () => {
       destination.index
     );
     
-    // Force repaint to remove ghost elements
+    // Synchronous cleanup of DnD transforms and force reflow
+    const container = scrollContainerRef.current;
+    if (container) {
+      const draggables = container.querySelectorAll('[data-rbd-draggable-id]');
+      draggables.forEach((el) => {
+        const node = el as HTMLElement;
+        node.style.transform = '';
+        node.style.transition = '';
+        node.style.willChange = '';
+      });
+      void container.offsetHeight; // force reflow
+    }
+    
+    // Auto-scroll to destination list after cleanup
     requestAnimationFrame(() => {
-      const container = scrollContainerRef.current;
-      if (container) {
-        const targetEl = container.querySelector(`[data-list-id="${destination.droppableId}"]`) as HTMLElement | null;
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      setTimeout(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+          const targetEl = container.querySelector(`[data-list-id="${destination.droppableId}"]`) as HTMLElement | null;
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+          }
+          // micro scroll to ensure repaint
+          const currentScroll = container.scrollLeft;
+          container.scrollLeft = currentScroll + 1;
+          requestAnimationFrame(() => {
+            container.scrollLeft = currentScroll;
+          });
         }
-        const currentScroll = container.scrollLeft;
-        container.scrollLeft = currentScroll + 1;
-        requestAnimationFrame(() => {
-          container.scrollLeft = currentScroll;
-        });
-      }
+      }, 50);
     });
   };
 
@@ -249,7 +278,7 @@ export const KanbanView = () => {
                                       <CardContent
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto pr-2 ${
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden pr-2 ${
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >
