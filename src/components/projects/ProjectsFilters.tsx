@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,6 +47,29 @@ function Circle({ size, className }: { size: number; className: string }) {
 
 export const ProjectsFilters = () => {
   const { state, actions } = useProjects();
+  const [colaboradoresAtivos, setColaboradoresAtivos] = useState<Set<string>>(new Set());
+
+  // Buscar colaboradores ativos quando o board mudar
+  useEffect(() => {
+    const fetchColaboradoresAtivos = async () => {
+      const { data } = await supabase
+        .from('colaboradores')
+        .select('user_id')
+        .eq('status', 'ativo');
+      
+      const userIds = new Set((data || []).map(c => c.user_id).filter(Boolean));
+      setColaboradoresAtivos(userIds);
+    };
+    
+    if (state.currentBoard?.id) {
+      fetchColaboradoresAtivos();
+    }
+  }, [state.currentBoard?.id]);
+
+  // Filtrar membros para mostrar apenas colaboradores ativos
+  const activeMembers = state.currentBoard?.members.filter(member => 
+    !member.user_id || colaboradoresAtivos.has(member.user_id)
+  ) || [];
 
   const handleMemberToggle = (memberId: string) => {
     const currentMembers = state.filters.members;
@@ -129,7 +153,7 @@ export const ProjectsFilters = () => {
             </div>
             
             <div className="space-y-2">
-              {state.currentBoard?.members.map((member) => (
+              {activeMembers.map((member) => (
                 <div key={member.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`member-${member.id}`}
