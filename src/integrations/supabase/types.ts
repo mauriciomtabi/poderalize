@@ -2470,6 +2470,57 @@ export type Database = {
           watching: boolean
         }[]
       }
+      get_all_cards_admin_light: {
+        Args: { _user_id: string }
+        Returns: {
+          actual_hours: number
+          archived: boolean
+          card_position: number
+          checklists: Json
+          client_id: string
+          comments: Json
+          cover: string
+          created_at: string
+          created_by: string
+          description: string
+          due_date: string
+          estimated_hours: number
+          id: string
+          list_id: string
+          location: Json
+          priority: string
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+          watching: boolean
+        }[]
+      }
+      get_card_full_admin: {
+        Args: { _card_id: string; _user_id: string }
+        Returns: {
+          actual_hours: number | null
+          archived: boolean
+          client_id: string | null
+          cover: string | null
+          created_at: string
+          created_by: string
+          custom_fields: Json | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          list_id: string
+          location: Json | null
+          position: number
+          priority: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          watching: boolean
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]

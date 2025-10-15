@@ -68,11 +68,13 @@ export const useProjectCards = (listId?: string) => {
           id, list_id, title, description, status, priority, 
           due_date, start_date, estimated_hours, actual_hours, 
           position, cover, location, archived, watching, 
-          created_by, client_id, created_at, updated_at, custom_fields,
+          created_by, client_id, created_at, updated_at,
+          checklists:custom_fields->checklists,
+          comments:custom_fields->comments,
           project_lists!inner(board_id)
-        `)
+        ` as any)
         .eq('project_lists.board_id', boardId)
-        .order('position', { ascending: true });
+        .order('position', { ascending: true }) as any;
 
       if (error) {
         console.error('Error fetching board cards:', error);
@@ -91,15 +93,17 @@ export const useProjectCards = (listId?: string) => {
 
       console.timeEnd('⚡ Fetch board cards');
       
-      // Strip attachments from custom_fields to reduce payload
+      // Reconstruct custom_fields without attachments (loaded on-demand in modal)
       const cleanedData = (data || []).map(card => {
-        if (card.custom_fields && typeof card.custom_fields === 'object') {
-          const cf = card.custom_fields as any;
-          if (cf.attachments) {
-            delete cf.attachments;
+        const { checklists, comments, ...rest } = card as any;
+        return {
+          ...rest,
+          custom_fields: {
+            checklists: checklists || [],
+            comments: comments || []
+            // attachments will be loaded on-demand when modal opens
           }
-        }
-        return card;
+        };
       });
       
       return cleanedData;

@@ -24,6 +24,7 @@ import { ClientPicker } from "./ClientPicker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useClientes } from "@/hooks/useClientes";
+import { supabase } from "@/integrations/supabase/client";
 interface CardDetailModalProps {
   card?: ProjectCard;
   listId?: string;
@@ -60,6 +61,9 @@ export const CardDetailModal = ({
   const [tempChecklists, setTempChecklists] = useState<Checklist[]>([]);
   const [tempComments, setTempComments] = useState<Comment[]>([]);
   const [tempAttachments, setTempAttachments] = useState<any[]>([]);
+  
+  // Attachments loaded on-demand
+  const [attachmentsOverride, setAttachmentsOverride] = useState<Attachment[]>([]);
 
   // Dialog states
   const [showMemberPicker, setShowMemberPicker] = useState(false);
@@ -107,10 +111,64 @@ export const CardDetailModal = ({
       setTempChecklists([]);
       setTempComments([]);
       setTempAttachments([]);
+      setAttachmentsOverride([]);
       setIsEditingTitle(true);
       setIsEditingDescription(false);
     }
   }, [isOpen, isCreationMode]);
+
+  // Load attachments on-demand when modal opens (edit mode only)
+  useEffect(() => {
+    if (!isOpen || isCreationMode || !card?.id) {
+      return;
+    }
+    
+    let mounted = true;
+    
+    (async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const userId = authData.user?.id;
+        
+        if (!userId) return;
+        
+        let customFields: any = null;
+        
+        // Try admin RPC first
+        const { data: adminFull, error: adminErr } = await supabase
+          .rpc('get_card_full_admin' as any, { 
+            _user_id: userId, 
+            _card_id: card.id 
+          })
+          .maybeSingle() as any;
+        
+        if (adminFull && !adminErr) {
+          customFields = adminFull.custom_fields;
+        } else {
+          // Fallback for non-admin users
+          const { data: fallback } = await supabase
+            .from('project_cards')
+            .select('custom_fields')
+            .eq('id', card.id)
+            .maybeSingle();
+          
+          customFields = fallback?.custom_fields;
+        }
+        
+        if (mounted && customFields?.attachments) {
+          setAttachmentsOverride(
+            Array.isArray(customFields.attachments) ? customFields.attachments : []
+          );
+        }
+      } catch (error) {
+        console.error('Error loading attachments:', error);
+      }
+    })();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [isOpen, card?.id, isCreationMode]);
   const completedTasks = latestCard?.checklists.reduce((acc, checklist) => acc + checklist.items.filter(item => item.completed).length, 0) || 0;
   const totalTasks = latestCard?.checklists.reduce((acc, checklist) => acc + checklist.items.length, 0) || 0;
   const progress = totalTasks > 0 ? completedTasks / totalTasks * 100 : 0;
@@ -553,7 +611,9 @@ export const CardDetailModal = ({
 
                 {/* Attachments */}
                 {(() => {
-                  const currentAttachments = isCreationMode ? tempAttachments : (latestCard?.attachments || []);
+                  const currentAttachments = isCreationMode 
+                    ? tempAttachments 
+                    : (attachmentsOverride.length > 0 ? attachmentsOverride : (latestCard?.attachments || []));
                   if (currentAttachments.length > 0) {
                     return (
                       <div className="space-y-2">
@@ -743,7 +803,11 @@ export const CardDetailModal = ({
           <AttachmentManager 
             isOpen={showAttachmentManager} 
             onClose={() => setShowAttachmentManager(false)} 
-            card={latestCard} 
+            card={{
+              ...latestCard,
+              attachments: attachmentsOverride.length > 0 ? attachmentsOverride : latestCard.attachments
+            }}
+            onAttachmentsChange={setAttachmentsOverride}
           />
         ) : null}
 
