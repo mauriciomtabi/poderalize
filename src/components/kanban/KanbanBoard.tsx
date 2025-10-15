@@ -177,6 +177,10 @@ export const KanbanBoard = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
+                                }}
                                 className={snapshot.isDragging ? "kanban-drag-preview" : ""}
                               >
                                 <KanbanCard

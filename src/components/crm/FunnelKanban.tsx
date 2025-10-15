@@ -129,6 +129,10 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
+                              style={{
+                                ...provided.draggableProps.style,
+                                pointerEvents: snapshot.isDragging ? 'none' : undefined
+                              }}
                               className={`${
                                 snapshot.isDragging 
                                   ? 'rotate-2 scale-105 shadow-xl opacity-95' 

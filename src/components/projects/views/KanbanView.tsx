@@ -170,6 +170,10 @@ export const KanbanView = () => {
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
+                                }}
                                 className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
                               >
                                 <Card 
@@ -221,14 +225,18 @@ export const KanbanView = () => {
                                         }`}
                                       >
                                         {filteredCards.map((card, index) => (
-                                          <Draggable key={card.id} draggableId={card.id} index={index}>
-                                            {(provided, snapshot) => (
-                                              <div
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                className={snapshot.isDragging ? "kanban-drag-preview" : ""}
-                                              >
+                          <Draggable key={card.id} draggableId={card.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
+                                }}
+                                className={snapshot.isDragging ? "kanban-drag-preview" : ""}
+                              >
                                                 <EnhancedProjectCard
                                                   card={card}
                                                   onEdit={() => handleEditCard(card)}
