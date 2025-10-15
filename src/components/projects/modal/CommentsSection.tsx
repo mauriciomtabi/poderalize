@@ -156,7 +156,7 @@ export const CommentsSection = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="flex items-center gap-2">
         <MessageCircle className="h-4 w-4" />
         <h3 className="font-medium">Comentários</h3>
@@ -167,8 +167,8 @@ export const CommentsSection = ({
 
       {/* Add new comment */}
       {currentUser && (
-        <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
-          <Avatar className="h-8 w-8">
+        <div className="flex gap-3 w-full" onClick={(e) => e.stopPropagation()}>
+          <Avatar className="h-8 w-8 flex-shrink-0">
             <AvatarImage src={currentUser.avatar} />
             <AvatarFallback className="text-xs">
               {currentUser.name.split(' ').map(n => n[0]).join('')}
@@ -200,23 +200,23 @@ export const CommentsSection = ({
       )}
 
       {/* Comments list */}
-      <div className="space-y-4">
+      <div className="space-y-4 w-full">
         {[...currentComments].reverse().map(comment => (
-          <div key={comment.id} className="flex gap-3">
-            <Avatar className="h-8 w-8">
+          <div key={comment.id} className="flex gap-3 w-full">
+            <Avatar className="h-8 w-8 flex-shrink-0">
               <AvatarFallback className="text-xs">
                 {comment.authorName.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 space-y-1 min-w-0">
+            <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">{comment.authorName}</span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(comment.createdAt)}
                 </span>
               </div>
-              <div className="bg-muted/50 rounded-lg p-3">
-                <div className="text-sm whitespace-pre-wrap break-words">
+              <div className="bg-muted/50 rounded-lg p-3 w-full">
+                <div className="text-sm whitespace-pre-wrap break-words w-full">
                   {formatCommentText(comment.text)}
                 </div>
               </div>

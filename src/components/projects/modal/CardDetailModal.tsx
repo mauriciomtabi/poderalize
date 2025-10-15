@@ -458,11 +458,11 @@ export const CardDetailModal = ({
         <DialogDescription className="sr-only">
           {isCreationMode ? 'Preencha as informações da nova tarefa' : 'Visualize e edite as informações do cartão.'}
         </DialogDescription>
-        <div className="flex h-full min-h-[70vh] overflow-hidden">
+        <div className="flex h-full min-h-[70vh]">
           {/* Main Content with ScrollArea */}
           <div className="flex-1 min-w-0 basis-0">
-            <ScrollArea className="h-[80vh] p-6">
-              <div className="space-y-6 pr-2">
+            <ScrollArea className="h-[80vh]">
+              <div className="space-y-6 px-6 py-4 pr-4">
                 {/* Header with title */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1 mr-4">
@@ -622,11 +622,11 @@ export const CardDetailModal = ({
                           <h3 className="font-medium">Anexos</h3>
                           <span className="text-sm text-muted-foreground">({currentAttachments.length})</span>
                         </div>
-                        <div className="space-y-2 overflow-hidden">
+                        <div className="space-y-2 w-full">
                           {currentAttachments.map((attachment) => (
                             <div
                               key={attachment.id}
-                              className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors overflow-hidden"
+                              className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors w-full"
                             >
                              <div className="flex items-center gap-2 flex-1 min-w-0">
                                 {attachment.type === 'link' ? (
@@ -641,7 +641,7 @@ export const CardDetailModal = ({
                                     href={attachment.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="font-medium text-sm text-primary hover:underline break-words whitespace-normal block"
+                                    className="font-medium text-sm text-primary hover:underline break-words whitespace-normal block w-full"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     {attachment.name}
