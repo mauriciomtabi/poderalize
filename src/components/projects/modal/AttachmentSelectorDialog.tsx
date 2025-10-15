@@ -36,11 +36,13 @@ export const AttachmentSelectorDialog = ({
     return <FileText className="h-5 w-5 text-primary" />;
   };
 
-  const handleOpen = (attachment: Attachment) => {
+  const handleOpen = (attachment: Attachment, e: React.MouseEvent) => {
+    e.stopPropagation();
     window.open(attachment.url, '_blank');
   };
 
-  const handleDownload = async (attachment: Attachment) => {
+  const handleDownload = async (attachment: Attachment, e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       const response = await fetch(attachment.url);
       const blob = await response.blob();
@@ -86,7 +88,7 @@ export const AttachmentSelectorDialog = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleOpen(attachment)}
+                    onClick={(e) => handleOpen(attachment, e)}
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Abrir
@@ -94,7 +96,7 @@ export const AttachmentSelectorDialog = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDownload(attachment)}
+                    onClick={(e) => handleDownload(attachment, e)}
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Baixar
