@@ -217,48 +217,47 @@ export const KanbanView = () => {
 
                                   <Droppable droppableId={list.id}>
                                     {(provided, snapshot) => (
-                                      <CardContent className="flex-1 min-h-24 p-0">
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.droppableProps}
-                                          className={`h-full space-y-3 overflow-y-auto pr-2 ${
-                                            snapshot.isDraggingOver ? "kanban-drop-zone" : ""
-                                          }`}
+                                      <CardContent
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto pr-2 ${
+                                          snapshot.isDraggingOver ? "kanban-drop-zone" : ""
+                                        }`}
+                                      >
+                                        {filteredCards.map((card, index) => (
+                          <Draggable key={card.id} draggableId={card.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
+                                }}
+                                className={snapshot.isDragging ? "kanban-drag-preview" : ""}
+                              >
+                                                <EnhancedProjectCard
+                                                  card={card}
+                                                  onEdit={() => handleEditCard(card)}
+                                                  onDelete={() => actions.deleteCard(card.id)}
+                                                  onDuplicate={() => actions.duplicateCard(card.id)}
+                                                  onClick={() => handleCardClick(card)}
+                                                />
+                                              </div>
+                                            )}
+                                          </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                        
+                                        <Button
+                                          variant="ghost"
+                                          className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0"
+                                          onClick={() => handleAddCard(list.id)}
                                         >
-                                          {filteredCards.map((card, index) => (
-                                            <Draggable key={card.id} draggableId={card.id} index={index}>
-                                              {(provided, snapshot) => (
-                                                <div
-                                                  ref={provided.innerRef}
-                                                  {...provided.draggableProps}
-                                                  {...provided.dragHandleProps}
-                                                  style={{
-                                                    ...provided.draggableProps.style,
-                                                    pointerEvents: snapshot.isDragging ? 'none' : undefined
-                                                  }}
-                                                  className={snapshot.isDragging ? "kanban-drag-preview" : ""}
-                                                >
-                                                  <EnhancedProjectCard
-                                                    card={card}
-                                                    onEdit={() => handleEditCard(card)}
-                                                    onDelete={() => actions.deleteCard(card.id)}
-                                                    onDuplicate={() => actions.duplicateCard(card.id)}
-                                                    onClick={() => handleCardClick(card)}
-                                                  />
-                                                </div>
-                                              )}
-                                            </Draggable>
-                                          ))}
-                                          {provided.placeholder}
-                                          <Button
-                                            variant="ghost"
-                                            className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0"
-                                            onClick={() => handleAddCard(list.id)}
-                                          >
-                                            <Plus size={16} className="mr-2" />
-                                            Adicionar cartão
-                                          </Button>
-                                        </div>
+                                          <Plus size={16} className="mr-2" />
+                                          Adicionar cartão
+                                        </Button>
                                       </CardContent>
                                     )}
                                   </Droppable>
