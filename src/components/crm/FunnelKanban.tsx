@@ -109,57 +109,58 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                 {/* Droppable Area */}
                 <Droppable droppableId={stage.id}>
                   {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={`flex-1 p-4 space-y-3 min-h-[200px] overflow-y-auto pr-2 transition-colors ${
-                        snapshot.isDraggingOver 
-                          ? 'kanban-drop-zone' 
-                          : ''
-                      }`}
-                    >
-                      {stage.leads.map((lead, leadIndex) => (
-                        <Draggable
-                          key={lead.id}
-                          draggableId={lead.id}
-                          index={leadIndex}
-                        >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              style={{
-                                ...provided.draggableProps.style,
-                                pointerEvents: snapshot.isDragging ? 'none' : undefined
-                              }}
-                              className={`${
-                                snapshot.isDragging 
-                                  ? 'rotate-2 scale-105 shadow-xl opacity-95' 
-                                  : ''
-                              }`}
-                            >
-                              <LeadCard lead={lead} onLeadUpdate={() => window.location.reload()} />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                      
-                      {stage.leads.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-sm border-2 border-dashed border-muted rounded-lg">
-                          <p className="mb-2">Nenhum lead ainda</p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleAddLead(stage.id)}
-                            className="text-muted-foreground hover:text-foreground"
+                    <div className="flex-1 min-h-[200px] p-4">
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`h-full space-y-3 overflow-y-auto pr-2 transition-colors ${
+                          snapshot.isDraggingOver 
+                            ? 'kanban-drop-zone' 
+                            : ''
+                        }`}
+                      >
+                        {stage.leads.map((lead, leadIndex) => (
+                          <Draggable
+                            key={lead.id}
+                            draggableId={lead.id}
+                            index={leadIndex}
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Adicionar Lead
-                          </Button>
-                        </div>
-                      )}
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
+                                }}
+                                className={`${
+                                  snapshot.isDragging 
+                                    ? 'rotate-2 scale-105 shadow-xl opacity-95' 
+                                    : ''
+                                }`}
+                              >
+                                <LeadCard lead={lead} onLeadUpdate={() => window.location.reload()} />
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                        {stage.leads.length === 0 && (
+                          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-sm border-2 border-dashed border-muted rounded-lg">
+                            <p className="mb-2">Nenhum lead ainda</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAddLead(stage.id)}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Adicionar Lead
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </Droppable>

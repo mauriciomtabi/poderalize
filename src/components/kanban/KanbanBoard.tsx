@@ -163,47 +163,48 @@ export const KanbanBoard = () => {
 
                   <Droppable droppableId={column.id}>
                     {(provided, snapshot) => (
-                      <CardContent
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`flex-1 space-y-3 min-h-24 ${
-                          snapshot.isDraggingOver ? "kanban-drop-zone" : ""
-                        }`}
-                      >
-                        {column.tasks.map((task, index) => (
-                          <Draggable key={task.id} draggableId={task.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                style={{
-                                  ...provided.draggableProps.style,
-                                  pointerEvents: snapshot.isDragging ? 'none' : undefined
-                                }}
-                                className={snapshot.isDragging ? "kanban-drag-preview" : ""}
-                              >
-                                <KanbanCard
-                                  task={task}
-                                  onEdit={() => handleEditTask(task)}
-                                  onDelete={() => handleDeleteTask(task.id)}
-                                  onDuplicate={() => handleDuplicateTask(task)}
-                                  onUpdateTitle={handleUpdateTaskTitle}
-                                />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                        
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-muted-foreground hover:text-foreground"
-                          onClick={() => handleAddCard(column.id)}
+                      <CardContent className={`flex-1 min-h-24 p-0`}>
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`h-full space-y-3 ${
+                            snapshot.isDraggingOver ? "kanban-drop-zone" : ""
+                          }`}
                         >
-                          <Plus size={16} className="mr-2" />
-                          Adicionar cartão
-                        </Button>
+                          {column.tasks.map((task, index) => (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                    pointerEvents: snapshot.isDragging ? 'none' : undefined
+                                  }}
+                                  className={snapshot.isDragging ? "kanban-drag-preview" : ""}
+                                >
+                                  <KanbanCard
+                                    task={task}
+                                    onEdit={() => handleEditTask(task)}
+                                    onDelete={() => handleDeleteTask(task.id)}
+                                    onDuplicate={() => handleDuplicateTask(task)}
+                                    onUpdateTitle={handleUpdateTaskTitle}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-muted-foreground hover:text-foreground"
+                            onClick={() => handleAddCard(column.id)}
+                          >
+                            <Plus size={16} className="mr-2" />
+                            Adicionar cartão
+                          </Button>
+                        </div>
                       </CardContent>
                     )}
                   </Droppable>
