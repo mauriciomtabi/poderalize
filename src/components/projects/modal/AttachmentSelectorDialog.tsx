@@ -39,6 +39,7 @@ export const AttachmentSelectorDialog = ({
   const handleOpen = (attachment: Attachment, e: React.MouseEvent) => {
     e.stopPropagation();
     window.open(attachment.url, '_blank');
+    onClose();
   };
 
   const handleDownload = async (attachment: Attachment, e: React.MouseEvent) => {
