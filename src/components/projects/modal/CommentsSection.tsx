@@ -207,15 +207,15 @@ export const CommentsSection = ({
                 {comment.authorName.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 space-y-1 min-w-0 overflow-hidden">
+            <div className="flex-1 space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sm">{comment.authorName}</span>
                 <span className="text-xs text-muted-foreground">
                   {formatDate(comment.createdAt)}
                 </span>
               </div>
-              <div className="bg-muted/50 rounded-lg p-3 overflow-hidden">
-                <div className="text-sm whitespace-pre-wrap break-all">
+              <div className="bg-muted/50 rounded-lg p-3">
+                <div className="text-sm whitespace-pre-wrap break-words overflow-auto">
                   {formatCommentText(comment.text)}
                 </div>
               </div>
