@@ -147,9 +147,9 @@ export const KanbanView = () => {
       <div className="flex h-full min-w-0 min-h-0">
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-x-auto overflow-y-hidden min-w-0"
+          className="flex-1 min-w-0"
         >
-          <div className="h-full">
+          <div className="h-full overflow-x-auto overflow-y-hidden">
             <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
               <Droppable droppableId="board" type="LIST" direction="horizontal">
                 {(provided) => (
@@ -173,7 +173,7 @@ export const KanbanView = () => {
                                 className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
                               >
                                 <Card 
-                                  className="flex flex-col kanban-column max-h-[calc(100vh-12rem)]"
+                                  className="flex flex-col kanban-column h-[calc(100vh-12rem)]"
                                   style={{ backgroundColor: list.color }}
                                 >
                                   <CardHeader 
@@ -216,7 +216,7 @@ export const KanbanView = () => {
                                       <CardContent
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto ${
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto pr-2 ${
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >

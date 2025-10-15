@@ -46,7 +46,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-foreground mb-2">{funnel.name}</h2>
         {funnel.description && (
@@ -55,11 +55,11 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 overflow-x-auto pb-4 flex-1">
+        <div className="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
           {funnel.stages.map((stage, index) => (
             <div key={stage.id} className="flex-shrink-0 w-72">
               <Card 
-                className="h-full flex flex-col"
+                className="h-[calc(100vh-16rem)] flex flex-col"
                 style={{ 
                   borderTop: `4px solid ${stage.color}`,
                 }}
@@ -112,9 +112,9 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-1 p-4 space-y-3 min-h-[200px] transition-colors ${
+                      className={`flex-1 p-4 space-y-3 min-h-[200px] overflow-y-auto pr-2 transition-colors ${
                         snapshot.isDraggingOver 
-                          ? 'bg-muted/50 border-dashed border-2 border-primary' 
+                          ? 'kanban-drop-zone' 
                           : ''
                       }`}
                     >
