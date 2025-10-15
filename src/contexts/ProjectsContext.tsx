@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { localStorageService } from '@/services/localStorage';
 
 // Transform Supabase data to match our types
 const transformDBBoard = (dbBoard: DBProjectBoard, lists: ProjectList[], labels: any[], members: any[]): ProjectBoard => {
@@ -186,7 +187,15 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 
 export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [state, setState] = useState<ProjectsState>(initialState);
+  
+  // Initialize viewAllCardsAsAdmin from localStorage
+  const savedPrefs = localStorageService.load('projects_prefs');
+  const initialViewAllState = savedPrefs?.viewAllCardsAsAdmin ?? false;
+  
+  const [state, setState] = useState<ProjectsState>({
+    ...initialState,
+    viewAllCardsAsAdmin: initialViewAllState
+  });
   
   // Supabase hooks
   const boardsHook = useProjectBoards();
@@ -336,11 +345,53 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       // Fetch cards: use admin RPC when toggle is ON (ALL BOARDS), else board-only query
       if (isAdmin && viewAllCards) {
-        // Admin with "view all" ON: Load cards from ALL boards, not just current one
-        const { data: allCardsAdmin } = await supabase.rpc('get_all_cards_admin', { _user_id: currentUser?.id });
-        const mapped = (allCardsAdmin || []).map((c: any) => transformDBCard(c as any));
-        allCards.push(...(mapped as ProjectCard[]));
-        console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin view)`);
+        // Admin with "view all" ON: Load cards from ALL boards using LIGHTWEIGHT query
+        console.time('⚡ Admin load all cards');
+        try {
+          const { data: allCardsAdmin, error: adminError } = await supabase
+            .from('project_cards')
+            .select(`
+              id, list_id, title, description, status, priority,
+              due_date, start_date, estimated_hours, actual_hours,
+              position, cover, location, archived, watching,
+              created_by, client_id, created_at, updated_at
+            `)
+            .order('position', { ascending: true });
+          
+          if (adminError) {
+            console.error('Error fetching admin cards:', adminError);
+            
+            // Handle timeout specifically
+            if (adminError.code === '57014') {
+              toast({
+                title: "Carregamento demorado",
+                description: "A consulta demorou mais que o esperado. Mantendo dados anteriores.",
+                variant: "default",
+              });
+              // Don't clear state - keep previous cards visible
+              setState(prev => ({ ...prev, isLoading: false }));
+              return;
+            }
+            throw adminError;
+          }
+          
+          // Map and ensure no heavy fields
+          const mapped = (allCardsAdmin || []).map((c: any) => {
+            // Create lightweight custom_fields without attachments
+            c.custom_fields = {
+              checklists: [],
+              comments: []
+            };
+            return transformDBCard(c as any);
+          });
+          
+          allCards.push(...(mapped as ProjectCard[]));
+          console.timeEnd('⚡ Admin load all cards');
+          console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin view)`);
+        } catch (error) {
+          console.error('Unexpected error loading admin cards:', error);
+          console.timeEnd('⚡ Admin load all cards');
+        }
       } else {
         // Regular view: only cards from current board
         const listIds = new Set((lists || []).map(l => l.id));
@@ -573,6 +624,12 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     setViewAllCardsAsAdmin: (value: boolean) => {
+      // Persist to localStorage
+      localStorageService.save('projects_prefs', {
+        viewAllCardsAsAdmin: value,
+        lastUpdated: new Date().toISOString()
+      });
+      
       setState(prev => {
         const newState = { ...prev, viewAllCardsAsAdmin: value };
         // Reload board with the new state value

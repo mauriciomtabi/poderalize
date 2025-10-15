@@ -60,11 +60,15 @@ export const useProjectCards = (listId?: string) => {
   };
 
   const fetchAllBoardCards = async (boardId: string) => {
+    console.time('⚡ Fetch board cards');
     try {
       const { data, error } = await supabase
         .from('project_cards')
         .select(`
-          *,
+          id, list_id, title, description, status, priority, 
+          due_date, start_date, estimated_hours, actual_hours, 
+          position, cover, location, archived, watching, 
+          created_by, client_id, created_at, updated_at, custom_fields,
           project_lists!inner(board_id)
         `)
         .eq('project_lists.board_id', boardId)
@@ -72,10 +76,33 @@ export const useProjectCards = (listId?: string) => {
 
       if (error) {
         console.error('Error fetching board cards:', error);
+        
+        // Handle timeout specifically
+        if (error.code === '57014') {
+          toast({
+            title: "Carregamento demorado",
+            description: "A consulta demorou mais que o esperado.",
+            variant: "default",
+          });
+        }
+        
         return [];
       }
 
-      return data || [];
+      console.timeEnd('⚡ Fetch board cards');
+      
+      // Strip attachments from custom_fields to reduce payload
+      const cleanedData = (data || []).map(card => {
+        if (card.custom_fields && typeof card.custom_fields === 'object') {
+          const cf = card.custom_fields as any;
+          if (cf.attachments) {
+            delete cf.attachments;
+          }
+        }
+        return card;
+      });
+      
+      return cleanedData;
     } catch (error) {
       console.error('Error fetching board cards:', error);
       return [];
