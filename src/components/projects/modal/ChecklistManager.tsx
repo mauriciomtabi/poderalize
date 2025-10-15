@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -51,10 +51,6 @@ export const ChecklistManager = ({
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [newItemTexts, setNewItemTexts] = useState<Record<string, string>>({});
   const [showNewItemForms, setShowNewItemForms] = useState<Record<string, boolean>>({});
-  const [openAssigneePopovers, setOpenAssigneePopovers] = useState<Record<string, boolean>>({});
-  
-  // FASE 6: Ref para debounce de updates
-  const updateTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleAddChecklist = (title?: string, items?: string[]) => {
     const checklistTitle = title || newChecklistTitle.trim();
@@ -194,10 +190,6 @@ export const ChecklistManager = ({
   };
 
   const handleAssigneeChange = (checklistId: string, itemId: string, assigneeId: string | null) => {
-    // Close popover immediately for better UX
-    const popoverKey = `${checklistId}-${itemId}`;
-    setOpenAssigneePopovers(prev => ({ ...prev, [popoverKey]: false }));
-
     const updatedChecklists = currentChecklists.map(cl => 
       cl.id === checklistId 
         ? {
@@ -212,19 +204,10 @@ export const ChecklistManager = ({
     if (isCreationMode && onChecklistsChange) {
       onChecklistsChange(updatedChecklists);
     } else if (card) {
-      // FASE 2 & 6: Update leve (somente custom_fields) + debounce
-      // Clear timeout anterior
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-      
-      // Update com debounce de 300ms usando lightweightUpdate
-      updateTimeoutRef.current = setTimeout(() => {
-        actions.updateCard({
-          ...card,
-          checklists: updatedChecklists
-        }, { lightweightUpdate: true });
-      }, 300);
+      actions.updateCard({
+        ...card,
+        checklists: updatedChecklists
+      });
     }
   };
 
@@ -283,7 +266,6 @@ export const ChecklistManager = ({
           <div className="space-y-2 pl-6">
             {checklist.items.map(item => {
               const assignee = getAssigneeInfo(item.assignee);
-              const popoverKey = `${checklist.id}-${item.id}`;
               return (
                 <div key={item.id} className="flex items-center gap-2 group" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
@@ -307,10 +289,7 @@ export const ChecklistManager = ({
                   )}
                   
                   {/* Assignee selector - aparece no hover */}
-                  <Popover 
-                    open={openAssigneePopovers[popoverKey]}
-                    onOpenChange={(open) => setOpenAssigneePopovers(prev => ({ ...prev, [popoverKey]: open }))}
-                  >
+                  <Popover>
                     <PopoverTrigger asChild>
                       <Button 
                         variant="ghost" 

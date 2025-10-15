@@ -35,7 +35,6 @@ export const useProjectCards = (listId?: string) => {
     if (!listId) return;
     
     try {
-      // Query usando select * mas removendo attachments depois
       const { data, error } = await supabase
         .from('project_cards')
         .select('*')
@@ -52,16 +51,7 @@ export const useProjectCards = (listId?: string) => {
         return;
       }
 
-      // Remover attachments pesados
-      const lightCards = (data || []).map((card: any) => {
-        if (card.custom_fields?.attachments) {
-          const { attachments, ...rest } = card.custom_fields;
-          return { ...card, custom_fields: rest };
-        }
-        return card;
-      });
-
-      setCards(lightCards);
+      setCards(data || []);
     } catch (error) {
       console.error('Error fetching cards:', error);
     } finally {
@@ -73,7 +63,11 @@ export const useProjectCards = (listId?: string) => {
     try {
       const { data, error } = await supabase
         .from('project_cards')
-        .select(`*`)
+        .select(`
+          *,
+          project_lists!inner(board_id)
+        `)
+        .eq('project_lists.board_id', boardId)
         .order('position', { ascending: true });
 
       if (error) {
@@ -85,71 +79,6 @@ export const useProjectCards = (listId?: string) => {
     } catch (error) {
       console.error('Error fetching board cards:', error);
       return [];
-    }
-  };
-
-  // Buscar cartões por múltiplas listas (evita JOIN pesado) - MODO LEVE
-  const fetchCardsByListIds = async (listIds: string[]): Promise<ProjectCard[]> => {
-    if (!listIds || listIds.length === 0) return [];
-    
-    console.time('⏱️ fetchCardsByListIds');
-    try {
-      // Query leve: seleciona campos essenciais + checklists/comments do custom_fields, SEM attachments
-      const { data, error } = await supabase
-        .from('project_cards')
-        .select('*')
-        .in('list_id', listIds)
-        .order('position', { ascending: true }) as any;
-
-      if (error) {
-        console.error('Error fetching cards by list ids:', error);
-        
-        // Error 57014 = timeout - mostrar toast amigável
-        if (error.code === '57014') {
-          toast({
-            title: "Carregamento demorado",
-            description: "Alguns cards podem não ter carregado. Tente novamente.",
-            variant: "destructive",
-          });
-        }
-        return [];
-      }
-      
-      // Remover attachments dos cards retornados
-      const lightCards = (data || []).map((card: any) => {
-        if (card.custom_fields?.attachments) {
-          const { attachments, ...rest } = card.custom_fields;
-          return { ...card, custom_fields: rest };
-        }
-        return card;
-      });
-      
-      console.timeEnd('⏱️ fetchCardsByListIds');
-      return lightCards as ProjectCard[];
-    } catch (error) {
-      console.error('Error fetching cards by list ids:', error);
-      console.timeEnd('⏱️ fetchCardsByListIds');
-      return [];
-    }
-  };
-
-  // Buscar um cartão completo (com attachments) - para o modal
-  const fetchCardWithAttachments = async (cardId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('project_cards')
-        .select('*')
-        .eq('id', cardId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching card with attachments:', error);
-        return null;
-      }
-      return data;
-    } catch (error) {
-      console.error('Error fetching card with attachments:', error);
-      return null;
     }
   };
 
@@ -245,8 +174,6 @@ export const useProjectCards = (listId?: string) => {
     isLoading,
     fetchCards,
     fetchAllBoardCards,
-    fetchCardsByListIds,
-    fetchCardWithAttachments,
     createCard,
     updateCard,
     deleteCard,

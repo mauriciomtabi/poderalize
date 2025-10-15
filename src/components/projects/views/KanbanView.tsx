@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useProjects } from "@/contexts/ProjectsContext";
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { EnhancedProjectCard } from "../cards/EnhancedProjectCard";
 import { AddListDialog } from "../dialogs/AddListDialog";
 import { ListActionsDialog } from "../dialogs/ListActionsDialog";
@@ -105,36 +105,30 @@ export const KanbanView = () => {
     );
   };
 
-  // FASE 3: Filtrar cards uma única vez por render
-  const filteredCards = useMemo(() => {
-    return actions.getFilteredCards();
-  }, [state.currentBoard, state.filters]);
-
-  // FASE 4: Handlers estáveis com useCallback
-  const handleAddCard = useCallback(async (listId: string) => {
+  const handleAddCard = async (listId: string) => {
     setSelectedListId(listId);
     setSelectedCard(undefined);
     setShowCardModal(true);
-  }, []);
+  };
 
-  const handleCardClick = useCallback((card: any) => {
+  const handleCardClick = (card: any) => {
     setSelectedCard(card);
     setShowCardModal(true);
-  }, []);
+  };
 
-  const handleEditCard = useCallback((card: any) => {
+  const handleEditCard = (card: any) => {
     setSelectedCard(card);
     setShowCardModal(true);
-  }, []);
+  };
 
-  const handleAddList = useCallback(() => {
+  const handleAddList = () => {
     setShowAddListDialog(true);
-  }, []);
+  };
 
-  const handleListActions = useCallback((list: ProjectList) => {
+  const handleListActions = (list: ProjectList) => {
     setSelectedList(list);
     setShowListActionsDialog(true);
-  }, []);
+  };
 
   if (!state.currentBoard) {
     return <div className="flex items-center justify-center h-full">Nenhum projeto selecionado</div>;
@@ -167,8 +161,8 @@ export const KanbanView = () => {
                     {state.currentBoard.lists
                       .filter(list => !list.archived)
                       .map((list, index) => {
-                        // FASE 3: Filtrar do array já memoizado
-                        const listCards = filteredCards.filter(card => card.listId === list.id);
+                        // Apply filters to cards in this list
+                        const filteredCards = actions.getFilteredCards().filter(card => card.listId === list.id);
                         
                         return (
                           <Draggable key={list.id} draggableId={list.id} index={index}>
@@ -195,7 +189,7 @@ export const KanbanView = () => {
                                           placeholder="Título da lista"
                                         />
                                         <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
-                                          {listCards.length}
+                                          {filteredCards.length}
                                         </Badge>
                                       </div>
                                       <DropdownMenu>
@@ -226,7 +220,7 @@ export const KanbanView = () => {
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >
-                                        {listCards.map((card, index) => (
+                                        {filteredCards.map((card, index) => (
                                           <Draggable key={card.id} draggableId={card.id} index={index}>
                                             {(provided, snapshot) => (
                                               <div

@@ -9,7 +9,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { localStorageService } from '@/services/localStorage';
 
 // Transform Supabase data to match our types
 const transformDBBoard = (dbBoard: DBProjectBoard, lists: ProjectList[], labels: any[], members: any[]): ProjectBoard => {
@@ -49,24 +48,20 @@ const transformDBList = (dbList: DBProjectList, cards: ProjectCard[]): ProjectLi
   };
 };
 
-const transformDBCard = (dbCard: any): ProjectCard => {
-  // Handle both full cards and lightweight cards (from selective queries)
+const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
   const cf = (dbCard.custom_fields as any) || {};
-  
-  // If checklists/comments come as separate columns (from lightweight query)
-  const checklists = dbCard.checklists || (Array.isArray(cf.checklists) ? cf.checklists : []);
-  const comments = dbCard.comments || (Array.isArray(cf.comments) ? cf.comments : []);
-  
-  // Attachments are only loaded on-demand (not in lightweight queries)
+  const checklists = Array.isArray(cf.checklists) ? cf.checklists : [];
+  const comments = Array.isArray(cf.comments) ? cf.comments : [];
   const attachments = Array.isArray(cf.attachments) ? cf.attachments : [];
+  // Activities will be loaded separately from the database
   const activities: any[] = [];
 
   return {
     id: dbCard.id,
-    title: dbCard.title || '',
-    description: dbCard.description || '',
-    status: (dbCard.status as CardStatus) || 'todo',
-    priority: (dbCard.priority as Priority) || 'medium',
+    title: dbCard.title,
+    description: dbCard.description,
+    status: dbCard.status as CardStatus,
+    priority: dbCard.priority as Priority,
     labels: [],
     assignees: [],
     dueDate: dbCard.due_date,
@@ -77,7 +72,7 @@ const transformDBCard = (dbCard: any): ProjectCard => {
     attachments,
     comments,
     activities,
-    position: dbCard.position || 0,
+    position: dbCard.position,
     listId: dbCard.list_id,
     createdBy: dbCard.created_by,
     createdAt: dbCard.created_at,
@@ -85,8 +80,8 @@ const transformDBCard = (dbCard: any): ProjectCard => {
     cover: dbCard.cover,
     location: dbCard.location,
     customFields: cf,
-    archived: dbCard.archived || false,
-    watching: dbCard.watching || false,
+    archived: dbCard.archived,
+    watching: dbCard.watching,
     client_id: dbCard.client_id
   };
 };
@@ -163,7 +158,7 @@ interface ProjectsContextType {
     
     // Card actions
     addCard: (listId: string, card: Omit<ProjectCard, 'id' | 'position' | 'createdAt' | 'updatedAt' | 'activities'>) => Promise<boolean>;
-    updateCard: (card: ProjectCard, options?: { lightweightUpdate?: boolean }) => Promise<boolean>;
+    updateCard: (card: ProjectCard) => Promise<boolean>;
     deleteCard: (cardId: string) => Promise<boolean>;
     moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => Promise<boolean>;
     duplicateCard: (cardId: string) => Promise<boolean>;
@@ -191,14 +186,7 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 
 export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [state, setState] = useState<ProjectsState>(() => {
-    // Inicializar com viewAllCardsAsAdmin do localStorage
-    const prefs = localStorageService.load('projects_prefs');
-    return {
-      ...initialState,
-      viewAllCardsAsAdmin: prefs?.viewAllCardsAsAdmin || false
-    };
-  });
+  const [state, setState] = useState<ProjectsState>(initialState);
   
   // Supabase hooks
   const boardsHook = useProjectBoards();
@@ -250,24 +238,6 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     handleBoardsLoaded();
   }, [boardsHook.boards, boardsHook.isLoading, user]);
 
-  // FASE 1: Helper para update otimista local
-  const updateCardInState = (updatedCard: ProjectCard) => {
-    setState(prev => {
-      if (!prev.currentBoard) return prev;
-      
-      return {
-        ...prev,
-        currentBoard: {
-          ...prev.currentBoard,
-          lists: prev.currentBoard.lists.map(list => ({
-            ...list,
-            cards: list.cards.map(c => c.id === updatedCard.id ? updatedCard : c)
-          }))
-        }
-      };
-    });
-  };
-
   // Load current board data
   const loadBoard = async (boardId: string, adminViewAll?: boolean) => {
     setState(prev => ({ ...prev, isLoading: true }));
@@ -279,34 +249,12 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const board = boardsHook.boards.find(b => b.id === boardId);
       if (!board) return;
 
-      // FASE 5: Usar user do contexto ao invés de getUser() para evitar chamada de rede
-      const currentUser = user;
-      if (!currentUser) return;
-
-      // FASE 1: Queries Paralelas - Execute todas as queries simultaneamente
-      const [
-        { data: listsData, error: listsError },
-        labelsResponse,
-        { data: projectMembers },
-        { data: profilesData }
-      ] = await Promise.all([
-        supabase
-          .from('project_lists')
-          .select('*')
-          .eq('board_id', boardId)
-          .order('position', { ascending: true }),
-        supabase
-          .from('project_labels')
-          .select('*')
-          .eq('board_id', boardId),
-        supabase
-          .from('project_members')
-          .select('*')
-          .eq('board_id', boardId),
-        supabase
-          .from('profiles')
-          .select('user_id, avatar_url, full_name, email')
-      ]);
+      // Create a temporary lists hook for this specific board
+      const { data: listsData, error: listsError } = await supabase
+        .from('project_lists')
+        .select('*')
+        .eq('board_id', boardId)
+        .order('position', { ascending: true });
 
       if (listsError) {
         console.error('Error fetching lists:', listsError);
@@ -314,19 +262,45 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         return;
       }
 
-      let labels = labelsResponse.data?.map(transformDBLabel) || [];
+      // Fetch labels and members directly from Supabase for reliability
+      const labelsResponse = await supabase
+        .from('project_labels')
+        .select('*')
+        .eq('board_id', boardId);
 
-      // FASE 2: Usar Map ao invés de .find() para O(n) ao invés de O(n²)
-      const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+      let labels = labelsResponse.data?.map(transformDBLabel) || [];
+      
+      // Current auth user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      // Fetch existing project members for this board (no auto-sync)
+      const { data: projectMembers } = await supabase
+        .from('project_members')
+        .select('*')
+        .eq('board_id', boardId);
+
+      // Fetch colaboradores for enrichment only
+      const { data: colaboradoresData } = await supabase
+        .from('colaboradores')
+        .select('*')
+        .eq('status', 'ativo');
+
+      // Fetch profiles to enrich with avatar/name
+      const userIds = (projectMembers || []).map(pm => pm.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, avatar_url, full_name, email')
+        .in('user_id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
 
       // Build members list aligned to project_members.id (required by project_card_assignees)
       let members: Member[] = (projectMembers || []).map(pm => {
-        const profile = profileMap.get(pm.user_id);
+        const profile = profilesData?.find(p => p.user_id === pm.user_id);
+        const colab = (colaboradoresData || []).find(c => c.user_id === pm.user_id);
         return {
           id: pm.id, // IMPORTANT: use project_members.id for linking
-          user_id: pm.user_id,
-          name: pm.name || profile?.full_name || profile?.email || 'Usuário',
-          email: pm.email || profile?.email || '',
+          user_id: pm.user_id, // Adicionado para permitir filtro por colaboradores ativos
+          name: colab?.nome || pm.name || profile?.full_name || profile?.email || 'Usuário',
+          email: colab?.email || pm.email || profile?.email || '',
           avatar: profile?.avatar_url || pm.avatar,
           role: (pm.role as any) || 'member'
         };
@@ -334,24 +308,15 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       // Also include the current user if somehow missing
       if (currentUser?.id && !(projectMembers || []).some(pm => pm.user_id === currentUser.id)) {
-        const currentProfile = profileMap.get(currentUser.id);
         members.push({
           id: currentUser.id,
-          user_id: currentUser.id,
+          user_id: currentUser.id, // Adicionado para permitir filtro por colaboradores ativos
           name: (currentUser as any).user_metadata?.full_name || currentUser.email || 'Você',
           email: currentUser.email || '',
-          avatar: currentProfile?.avatar_url,
+          avatar: profilesData?.find(p => p.user_id === currentUser.id)?.avatar_url,
           role: 'owner' as const
         });
       }
-
-      // FASE 7: Pré-carregar avatares em cache do browser
-      members.forEach(member => {
-        if (member.avatar) {
-          const img = new Image();
-          img.src = member.avatar;
-        }
-      });
 
       // NEVER auto-create labels - they should only be created when board is created
 
@@ -368,70 +333,23 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const isAdmin = !!isAdminFn;
       
       console.log(`🔍 Loading cards for board ${boardId}. Admin: ${isAdmin}, ViewAll: ${viewAllCards}`);
-      console.time('⏱️ Total card loading time');
       
-      // Fetch cards: use admin RPC quando toggle ON (ALL BOARDS), else board-only query
+      // Fetch cards: use admin RPC when toggle is ON (ALL BOARDS), else board-only query
       if (isAdmin && viewAllCards) {
-        // Admin com "view all" ON: Carregar cards de TODOS os boards usando RPC leve
-        try {
-          const { data: allCardsAdmin, error: rpcError } = await supabase.rpc('get_all_cards_admin_light', { 
-            _user_id: currentUser.id 
-          });
-          
-          if (rpcError) {
-            console.error('Error calling get_all_cards_admin_light:', rpcError);
-            
-            // Fallback: tentar com a RPC antiga se a nova não existir
-            if (rpcError.message?.includes('does not exist')) {
-              const { data: fallbackCards } = await supabase.rpc('get_all_cards_admin', { _user_id: currentUser.id });
-              const mapped = (fallbackCards || []).map((c: any) => {
-                // Remover attachments pesados do fallback
-                const card = c as any;
-                if (card.custom_fields?.attachments) {
-                  const { attachments, ...rest } = card.custom_fields;
-                  card.custom_fields = rest;
-                }
-                return transformDBCard(card);
-              });
-              allCards.push(...(mapped as ProjectCard[]));
-              console.log(`📦 Loaded ${mapped.length} cards from ALL boards (fallback)`);
-            } else if (rpcError.code === '57014') {
-              // Timeout error - mostrar mensagem amigável
-              toast({
-                title: "Timeout ao carregar cards",
-                description: "Há muitos cards. Desative 'Ver todos' ou aguarde.",
-                variant: "destructive",
-              });
-            }
-          } else {
-            // Mapear retorno da RPC leve (card_position -> position)
-            const mapped = (allCardsAdmin || []).map((c: any) => {
-              const cardWithPosition = { ...c, position: c.card_position };
-              delete cardWithPosition.card_position;
-              return transformDBCard(cardWithPosition as any);
-            });
-            allCards.push(...(mapped as ProjectCard[]));
-            console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin light view)`);
-          }
-        } catch (err) {
-          console.error('Error in admin view all:', err);
-          toast({
-            title: "Erro ao carregar cards",
-            description: "Tente novamente ou desative 'Ver todos'.",
-            variant: "destructive",
-          });
-        }
+        // Admin with "view all" ON: Load cards from ALL boards, not just current one
+        const { data: allCardsAdmin } = await supabase.rpc('get_all_cards_admin', { _user_id: currentUser?.id });
+        const mapped = (allCardsAdmin || []).map((c: any) => transformDBCard(c as any));
+        allCards.push(...(mapped as ProjectCard[]));
+        console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin view)`);
       } else {
-        // Visualização normal: apenas cards do board atual
-        const listIds = (lists || []).map(l => l.id);
-        const boardCards = await cardsHook.fetchCardsByListIds(listIds);
+        // Regular view: only cards from current board
+        const listIds = new Set((lists || []).map(l => l.id));
+        const boardCards = await cardsHook.fetchAllBoardCards(boardId);
         if (boardCards) {
           allCards.push(...boardCards.map(transformDBCard));
           console.log(`📦 Loaded ${boardCards.length} cards from current board`);
         }
       }
-      
-      console.timeEnd('⏱️ Total card loading time');
 
       // Enrich cards with labels and assignees from linking tables
       const cardIds = allCards.map(c => c.id);
@@ -491,77 +409,57 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const isBoardOwner = boardOwner?.user_id === currentUser?.id;
       
       if (isAdmin && viewAllCards) {
-        // FASE 4 & 5: Admin ViewAll Otimizado - Só buscar se houver cards
-        if (allCards.length === 0) {
-          // Sem cards, não precisa buscar listas de outros boards
-          for (const list of lists) {
-            listsWithCards.push(transformDBList(list, []));
-          }
-        } else {
-          // Fetch ALL lists from ALL boards to map by title and position index per board
-          const { data: allListsData } = await supabase
-            .from('project_lists')
-            .select('id, title, position, board_id')
-            .order('position', { ascending: true });
+        // Admin viewing all: Group ALL cards by list title into current board's lists
+        // Fetch ALL lists from ALL boards to map by title and position index per board
+        const { data: allListsData } = await supabase
+          .from('project_lists')
+          .select('id, title, position, board_id')
+          .order('position', { ascending: true });
+        
+        const allLists = allListsData || [];
+        
+        // Helpers
+        const normalize = (s: string) => (s || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .trim();
+        
+        // Map list title -> ids (across all boards)
+        const titleToIds = new Map<string, string[]>();
+        // Map board_id -> lists ordered by position
+        const boardToLists = new Map<string, { id: string; title: string }[]>();
+        
+        allLists.forEach((l: any) => {
+          const key = normalize(l.title);
+          const ids = titleToIds.get(key) || [];
+          ids.push(l.id);
+          titleToIds.set(key, ids);
           
-          const allLists = allListsData || [];
+          const arr = boardToLists.get(l.board_id) || [];
+          arr.push({ id: l.id, title: l.title });
+          boardToLists.set(l.board_id, arr);
+        });
+        
+        // Ensure arrays per board are ordered by position already due to query order
+        
+        for (let i = 0; i < lists.length; i++) {
+          const list = lists[i];
+          const key = normalize(list.title);
+          let matchingListIds = titleToIds.get(key) || [];
           
-          // Helpers
-          const normalize = (s: string) => (s || '')
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim();
-          
-          // Map list title -> ids (across all boards)
-          const titleToIds = new Map<string, string[]>();
-          // Map board_id -> lists ordered by position
-          const boardToLists = new Map<string, { id: string; title: string }[]>();
-          
-          allLists.forEach((l: any) => {
-            const key = normalize(l.title);
-            const ids = titleToIds.get(key) || [];
-            ids.push(l.id);
-            titleToIds.set(key, ids);
-            
-            const arr = boardToLists.get(l.board_id) || [];
-            arr.push({ id: l.id, title: l.title });
-            boardToLists.set(l.board_id, arr);
-          });
-          
-          // Agrupar cards uma única vez por listId
-          const cardsByListId = new Map<string, ProjectCard[]>();
-          allCards.forEach(card => {
-            const existing = cardsByListId.get(card.listId) || [];
-            existing.push(card);
-            cardsByListId.set(card.listId, existing);
-          });
-          
-          // Mapear listas para cards usando lookup direto
-          for (let i = 0; i < lists.length; i++) {
-            const list = lists[i];
-            const key = normalize(list.title);
-            let matchingListIds = titleToIds.get(key) || [];
-            
-            // Fallback: if no title matches found, aggregate by same index across boards
-            if (matchingListIds.length === 0) {
-              const fallbackIds: string[] = [];
-              boardToLists.forEach((arr) => {
-                if (i < arr.length) fallbackIds.push(arr[i].id);
-              });
-              matchingListIds = fallbackIds.length ? fallbackIds : [list.id];
-            }
-            
-            // Combinar cards de todas as listas matching
-            const listCards: ProjectCard[] = [];
-            matchingListIds.forEach(id => {
-              const cards = cardsByListId.get(id);
-              if (cards) listCards.push(...cards);
+          // Fallback: if no title matches found, aggregate by same index across boards
+          if (matchingListIds.length === 0) {
+            const fallbackIds: string[] = [];
+            boardToLists.forEach((arr) => {
+              if (i < arr.length) fallbackIds.push(arr[i].id);
             });
-            
-            listsWithCards.push(transformDBList(list, listCards));
-            console.log(`🔓 Admin view: ${list.title} => ${listCards.length} cards (matched ${matchingListIds.length} lists)`);
+            matchingListIds = fallbackIds.length ? fallbackIds : [list.id];
           }
+          
+          const listCards = allCards.filter(card => matchingListIds.includes(card.listId));
+          listsWithCards.push(transformDBList(list, listCards));
+          console.log(`🔓 Admin view: ${list.title} => ${listCards.length} cards (matched ${matchingListIds.length} lists)`);
         }
       } else {
         // Regular view: only show lists from current board
@@ -605,7 +503,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  // FASE 6: Realtime subscription sem reload completo
+  // Realtime subscription for automatic card updates when automation runs
   useEffect(() => {
     if (!state.currentBoard?.id || state.currentBoard.lists.length === 0) return;
 
@@ -623,28 +521,20 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           schema: 'public',
           table: 'project_cards'
         },
-        async (payload) => {
+        (payload) => {
           const newCard = payload.new as any;
           // Check if the card belongs to one of this board's lists
           if (listIds.includes(newCard.list_id)) {
             console.log('🎯 New card detected by automation:', newCard);
             
-            // Check if already exists (avoid duplicates)
-            const exists = state.currentBoard?.lists.some(l => 
-              l.cards.some(c => c.id === newCard.id)
-            );
+            // Show notification
+            toast({
+              title: "Card criado pela automação",
+              description: `"${newCard.title}" foi adicionado automaticamente`,
+            });
             
-            if (!exists) {
-              // Transform and add to state locally
-              const transformedCard = transformDBCard(newCard as any);
-              updateCardInState(transformedCard);
-              
-              // Show notification
-              toast({
-                title: "Card criado pela automação",
-                description: `"${newCard.title}" foi adicionado automaticamente`,
-              });
-            }
+            // Reload the board to show the new card
+            loadBoard(state.currentBoard!.id);
           }
         }
       )
@@ -683,12 +573,6 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     setViewAllCardsAsAdmin: (value: boolean) => {
-      // Salvar preferência no localStorage
-      localStorageService.save('projects_prefs', {
-        viewAllCardsAsAdmin: value,
-        lastUpdated: new Date().toISOString()
-      });
-      
       setState(prev => {
         const newState = { ...prev, viewAllCardsAsAdmin: value };
         // Reload board with the new state value
@@ -925,89 +809,99 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     },
 
-    updateCard: async (card: ProjectCard, options?: { lightweightUpdate?: boolean }) => {
+    updateCard: async (card: ProjectCard) => {
       try {
-        // FASE 1 & 5: Update otimista - atualizar UI imediatamente
-        updateCardInState(card);
-        
-        // Sync labels and assignees link tables SOMENTE se não for update leve
+        // Sync labels and assignees link tables if we have current board context
         const prevCard = state.currentBoard?.lists.flatMap(l => l.cards).find(c => c.id === card.id);
 
-        if (!options?.lightweightUpdate) {
-          // Labels diff
-          const prevLabelIds = (prevCard?.labels || []).map(l => l.id);
-          const newLabelIds = (card.labels || []).map(l => l.id);
-          const labelsToAdd = newLabelIds.filter(id => !prevLabelIds.includes(id));
-          const labelsToRemove = prevLabelIds.filter(id => !newLabelIds.includes(id));
+        // Labels diff
+        const prevLabelIds = (prevCard?.labels || []).map(l => l.id);
+        const newLabelIds = (card.labels || []).map(l => l.id);
+        const labelsToAdd = newLabelIds.filter(id => !prevLabelIds.includes(id));
+        const labelsToRemove = prevLabelIds.filter(id => !newLabelIds.includes(id));
 
-          if (labelsToAdd.length > 0) {
-            await supabase
-              .from('project_card_labels')
-              .insert(labelsToAdd.map(id => ({ card_id: card.id, label_id: id })) as any);
-          }
-          if (labelsToRemove.length > 0) {
-            await supabase
-              .from('project_card_labels')
-              .delete()
-              .eq('card_id', card.id)
-              .in('label_id', labelsToRemove as any);
-          }
+        if (labelsToAdd.length > 0) {
+          await supabase
+            .from('project_card_labels')
+            .insert(labelsToAdd.map(id => ({ card_id: card.id, label_id: id })) as any);
+        }
+        if (labelsToRemove.length > 0) {
+          await supabase
+            .from('project_card_labels')
+            .delete()
+            .eq('card_id', card.id)
+            .in('label_id', labelsToRemove as any);
+        }
 
-          // Assignees diff
-          const prevMemberIds = (prevCard?.assignees || []).map(m => m.id);
-          const newMemberIds = (card.assignees || []).map(m => m.id);
-          const membersToAdd = newMemberIds.filter(id => !prevMemberIds.includes(id));
-          const membersToRemove = prevMemberIds.filter(id => !newMemberIds.includes(id));
+        // Assignees diff
+        const prevMemberIds = (prevCard?.assignees || []).map(m => m.id);
+        const newMemberIds = (card.assignees || []).map(m => m.id);
+        const membersToAdd = newMemberIds.filter(id => !prevMemberIds.includes(id));
+        const membersToRemove = prevMemberIds.filter(id => !newMemberIds.includes(id));
 
-          if (membersToAdd.length > 0) {
-            const insertData = membersToAdd.map(id => ({ card_id: card.id, member_id: id }));
-            
-            const { error: insertError } = await supabase
-              .from('project_card_assignees')
-              .insert(insertData as any)
-              .select();
-            
-            if (insertError) {
-              console.error('❌ Error inserting assignees:', insertError);
-            }
-            
-            // Create notifications for newly added members
-            for (const memberId of membersToAdd) {
-              const { data: memberData } = await supabase
-                .from('project_members')
-                .select('user_id, name')
-                .eq('id', memberId)
-                .single();
-              
-              if (memberData?.user_id) {
-                await supabase
-                  .from('notifications')
-                  .insert({
-                    user_id: memberData.user_id,
-                    type: 'project_assignment',
-                    title: 'Novo cartão atribuído',
-                    description: `Você foi atribuído ao cartão "${card.title}"`,
-                    priority: 'medium',
-                    link: `/projetos?card=${card.id}`,
-                    read: false
-                  });
-              }
-            }
+        console.log('🔍 Assignee sync:', { 
+          prevMemberIds, 
+          newMemberIds, 
+          membersToAdd, 
+          membersToRemove,
+          cardId: card.id
+        });
+
+        if (membersToAdd.length > 0) {
+          const insertData = membersToAdd.map(id => ({ card_id: card.id, member_id: id }));
+          console.log('➕ Inserting assignees:', insertData);
+          
+          const { data: insertResult, error: insertError } = await supabase
+            .from('project_card_assignees')
+            .insert(insertData as any)
+            .select();
+          
+          if (insertError) {
+            console.error('❌ Error inserting assignees:', insertError);
+          } else {
+            console.log('✅ Assignees inserted successfully:', insertResult);
           }
-          if (membersToRemove.length > 0) {
-            const { error: deleteError } = await supabase
-              .from('project_card_assignees')
-              .delete()
-              .eq('card_id', card.id)
-              .in('member_id', membersToRemove as any);
+          
+          // Create notifications for newly added members
+          for (const memberId of membersToAdd) {
+            const { data: memberData } = await supabase
+              .from('project_members')
+              .select('user_id, name')
+              .eq('id', memberId)
+              .single();
             
-            if (deleteError) {
-              console.error('❌ Error removing assignees:', deleteError);
+            if (memberData?.user_id) {
+              await supabase
+                .from('notifications')
+                .insert({
+                  user_id: memberData.user_id,
+                  type: 'project_assignment',
+                  title: 'Novo cartão atribuído',
+                  description: `Você foi atribuído ao cartão "${card.title}"`,
+                  priority: 'medium',
+                  link: `/projetos?card=${card.id}`,
+                  read: false
+                });
             }
           }
         }
+        if (membersToRemove.length > 0) {
+          console.log('➖ Removing assignees:', membersToRemove);
+          
+          const { error: deleteError } = await supabase
+            .from('project_card_assignees')
+            .delete()
+            .eq('card_id', card.id)
+            .in('member_id', membersToRemove as any);
+          
+          if (deleteError) {
+            console.error('❌ Error removing assignees:', deleteError);
+          } else {
+            console.log('✅ Assignees removed successfully');
+          }
+        }
 
-        // Update main card fields em background
+        // Update main card fields
         const result = await cardsHook.updateCard(card.id, {
           title: card.title,
           description: card.description,
@@ -1031,19 +925,12 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           watching: card.watching
         } as any);
         
-        // NÃO recarregar o board - update já foi feito otimisticamente
-        return result;
-      } catch (error) {
-        console.error('Error updating card:', error);
-        toast({
-          title: 'Erro ao atualizar',
-          description: 'Recarregando...',
-          variant: 'destructive',
-        });
-        // Fallback: reload em caso de erro
-        if (state.currentBoard) {
+        if (result && state.currentBoard) {
           await loadBoard(state.currentBoard.id);
         }
+        return result;
+      } catch (error) {
+        console.error('Error updating card with labels/assignees:', error);
         return false;
       }
     },
@@ -1057,26 +944,17 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     moveCard: async (cardId: string, sourceListId: string, destListId: string, newPosition: number) => {
-      // FASE 1: Update otimista - mover card localmente imediatamente
-      const card = state.currentBoard?.lists.flatMap(l => l.cards).find(c => c.id === cardId);
-      if (card && state.currentBoard) {
-        const movedCard = { ...card, listId: destListId, position: newPosition };
-        updateCardInState(movedCard);
-      }
-      
-      // Persistir em background
       const result = await cardsHook.updateCard(cardId, {
         list_id: destListId,
         position: newPosition
       } as any);
       
       if (result && state.currentBoard) {
-        // Add activity for card move em background
+        // Add activity for card move
         const sourceList = state.currentBoard.lists.find(l => l.id === sourceListId);
         const destList = state.currentBoard.lists.find(l => l.id === destListId);
         if (sourceList && destList && sourceListId !== destListId && user) {
-          // Fire and forget activity logging
-          void supabase
+          await supabase
             .from('project_activities')
             .insert({
               card_id: cardId,
@@ -1085,6 +963,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
               details: { sourceListId, destListId }
             } as any);
         }
+        await loadBoard(state.currentBoard.id);
       }
       return result;
     },

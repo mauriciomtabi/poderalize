@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -26,7 +25,7 @@ import {
 import { ProjectCard } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { cn, getInitials, isDateOverdue, getDueDateColorClass } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
 
 const priorityConfig = {
@@ -53,8 +52,7 @@ interface EnhancedProjectCardProps {
   onClick?: () => void;
 }
 
-// FASE 4: Componente base
-const EnhancedProjectCardComponent = ({ 
+export const EnhancedProjectCard = ({ 
   card, 
   onEdit, 
   onDelete, 
@@ -65,36 +63,27 @@ const EnhancedProjectCardComponent = ({
   const { state } = useProjects();
   const PriorityIcon = priorityConfig[card.priority].icon;
   
-  // FASE 3: Memoizar Cálculos para evitar recalcular em cada render
-  const { completedTasks, totalTasks, progress, firstIncompleteTask, taskAssignee } = useMemo(() => {
-    const completed = card.checklists.reduce((acc, checklist) => 
-      acc + checklist.items.filter(item => item.completed).length, 0
-    );
-    const total = card.checklists.reduce((acc, checklist) => 
-      acc + checklist.items.length, 0
-    );
-    const prog = total > 0 ? (completed / total) * 100 : 0;
-    
-    const firstIncomplete = card.checklists
-      .flatMap(checklist => checklist.items)
-      .find(item => !item.completed);
-    
-    const assignee = firstIncomplete?.assignee 
-      ? card.assignees.find(a => a.id === firstIncomplete.assignee)
-      : null;
-    
-    return {
-      completedTasks: completed,
-      totalTasks: total,
-      progress: prog,
-      firstIncompleteTask: firstIncomplete,
-      taskAssignee: assignee
-    };
-  }, [card.checklists, card.assignees]);
+  const completedTasks = card.checklists.reduce((acc, checklist) => 
+    acc + checklist.items.filter(item => item.completed).length, 0
+  );
+  const totalTasks = card.checklists.reduce((acc, checklist) => 
+    acc + checklist.items.length, 0
+  );
+  const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   
   const isOverdue = card.dueDate && isDateOverdue(card.dueDate) && card.status !== 'done';
   
   const cardColorClass = cardColorStyles[state.currentBoard?.cardColor as keyof typeof cardColorStyles] || cardColorStyles.default;
+
+  // Get first incomplete task
+  const firstIncompleteTask = card.checklists
+    .flatMap(checklist => checklist.items)
+    .find(item => !item.completed);
+
+  // Get assignee info for the first incomplete task
+  const taskAssignee = firstIncompleteTask?.assignee 
+    ? card.assignees.find(a => a.id === firstIncompleteTask.assignee)
+    : null;
 
   return (
     <Card className={cn("card-kanban group", cardColorClass)} onClick={onClick}>
@@ -280,6 +269,3 @@ const EnhancedProjectCardComponent = ({
     </Card>
   );
 };
-
-// FASE 4: Export com memo para evitar re-renders
-export const EnhancedProjectCard = memo(EnhancedProjectCardComponent);
