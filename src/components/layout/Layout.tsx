@@ -49,7 +49,7 @@ export const Layout = () => {
         <Sidebar />
         <div className={`flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
           <Header title={title} />
-          <main className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-6 overflow-hidden">
             <Outlet />
           </main>
         </div>
