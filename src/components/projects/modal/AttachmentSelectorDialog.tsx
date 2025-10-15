@@ -61,7 +61,11 @@ export const AttachmentSelectorDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent 
+        className="max-w-2xl"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Selecione um Anexo</DialogTitle>
         </DialogHeader>
@@ -71,7 +75,12 @@ export const AttachmentSelectorDialog = ({
             {attachments.map((attachment) => (
               <div
                 key={attachment.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={(e) => handleOpen(attachment, e)}
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
               >
                 <div className="flex-shrink-0">
                   {getAttachmentIcon(attachment)}
@@ -89,6 +98,8 @@ export const AttachmentSelectorDialog = ({
                     variant="outline"
                     size="sm"
                     onClick={(e) => handleOpen(attachment, e)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
                   >
                     <ExternalLink className="h-4 w-4 mr-1" />
                     Abrir
@@ -97,6 +108,8 @@ export const AttachmentSelectorDialog = ({
                     variant="outline"
                     size="sm"
                     onClick={(e) => handleDownload(attachment, e)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Baixar
