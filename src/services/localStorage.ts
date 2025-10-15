@@ -18,6 +18,10 @@ export interface StorageData {
     notifications: boolean;
     lastUpdated: string;
   };
+  projects_prefs: {
+    viewAllCardsAsAdmin: boolean;
+    lastUpdated: string;
+  };
 }
 
 class LocalStorageService {

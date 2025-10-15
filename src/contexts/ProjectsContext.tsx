@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { localStorageService } from '@/services/localStorage';
 
 // Transform Supabase data to match our types
 const transformDBBoard = (dbBoard: DBProjectBoard, lists: ProjectList[], labels: any[], members: any[]): ProjectBoard => {
@@ -190,7 +191,14 @@ const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined
 
 export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [state, setState] = useState<ProjectsState>(initialState);
+  const [state, setState] = useState<ProjectsState>(() => {
+    // Inicializar com viewAllCardsAsAdmin do localStorage
+    const prefs = localStorageService.load('projects_prefs');
+    return {
+      ...initialState,
+      viewAllCardsAsAdmin: prefs?.viewAllCardsAsAdmin || false
+    };
+  });
   
   // Supabase hooks
   const boardsHook = useProjectBoards();
@@ -360,16 +368,61 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const isAdmin = !!isAdminFn;
       
       console.log(`🔍 Loading cards for board ${boardId}. Admin: ${isAdmin}, ViewAll: ${viewAllCards}`);
+      console.time('⏱️ Total card loading time');
       
-      // Fetch cards: use admin RPC when toggle is ON (ALL BOARDS), else board-only query
+      // Fetch cards: use admin RPC quando toggle ON (ALL BOARDS), else board-only query
       if (isAdmin && viewAllCards) {
-        // Admin with "view all" ON: Load cards from ALL boards, not just current one
-        const { data: allCardsAdmin } = await supabase.rpc('get_all_cards_admin', { _user_id: currentUser.id });
-        const mapped = (allCardsAdmin || []).map((c: any) => transformDBCard(c as any));
-        allCards.push(...(mapped as ProjectCard[]));
-        console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin view)`);
+        // Admin com "view all" ON: Carregar cards de TODOS os boards usando RPC leve
+        try {
+          const { data: allCardsAdmin, error: rpcError } = await supabase.rpc('get_all_cards_admin_light', { 
+            _user_id: currentUser.id 
+          });
+          
+          if (rpcError) {
+            console.error('Error calling get_all_cards_admin_light:', rpcError);
+            
+            // Fallback: tentar com a RPC antiga se a nova não existir
+            if (rpcError.message?.includes('does not exist')) {
+              const { data: fallbackCards } = await supabase.rpc('get_all_cards_admin', { _user_id: currentUser.id });
+              const mapped = (fallbackCards || []).map((c: any) => {
+                // Remover attachments pesados do fallback
+                const card = c as any;
+                if (card.custom_fields?.attachments) {
+                  const { attachments, ...rest } = card.custom_fields;
+                  card.custom_fields = rest;
+                }
+                return transformDBCard(card);
+              });
+              allCards.push(...(mapped as ProjectCard[]));
+              console.log(`📦 Loaded ${mapped.length} cards from ALL boards (fallback)`);
+            } else if (rpcError.code === '57014') {
+              // Timeout error - mostrar mensagem amigável
+              toast({
+                title: "Timeout ao carregar cards",
+                description: "Há muitos cards. Desative 'Ver todos' ou aguarde.",
+                variant: "destructive",
+              });
+            }
+          } else {
+            // Mapear retorno da RPC leve (card_position -> position)
+            const mapped = (allCardsAdmin || []).map((c: any) => {
+              const cardWithPosition = { ...c, position: c.card_position };
+              delete cardWithPosition.card_position;
+              return transformDBCard(cardWithPosition as any);
+            });
+            allCards.push(...(mapped as ProjectCard[]));
+            console.log(`📦 Loaded ${mapped.length} cards from ALL boards (admin light view)`);
+          }
+        } catch (err) {
+          console.error('Error in admin view all:', err);
+          toast({
+            title: "Erro ao carregar cards",
+            description: "Tente novamente ou desative 'Ver todos'.",
+            variant: "destructive",
+          });
+        }
       } else {
-        // Regular view: only cards from current board (sem JOIN)
+        // Visualização normal: apenas cards do board atual
         const listIds = (lists || []).map(l => l.id);
         const boardCards = await cardsHook.fetchCardsByListIds(listIds);
         if (boardCards) {
@@ -377,6 +430,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           console.log(`📦 Loaded ${boardCards.length} cards from current board`);
         }
       }
+      
+      console.timeEnd('⏱️ Total card loading time');
 
       // Enrich cards with labels and assignees from linking tables
       const cardIds = allCards.map(c => c.id);
@@ -628,6 +683,12 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
     },
 
     setViewAllCardsAsAdmin: (value: boolean) => {
+      // Salvar preferência no localStorage
+      localStorageService.save('projects_prefs', {
+        viewAllCardsAsAdmin: value,
+        lastUpdated: new Date().toISOString()
+      });
+      
       setState(prev => {
         const newState = { ...prev, viewAllCardsAsAdmin: value };
         // Reload board with the new state value

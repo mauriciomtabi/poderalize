@@ -35,6 +35,7 @@ export const useProjectCards = (listId?: string) => {
     if (!listId) return;
     
     try {
+      // Query usando select * mas removendo attachments depois
       const { data, error } = await supabase
         .from('project_cards')
         .select('*')
@@ -51,7 +52,16 @@ export const useProjectCards = (listId?: string) => {
         return;
       }
 
-      setCards(data || []);
+      // Remover attachments pesados
+      const lightCards = (data || []).map((card: any) => {
+        if (card.custom_fields?.attachments) {
+          const { attachments, ...rest } = card.custom_fields;
+          return { ...card, custom_fields: rest };
+        }
+        return card;
+      });
+
+      setCards(lightCards);
     } catch (error) {
       console.error('Error fetching cards:', error);
     } finally {
@@ -79,39 +89,46 @@ export const useProjectCards = (listId?: string) => {
   };
 
   // Buscar cartões por múltiplas listas (evita JOIN pesado) - MODO LEVE
-  const fetchCardsByListIds = async (listIds: string[]) => {
+  const fetchCardsByListIds = async (listIds: string[]): Promise<ProjectCard[]> => {
     if (!listIds || listIds.length === 0) return [];
+    
+    console.time('⏱️ fetchCardsByListIds');
     try {
-      // Seleciona todos os campos EXCETO attachments pesados
+      // Query leve: seleciona campos essenciais + checklists/comments do custom_fields, SEM attachments
       const { data, error } = await supabase
         .from('project_cards')
         .select('*')
         .in('list_id', listIds)
-        .order('position', { ascending: true });
+        .order('position', { ascending: true }) as any;
 
       if (error) {
         console.error('Error fetching cards by list ids:', error);
+        
+        // Error 57014 = timeout - mostrar toast amigável
+        if (error.code === '57014') {
+          toast({
+            title: "Carregamento demorado",
+            description: "Alguns cards podem não ter carregado. Tente novamente.",
+            variant: "destructive",
+          });
+        }
         return [];
       }
       
-      // Filtrar attachments do custom_fields para economizar banda
-      const lightCards = (data || []).map(card => {
-        if (card.custom_fields && typeof card.custom_fields === 'object') {
-          const { attachments, ...restFields } = card.custom_fields as any;
-          return {
-            ...card,
-            custom_fields: {
-              ...restFields,
-              attachments: [] // Remove attachments pesados do carregamento inicial
-            }
-          };
+      // Remover attachments dos cards retornados
+      const lightCards = (data || []).map((card: any) => {
+        if (card.custom_fields?.attachments) {
+          const { attachments, ...rest } = card.custom_fields;
+          return { ...card, custom_fields: rest };
         }
         return card;
       });
       
-      return lightCards;
+      console.timeEnd('⏱️ fetchCardsByListIds');
+      return lightCards as ProjectCard[];
     } catch (error) {
       console.error('Error fetching cards by list ids:', error);
+      console.timeEnd('⏱️ fetchCardsByListIds');
       return [];
     }
   };

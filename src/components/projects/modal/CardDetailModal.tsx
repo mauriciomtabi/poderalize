@@ -102,10 +102,20 @@ export const CardDetailModal = ({
   }, [latestCard, isCreationMode]);
 
   // Carregar anexos sob demanda quando abrir o modal (modo edição)
+  // Usar ref para evitar recargas desnecessárias
+  const lastLoadedCardId = useRef<string | null>(null);
+  
   useEffect(() => {
     const loadAttachments = async () => {
-      if (!isCreationMode && isOpen && card?.id) {
+      // Só carregar se:
+      // 1. Não for modo criação
+      // 2. Modal estiver aberto
+      // 3. Houver um card
+      // 4. Não foi carregado ainda (evitar flickering)
+      if (!isCreationMode && isOpen && card?.id && lastLoadedCardId.current !== card.id) {
+        lastLoadedCardId.current = card.id;
         setIsLoadingAttachments(true);
+        
         try {
           const fullCard = await fetchCardWithAttachments(card.id);
           const customFields = fullCard?.custom_fields as any;
@@ -121,10 +131,16 @@ export const CardDetailModal = ({
           setIsLoadingAttachments(false);
         }
       }
+      
+      // Reset quando fechar o modal
+      if (!isOpen) {
+        lastLoadedCardId.current = null;
+        setLoadedAttachments([]);
+      }
     };
     
     loadAttachments();
-  }, [isOpen, card?.id, isCreationMode, fetchCardWithAttachments]);
+  }, [isOpen, card?.id, isCreationMode]); // fetchCardWithAttachments removido das dependências
 
   // Reset all fields when opening modal in creation mode
   useEffect(() => {
