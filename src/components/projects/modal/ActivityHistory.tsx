@@ -1,5 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Activity, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Activity, Clock, ChevronDown, ChevronRight } from "lucide-react";
 import { ProjectCard } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useState, useEffect } from "react";
@@ -13,6 +15,7 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
   const { actions } = useProjects();
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const loadActivities = async () => {
@@ -83,50 +86,68 @@ export const ActivityHistory = ({ card }: ActivityHistoryProps) => {
   // Activities are now loaded from the database
 
   return (
-    <div className="space-y-4 p-4 bg-muted/30 rounded-lg">
-      <div className="flex items-center gap-2">
-        <Activity className="h-4 w-4" />
-        <h3 className="font-medium">Atividades</h3>
-      </div>
-
-      <div className="space-y-3">
-        {loading ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <Activity className="h-8 w-8 mx-auto mb-2 opacity-50 animate-spin" />
-            <p className="text-sm">Carregando atividades...</p>
-          </div>
-        ) : activities.map(activity => (
-          <div key={activity.id} className="flex gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm">
-              {getActivityIcon(activity.action || '')}
-            </div>
-            <div className="flex-1 space-y-1">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <span className="font-medium text-sm">{activity.author_name}</span>
-                  <span className="text-sm ml-1">{activity.action}</span>
-                </div>
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatDate(activity.created_at)}
-                </span>
-              </div>
-              {activity.details && Object.keys(activity.details).length > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  {JSON.stringify(activity.details)}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {!loading && activities.length === 0 && (
-          <div className="text-center py-6 text-muted-foreground">
-            <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Nenhuma atividade registrada</p>
-          </div>
+    <Collapsible
+      open={isExpanded}
+      onOpenChange={setIsExpanded}
+      className="space-y-4 p-4 bg-muted/30 rounded-lg"
+    >
+      <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 -m-2 p-2 rounded transition-colors">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          <h3 className="font-medium">Atividades</h3>
+          {activities.length > 0 && (
+            <Badge variant="secondary" className="ml-1 text-xs">
+              {activities.length}
+            </Badge>
+          )}
+        </div>
+        {isExpanded ? (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         )}
-      </div>
-    </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="space-y-3">
+          {loading ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <Activity className="h-8 w-8 mx-auto mb-2 opacity-50 animate-spin" />
+              <p className="text-sm">Carregando atividades...</p>
+            </div>
+          ) : activities.map(activity => (
+            <div key={activity.id} className="flex gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm">
+                {getActivityIcon(activity.action || '')}
+              </div>
+              <div className="flex-1 space-y-1">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <span className="font-medium text-sm">{activity.author_name}</span>
+                    <span className="text-sm ml-1">{activity.action}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {formatDate(activity.created_at)}
+                  </span>
+                </div>
+                {activity.details && Object.keys(activity.details).length > 0 && (
+                  <div className="text-xs text-muted-foreground">
+                    {JSON.stringify(activity.details)}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {!loading && activities.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground">
+              <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Nenhuma atividade registrada</p>
+            </div>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };

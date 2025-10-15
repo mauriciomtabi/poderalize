@@ -458,9 +458,9 @@ export const CardDetailModal = ({
         <DialogDescription className="sr-only">
           {isCreationMode ? 'Preencha as informações da nova tarefa' : 'Visualize e edite as informações do cartão.'}
         </DialogDescription>
-        <div className="flex h-full min-h-[70vh]">
+        <div className="flex h-full min-h-[70vh] w-full">
           {/* Main Content with ScrollArea */}
-          <div className="flex-1 min-w-0 basis-0">
+          <div className="flex-1 min-w-0 basis-0 max-w-[calc(100%-16rem)]">
             <ScrollArea className="h-[80vh]">
               <div className="space-y-6 px-6 py-4 pr-4">
                 {/* Header with title */}
@@ -690,7 +690,7 @@ export const CardDetailModal = ({
           </div>
 
           {/* Sidebar */}
-          <div className="w-64 border-l bg-muted/30 flex-shrink-0">
+          <div className="w-64 min-w-[16rem] max-w-64 border-l bg-muted/30 flex-shrink-0">
             <ScrollArea className="h-[80vh] p-4">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Adicionar ao cartão</h3>

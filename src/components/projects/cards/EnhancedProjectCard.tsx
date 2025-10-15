@@ -7,6 +7,7 @@ import { Calendar, MessageCircle, Paperclip, MoreHorizontal, Clock, AlertCircle,
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ProjectCard } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { AttachmentSelectorDialog } from "@/components/projects/modal/AttachmentSelectorDialog";
 import { cn, getInitials, isDateOverdue, getDueDateColorClass } from "@/lib/utils";
 import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
@@ -51,6 +52,7 @@ export const EnhancedProjectCard = ({
   onClick
 }: EnhancedProjectCardProps) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showAttachmentSelector, setShowAttachmentSelector] = useState(false);
   const {
     state
   } = useProjects();
@@ -157,11 +159,19 @@ export const EnhancedProjectCard = ({
           {(card.attachments_count ?? card.attachments.length) > 0 && <Button variant="ghost" size="sm" className="h-6 px-2 hover:bg-primary/10 transition-colors" onClick={async e => {
           e.stopPropagation();
 
-          // Buscar o primeiro anexo do card
+          // Buscar todos os anexos do card
           const {
             data
           } = await (await import("@/integrations/supabase/client")).supabase.from('project_cards').select('custom_fields').eq('id', card.id).single();
           const attachments = (data?.custom_fields as any)?.attachments || [];
+          
+          // Se houver múltiplos anexos, abrir o seletor
+          if (attachments.length > 1) {
+            setShowAttachmentSelector(true);
+            return;
+          }
+          
+          // Se houver apenas 1 anexo, abrir diretamente
           const firstAttachment = attachments[0];
           if (firstAttachment) {
             // Para data URLs (PDFs em base64), criar link temporário
@@ -220,5 +230,11 @@ export const EnhancedProjectCard = ({
           </DropdownMenu>
         </div>
       </div>
+
+      <AttachmentSelectorDialog
+        isOpen={showAttachmentSelector}
+        onClose={() => setShowAttachmentSelector(false)}
+        attachments={card.attachments || []}
+      />
     </Card>;
 };
