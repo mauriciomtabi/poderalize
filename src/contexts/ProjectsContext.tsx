@@ -349,14 +349,9 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         console.time('⚡ Admin load all cards');
         try {
           const { data: allCardsAdmin, error: adminError } = await supabase
-            .from('project_cards')
-            .select(`
-              id, list_id, title, description, status, priority,
-              due_date, start_date, estimated_hours, actual_hours,
-              position, cover, location, archived, watching,
-              created_by, client_id, created_at, updated_at
-            `)
-            .order('position', { ascending: true });
+            .rpc('get_all_cards_admin_light' as any, {
+              _user_id: currentUser.id
+            }) as any;
           
           if (adminError) {
             console.error('Error fetching admin cards:', adminError);
@@ -375,14 +370,19 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             throw adminError;
           }
           
-          // Map and ensure no heavy fields
-          const mapped = (allCardsAdmin || []).map((c: any) => {
-            // Create lightweight custom_fields without attachments
-            c.custom_fields = {
-              checklists: [],
-              comments: []
+          // Map RPC response: card_position → position, preserve checklists/comments
+          const mapped = (Array.isArray(allCardsAdmin) ? allCardsAdmin : []).map((c: any) => {
+            const card = {
+              ...c,
+              position: c.card_position, // RPC retorna card_position
+              custom_fields: {
+                checklists: c.checklists || [],
+                comments: c.comments || []
+                // attachments carregados sob demanda no modal
+              }
             };
-            return transformDBCard(c as any);
+            delete card.card_position; // Remover campo temporário
+            return transformDBCard(card as any);
           });
           
           allCards.push(...(mapped as ProjectCard[]));
