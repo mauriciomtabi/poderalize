@@ -28,6 +28,18 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
     if (source.droppableId === destination.droppableId) return;
 
     moveLead(draggableId, destination.droppableId);
+    
+    // Force repaint to remove ghost elements
+    requestAnimationFrame(() => {
+      const scrollContainer = document.querySelector('.overflow-x-auto');
+      if (scrollContainer) {
+        const currentScroll = scrollContainer.scrollLeft;
+        scrollContainer.scrollLeft = currentScroll + 0.1;
+        requestAnimationFrame(() => {
+          scrollContainer.scrollLeft = currentScroll;
+        });
+      }
+    });
   };
 
   const calculateConversionRate = (currentStageIndex: number) => {

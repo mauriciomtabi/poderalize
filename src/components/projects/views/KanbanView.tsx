@@ -79,7 +79,7 @@ export const KanbanView = () => {
     // Clear dragged item with a slight delay to prevent visual glitches
     setTimeout(() => {
       actions.setDraggedItem(null);
-    }, 50);
+    }, 100);
 
     if (!destination) return;
 
@@ -93,6 +93,19 @@ export const KanbanView = () => {
     // Handle list drag and drop
     if (type === 'LIST') {
       actions.moveList(draggableId, destination.index);
+      
+      // Force repaint to remove ghost elements
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          const currentScroll = scrollContainerRef.current.scrollLeft;
+          scrollContainerRef.current.scrollLeft = currentScroll + 0.1;
+          requestAnimationFrame(() => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollLeft = currentScroll;
+            }
+          });
+        }
+      });
       return;
     }
 
@@ -103,6 +116,19 @@ export const KanbanView = () => {
       destination.droppableId,
       destination.index
     );
+    
+    // Force repaint to remove ghost elements
+    requestAnimationFrame(() => {
+      if (scrollContainerRef.current) {
+        const currentScroll = scrollContainerRef.current.scrollLeft;
+        scrollContainerRef.current.scrollLeft = currentScroll + 0.1;
+        requestAnimationFrame(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollLeft = currentScroll;
+          }
+        });
+      }
+    });
   };
 
   const handleAddCard = async (listId: string) => {

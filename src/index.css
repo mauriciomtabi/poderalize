@@ -190,12 +190,9 @@
 
   /* Kanban specific styles */
   .kanban-column {
-    @apply transition-all duration-300 ease-in-out;
-  }
-
-  /* Kanban específico */
-  .kanban-column {
+    /* Remove transition-all to prevent interference with drag & drop */
     @apply border border-white/20 shadow-md;
+    transition: opacity 0.3s ease-in-out, background-color 0.3s ease-in-out;
     /* Background color will be set inline via style attribute */
   }
 

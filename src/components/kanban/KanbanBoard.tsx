@@ -57,7 +57,10 @@ export const KanbanBoard = () => {
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
-    actions.setDraggedItem(null);
+    
+    setTimeout(() => {
+      actions.setDraggedItem(null);
+    }, 100);
 
     if (!destination) return;
 
@@ -74,6 +77,18 @@ export const KanbanBoard = () => {
       destination.droppableId,
       destination.index
     );
+    
+    // Force repaint to remove ghost elements
+    requestAnimationFrame(() => {
+      const scrollContainer = document.querySelector('.overflow-x-auto');
+      if (scrollContainer) {
+        const currentScroll = scrollContainer.scrollLeft;
+        scrollContainer.scrollLeft = currentScroll + 0.1;
+        requestAnimationFrame(() => {
+          scrollContainer.scrollLeft = currentScroll;
+        });
+      }
+    });
   };
 
   const handleAddCard = (columnId: string) => {
