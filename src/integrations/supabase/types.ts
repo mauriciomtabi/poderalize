@@ -2475,6 +2475,7 @@ export type Database = {
         Returns: {
           actual_hours: number
           archived: boolean
+          attachments_count: number
           card_position: number
           checklists: Json
           client_id: string

@@ -202,35 +202,20 @@ export const EnhancedProjectCard = ({
           )}
 
           {/* Attachments */}
-          {card.attachments.length > 0 && (
+          {(card.attachments_count ?? card.attachments.length) > 0 && (
             <Button
               variant="ghost"
               size="sm"
               className="h-6 px-2 hover:bg-primary/10 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-                const firstAttachment = card.attachments[0];
-                if (firstAttachment) {
-                  // Para data URLs (PDFs em base64), criar link temporário
-                  if (firstAttachment.url.startsWith('data:')) {
-                    const link = document.createElement('a');
-                    link.href = firstAttachment.url;
-                    link.target = '_blank';
-                    link.download = firstAttachment.name || 'anexo';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  } else {
-                    // Para URLs normais, usar window.open
-                    window.open(firstAttachment.url, '_blank', 'noopener,noreferrer');
-                  }
-                }
+                onClick?.(); // Abre o modal do card onde os anexos serão carregados
               }}
-              title={`Abrir: ${card.attachments[0]?.name || 'anexo'}`}
+              title="Ver anexos"
             >
               <div className="flex items-center space-x-1 text-xs">
                 <Paperclip size={12} />
-                <span>{card.attachments.length}</span>
+                <span>{card.attachments_count ?? card.attachments.length}</span>
               </div>
             </Button>
           )}

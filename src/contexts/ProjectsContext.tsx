@@ -83,7 +83,8 @@ const transformDBCard = (dbCard: DBProjectCard): ProjectCard => {
     customFields: cf,
     archived: dbCard.archived,
     watching: dbCard.watching,
-    client_id: dbCard.client_id
+    client_id: dbCard.client_id,
+    attachments_count: (dbCard as any).attachments_count ?? attachments.length
   };
 };
 
@@ -375,6 +376,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             const card = {
               ...c,
               position: c.card_position, // RPC retorna card_position
+              attachments_count: c.attachments_count ?? 0, // Contagem de anexos
               custom_fields: {
                 checklists: c.checklists || [],
                 comments: c.comments || []

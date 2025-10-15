@@ -85,6 +85,7 @@ export interface ProjectCard {
   createdAt: string;
   updatedAt: string;
   client_id?: string;
+  attachments_count?: number; // Contagem de anexos (para performance)
   
   // Additional Trello-like features
   cover?: string;
