@@ -167,6 +167,7 @@ export interface ProjectsState {
   } | null;
   isLoading: boolean;
   selectedCard: ProjectCard | null;
+  dragKey: number; // Força re-render do DnD após movimentação
   
   // View-specific states
   calendarDate: Date;

@@ -150,7 +150,7 @@ export const KanbanView = () => {
           className="flex-1 min-w-0"
         >
           <div className="h-full overflow-x-auto overflow-y-hidden">
-            <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
+            <DragDropContext key={state.dragKey} onDragEnd={onDragEnd} onDragStart={onDragStart}>
               <Droppable droppableId="board" type="LIST" direction="horizontal">
                 {(provided) => (
                   <div
