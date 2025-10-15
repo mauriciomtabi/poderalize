@@ -462,7 +462,7 @@ export const CardDetailModal = ({
           {/* Main Content with ScrollArea */}
           <div className="flex-1 min-w-0 basis-0 max-w-[calc(100%-16rem)]">
             <ScrollArea className="h-[80vh]">
-              <div className="space-y-6 px-6 py-4 pr-4">
+              <div className="space-y-6 px-6 py-4 pr-4 overflow-hidden break-words">
                 {/* Header with title */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1 mr-4">

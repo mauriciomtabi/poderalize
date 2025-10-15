@@ -272,7 +272,7 @@ export const ChecklistManager = ({
                     checked={item.completed}
                     onCheckedChange={() => handleToggleItem(checklist.id, item.id)}
                   />
-                  <span className={`flex-1 ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
+                  <span className={`flex-1 break-words overflow-hidden ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
                     {item.text}
                   </span>
                   

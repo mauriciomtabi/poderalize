@@ -215,8 +215,8 @@ export const CommentsSection = ({
                   {formatDate(comment.createdAt)}
                 </span>
               </div>
-              <div className="bg-muted/50 rounded-lg p-3 w-full">
-                <div className="text-sm whitespace-pre-wrap break-words w-full">
+              <div className="bg-muted/50 rounded-lg p-3 w-full overflow-hidden">
+                <div className="text-sm whitespace-pre-wrap break-words break-all overflow-wrap-anywhere w-full">
                   {formatCommentText(comment.text)}
                 </div>
               </div>
