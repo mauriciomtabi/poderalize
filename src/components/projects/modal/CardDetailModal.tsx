@@ -538,42 +538,6 @@ export const CardDetailModal = ({
                     </div>
                   </div>}
 
-                {/* Checkbox Concluído */}
-                {!isCreationMode && (
-                  <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg border-2 border-transparent hover:border-primary/20 transition-colors">
-                    <Checkbox
-                      id="card-completed"
-                      checked={card?.status === 'done'}
-                      onCheckedChange={(checked) => {
-                        if (card) {
-                          actions.updateCard({
-                            ...card,
-                            status: checked ? 'done' : 'todo'
-                          });
-                          actions.addActivity(
-                            card.id,
-                            'update',
-                            checked ? 'marcou o card como concluído' : 'desmarcou o card como concluído'
-                          );
-                          toast({
-                            title: checked ? "Card concluído! 🎉" : "Card reaberto",
-                            description: checked 
-                              ? "Este card foi marcado como concluído" 
-                              : "Este card foi reaberto",
-                          });
-                        }
-                      }}
-                      className="h-5 w-5"
-                    />
-                    <label
-                      htmlFor="card-completed"
-                      className="text-sm font-medium cursor-pointer select-none"
-                    >
-                      Marcar como concluído
-                    </label>
-                  </div>
-                )}
-
                 {/* Description */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -762,6 +726,42 @@ export const CardDetailModal = ({
                 
                 {!isCreationMode && (
                   <div className="space-y-2 mb-6">
+                    {/* Marcar como Concluído */}
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-background hover:bg-muted/50 transition-colors border">
+                      <Checkbox
+                        id="card-completed-sidebar"
+                        checked={card?.status === 'done'}
+                        onCheckedChange={(checked) => {
+                          if (card) {
+                            actions.updateCard({
+                              ...card,
+                              status: checked ? 'done' : 'todo'
+                            });
+                            actions.addActivity(
+                              card.id,
+                              'update',
+                              checked ? 'marcou o card como concluído' : 'desmarcou o card como concluído'
+                            );
+                            toast({
+                              title: checked ? "Card concluído! 🎉" : "Card reaberto",
+                              description: checked 
+                                ? "Este card foi marcado como concluído" 
+                                : "Este card foi reaberto",
+                            });
+                          }
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <label
+                        htmlFor="card-completed-sidebar"
+                        className="text-sm cursor-pointer select-none flex-1"
+                      >
+                        Marcar como concluído
+                      </label>
+                    </div>
+                    
+                    <Separator className="my-2" />
+                    
                     <Button variant="ghost" className="w-full justify-start" size="sm" onClick={() => setShowMoveDialog(true)}>
                       <Move className="h-4 w-4 mr-2" />
                       Mover
