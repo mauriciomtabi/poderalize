@@ -76,28 +76,36 @@ export const EnhancedProjectCard = ({
       {/* Header: title + assignees + labels + priority */}
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-start gap-2 flex-1 min-w-0">
-          <Checkbox
-            checked={isCompleted}
-            onCheckedChange={(checked) => {
+          {/* Checkbox circular - visível no hover ou quando concluído */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               actions.updateCard({
                 ...card,
-                status: checked ? 'done' : 'todo'
+                status: isCompleted ? 'todo' : 'done'
               });
               actions.addActivity(
                 card.id,
                 'update',
-                checked ? 'marcou o card como concluído' : 'desmarcou o card como concluído'
+                isCompleted ? 'desmarcou o card como concluído' : 'marcou o card como concluído'
               );
               toast({
-                title: checked ? "Card concluído! 🎉" : "Card reaberto",
-                description: checked 
-                  ? "Este card foi marcado como concluído" 
-                  : "Este card foi reaberto",
+                title: isCompleted ? "Card reaberto" : "Card concluído! 🎉",
+                description: isCompleted 
+                  ? "Este card foi reaberto" 
+                  : "Este card foi marcado como concluído",
               });
             }}
-            onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 flex-shrink-0 mt-0.5"
-          />
+            className={cn(
+              "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all mt-0.5",
+              isCompleted 
+                ? "bg-green-500 border-2 border-green-500" 
+                : "border-2 border-muted-foreground/30 opacity-0 group-hover:opacity-100 hover:border-green-500"
+            )}
+            title={isCompleted ? "Marcar como não concluído" : "Marcar como concluído"}
+          >
+            {isCompleted && <Check className="h-3 w-3 text-white" />}
+          </button>
           <h3 className={cn("font-medium text-sm cursor-pointer whitespace-normal break-words flex-1 leading-snug", isCompleted && "line-through text-muted-foreground")}>
             {card.title}
           </h3>
