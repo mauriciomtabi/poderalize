@@ -54,9 +54,7 @@ export const EnhancedProjectCard = ({
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showAttachmentSelector, setShowAttachmentSelector] = useState(false);
   const [loadedAttachments, setLoadedAttachments] = useState<any[]>([]);
-  const {
-    state
-  } = useProjects();
+  const { state, actions } = useProjects();
   const PriorityIcon = priorityConfig[card.priority].icon;
   const completedTasks = card.checklists.reduce((acc, checklist) => acc + checklist.items.filter(item => item.completed).length, 0);
   const totalTasks = card.checklists.reduce((acc, checklist) => acc + checklist.items.length, 0);
@@ -85,6 +83,35 @@ export const EnhancedProjectCard = ({
           </h3>
         </div>
         <div className="flex items-center gap-2">
+          {/* Botão Concluir - visível ao passar o mouse */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-6 w-6 p-0 transition-all",
+              isCompleted ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              actions.updateCard({
+                ...card,
+                status: isCompleted ? 'todo' : 'done'
+              });
+              actions.addActivity(
+                card.id,
+                'update',
+                isCompleted ? 'desmarcou o card como concluído' : 'marcou o card como concluído'
+              );
+            }}
+            title={isCompleted ? "Reabrir card" : "Marcar como concluído"}
+          >
+            {isCompleted ? (
+              <Check className="h-4 w-4 text-green-600" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground hover:text-green-600" />
+            )}
+          </Button>
+          
           {/* Priority indicator */}
           
           
