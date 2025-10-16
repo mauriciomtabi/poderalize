@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, MessageCircle, Paperclip, MoreHorizontal, Clock, AlertCircle, Zap, CheckCircle2, Copy, Trash2, CheckSquare, Check } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -11,6 +12,7 @@ import { AttachmentSelectorDialog } from "@/components/projects/modal/Attachment
 import { cn, getInitials, isDateOverdue, getDueDateColorClass } from "@/lib/utils";
 import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
+import { useToast } from "@/hooks/use-toast";
 const priorityConfig = {
   low: {
     icon: Clock,
@@ -55,6 +57,7 @@ export const EnhancedProjectCard = ({
   const [showAttachmentSelector, setShowAttachmentSelector] = useState(false);
   const [loadedAttachments, setLoadedAttachments] = useState<any[]>([]);
   const { state, actions } = useProjects();
+  const { toast } = useToast();
   const PriorityIcon = priorityConfig[card.priority].icon;
   const completedTasks = card.checklists.reduce((acc, checklist) => acc + checklist.items.filter(item => item.completed).length, 0);
   const totalTasks = card.checklists.reduce((acc, checklist) => acc + checklist.items.length, 0);
@@ -73,44 +76,33 @@ export const EnhancedProjectCard = ({
       {/* Header: title + assignees + labels + priority */}
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-start gap-2 flex-1 min-w-0">
-          {isCompleted && (
-            <div className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
-              <Check className="h-3 w-3 text-white" />
-            </div>
-          )}
+          <Checkbox
+            checked={isCompleted}
+            onCheckedChange={(checked) => {
+              actions.updateCard({
+                ...card,
+                status: checked ? 'done' : 'todo'
+              });
+              actions.addActivity(
+                card.id,
+                'update',
+                checked ? 'marcou o card como concluído' : 'desmarcou o card como concluído'
+              );
+              toast({
+                title: checked ? "Card concluído! 🎉" : "Card reaberto",
+                description: checked 
+                  ? "Este card foi marcado como concluído" 
+                  : "Este card foi reaberto",
+              });
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-5 w-5 flex-shrink-0 mt-0.5"
+          />
           <h3 className={cn("font-medium text-sm cursor-pointer whitespace-normal break-words flex-1 leading-snug", isCompleted && "line-through text-muted-foreground")}>
             {card.title}
           </h3>
         </div>
         <div className="flex items-center gap-2">
-          {/* Botão Concluir - visível ao passar o mouse */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-6 w-6 p-0 transition-all",
-              isCompleted ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              actions.updateCard({
-                ...card,
-                status: isCompleted ? 'todo' : 'done'
-              });
-              actions.addActivity(
-                card.id,
-                'update',
-                isCompleted ? 'desmarcou o card como concluído' : 'marcou o card como concluído'
-              );
-            }}
-            title={isCompleted ? "Reabrir card" : "Marcar como concluído"}
-          >
-            {isCompleted ? (
-              <Check className="h-4 w-4 text-green-600" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground hover:text-green-600" />
-            )}
-          </Button>
           
           {/* Priority indicator */}
           
