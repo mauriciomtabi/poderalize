@@ -22,6 +22,10 @@ export interface StorageData {
     viewAllCardsAsAdmin: boolean;
     lastUpdated: string;
   };
+  viewed_due_cards: {
+    cards: string[];
+    timestamp: number;
+  };
 }
 
 class LocalStorageService {
