@@ -25,11 +25,12 @@ export const useDueCardNotifications = () => {
           .from('project_card_assignees')
           .select(`
             card_id,
-            project_cards!inner(id, title, due_date, list_id, archived),
+            project_cards!inner(id, title, due_date, list_id, archived, status),
             project_members!inner(user_id)
           `)
           .eq('project_members.user_id', user.id)
-          .eq('project_cards.archived', false);
+          .eq('project_cards.archived', false)
+          .neq('project_cards.status', 'done');
 
         if (!assignedCards) return;
 

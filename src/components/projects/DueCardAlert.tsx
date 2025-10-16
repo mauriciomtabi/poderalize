@@ -21,11 +21,16 @@ export const DueCardAlert = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (dueCards.length > 0 && !showAlert) {
+    // Filter out completed cards as additional safety layer
+    const activeDueCards = dueCards.filter((card: any) => {
+      return card.status !== 'done';
+    });
+    
+    if (activeDueCards.length > 0 && !showAlert) {
       setShowAlert(true);
       setCurrentCardIndex(0);
     }
-  }, [dueCards.length]);
+  }, [dueCards.length, showAlert]);
 
   const handleNext = () => {
     if (currentCardIndex < dueCards.length - 1) {

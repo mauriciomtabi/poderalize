@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Calendar, Users, Tag, Clock, MessageCircle, CheckSquare, Activity, Paperclip, Plus, Edit2, Trash2, Copy, Archive, Move, Building2, File, Image, Link } from "lucide-react";
 import { ProjectCard, Member, Label as ProjectLabel, ChecklistItem, Checklist, Comment, Attachment, CardStatus, Priority } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useClientes } from "@/hooks/useClientes";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 interface CardDetailModalProps {
   card?: ProjectCard;
   listId?: string;
@@ -38,6 +40,7 @@ export const CardDetailModal = ({
   onClose
 }: CardDetailModalProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const {
     actions,
     state
@@ -61,6 +64,7 @@ export const CardDetailModal = ({
   const [tempChecklists, setTempChecklists] = useState<Checklist[]>([]);
   const [tempComments, setTempComments] = useState<Comment[]>([]);
   const [tempAttachments, setTempAttachments] = useState<any[]>([]);
+  const [tempCardData, setTempCardData] = useState({ status: 'todo' as CardStatus });
   
   // Attachments loaded on-demand
   const [attachmentsOverride, setAttachmentsOverride] = useState<Attachment[]>([]);
@@ -463,6 +467,69 @@ export const CardDetailModal = ({
           <div className="flex-1 min-w-0 basis-0 max-w-[calc(100%-16rem)]">
             <ScrollArea className="h-[80vh]">
               <div className="space-y-6 px-6 py-4 pr-4 overflow-hidden break-words">
+                {/* Status Selector */}
+                <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
+                  <span className="text-sm font-medium">Status:</span>
+                  <Select
+                    value={card?.status || tempCardData?.status || 'todo'}
+                    onValueChange={(value: CardStatus) => {
+                      if (card) {
+                        actions.updateCard({
+                          ...card,
+                          status: value
+                        });
+                        actions.addActivity(
+                          card.id, 
+                          'update', 
+                          `alterou o status para ${value === 'done' ? 'concluído' : value}`
+                        );
+                        toast({
+                          title: value === 'done' ? "Card concluído! 🎉" : "Status atualizado",
+                          description: `Status alterado para: ${value}`,
+                        });
+                      } else {
+                        setTempCardData((prev) => ({ ...prev, status: value }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todo">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-gray-400" />
+                          A Fazer
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="in-progress">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          Em Progresso
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="review">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                          Em Revisão
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="blocked">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-red-500" />
+                          Bloqueado
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="done">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          ✓ Concluído
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Header with title */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1 mr-4">

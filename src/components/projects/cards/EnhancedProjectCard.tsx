@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, MessageCircle, Paperclip, MoreHorizontal, Clock, AlertCircle, Zap, CheckCircle2, Copy, Trash2, CheckSquare } from "lucide-react";
+import { Calendar, MessageCircle, Paperclip, MoreHorizontal, Clock, AlertCircle, Zap, CheckCircle2, Copy, Trash2, CheckSquare, Check } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ProjectCard } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -69,12 +69,21 @@ export const EnhancedProjectCard = ({
 
   // Get assignee info for the first incomplete task
   const taskAssignee = firstIncompleteTask?.assignee ? card.assignees.find(a => a.id === firstIncompleteTask.assignee) : null;
-  return <Card className={cn("card-kanban group", cardColorClass)} onClick={onClick}>
+  const isCompleted = card.status === 'done';
+  
+  return <Card className={cn("card-kanban group", cardColorClass, isCompleted && "opacity-60 bg-green-50 dark:bg-green-950/20")} onClick={onClick}>
       {/* Header: title + assignees + labels + priority */}
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-medium text-sm cursor-pointer whitespace-normal break-words flex-1 leading-snug">
-          {card.title}
-        </h3>
+        <div className="flex items-start gap-2 flex-1 min-w-0">
+          {isCompleted && (
+            <div className="mt-0.5 flex-shrink-0 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+              <Check className="h-3 w-3 text-white" />
+            </div>
+          )}
+          <h3 className={cn("font-medium text-sm cursor-pointer whitespace-normal break-words flex-1 leading-snug", isCompleted && "line-through text-muted-foreground")}>
+            {card.title}
+          </h3>
+        </div>
         <div className="flex items-center gap-2">
           {/* Priority indicator */}
           
