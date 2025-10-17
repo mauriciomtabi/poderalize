@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export const useAutomationProcessor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const processingRef = useRef(false);
 
   const processAutomations = async () => {
+    // Prevent multiple simultaneous calls
+    if (processingRef.current || isProcessing) {
+      console.log('Automation processing already in progress, skipping...');
+      return { success: false, error: 'Already processing' };
+    }
+
+    processingRef.current = true;
     setIsProcessing(true);
     
     try {
@@ -36,6 +44,7 @@ export const useAutomationProcessor = () => {
       });
       return { success: false, error };
     } finally {
+      processingRef.current = false;
       setIsProcessing(false);
     }
   };

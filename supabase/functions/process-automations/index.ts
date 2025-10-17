@@ -35,6 +35,17 @@ serve(async (req) => {
 
     for (const recurringCard of recurringCards || []) {
       try {
+        // TEMPORAL PROTECTION: Skip if card was created less than 1 hour ago
+        if (recurringCard.last_created_at) {
+          const lastCreated = new Date(recurringCard.last_created_at);
+          const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+          
+          if (lastCreated > oneHourAgo) {
+            console.log(`Skipping recurring card ${recurringCard.id} - created less than 1 hour ago`);
+            continue;
+          }
+        }
+
         // Check if end_date has passed
         if (recurringCard.end_date) {
           const endDate = new Date(recurringCard.end_date);
@@ -66,6 +77,140 @@ serve(async (req) => {
 
         console.log(`Processing recurring card: ${recurringCard.id} - ${recurringCard.title}`);
 
+        // IDEMPOTENCY CHECK: Verify if a card with the same title was created in the last 24 hours
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const { data: recentCards } = await supabase
+          .from('project_cards')
+          .select('id, created_at')
+          .eq('list_id', recurringCard.list_id)
+          .eq('title', recurringCard.title)
+          .gte('created_at', twentyFourHoursAgo.toISOString())
+          .limit(1);
+
+        if (recentCards && recentCards.length > 0) {
+          console.log(`Skipping recurring card ${recurringCard.id} - card with same title already exists (created at ${recentCards[0].created_at})`);
+          
+          // Log the duplicate prevention
+          await supabase.from('automation_logs').insert({
+            board_id: recurringCard.board_id,
+            automation_id: recurringCard.id,
+            automation_type: 'recurring_card',
+            action: 'duplicate_prevented',
+            status: 'success',
+            metadata: {
+              title: recurringCard.title,
+              existing_card_id: recentCards[0].id,
+              existing_card_created_at: recentCards[0].created_at
+            }
+          });
+          
+          continue;
+        }
+
+        // Calculate next creation time BEFORE creating the card
+        let nextCreation = new Date(recurringCard.next_creation_at);
+        const [hours, minutes] = (recurringCard.time_of_day || '09:00').split(':').map(Number);
+
+        // Get template config for frequency calculation
+        const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
+          ? recurringCard.template_config as Record<string, any>
+          : {};
+
+        if (recurringCard.frequency === 'daily') {
+          const daysOfWeek = Array.isArray((config as any).utc_days_of_week)
+            ? (config as any).utc_days_of_week
+            : (Array.isArray((config as any).days_of_week) ? (config as any).days_of_week : []);
+          
+          if (daysOfWeek.length > 0) {
+            const sortedDays = [...daysOfWeek].sort((a: number, b: number) => a - b);
+            for (let i = 1; i <= 7; i++) {
+              const testDate = new Date(nextCreation);
+              testDate.setDate(testDate.getDate() + i);
+              if (sortedDays.includes(testDate.getUTCDay())) {
+                nextCreation = testDate;
+                break;
+              }
+            }
+          } else {
+            nextCreation.setDate(nextCreation.getDate() + 1);
+          }
+        } else if (recurringCard.frequency === 'weekly') {
+          nextCreation.setDate(nextCreation.getDate() + 7);
+        } else if (recurringCard.frequency === 'biweekly') {
+          const firstDay = typeof config.biweekly_first_day === 'number' ? config.biweekly_first_day : 5;
+          const secondDay = typeof config.biweekly_second_day === 'number' ? config.biweekly_second_day : 20;
+          const currentDay = nextCreation.getDate();
+          const currentMonth = nextCreation.getMonth();
+          
+          if (currentDay === firstDay) {
+            nextCreation.setDate(secondDay);
+          } else if (currentDay === secondDay) {
+            nextCreation.setMonth(currentMonth + 1);
+            nextCreation.setDate(firstDay);
+          } else {
+            if (currentDay < firstDay) {
+              nextCreation.setDate(firstDay);
+            } else if (currentDay < secondDay) {
+              nextCreation.setDate(secondDay);
+            } else {
+              nextCreation.setMonth(currentMonth + 1);
+              nextCreation.setDate(firstDay);
+            }
+          }
+        } else if (recurringCard.frequency === 'monthly') {
+          const targetDay = recurringCard.day_of_month || 1;
+          nextCreation.setMonth(nextCreation.getMonth() + 1);
+          nextCreation.setDate(targetDay);
+        }
+
+        // Set the time
+        nextCreation.setUTCHours(hours, minutes, 0, 0);
+
+        // Check if next_creation_at would be after end_date
+        if (recurringCard.end_date) {
+          const endDate = new Date(recurringCard.end_date);
+          if (nextCreation > endDate) {
+            console.log(`Next creation would be after end_date. Disabling automation.`);
+            await supabase
+              .from('recurring_cards')
+              .update({ 
+                enabled: false,
+                last_created_at: now.toISOString()
+              })
+              .eq('id', recurringCard.id);
+            
+            await supabase.from('automation_logs').insert({
+              board_id: recurringCard.board_id,
+              automation_id: recurringCard.id,
+              automation_type: 'recurring_card',
+              action: 'disabled_by_end_date',
+              status: 'success',
+              metadata: {
+                title: recurringCard.title,
+                end_date: recurringCard.end_date
+              }
+            });
+            
+            continue;
+          }
+        }
+
+        // UPDATE next_creation_at BEFORE creating the card (prevents race conditions)
+        const { error: updateBeforeError } = await supabase
+          .from('recurring_cards')
+          .update({
+            next_creation_at: nextCreation.toISOString(),
+            last_created_at: now.toISOString(),
+          })
+          .eq('id', recurringCard.id);
+
+        if (updateBeforeError) {
+          console.error('Error updating recurring card before creation:', updateBeforeError);
+          throw updateBeforeError;
+        }
+
+        console.log(`Updated next_creation_at to ${nextCreation.toISOString()} before card creation`);
+
         // Get the next position in the list
         const { data: existingCards } = await supabase
           .from('project_cards')
@@ -79,10 +224,7 @@ serve(async (req) => {
           : 0;
 
         // Get template config
-        const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
-          ? recurringCard.template_config as Record<string, any>
-          : {};
-
+        // Reuse config from earlier calculation
         // Calculate dates if offsets are provided
         const creationDate = new Date();
         const startDate = config.start_date_offset > 0
@@ -235,126 +377,7 @@ serve(async (req) => {
           }
         }
 
-        // Calculate next creation time
-        let nextCreation = new Date(recurringCard.next_creation_at);
-        
-        // Extract the configured time before any date manipulation
-        const [hours, minutes] = (recurringCard.time_of_day || '09:00').split(':').map(Number);
-
-        if (recurringCard.frequency === 'daily') {
-          // Check if days_of_week is configured
-          const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
-            ? recurringCard.template_config as Record<string, any>
-            : {};
-          const daysOfWeek = Array.isArray((config as any).utc_days_of_week)
-            ? (config as any).utc_days_of_week
-            : (Array.isArray((config as any).days_of_week) ? (config as any).days_of_week : []);
-          
-          if (daysOfWeek.length > 0) {
-            // Find next occurrence based on selected days
-            const sortedDays = [...daysOfWeek].sort((a: number, b: number) => a - b);
-            
-            // Try to find the next valid day starting from tomorrow
-            for (let i = 1; i <= 7; i++) {
-              const testDate = new Date(nextCreation);
-              testDate.setDate(testDate.getDate() + i);
-              
-              if (sortedDays.includes(testDate.getUTCDay())) {
-                nextCreation = testDate;
-                break;
-              }
-            }
-          } else {
-            // No specific days configured, create daily
-            nextCreation.setDate(nextCreation.getDate() + 1);
-          }
-        } else if (recurringCard.frequency === 'weekly') {
-          nextCreation.setDate(nextCreation.getDate() + 7);
-        } else if (recurringCard.frequency === 'biweekly') {
-          // Buscar os dias configurados do template_config
-          const config = typeof recurringCard.template_config === 'object' && recurringCard.template_config !== null
-            ? recurringCard.template_config as Record<string, any>
-            : {};
-          
-          const firstDay = typeof config.biweekly_first_day === 'number' ? config.biweekly_first_day : 5;
-          const secondDay = typeof config.biweekly_second_day === 'number' ? config.biweekly_second_day : 20;
-          
-          const currentDay = nextCreation.getDate();
-          const currentMonth = nextCreation.getMonth();
-          
-          // Alternar entre primeiro e segundo dia
-          if (currentDay === firstDay) {
-            // Próxima criação: segundo dia do mesmo mês
-            nextCreation.setDate(secondDay);
-          } else if (currentDay === secondDay) {
-            // Próxima criação: primeiro dia do próximo mês
-            nextCreation.setMonth(currentMonth + 1);
-            nextCreation.setDate(firstDay);
-          } else {
-            // Caso inesperado: calcular próximo dia válido
-            if (currentDay < firstDay) {
-              nextCreation.setDate(firstDay);
-            } else if (currentDay < secondDay) {
-              nextCreation.setDate(secondDay);
-            } else {
-              nextCreation.setMonth(currentMonth + 1);
-              nextCreation.setDate(firstDay);
-            }
-          }
-        } else if (recurringCard.frequency === 'monthly') {
-          // For monthly, preserve the target day of month
-          const targetDay = recurringCard.day_of_month || 1;
-          nextCreation.setMonth(nextCreation.getMonth() + 1);
-          nextCreation.setDate(targetDay);
-        }
-
-        // Check if next_creation_at would be after end_date
-        if (recurringCard.end_date) {
-          const endDate = new Date(recurringCard.end_date);
-          if (nextCreation > endDate) {
-            console.log(`Next creation ${nextCreation.toISOString()} is after end_date ${endDate.toISOString()}. Disabling automation.`);
-            
-            // Disable the recurring card instead of scheduling another run
-            await supabase
-              .from('recurring_cards')
-              .update({ 
-                enabled: false,
-                last_created_at: now.toISOString()
-              })
-              .eq('id', recurringCard.id);
-            
-            // Log the action
-            await supabase.from('automation_logs').insert({
-              board_id: recurringCard.board_id,
-              automation_id: recurringCard.id,
-              automation_type: 'recurring_card',
-              action: 'disabled_by_end_date',
-              status: 'success',
-              metadata: {
-                title: recurringCard.title,
-                end_date: recurringCard.end_date,
-                last_card_created: newCard.id
-              }
-            });
-            
-            console.log(`Successfully processed and disabled recurring card: ${recurringCard.id}`);
-            continue;
-          }
-        }
-
-        // Update recurring card with next creation time
-        const { error: updateError } = await supabase
-          .from('recurring_cards')
-          .update({
-            last_created_at: now.toISOString(),
-            next_creation_at: nextCreation.toISOString(),
-          })
-          .eq('id', recurringCard.id);
-
-        if (updateError) {
-          console.error('Error updating recurring card:', updateError);
-          throw updateError;
-        }
+        // next_creation_at already updated before card creation
 
         // Log success
         await supabase.from('automation_logs').insert({
