@@ -117,19 +117,19 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">{funnel.name}</h2>
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">{funnel.name}</h2>
         {funnel.description && (
-          <p className="text-muted-foreground">{funnel.description}</p>
+          <p className="text-sm sm:text-base text-muted-foreground">{funnel.description}</p>
         )}
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div ref={scrollContainerRef} className="flex gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden">
+        <div ref={scrollContainerRef} className="flex gap-4 sm:gap-6 pb-2 sm:pb-4 flex-1 overflow-x-auto overflow-y-hidden">
           {funnel.stages.map((stage, index) => (
-            <div key={stage.id} data-stage-id={stage.id} className="flex-shrink-0 w-72">
+            <div key={stage.id} data-stage-id={stage.id} className="flex-shrink-0 w-64 sm:w-72">
               <Card 
-                className="h-[calc(100vh-16rem)] flex flex-col"
+                className="h-[calc(100vh-20rem)] sm:h-[calc(100vh-16rem)] flex flex-col"
                 style={{ 
                   borderTop: `4px solid ${stage.color}`,
                 }}

@@ -7,6 +7,8 @@ import { DueCardAlert } from "@/components/projects/DueCardAlert";
 interface SidebarContextType {
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -40,16 +42,17 @@ const getPageTitle = (pathname: string): string => {
 
 export const Layout = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const title = getPageTitle(location.pathname);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
+    <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
       <div className="min-h-screen bg-background">
         <Sidebar />
-        <div className={`flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
+        <div className={`flex flex-col min-h-screen transition-all duration-300 ml-0 md:ml-16 lg:${collapsed ? 'ml-16' : 'ml-64'}`}>
           <Header title={title} />
-          <main className="flex-1 p-6 overflow-hidden">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-hidden">
             <Outlet />
           </main>
         </div>

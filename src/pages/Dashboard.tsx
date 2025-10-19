@@ -110,13 +110,13 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-primary via-primary/90 to-secondary text-primary-foreground p-6 rounded-lg">
-          <h1 className="text-2xl font-bold mb-2">
+        <div className="bg-gradient-to-r from-primary via-primary/90 to-secondary text-primary-foreground p-4 sm:p-6 rounded-lg">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">
             🚀 CRM Poderalize - Inteligência em Vendas
           </h1>
-          <p className="opacity-90">
+          <p className="text-sm sm:text-base opacity-90">
             Transforme leads em clientes usando psicologia de vendas e IA avançada.
           </p>
         </div>

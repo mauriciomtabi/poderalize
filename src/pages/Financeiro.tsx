@@ -325,7 +325,7 @@ const Financeiro = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center">
             <div className="flex-1 min-w-[150px]">
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger>
@@ -362,6 +362,7 @@ const Financeiro = () => {
                 setSelectedYear(currentYear.toString());
                 setSelectedMonth(currentMonth.toString());
               }}
+              className="w-full sm:w-auto"
             >
               Limpar filtros
             </Button>
@@ -371,13 +372,13 @@ const Financeiro = () => {
 
       {/* Tabs para Dashboard e Detalhado */}
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="dashboard" className="flex items-center gap-2">
-            <BarChart3 size={16} />
+        <TabsList className="grid w-full max-w-full sm:max-w-md grid-cols-2">
+          <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <BarChart3 size={16} className="hidden sm:block" />
             Dashboard
           </TabsTrigger>
-          <TabsTrigger value="detalhado" className="flex items-center gap-2">
-            <FileText size={16} />
+          <TabsTrigger value="detalhado" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <FileText size={16} className="hidden sm:block" />
             Detalhado
           </TabsTrigger>
         </TabsList>
@@ -389,7 +390,7 @@ const Financeiro = () => {
         <TabsContent value="detalhado" className="mt-6 space-y-6">
 
       {/* Resumo Financeiro */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="card-interactive hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -483,8 +484,8 @@ const Financeiro = () => {
       {/* Receitas - Clientes */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building size={20} />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Building size={20} className="flex-shrink-0" />
             Receitas - Clientes
           </CardTitle>
         </CardHeader>
@@ -578,12 +579,12 @@ const Financeiro = () => {
 
       {/* Outras Receitas */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp size={20} />
+        <CardHeader className="flex flex-col sm:flex-row gap-3 sm:gap-0 items-start sm:items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <TrendingUp size={20} className="flex-shrink-0" />
             Outras Receitas
           </CardTitle>
-          <Button onClick={() => setIsAddReceitaOpen(true)} size="sm">
+          <Button onClick={() => setIsAddReceitaOpen(true)} size="sm" className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lançar Receita
           </Button>
@@ -641,9 +642,9 @@ const Financeiro = () => {
       {/* Despesas - Salários */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users size={20} />
-            Despesas - Salários dos Colaboradores
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Users size={20} className="flex-shrink-0" />
+            <span className="truncate">Salários dos Colaboradores</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -740,12 +741,12 @@ const Financeiro = () => {
 
       {/* Outras Despesas */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="flex items-center gap-2">
-            <TrendingDown size={20} />
+        <CardHeader className="flex flex-col sm:flex-row gap-3 sm:gap-0 items-start sm:items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <TrendingDown size={20} className="flex-shrink-0" />
             Outras Despesas
           </CardTitle>
-          <Button onClick={() => setIsAddDespesaOpen(true)} size="sm">
+          <Button onClick={() => setIsAddDespesaOpen(true)} size="sm" className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Lançar Despesa
           </Button>

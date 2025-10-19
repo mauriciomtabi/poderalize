@@ -11,10 +11,12 @@ import {
   Target,
   PieChart,
   UserCheck,
-  DollarSign
+  DollarSign,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import logo from "@/assets/poderalize-logo.png";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +36,7 @@ const menuItems = [
 ];
 
 export const Sidebar = () => {
-  const { collapsed, setCollapsed } = useSidebarContext();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarContext();
   const location = useLocation();
   const { user, isAdmin } = useAuthContext();
   const [visibleMenuItems, setVisibleMenuItems] = useState(menuItems);
@@ -87,11 +89,8 @@ export const Sidebar = () => {
     checkPermissions();
   }, [user, isAdmin]);
 
-  return (
-    <div className={cn(
-      "fixed left-0 top-0 bg-gradient-secondary text-secondary-foreground transition-all duration-300 h-screen flex flex-col border-r border-border z-40",
-      collapsed ? "w-16" : "w-64"
-    )}>
+  const SidebarContent = () => (
+    <>
       {/* Header */}
       <div className="p-4 border-b border-secondary/20">
         <div className="flex items-center justify-between">
@@ -114,7 +113,7 @@ export const Sidebar = () => {
               variant="ghost"
               size="sm"
               onClick={() => setCollapsed(!collapsed)}
-              className="text-secondary-foreground hover:bg-secondary/20"
+              className="text-secondary-foreground hover:bg-secondary/20 hidden lg:flex"
             >
               <ChevronLeft size={16} />
             </Button>
@@ -126,7 +125,7 @@ export const Sidebar = () => {
               variant="ghost"
               size="sm"
               onClick={() => setCollapsed(!collapsed)}
-              className="text-secondary-foreground hover:bg-secondary/20"
+              className="text-secondary-foreground hover:bg-secondary/20 hidden lg:flex"
             >
               <ChevronRight size={16} />
             </Button>
@@ -135,13 +134,14 @@ export const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {visibleMenuItems.map((item) => {
           const isActive = location.pathname === item.href || (location.pathname === "/" && item.href === "/projetos");
           return (
             <Link
               key={item.href}
               to={item.href}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 "flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200",
                 isActive 
@@ -164,6 +164,25 @@ export const Sidebar = () => {
           </div>
         )}
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className={cn(
+        "hidden md:fixed md:flex left-0 top-0 bg-gradient-secondary text-secondary-foreground transition-all duration-300 h-screen flex-col border-r border-border z-40",
+        collapsed ? "w-16" : "w-64"
+      )}>
+        <SidebarContent />
+      </div>
+
+      {/* Mobile Sidebar (Sheet) */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="p-0 w-64 bg-gradient-secondary text-secondary-foreground border-r border-border">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };

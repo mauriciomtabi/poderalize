@@ -85,9 +85,9 @@ export const CRMHeader = () => {
 
       {/* Header Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-1 w-full">
           {/* Funnel Selector */}
-          <div className="min-w-[200px]">
+          <div className="min-w-[150px] w-full sm:w-auto sm:max-w-[200px]">
             <Select
               value={currentFunnel?.id || ""}
               onValueChange={handleFunnelChange}
@@ -125,24 +125,25 @@ export const CRMHeader = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? "bg-muted" : ""}
+            className={`flex-1 sm:flex-initial ${showFilters ? "bg-muted" : ""}`}
           >
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
+            <Filter className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Filtros</span>
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowCreateFunnel(true)}
+            className="flex-1 sm:flex-initial"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Funil
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Novo</span>
           </Button>
 
           {currentFunnel && (
@@ -150,9 +151,10 @@ export const CRMHeader = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowEditFunnel(true)}
+              className="flex-1 sm:flex-initial"
             >
-              <Edit className="h-4 w-4 mr-2" />
-              Editar Funil
+              <Edit className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Editar</span>
             </Button>
           )}
 
@@ -160,6 +162,7 @@ export const CRMHeader = () => {
             variant="outline" 
             size="sm"
             onClick={() => setShowSettings(true)}
+            className="flex-1 sm:flex-initial"
           >
             <Settings className="h-4 w-4" />
           </Button>
