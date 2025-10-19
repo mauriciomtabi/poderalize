@@ -465,10 +465,10 @@ export const CardDetailModal = ({
         <div className="flex flex-col md:flex-row h-full min-h-[70vh] w-full">
           {/* Main Content with ScrollArea */}
           <div className="flex-1 min-w-0 basis-0 w-full md:max-w-[calc(100%-16rem)]">
-            <ScrollArea className="h-auto max-h-[60vh] md:h-[80vh]">
+            <ScrollArea className="h-[60vh] md:h-[80vh]">
               <div className="space-y-6 px-6 py-4 pr-4 overflow-hidden break-words">
                 {/* Header with title */}
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between pr-8 sm:pr-10">
                   <div className="flex-1 mr-4">
                     {isCreationMode && (
                       <h2 className="text-lg font-semibold text-primary mb-2">
@@ -496,7 +496,7 @@ export const CardDetailModal = ({
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {/* Assignees next to title */}
                     {cardAssignees.length > 0 && (
                       <div className="flex -space-x-2">
@@ -695,7 +695,7 @@ export const CardDetailModal = ({
 
           {/* Sidebar */}
           <div className="w-full md:w-64 md:min-w-[16rem] md:max-w-64 border-t md:border-t-0 md:border-l bg-muted/30 md:flex-shrink-0">
-            <ScrollArea className="h-auto max-h-[40vh] md:h-[80vh] p-4">
+            <ScrollArea className="h-[40vh] md:h-[80vh] p-4">
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
                 
