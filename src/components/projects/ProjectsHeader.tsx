@@ -55,9 +55,11 @@ export const ProjectsHeader = ({
     return filter !== null;
   }).length;
   return <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      {/* View Selector and Search */}
-      <div className="flex flex-col lg:flex-row gap-3 landscape:gap-2 lg:gap-0 items-stretch lg:items-center justify-between px-3 landscape:px-2 sm:px-4 pb-3 landscape:pb-1 sm:pb-4">
-        <div className="flex items-center space-x-3 landscape:space-x-2 overflow-x-auto pb-2 landscape:pb-1 lg:pb-0">
+      {/* Mobile Layout: Cada seção em sua própria linha */}
+      <div className="flex flex-col gap-3 landscape:gap-2 px-3 landscape:px-2 sm:px-4 pb-3 landscape:pb-1 sm:pb-4 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
+        
+        {/* 1. View Selector */}
+        <div className="w-full lg:w-auto">
           <div className="grid grid-cols-2 md:flex items-center space-x-0 md:space-x-1 gap-1 landscape:gap-0.5 md:gap-0 bg-muted rounded-lg p-1 landscape:p-0.5">
           {Object.entries(viewIcons).map(([view, Icon]) => {
           // Only admins can see dashboard view
@@ -72,48 +74,53 @@ export const ProjectsHeader = ({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 landscape:gap-1">
-          {isAdmin && <div className="flex items-center justify-between sm:justify-start space-x-2 landscape:space-x-1 sm:mr-4 px-3 landscape:px-2 py-1 landscape:py-0.5 bg-muted rounded-lg">
+        {/* 2. Ver todos (Admin only) */}
+        {isAdmin && <div className="w-full lg:w-auto lg:mr-4">
+            <div className="flex items-center justify-between sm:justify-start space-x-2 landscape:space-x-1 px-3 landscape:px-2 py-1 landscape:py-0.5 bg-muted rounded-lg">
               <div className="flex items-center space-x-2 landscape:space-x-1">
                 <Eye size={16} className="text-muted-foreground landscape:w-3 landscape:h-3" />
                 <span className="text-sm landscape:text-xs">Ver todos</span>
               </div>
               <Switch id="view-all-cards" checked={state.viewAllCardsAsAdmin} onCheckedChange={actions.setViewAllCardsAsAdmin} className="landscape:scale-75" />
-            </div>}
-          
-          <div className="relative flex-1 sm:flex-initial">
+            </div>
+          </div>}
+
+        {/* 3. Campo de Busca */}
+        <div className="w-full lg:w-64">
+          <div className="relative">
             <Search size={16} className="absolute left-3 landscape:left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground landscape:w-3 landscape:h-3" />
-            <Input placeholder="Buscar cartões..." value={state.filters.search} onChange={e => handleSearchChange(e.target.value)} className="w-full sm:w-64 pl-9 landscape:pl-7 h-10 landscape:h-7 text-sm landscape:text-xs" />
+            <Input placeholder="Buscar cartões..." value={state.filters.search} onChange={e => handleSearchChange(e.target.value)} className="w-full pl-9 landscape:pl-7 h-10 landscape:h-7 text-sm landscape:text-xs" />
           </div>
-          
-          <div className="flex items-center gap-2 landscape:gap-1 flex-wrap">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="relative flex-1 sm:flex-initial h-9 landscape:h-7 px-3 landscape:px-2">
-                  <Filter size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
-                  <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Filtros</span>
-                  {activeFiltersCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 landscape:h-4 w-5 landscape:w-4 rounded-full p-0 text-xs landscape:text-[10px]">
-                      {activeFiltersCount}
-                    </Badge>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" side="bottom" className="p-0 w-80">
-                <ProjectsFilters />
-              </PopoverContent>
-            </Popover>
+        </div>
 
-            {isAdmin && <>
-                <Button variant="outline" size="sm" onClick={() => setShowAutomation(true)} title="Automação" className="flex-1 sm:flex-initial h-9 landscape:h-7 px-3 landscape:px-2">
-                  <Zap size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
-                  <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Automação</span>
-                </Button>
+        {/* 4. Botões de Ação */}
+        <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="relative h-9 landscape:h-7 px-3 landscape:px-2">
+                <Filter size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
+                <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Filtros</span>
+                {activeFiltersCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 landscape:h-4 w-5 landscape:w-4 rounded-full p-0 text-xs landscape:text-[10px]">
+                    {activeFiltersCount}
+                  </Badge>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" side="bottom" className="p-0 w-80">
+              <ProjectsFilters />
+            </PopoverContent>
+          </Popover>
 
-                <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="flex-1 sm:flex-initial h-9 landscape:h-7 px-3 landscape:px-2">
-                  <Settings size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
-                  <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Config</span>
-                </Button>
-              </>}
-          </div>
+          {isAdmin && <>
+              <Button variant="outline" size="sm" onClick={() => setShowAutomation(true)} title="Automação" className="h-9 landscape:h-7 px-3 landscape:px-2">
+                <Zap size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
+                <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Automação</span>
+              </Button>
+
+              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="h-9 landscape:h-7 px-3 landscape:px-2">
+                <Settings size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
+                <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Config</span>
+              </Button>
+            </>}
         </div>
       </div>
 
