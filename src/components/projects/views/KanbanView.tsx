@@ -246,11 +246,11 @@ export const KanbanView = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 style={getDropStyle(provided.draggableProps.style, snapshot)}
-                                className={`flex-shrink-0 w-80 ${snapshot.isDragging ? 'rotate-2' : ''}`}
+                                className={`flex-shrink-0 w-80 landscape:w-64 ${snapshot.isDragging ? 'rotate-2' : ''}`}
                                 data-list-id={list.id}
                               >
                                 <Card 
-                                  className="flex flex-col kanban-column h-[calc(100vh-12rem)]"
+                                  className="flex flex-col kanban-column h-[calc(100vh-12rem)] landscape:h-[calc(100vh-8rem)]"
                                   style={{ backgroundColor: list.color }}
                                 >
                                   <CardHeader 
@@ -340,7 +340,7 @@ export const KanbanView = () => {
                     {provided.placeholder}
 
                     {/* Add List Button */}
-                    <div className="flex-shrink-0 w-80">
+                    <div className="flex-shrink-0 w-80 landscape:w-64">
                       <Button
                         variant="ghost"
                         className="w-full h-20 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
