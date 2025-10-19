@@ -25,41 +25,41 @@ export const Header = ({
   const handleSignOut = () => {
     signOut();
   };
-  return <header className="bg-card border-b border-border px-3 py-3 sm:px-4 sm:py-3 md:px-6 md:py-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
+  return <header className="bg-card border-b border-border px-3 py-3 landscape:py-1 sm:px-4 sm:py-3 md:px-6 md:py-4">
+      <div className="flex items-center justify-between gap-2 landscape:gap-1">
+        <div className="flex items-center space-x-2 landscape:space-x-1 sm:space-x-4 flex-1 min-w-0">
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setMobileOpen(true)}
-            className="md:hidden flex-shrink-0"
+            className="md:hidden flex-shrink-0 h-8 w-8 landscape:h-6 landscape:w-6"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5 landscape:h-4 landscape:w-4" />
           </Button>
           
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground truncate">{title}</h1>
+          <h1 className="text-lg landscape:text-base sm:text-xl md:text-2xl font-bold text-foreground truncate">{title}</h1>
         </div>
 
-        <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+        <div className="flex items-center space-x-2 landscape:space-x-1 sm:space-x-4 flex-shrink-0">
           {/* Notifications */}
           <NotificationsDropdown />
 
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                <Avatar className="w-7 h-7 sm:w-8 sm:h-8">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-2 landscape:space-x-1 h-auto py-1 landscape:py-0.5">
+                <Avatar className="w-7 h-7 landscape:w-6 landscape:h-6 sm:w-8 sm:h-8">
                   {user?.avatar_url ? (
                     <AvatarImage src={user.avatar_url} alt={user.full_name || 'Avatar'} />
                   ) : (
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs landscape:text-[10px]">
                       {getInitials(user?.full_name || user?.email || 'U')}
                     </AvatarFallback>
                   )}
                 </Avatar>
-                <span className="font-medium hidden md:inline">{user?.full_name || user?.email || 'Usuário'}</span>
-                <Badge variant="outline" className="text-xs hidden md:inline-flex">
+                <span className="font-medium hidden md:inline text-sm landscape:text-xs">{user?.full_name || user?.email || 'Usuário'}</span>
+                <Badge variant="outline" className="text-xs landscape:text-[10px] landscape:px-1 landscape:py-0 hidden md:inline-flex">
                   {user?.role === 'admin' ? 'Admin' : user?.role === 'colaborador' ? 'Colaborador' : 'Pendente'}
                 </Badge>
               </Button>

@@ -117,48 +117,48 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">{funnel.name}</h2>
+      <div className="mb-4 landscape:mb-2 sm:mb-6">
+        <h2 className="text-xl landscape:text-base sm:text-2xl font-bold text-foreground mb-2 landscape:mb-1">{funnel.name}</h2>
         {funnel.description && (
-          <p className="text-sm sm:text-base text-muted-foreground">{funnel.description}</p>
+          <p className="text-sm landscape:text-xs sm:text-base text-muted-foreground">{funnel.description}</p>
         )}
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div ref={scrollContainerRef} className="flex gap-4 sm:gap-6 pb-2 sm:pb-4 flex-1 overflow-x-auto overflow-y-hidden">
+        <div ref={scrollContainerRef} className="flex gap-4 landscape:gap-2 sm:gap-6 pb-2 landscape:pb-1 sm:pb-4 flex-1 overflow-x-auto overflow-y-hidden">
           {funnel.stages.map((stage, index) => (
-            <div key={stage.id} data-stage-id={stage.id} className="flex-shrink-0 w-64 sm:w-72">
+            <div key={stage.id} data-stage-id={stage.id} className="flex-shrink-0 w-64 landscape:w-56 sm:w-72">
               <Card 
-                className="h-[calc(100vh-20rem)] sm:h-[calc(100vh-16rem)] flex flex-col"
+                className="h-[calc(100vh-20rem)] landscape:h-[calc(100vh-8rem)] sm:h-[calc(100vh-16rem)] flex flex-col"
                 style={{ 
                   borderTop: `4px solid ${stage.color}`,
                 }}
               >
                 {/* Stage Header */}
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <div className="p-4 landscape:p-2 border-b">
+                  <div className="flex items-center justify-between mb-2 landscape:mb-1">
+                    <h3 className="font-semibold text-sm landscape:text-xs text-foreground flex items-center gap-2 landscape:gap-1">
                       <div 
-                        className="w-3 h-3 rounded-full"
+                        className="w-3 h-3 landscape:w-2 landscape:h-2 rounded-full"
                         style={{ backgroundColor: stage.color }}
                       />
                       {stage.title}
                     </h3>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs landscape:text-[10px] landscape:px-1 landscape:py-0">
                       {stage.leads.length}
                     </Badge>
                   </div>
                   
                   {/* Stage Metrics */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
+                    <div className="flex items-center gap-4 landscape:gap-2 text-sm landscape:text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 landscape:gap-0.5">
+                        <Users className="h-3 w-3 landscape:h-2 landscape:w-2" />
                         <span>{stage.leads.length} leads</span>
                       </div>
                       {index > 0 && (
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="h-3 w-3" />
+                        <div className="flex items-center gap-1 landscape:gap-0.5">
+                          <TrendingUp className="h-3 w-3 landscape:h-2 landscape:w-2" />
                           <span>{calculateConversionRate(index)}%</span>
                         </div>
                       )}
@@ -169,9 +169,9 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleAddLead(stage.id)}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground h-8 w-8 landscape:h-6 landscape:w-6 p-0"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4 landscape:h-3 landscape:w-3" />
                     </Button>
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-1 p-4 space-y-3 min-h-[200px] overflow-y-auto overflow-x-hidden pr-2 transition-colors ${
+                      className={`flex-1 p-4 landscape:p-2 space-y-3 landscape:space-y-2 min-h-[200px] landscape:min-h-[150px] overflow-y-auto overflow-x-hidden pr-2 landscape:pr-1 transition-colors ${
                         snapshot.isDraggingOver 
                           ? 'kanban-drop-zone' 
                           : ''

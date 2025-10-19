@@ -171,7 +171,7 @@ export const Sidebar = () => {
     <>
       {/* Desktop Sidebar */}
       <div className={cn(
-        "hidden md:fixed md:flex left-0 top-0 bg-gradient-secondary text-secondary-foreground transition-all duration-300 h-screen flex-col border-r border-border z-40",
+        "hidden landscape:hidden md:fixed md:flex left-0 top-0 bg-gradient-secondary text-secondary-foreground transition-all duration-300 h-screen flex-col border-r border-border z-40",
         collapsed ? "w-16" : "w-64"
       )}>
         <SidebarContent />

@@ -110,35 +110,35 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 landscape:space-y-3 sm:space-y-8">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-primary via-primary/90 to-secondary text-primary-foreground p-4 sm:p-6 rounded-lg">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">
+        <div className="bg-gradient-to-r from-primary via-primary/90 to-secondary text-primary-foreground p-4 landscape:p-2 sm:p-6 rounded-lg">
+          <h1 className="text-lg landscape:text-base sm:text-xl md:text-2xl font-bold mb-2 landscape:mb-1">
             🚀 CRM Poderalize - Inteligência em Vendas
           </h1>
-          <p className="text-sm sm:text-base opacity-90">
+          <p className="text-sm landscape:text-xs sm:text-base opacity-90">
             Transforme leads em clientes usando psicologia de vendas e IA avançada.
           </p>
         </div>
 
         {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 landscape:gap-3">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 landscape:pb-1 p-6 landscape:p-3">
+                  <CardTitle className="text-sm landscape:text-xs font-medium">
                     {stat.title}
                   </CardTitle>
-                  <Icon className={`h-5 w-5 ${stat.color}`} />
+                  <Icon className={`h-5 w-5 landscape:h-4 landscape:w-4 ${stat.color}`} />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground mb-1">
+                <CardContent className="p-6 landscape:p-3 pt-0 landscape:pt-0">
+                  <div className="text-2xl landscape:text-xl font-bold">{stat.value}</div>
+                  <p className="text-xs landscape:text-[10px] text-muted-foreground mb-1 landscape:mb-0">
                     {stat.change}
                   </p>
-                  <p className="text-xs text-muted-foreground/80">
+                  <p className="text-xs landscape:text-[10px] text-muted-foreground/80">
                     {stat.description}
                   </p>
                 </CardContent>

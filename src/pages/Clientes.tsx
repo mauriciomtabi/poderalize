@@ -167,8 +167,8 @@ const Clientes = () => {
                 {searchTerm ? 'Tente ajustar os termos de busca para encontrar clientes.' : 'Quando você fechar leads, eles aparecerão aqui como clientes.'}
               </p>
             </CardContent>
-          </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredClientes.map(cliente => <Card key={cliente.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleCardClick(cliente)}>
+          </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 landscape:gap-3">
+            {filteredClientes.map(cliente => <Card key={cliente.id} className="cursor-pointer hover:shadow-lg transition-shadow p-6 landscape:p-3" onClick={() => handleCardClick(cliente)}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
                     <Avatar className="h-12 w-12 flex-shrink-0">
@@ -237,10 +237,10 @@ const Clientes = () => {
         <Dialog open={isAddModalOpen} onOpenChange={(open) => {
           if (!open) handleCloseAddModal();
         }}>
-          <DialogContent id="cliente-add-content" className="max-w-full sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh]">
+          <DialogContent id="cliente-add-content" className="max-w-full sm:max-w-4xl max-h-[95vh] landscape:max-h-[90vh] sm:max-h-[90vh] p-6 landscape:p-4">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
+              <DialogTitle className="flex items-center gap-2 landscape:gap-1 text-lg landscape:text-base">
+                <Plus className="h-5 w-5 landscape:h-4 landscape:w-4" />
                 Adicionar Novo Cliente
               </DialogTitle>
             </DialogHeader>
@@ -256,10 +256,10 @@ const Clientes = () => {
 
         {/* Edit Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-full sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-full sm:max-w-4xl max-h-[95vh] landscape:max-h-[90vh] sm:max-h-[90vh] overflow-y-auto p-6 landscape:p-4">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Pencil className="h-5 w-5" />
+              <DialogTitle className="flex items-center gap-2 landscape:gap-1 text-lg landscape:text-base">
+                <Pencil className="h-5 w-5 landscape:h-4 landscape:w-4" />
                 Editar Cliente
               </DialogTitle>
             </DialogHeader>
