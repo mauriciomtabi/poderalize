@@ -14,14 +14,12 @@ interface AttachmentSelectorDialogProps {
   isOpen: boolean;
   onClose: () => void;
   attachments: Attachment[];
-  onOpenAttachment?: (attachment: Attachment) => void;
 }
 
 export const AttachmentSelectorDialog = ({
   isOpen,
   onClose,
   attachments,
-  onOpenAttachment,
 }: AttachmentSelectorDialogProps) => {
   const getAttachmentIcon = (attachment: Attachment) => {
     const isUrl = attachment.url.startsWith('http://') || attachment.url.startsWith('https://');
@@ -38,21 +36,11 @@ export const AttachmentSelectorDialog = ({
     return <FileText className="h-5 w-5 text-primary" />;
   };
 
-const handleOpen = (attachment: Attachment, e: React.MouseEvent) => {
-  e.stopPropagation();
-  const isPDF = attachment.type === 'application/pdf' || attachment.name?.toLowerCase().endsWith('.pdf');
-  const isImage = (attachment.type || '').startsWith('image/');
-  const isDataUrl = attachment.url.startsWith('data:');
-
-  if (onOpenAttachment && (isPDF || isImage || isDataUrl)) {
-    onOpenAttachment(attachment);
+  const handleOpen = (attachment: Attachment, e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(attachment.url, '_blank');
     onClose();
-    return;
-  }
-  // Links e outros tipos abrem em nova aba com segurança
-  window.open(attachment.url, '_blank', 'noopener,noreferrer');
-  onClose();
-};
+  };
 
   const handleDownload = async (attachment: Attachment, e: React.MouseEvent) => {
     e.stopPropagation();
