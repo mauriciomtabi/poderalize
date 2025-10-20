@@ -55,52 +55,51 @@ export const ProjectsHeader = ({
     return filter !== null;
   }).length;
   return <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      {/* Mobile Layout: Cada seção em sua própria linha */}
-      <div className="flex flex-col gap-3 landscape:gap-2 px-3 landscape:px-2 sm:px-4 pb-3 landscape:pb-1 sm:pb-4 lg:flex-row lg:items-center lg:justify-between lg:gap-0">
+      <div className="flex flex-row items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
         
         {/* 1. View Selector */}
-        <div className="w-full lg:w-auto">
-          <div className="grid grid-cols-2 md:flex items-center space-x-0 md:space-x-1 gap-1 landscape:gap-0.5 md:gap-0 bg-muted rounded-lg p-1 landscape:p-0.5">
+        <div className="flex-shrink-0">
+          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5">
           {Object.entries(viewIcons).map(([view, Icon]) => {
           // Only admins can see dashboard view
           if (view === 'dashboard' && !isAdmin) {
             return null;
           }
-          return <Button key={view} variant={state.currentView === view ? "default" : "ghost"} size="sm" onClick={() => handleViewChange(view as ViewType)} className={cn("h-8 landscape:h-6 px-2 landscape:px-1 sm:px-3 text-muted-foreground hover:text-foreground text-sm landscape:text-xs", state.currentView === view && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm")}>
-                <Icon size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
-                <span className="hidden sm:inline landscape:hidden lg:inline">{viewLabels[view as ViewType]}</span>
+          return <Button key={view} variant={state.currentView === view ? "default" : "ghost"} size="sm" onClick={() => handleViewChange(view as ViewType)} className={cn("h-8 px-2 text-sm", state.currentView === view && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm")}>
+                <Icon size={16} className="sm:mr-1" />
+                <span className="hidden sm:inline">{viewLabels[view as ViewType]}</span>
               </Button>;
         })}
           </div>
         </div>
 
         {/* 2. Ver todos (Admin only) */}
-        {isAdmin && <div className="w-full lg:w-auto lg:mr-4">
-            <div className="flex items-center justify-between sm:justify-start space-x-2 landscape:space-x-1 px-3 landscape:px-2 py-1 landscape:py-0.5 bg-muted rounded-lg">
-              <div className="flex items-center space-x-2 landscape:space-x-1">
-                <Eye size={16} className="text-muted-foreground landscape:w-3 landscape:h-3" />
-                <span className="text-sm landscape:text-xs">Ver todos</span>
+        {isAdmin && <div className="flex-shrink-0">
+            <div className="flex items-center gap-2 px-2 py-1 bg-muted rounded-lg">
+              <div className="flex items-center gap-2">
+                <Eye size={16} className="text-muted-foreground" />
+                <span className="text-xs sm:text-sm">Ver todos</span>
               </div>
-              <Switch id="view-all-cards" checked={state.viewAllCardsAsAdmin} onCheckedChange={actions.setViewAllCardsAsAdmin} className="landscape:scale-75" />
+              <Switch id="view-all-cards" checked={state.viewAllCardsAsAdmin} onCheckedChange={actions.setViewAllCardsAsAdmin} />
             </div>
           </div>}
 
         {/* 3. Campo de Busca */}
-        <div className="w-full lg:w-64">
+        <div className="flex-1 min-w-0 max-w-xs">
           <div className="relative">
-            <Search size={16} className="absolute left-3 landscape:left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground landscape:w-3 landscape:h-3" />
-            <Input placeholder="Buscar cartões..." value={state.filters.search} onChange={e => handleSearchChange(e.target.value)} className="w-full pl-9 landscape:pl-7 h-10 landscape:h-7 text-sm landscape:text-xs" />
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Buscar cartões..." value={state.filters.search} onChange={e => handleSearchChange(e.target.value)} className="w-full pl-8 h-8 text-sm" />
           </div>
         </div>
 
         {/* 4. Botões de Ação */}
-        <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:gap-2">
+        <div className="flex gap-1 flex-shrink-0">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="relative h-9 landscape:h-7 px-3 landscape:px-2">
-                <Filter size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
-                <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Filtros</span>
-                {activeFiltersCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 landscape:h-4 w-5 landscape:w-4 rounded-full p-0 text-xs landscape:text-[10px]">
+              <Button variant="outline" size="sm" className="relative h-8 px-2">
+                <Filter size={16} className="sm:mr-1" />
+                <span className="hidden sm:inline">Filtros</span>
+                {activeFiltersCount > 0 && <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">
                     {activeFiltersCount}
                   </Badge>}
               </Button>
@@ -111,14 +110,14 @@ export const ProjectsHeader = ({
           </Popover>
 
           {isAdmin && <>
-              <Button variant="outline" size="sm" onClick={() => setShowAutomation(true)} title="Automação" className="h-9 landscape:h-7 px-3 landscape:px-2">
-                <Zap size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
-                <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Automação</span>
+              <Button variant="outline" size="sm" onClick={() => setShowAutomation(true)} title="Automação" className="h-8 px-2">
+                <Zap size={16} className="sm:mr-1" />
+                <span className="hidden sm:inline">Automação</span>
               </Button>
 
-              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="h-9 landscape:h-7 px-3 landscape:px-2">
-                <Settings size={16} className="sm:mr-1 landscape:w-3 landscape:h-3" />
-                <span className="hidden sm:inline landscape:hidden lg:inline text-sm landscape:text-xs">Config</span>
+              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="h-8 px-2">
+                <Settings size={16} className="sm:mr-1" />
+                <span className="hidden sm:inline">Config</span>
               </Button>
             </>}
         </div>
