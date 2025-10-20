@@ -384,7 +384,7 @@ const Financeiro = () => {
         <TabsContent value="detalhado" className="mt-6 space-y-6">
 
       {/* Resumo Financeiro */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="card-interactive hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -439,7 +439,7 @@ const Financeiro = () => {
 
       {/* Indicadores de Contratos */}
       {selectedMonth !== 'all' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="card-interactive hover-lift border-green-500/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
