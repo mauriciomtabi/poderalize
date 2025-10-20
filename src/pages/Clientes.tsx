@@ -286,7 +286,7 @@ const Clientes = () => {
                   <Users className="h-5 w-5" />
                   Detalhes do Cliente
                 </DialogTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 pr-10">
                   <Button
                     variant="outline"
                     size="sm"
