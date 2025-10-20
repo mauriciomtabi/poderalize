@@ -937,6 +937,18 @@ export const CardDetailModal = ({
           />
         ) : null}
 
+        {/* Attachment Viewer */}
+        {viewerAttachment && (
+          <AttachmentViewerDialog
+            attachment={viewerAttachment}
+            isOpen={showAttachmentViewer}
+            onClose={() => {
+              setShowAttachmentViewer(false);
+              setViewerAttachment(null);
+            }}
+          />
+        )}
+
         {/* Dialogs only for edit mode */}
         {!isCreationMode && latestCard && (
           <>
