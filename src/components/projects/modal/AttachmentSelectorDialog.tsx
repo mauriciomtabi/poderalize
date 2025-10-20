@@ -38,8 +38,18 @@ export const AttachmentSelectorDialog = ({
 
   const handleOpen = (attachment: Attachment, e: React.MouseEvent) => {
     e.stopPropagation();
-    window.open(attachment.url, '_blank');
-    onClose();
+    
+    // Se for PDF, baixa automaticamente ao invés de abrir
+    const isPdf = attachment.type?.toLowerCase().includes('pdf') || 
+                  attachment.name.toLowerCase().endsWith('.pdf') ||
+                  attachment.url.toLowerCase().includes('.pdf');
+    
+    if (isPdf) {
+      handleDownload(attachment, e);
+    } else {
+      window.open(attachment.url, '_blank');
+      onClose();
+    }
   };
 
   const handleDownload = async (attachment: Attachment, e: React.MouseEvent) => {
