@@ -327,75 +327,84 @@ const Leads = () => {
         <LoadingSpinner />
       </div>;
   }
-  return <div className="space-y-6 animate-fade-in">
-      {/* Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{leads.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(totalValue)}
+  return <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div>
+          
+          
+        </div>
+      </div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card className="p-4 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Total de Leads</p>
+              <p className="text-2xl font-bold">{leads.length}</p>
             </div>
-          </CardContent>
+            <div className="p-3 rounded-full bg-muted">
+              <Users className="h-6 w-6 text-muted-foreground" />
+            </div>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa Conversão</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {leads.length > 0 ? Math.round(leads.filter(l => l.status_simple === 'fechado').length / leads.length * 100) : 0}%
+        <Card className="p-4 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Valor Total</p>
+              <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
             </div>
-          </CardContent>
+            <div className="p-3 rounded-full bg-muted">
+              <DollarSign className="h-6 w-6 text-muted-foreground" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Taxa Conversão</p>
+              <p className="text-2xl font-bold">
+                {leads.length > 0 ? Math.round(leads.filter(l => l.status_simple === 'fechado').length / leads.length * 100) : 0}%
+              </p>
+            </div>
+            <div className="p-3 rounded-full bg-muted">
+              <TrendingUp className="h-6 w-6 text-muted-foreground" />
+            </div>
+          </div>
         </Card>
       </div>
 
-      {/* Header com busca, filtros e botão de adicionar */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="flex gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input placeholder="Buscar leads..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
-          </div>
-          
-          <div className="min-w-[200px]">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Leads</SelectItem>
-                <SelectItem value="novo">Novos</SelectItem>
-                <SelectItem value="qualificado">Qualificados</SelectItem>
-                <SelectItem value="proposta">Proposta</SelectItem>
-                <SelectItem value="negociacao">Negociação</SelectItem>
-                <SelectItem value="fechado">Fechados</SelectItem>
-                <SelectItem value="perdidos">
-                  🔍 Leads Perdidos {leadsPerdidos.length > 0 && `(${leadsPerdidos.length})`}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Search and Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input placeholder="Buscar leads..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+        </div>
+        <div className="min-w-[200px]">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Leads</SelectItem>
+              <SelectItem value="novo">Novos</SelectItem>
+              <SelectItem value="qualificado">Qualificados</SelectItem>
+              <SelectItem value="proposta">Proposta</SelectItem>
+              <SelectItem value="negociacao">Negociação</SelectItem>
+              <SelectItem value="fechado">Fechados</SelectItem>
+              <SelectItem value="perdidos">
+                🔍 Leads Perdidos {leadsPerdidos.length > 0 && `(${leadsPerdidos.length})`}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Novo Lead
             </Button>
@@ -682,15 +691,29 @@ const Leads = () => {
         </Card>
       )}
 
-      {/* Lista de leads */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredLeads.length === 0 ? <div className="col-span-full text-center py-8">
-            <p className="text-muted-foreground">
-              {searchTerm ? 'Nenhum lead encontrado para sua busca' : 'Nenhum lead cadastrado'}
+      {/* Leads List */}
+      {filteredLeads.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              {searchTerm ? 'Nenhum lead encontrado' : 'Nenhum lead ainda'}
+            </h3>
+            <p className="text-muted-foreground text-center max-w-sm">
+              {searchTerm ? 'Tente ajustar os termos de busca para encontrar leads.' : 'Comece adicionando seus primeiros leads para gerenciar suas oportunidades.'}
             </p>
-          </div> : filteredLeads.map(lead => <Card key={lead.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick(lead)}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start gap-3">
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-3 gap-6">
+          {filteredLeads.map(lead => (
+            <Card 
+              key={lead.id} 
+              className="cursor-pointer hover:shadow-lg transition-shadow p-6 landscape:p-3" 
+              onClick={() => handleCardClick(lead)}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
                   <Avatar className="h-12 w-12 flex-shrink-0">
                     <AvatarImage src={lead.avatar_url} alt={lead.nome} />
                     <AvatarFallback>
@@ -700,46 +723,60 @@ const Leads = () => {
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-lg truncate">{lead.nome}</CardTitle>
                     <p className="text-sm text-muted-foreground truncate">{lead.empresa}</p>
-                    <Badge className={`${getStatusConfig(lead.status_simple).color} mt-1`}>
-                      {getStatusConfig(lead.status_simple).label}
-                    </Badge>
                   </div>
+                  <Badge className={`${getStatusConfig(lead.status_simple).color} flex-shrink-0`}>
+                    {getStatusConfig(lead.status_simple).label}
+                  </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center gap-2">
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{lead.email}</span>
-                </div>
-                {lead.telefone && <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{lead.telefone}</span>
-                  </div>}
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{lead.fonte}</span>
+                  <span className="truncate">{lead.email}</span>
                 </div>
                 
-                {/* Show motivo_perda if lead is perdido */}
+                {lead.telefone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span>{lead.telefone}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-sm">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">{lead.fonte}</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold text-green-600">
+                    {formatCurrency(lead.valor || 0)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">{lead.probabilidade || 0}% probabilidade</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    {new Date(lead.data_contato).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+
                 {lead.status_simple === 'perdido' && lead.motivo_perda && (
                   <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded">
                     <p className="text-xs font-medium text-red-800">Motivo da Perda:</p>
-                    <p className="text-xs text-red-700">{lead.motivo_perda}</p>
+                    <p className="text-xs text-red-700 truncate">{lead.motivo_perda}</p>
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-2">
-                  <div>
-                    <p className="text-sm font-semibold">{formatCurrency(lead.valor || 0)}</p>
-                    <p className="text-xs text-muted-foreground">{lead.probabilidade || 0}% probabilidade</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4 inline mr-1" />
-                    Contato: {new Date(lead.data_contato).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
               </CardContent>
-            </Card>)}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Modal de visualização/edição */}
       <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
