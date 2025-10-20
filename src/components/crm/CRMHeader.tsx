@@ -10,7 +10,6 @@ import { CreateFunnelDialog } from "./CreateFunnelDialog";
 import { EditFunnelDialog } from "./EditFunnelDialog";
 import { CRMFilters } from "./CRMFilters";
 import { CRMSettings } from "./CRMSettings";
-import { AddLeadToFunnelDialog } from "./AddLeadToFunnelDialog";
 
 export const CRMHeader = () => {
   const { currentFunnel, funnels, metrics, filters, setCurrentFunnel, setFilters } = useCRM();
@@ -18,7 +17,6 @@ export const CRMHeader = () => {
   const [showEditFunnel, setShowEditFunnel] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showAddLead, setShowAddLead] = useState(false);
 
   const handleFunnelChange = (funnelId: string) => {
     const funnel = funnels.find(f => f.id === funnelId);
@@ -85,21 +83,90 @@ export const CRMHeader = () => {
         ))}
       </div>
 
-      {/* Search and Add Button */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Buscar leads..."
-            value={filters.search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10"
-          />
+      {/* Header Controls */}
+      <div className="flex flex-row items-center justify-between gap-2 px-3 py-2">
+        {/* 1. Funnel Selector */}
+        <div className="flex-shrink-0">
+          <Select
+            value={currentFunnel?.id || ""}
+            onValueChange={handleFunnelChange}
+          >
+            <SelectTrigger className="h-8 text-sm min-w-[150px]">
+              <SelectValue placeholder="Selecionar funil" />
+            </SelectTrigger>
+            <SelectContent>
+              {funnels.filter(funnel => funnel.id && funnel.id.trim()).map((funnel) => (
+                <SelectItem key={funnel.id} value={funnel.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{funnel.name}</span>
+                    {funnel.isActive && (
+                      <Badge variant="secondary" className="text-xs">
+                        Ativo
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Button onClick={() => setShowAddLead(true)} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Lead
-        </Button>
+
+        {/* 2. Search */}
+        <div className="flex-1 min-w-0 max-w-xs">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar leads..."
+              value={filters.search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full pl-8 h-8 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* 3. Action Buttons */}
+        <div className="flex gap-1 flex-shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`h-8 px-2 ${showFilters ? "bg-muted" : ""}`}
+          >
+            <Filter size={16} className="sm:mr-1" />
+            <span className="hidden sm:inline">Filtros</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCreateFunnel(true)}
+            className="h-8 px-2"
+          >
+            <Plus size={16} className="sm:mr-1" />
+            <span className="hidden sm:inline">Novo</span>
+          </Button>
+
+          {currentFunnel && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowEditFunnel(true)}
+              className="h-8 px-2"
+            >
+              <Edit size={16} className="sm:mr-1" />
+              <span className="hidden sm:inline">Editar</span>
+            </Button>
+          )}
+
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowSettings(true)}
+            className="h-8 w-8"
+          >
+            <Settings size={16} />
+          </Button>
+        </div>
       </div>
 
       {/* Filters Panel */}
@@ -129,15 +196,6 @@ export const CRMHeader = () => {
         open={showSettings}
         onOpenChange={setShowSettings}
       />
-
-      {/* Add Lead Dialog */}
-      {currentFunnel && (
-        <AddLeadToFunnelDialog
-          open={showAddLead}
-          onOpenChange={setShowAddLead}
-          stageId={currentFunnel.stages[0]?.id || ""}
-        />
-      )}
     </div>
   );
 };
