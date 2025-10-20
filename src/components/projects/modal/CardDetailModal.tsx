@@ -462,10 +462,10 @@ export const CardDetailModal = ({
         <DialogDescription className="sr-only">
           {isCreationMode ? 'Preencha as informações da nova tarefa' : 'Visualize e edite as informações do cartão.'}
         </DialogDescription>
-        <div className="flex flex-col md:flex-row h-[80vh] w-full min-h-0">
+        <div className="flex flex-col md:flex-row h-full w-full">
           {/* Main Content with ScrollArea */}
-          <div className="flex-1 min-w-0 basis-0 w-full md:max-w-[calc(100%-16rem)] flex flex-col min-h-0">
-            <ScrollArea className="flex-1">
+          <div className="flex-1 min-w-0 basis-0 w-full md:max-w-[calc(100%-16rem)]">
+            <ScrollArea className="h-[70vh] md:h-[75vh]">
               <div className="space-y-6 px-6 py-4 pr-4 overflow-hidden break-words">
                 {/* Header with title */}
                 <div className="flex items-start justify-between pr-8 sm:pr-10">
@@ -695,8 +695,8 @@ export const CardDetailModal = ({
 
           {/* Sidebar */}
           <div className="w-full md:w-64 md:min-w-[16rem] md:max-w-64 border-t md:border-t-0 md:border-l bg-muted/30 md:flex-shrink-0 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 p-4 pb-8">
-              <div className="space-y-4 pb-8">
+            <ScrollArea className="h-[70vh] md:h-[75vh] p-4">
+              <div className="space-y-4 pb-4">
                 <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
                 
                 <div className="space-y-2 mb-6">
