@@ -9,6 +9,7 @@ import { NotificationsDropdown } from "./NotificationsDropdown";
 import { ProfileDialog } from "./ProfileDialog";
 import { getInitials } from "@/lib/utils";
 import { useSidebarContext } from "./Layout";
+import poderalizeLogoImage from "@/assets/poderalize-logo.png";
 interface HeaderProps {
   title: string;
 }
@@ -37,6 +38,12 @@ export const Header = ({
           >
             <Menu className="h-5 w-5 landscape:h-4 landscape:w-4" />
           </Button>
+          
+          <img 
+            src={poderalizeLogoImage} 
+            alt="Poderalize Logo" 
+            className="h-8 landscape:h-6 sm:h-10 md:h-12 w-auto flex-shrink-0"
+          />
           
           <h1 className="text-xl landscape:text-lg sm:text-2xl md:text-3xl font-bold text-primary">{title}</h1>
         </div>
