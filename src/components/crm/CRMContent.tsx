@@ -1,15 +1,11 @@
 import { useCRM } from "@/contexts/CRMContext";
+import { FunnelKanban } from "./FunnelKanban";
 import { LeadDetailModal } from "./LeadDetailModal";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Users, Plus } from "lucide-react";
-import { LeadCard } from "./LeadCard";
-import { AddLeadToFunnelDialog } from "./AddLeadToFunnelDialog";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
 
 export const CRMContent = () => {
-  const { currentFunnel, selectedLead, leads: allLeads } = useCRM();
-  const [addLeadDialog, setAddLeadDialog] = useState(false);
+  const { currentFunnel, selectedLead } = useCRM();
 
   if (!currentFunnel) {
     return (
@@ -25,49 +21,17 @@ export const CRMContent = () => {
     );
   }
 
-  // Get leads for current funnel
-  const funnelLeads = allLeads.filter(lead => lead.funnelId === currentFunnel.id);
-
   return (
     <>
-      <div className="space-y-6">
-        {/* Action Button */}
-        <div className="flex justify-end">
-          <Button onClick={() => setAddLeadDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Lead
-          </Button>
-        </div>
-
-        {/* Leads Grid */}
-        {funnelLeads.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum lead ainda</h3>
-              <p className="text-muted-foreground text-center max-w-sm">
-                Adicione leads ao seu funil para começar a gerenciar suas oportunidades.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-3 gap-6">
-            {funnelLeads.map(lead => (
-              <LeadCard key={lead.id} lead={lead} />
-            ))}
-          </div>
-        )}
+      {/* Main Kanban View - Full Width */}
+      <div className="h-full">
+        <FunnelKanban funnel={currentFunnel} />
       </div>
 
       {/* Lead Detail Modal */}
-      {selectedLead && <LeadDetailModal lead={selectedLead} />}
-
-      {/* Add Lead Dialog */}
-      <AddLeadToFunnelDialog
-        open={addLeadDialog}
-        onOpenChange={setAddLeadDialog}
-        stageId={currentFunnel.stages[0]?.id || ""}
-      />
+      {selectedLead && (
+        <LeadDetailModal lead={selectedLead} />
+      )}
     </>
   );
 };
