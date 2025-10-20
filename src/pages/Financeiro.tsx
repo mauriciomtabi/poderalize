@@ -366,8 +366,8 @@ const Financeiro = () => {
       {/* Conteúdo Financeiro */}
       <div className="space-y-6">
 
-      {/* Resumo Financeiro */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Resumo Financeiro e Indicadores */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="card-interactive hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -418,46 +418,45 @@ const Financeiro = () => {
             </p>
           </CardContent>
         </Card>
+
+        {selectedMonth !== 'all' && (
+          <>
+            <Card className="card-interactive hover-lift border-green-500/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-green-600" />
+                  Contratos Pagos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl md:text-3xl font-bold text-green-600">
+                  {contratosPagos}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  pagamentos confirmados
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-interactive hover-lift border-orange-500/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Clock size={16} className="text-orange-600" />
+                  Contratos Pendentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl md:text-3xl font-bold text-orange-600">
+                  {contratosPendentes + contratosAtrasados}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {contratosAtrasados > 0 ? `${contratosAtrasados} atrasado(s)` : 'aguardando pagamento'}
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
-
-      {/* Indicadores de Contratos */}
-      {selectedMonth !== 'all' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="card-interactive hover-lift border-green-500/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-green-600" />
-                Contratos Pagos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl md:text-3xl font-bold text-green-600">
-                {contratosPagos}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                pagamentos confirmados
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-interactive hover-lift border-orange-500/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Clock size={16} className="text-orange-600" />
-                Contratos Pendentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl md:text-3xl font-bold text-orange-600">
-                {contratosPendentes + contratosAtrasados}
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {contratosAtrasados > 0 ? `${contratosAtrasados} atrasado(s)` : 'aguardando pagamento'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Receitas - Clientes */}
       <Card>
