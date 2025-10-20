@@ -111,6 +111,14 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 landscape:space-y-3 sm:space-y-8">
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
+            Dashboard
+          </h2>
+          <p className="text-muted-foreground">Visão geral do seu negócio e métricas importantes</p>
+        </div>
+
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-primary via-primary/90 to-secondary text-primary-foreground p-4 landscape:p-2 sm:p-6 rounded-lg">
           <h1 className="text-lg landscape:text-base sm:text-xl md:text-2xl font-bold mb-2 landscape:mb-1">

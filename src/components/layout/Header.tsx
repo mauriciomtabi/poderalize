@@ -25,7 +25,7 @@ export const Header = ({
   const handleSignOut = () => {
     signOut();
   };
-  return <header className="bg-card border-b border-border px-3 py-3 landscape:py-1 sm:px-4 sm:py-3 md:px-6 md:py-4">
+  return <header className="sticky top-0 z-50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-b border-border px-3 py-3 landscape:py-1 sm:px-4 sm:py-3 md:px-6 md:py-4">
       <div className="flex items-center justify-between gap-2 landscape:gap-1">
         <div className="flex items-center space-x-2 landscape:space-x-1 sm:space-x-4 flex-1 min-w-0">
           {/* Mobile Menu Button */}

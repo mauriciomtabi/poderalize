@@ -332,6 +332,14 @@ const Colaboradores = () => {
       </div>;
   }
   return <div className="space-y-6 animate-fade-in">
+      {/* Page Title */}
+      <div className="space-y-1">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
+          Colaboradores
+        </h2>
+        <p className="text-muted-foreground">Gerencie sua equipe e usuários do sistema</p>
+      </div>
+
       <Tabs defaultValue="colaboradores" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="colaboradores" className="flex items-center gap-2">
