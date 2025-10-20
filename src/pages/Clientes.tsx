@@ -112,35 +112,41 @@ const Clientes = () => {
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalClientes}</div>
-            </CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Total de Clientes</p>
+                <p className="text-2xl font-bold">{totalClientes}</p>
+              </div>
+              <div className="p-3 rounded-full bg-muted">
+                <Users className="h-6 w-6 text-muted-foreground" />
+              </div>
+            </div>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
-            </CardContent>
+          <Card className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Valor Total</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
+              </div>
+              <div className="p-3 rounded-full bg-muted">
+                <DollarSign className="h-6 w-6 text-muted-foreground" />
+              </div>
+            </div>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(averageValue)}</div>
-            </CardContent>
+          <Card className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Ticket Médio</p>
+                <p className="text-2xl font-bold">{formatCurrency(averageValue)}</p>
+              </div>
+              <div className="p-3 rounded-full bg-muted">
+                <DollarSign className="h-6 w-6 text-muted-foreground" />
+              </div>
+            </div>
           </Card>
         </div>
 
@@ -167,7 +173,7 @@ const Clientes = () => {
                 {searchTerm ? 'Tente ajustar os termos de busca para encontrar clientes.' : 'Quando você fechar leads, eles aparecerão aqui como clientes.'}
               </p>
             </CardContent>
-          </Card> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 landscape:gap-3">
+          </Card> : <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {filteredClientes.map(cliente => <Card key={cliente.id} className="cursor-pointer hover:shadow-lg transition-shadow p-6 landscape:p-3" onClick={() => handleCardClick(cliente)}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
