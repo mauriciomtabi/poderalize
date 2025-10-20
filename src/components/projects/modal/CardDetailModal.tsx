@@ -695,7 +695,7 @@ export const CardDetailModal = ({
 
           {/* Sidebar */}
           <div className="w-full md:w-64 md:min-w-[16rem] md:max-w-64 border-t md:border-t-0 md:border-l bg-muted/30 md:flex-shrink-0">
-            <ScrollArea className="h-auto max-h-[40vh] md:max-h-[80vh] p-4 pb-6">
+            <ScrollArea className="h-[60vh] md:h-[80vh] p-4 pb-6">
               <div className="space-y-4 pb-4">
                 <h3 className="text-sm font-medium">Adicionar ao cartão</h3>
                 
