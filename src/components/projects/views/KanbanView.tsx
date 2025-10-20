@@ -246,7 +246,7 @@ export const KanbanView = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 style={getDropStyle(provided.draggableProps.style, snapshot)}
-                                className={`flex-shrink-0 w-80 landscape:w-64 ${snapshot.isDragging ? 'rotate-2' : ''}`}
+                                className={`flex-shrink-0 w-[336px] landscape:w-64 ${snapshot.isDragging ? 'rotate-2' : ''}`}
                                 data-list-id={list.id}
                               >
                                 <Card 
@@ -293,7 +293,7 @@ export const KanbanView = () => {
                                       <CardContent
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden pr-2 ${
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden px-2 ${
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >
@@ -340,7 +340,7 @@ export const KanbanView = () => {
                     {provided.placeholder}
 
                     {/* Add List Button */}
-                    <div className="flex-shrink-0 w-80 landscape:w-64">
+                    <div className="flex-shrink-0 w-[336px] landscape:w-64">
                       <Button
                         variant="ghost"
                         className="w-full h-20 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5"
