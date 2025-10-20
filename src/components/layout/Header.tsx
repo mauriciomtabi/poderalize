@@ -38,7 +38,7 @@ export const Header = ({
             <Menu className="h-5 w-5 landscape:h-4 landscape:w-4" />
           </Button>
           
-          <h1 className="text-lg landscape:text-base sm:text-xl md:text-2xl font-bold text-foreground truncate">{title}</h1>
+          <h1 className="text-lg landscape:text-base sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{title}</h1>
         </div>
 
         <div className="flex items-center space-x-2 landscape:space-x-1 sm:space-x-4 flex-shrink-0">

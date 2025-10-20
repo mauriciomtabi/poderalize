@@ -106,10 +106,8 @@ const Clientes = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
-              Clientes
-            </h2>
-            <p className="text-muted-foreground mt-1">Gerencie seus clientes e acompanhe o relacionamento</p>
+            
+            
           </div>
         </div>
 

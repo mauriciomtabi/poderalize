@@ -55,14 +55,6 @@ export const ProjectsHeader = ({
     return filter !== null;
   }).length;
   return <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      {/* Page Title */}
-      <div className="px-3 pt-4 pb-2 sm:px-4 space-y-1">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
-          Projetos
-        </h2>
-        <p className="text-muted-foreground">Organize e gerencie seus projetos e tarefas</p>
-      </div>
-
       <div className="flex flex-row items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
         
         {/* 1. View Selector */}

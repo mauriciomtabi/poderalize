@@ -62,14 +62,6 @@ export const CRMHeader = () => {
 
   return (
     <div className="space-y-4">
-      {/* Page Title */}
-      <div className="space-y-1">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
-          CRM & Leads
-        </h2>
-        <p className="text-muted-foreground">Gerencie seus funis de vendas e acompanhe seus leads</p>
-      </div>
-
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metricsData.map((metric, index) => (

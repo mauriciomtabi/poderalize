@@ -316,14 +316,6 @@ const Financeiro = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page Title */}
-      <div className="space-y-1">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
-          Financeiro
-        </h2>
-        <p className="text-muted-foreground">Controle completo das suas finanças e fluxo de caixa</p>
-      </div>
-
       {/* Filtros de Período */}
       <Card>
         <CardHeader>
