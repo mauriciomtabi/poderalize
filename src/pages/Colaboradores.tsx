@@ -441,7 +441,7 @@ const Colaboradores = () => {
           </div>
 
         {/* Grid de colaboradores */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredColaboradores.map(colaborador => {
             const isAdmin = colaborador.user_id && adminUsers.has(colaborador.user_id);
             return <Card key={colaborador.id} className={`card-interactive hover-lift cursor-pointer transition-all duration-200 ${isAdmin ? 'border-2 border-primary/50 shadow-lg' : ''}`} onClick={() => handleCardClick(colaborador)}>
