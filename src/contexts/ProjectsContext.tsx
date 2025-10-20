@@ -379,8 +379,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
               attachments_count: c.attachments_count ?? 0, // Contagem de anexos
               custom_fields: {
                 checklists: c.checklists || [],
-                comments: c.comments || []
-                // attachments carregados sob demanda no modal
+                comments: c.comments || [],
+                attachments: c.attachments || []
               }
             };
             delete card.card_position; // Remover campo temporário

@@ -618,6 +618,15 @@ export const CardDetailModal = ({
                   const currentAttachments = isCreationMode 
                     ? tempAttachments 
                     : (attachmentsOverride.length > 0 ? attachmentsOverride : (latestCard?.attachments || []));
+                  
+                  console.log('Attachments debug:', {
+                    isCreationMode,
+                    tempAttachments,
+                    attachmentsOverride,
+                    latestCardAttachments: latestCard?.attachments,
+                    currentAttachments
+                  });
+                  
                   if (currentAttachments.length > 0) {
                     return (
                       <div className="space-y-2">
@@ -630,28 +639,37 @@ export const CardDetailModal = ({
                           {currentAttachments.map((attachment) => (
                             <div
                               key={attachment.id}
-                              className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors w-full"
+                              className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors w-full cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (attachment.type === 'link') {
+                                  window.open(attachment.url, '_blank');
+                                } else {
+                                  // Para arquivos, criar um link de download
+                                  const link = document.createElement('a');
+                                  link.href = attachment.url;
+                                  link.download = attachment.name;
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }
+                              }}
                             >
                              <div className="flex items-center gap-2 flex-1 min-w-0">
                                 {attachment.type === 'link' ? (
                                   <Link className="h-4 w-4 flex-shrink-0" />
-                                ) : attachment.type.startsWith('image/') ? (
+                                ) : attachment.type?.startsWith('image/') ? (
                                   <Image className="h-4 w-4 flex-shrink-0" />
                                 ) : (
                                   <File className="h-4 w-4 flex-shrink-0" />
                                 )}
                                 <div className="flex-1 min-w-0">
-                                  <a
-                                    href={attachment.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-medium text-sm text-primary hover:underline break-words whitespace-normal block w-full"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
+                                  <p className="font-medium text-sm text-primary hover:underline break-words whitespace-normal">
                                     {attachment.name}
-                                  </a>
+                                  </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}
+                                    {attachment.uploadedAt ? new Date(attachment.uploadedAt).toLocaleDateString('pt-BR') : ''}
                                   </p>
                                 </div>
                               </div>
