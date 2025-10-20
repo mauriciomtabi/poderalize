@@ -10,8 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle, BarChart3, FileText } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { format, isAfter, isBefore, startOfMonth, endOfMonth } from "date-fns";
@@ -20,7 +19,7 @@ import { DespesaForm } from "@/components/financeiro/DespesaForm";
 import { ReceitaForm } from "@/components/financeiro/ReceitaForm";
 import { ConfirmPaymentDialog } from "@/components/financeiro/ConfirmPaymentDialog";
 import { ConfirmSalaryPaymentDialog } from "@/components/financeiro/ConfirmSalaryPaymentDialog";
-import { DashboardView } from "@/components/financeiro/DashboardView";
+
 import { CreateDespesaData } from "@/hooks/useDespesas";
 import { CreateReceitaData } from "@/hooks/useReceitas";
 import { Cliente } from "@/hooks/useClientes";
@@ -364,24 +363,8 @@ const Financeiro = () => {
         </div>
       </div>
 
-      {/* Tabs para Dashboard e Detalhado */}
-      <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="inline-flex">
-          <TabsTrigger value="dashboard" className="flex items-center gap-2">
-            <BarChart3 size={16} />
-            Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="detalhado" className="flex items-center gap-2">
-            <FileText size={16} />
-            Detalhado
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="dashboard" className="mt-6">
-          <DashboardView selectedYear={selectedYear} selectedMonth={selectedMonth} />
-        </TabsContent>
-
-        <TabsContent value="detalhado" className="mt-6 space-y-6">
+      {/* Conteúdo Financeiro */}
+      <div className="space-y-6">
 
       {/* Resumo Financeiro */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -439,7 +422,7 @@ const Financeiro = () => {
 
       {/* Indicadores de Contratos */}
       {selectedMonth !== 'all' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="card-interactive hover-lift border-green-500/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -836,8 +819,7 @@ const Financeiro = () => {
         ano={parseInt(selectedYear)}
         mes={parseInt(selectedMonth)}
       />
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 };
