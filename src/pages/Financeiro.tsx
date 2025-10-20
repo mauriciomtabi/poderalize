@@ -316,15 +316,15 @@ const Financeiro = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Filtros de Período */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-card border rounded-lg p-4">
+      <div className="flex flex-row flex-wrap items-center justify-between bg-card border rounded-lg p-4">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Calendar size={18} />
           <span>Período:</span>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-3 flex-1 md:max-w-2xl">
+        <div className="flex flex-row flex-wrap gap-3 flex-1">
           <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-full md:w-[140px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Ano" />
             </SelectTrigger>
             <SelectContent>
@@ -337,7 +337,7 @@ const Financeiro = () => {
           </Select>
 
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-full md:w-[180px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Mês" />
             </SelectTrigger>
             <SelectContent>
@@ -356,7 +356,7 @@ const Financeiro = () => {
               setSelectedYear(currentYear.toString());
               setSelectedMonth(currentMonth.toString());
             }}
-            className="w-full md:w-auto"
+            className="w-auto"
           >
             Limpar
           </Button>
@@ -367,7 +367,7 @@ const Financeiro = () => {
       <div className="space-y-6">
 
       {/* Resumo Financeiro e Indicadores */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Card className="card-interactive hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
