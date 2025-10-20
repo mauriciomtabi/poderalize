@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, MessageCircle, Paperclip, MoreHorizontal, Clock, AlertCircle, Zap, CheckCircle2, Copy, Trash2, CheckSquare, Check } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ProjectCard } from "@/types/projects";
+import { ProjectCard, Attachment } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { AttachmentSelectorDialog } from "@/components/projects/modal/AttachmentSelectorDialog";
+import { AttachmentViewerDialog } from "@/components/projects/modal/AttachmentViewerDialog";
 import { cn, getInitials, isDateOverdue, getDueDateColorClass } from "@/lib/utils";
 import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
@@ -52,10 +53,12 @@ export const EnhancedProjectCard = ({
   onDuplicate,
   onClick
 }: EnhancedProjectCardProps) => {
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [showAttachmentSelector, setShowAttachmentSelector] = useState(false);
-  const [loadedAttachments, setLoadedAttachments] = useState<any[]>([]);
-  const { state, actions } = useProjects();
+const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+const [showAttachmentSelector, setShowAttachmentSelector] = useState(false);
+const [loadedAttachments, setLoadedAttachments] = useState<any[]>([]);
+const [showAttachmentViewer, setShowAttachmentViewer] = useState(false);
+const [viewerAttachment, setViewerAttachment] = useState<Attachment | null>(null);
+const { state, actions } = useProjects();
   const { toast } = useToast();
   const PriorityIcon = priorityConfig[card.priority].icon;
   const completedTasks = card.checklists.reduce((acc, checklist) => acc + checklist.items.filter(item => item.completed).length, 0);
@@ -212,21 +215,18 @@ export const EnhancedProjectCard = ({
           
           // Se houver apenas 1 anexo, abrir diretamente
           const firstAttachment = attachments[0];
-          if (firstAttachment) {
-            // Para data URLs (PDFs em base64), criar link temporário
-            if (firstAttachment.url.startsWith('data:')) {
-              const link = document.createElement('a');
-              link.href = firstAttachment.url;
-              link.target = '_blank';
-              link.download = firstAttachment.name || 'anexo';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            } else {
-              // Para URLs normais, usar window.open
-              window.open(firstAttachment.url, '_blank', 'noopener,noreferrer');
-            }
-          }
+if (firstAttachment) {
+  const isPDF = firstAttachment.type === 'application/pdf' || firstAttachment.name?.toLowerCase().endsWith('.pdf');
+  const isImage = (firstAttachment.type || '').startsWith('image/');
+  const isDataUrl = firstAttachment.url.startsWith('data:');
+
+  if (isPDF || isImage || isDataUrl) {
+    setViewerAttachment(firstAttachment as Attachment);
+    setShowAttachmentViewer(true);
+  } else {
+    window.open(firstAttachment.url, '_blank', 'noopener,noreferrer');
+  }
+}
         }} title="Abrir anexo">
               <div className="flex items-center space-x-1 text-xs">
                 <Paperclip size={12} />
@@ -274,6 +274,21 @@ export const EnhancedProjectCard = ({
         isOpen={showAttachmentSelector}
         onClose={() => setShowAttachmentSelector(false)}
         attachments={loadedAttachments}
+        onOpenAttachment={(a) => {
+          setViewerAttachment(a as Attachment);
+          setShowAttachmentViewer(true);
+        }}
       />
+
+      {viewerAttachment && (
+        <AttachmentViewerDialog
+          attachment={viewerAttachment}
+          isOpen={showAttachmentViewer}
+          onClose={() => {
+            setShowAttachmentViewer(false);
+            setViewerAttachment(null);
+          }}
+        />
+      )}
     </Card>;
-};
+  };
