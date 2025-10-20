@@ -21,6 +21,7 @@ import { LabelPicker } from "./LabelPicker";
 import { DueDatePicker } from "./DueDatePicker";
 import { MoveCardDialog } from "./MoveCardDialog";
 import { AttachmentManager } from "./AttachmentManager";
+import { AttachmentViewerDialog } from "./AttachmentViewerDialog";
 import { ClientPicker } from "./ClientPicker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -78,6 +79,8 @@ export const CardDetailModal = ({
   const [showAttachmentManager, setShowAttachmentManager] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false);
+  const [showAttachmentViewer, setShowAttachmentViewer] = useState(false);
+  const [viewerAttachment, setViewerAttachment] = useState<Attachment | null>(null);
   const availableMembers = state.currentBoard?.members || [];
   const availableLabels = state.currentBoard?.labels || [];
 
@@ -664,7 +667,8 @@ export const CardDetailModal = ({
                                       variant="ghost"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        window.open(attachment.url, '_blank');
+                                        setViewerAttachment(attachment);
+                                        setShowAttachmentViewer(true);
                                       }}
                                       className="h-8 px-2"
                                       title="Visualizar PDF"
@@ -700,7 +704,8 @@ export const CardDetailModal = ({
                                           variant="ghost"
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            window.open(attachment.url, '_blank');
+                                            setViewerAttachment(attachment);
+                                            setShowAttachmentViewer(true);
                                           }}
                                           className="h-8 px-2"
                                           title="Ver imagem"
