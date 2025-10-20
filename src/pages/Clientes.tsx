@@ -173,7 +173,7 @@ const Clientes = () => {
                 {searchTerm ? 'Tente ajustar os termos de busca para encontrar clientes.' : 'Quando você fechar leads, eles aparecerão aqui como clientes.'}
               </p>
             </CardContent>
-          </Card> : <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          </Card> : <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {filteredClientes.map(cliente => <Card key={cliente.id} className="cursor-pointer hover:shadow-lg transition-shadow p-6 landscape:p-3" onClick={() => handleCardClick(cliente)}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
