@@ -619,14 +619,6 @@ export const CardDetailModal = ({
                     ? tempAttachments 
                     : (attachmentsOverride.length > 0 ? attachmentsOverride : (latestCard?.attachments || []));
                   
-                  console.log('Attachments debug:', {
-                    isCreationMode,
-                    tempAttachments,
-                    attachmentsOverride,
-                    latestCardAttachments: latestCard?.attachments,
-                    currentAttachments
-                  });
-                  
                   if (currentAttachments.length > 0) {
                     return (
                       <div className="space-y-2">
@@ -636,45 +628,116 @@ export const CardDetailModal = ({
                           <span className="text-sm text-muted-foreground">({currentAttachments.length})</span>
                         </div>
                         <div className="space-y-2 w-full">
-                          {currentAttachments.map((attachment) => (
-                            <div
-                              key={attachment.id}
-                              className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors w-full cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (attachment.type === 'link') {
-                                  window.open(attachment.url, '_blank');
-                                } else {
-                                  // Para arquivos, criar um link de download
-                                  const link = document.createElement('a');
-                                  link.href = attachment.url;
-                                  link.download = attachment.name;
-                                  link.target = '_blank';
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                }
-                              }}
-                            >
-                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                {attachment.type === 'link' ? (
-                                  <Link className="h-4 w-4 flex-shrink-0" />
-                                ) : attachment.type?.startsWith('image/') ? (
-                                  <Image className="h-4 w-4 flex-shrink-0" />
-                                ) : (
-                                  <File className="h-4 w-4 flex-shrink-0" />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm text-primary hover:underline break-words whitespace-normal">
-                                    {attachment.name}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {attachment.uploadedAt ? new Date(attachment.uploadedAt).toLocaleDateString('pt-BR') : ''}
-                                  </p>
+                          {currentAttachments.map((attachment) => {
+                            const isPDF = attachment.type === 'application/pdf' || attachment.name?.toLowerCase().endsWith('.pdf');
+                            const isImage = attachment.type?.startsWith('image/');
+                            const isLink = attachment.type === 'link';
+                            
+                            return (
+                              <div
+                                key={attachment.id}
+                                className="flex items-center justify-between gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors w-full"
+                              >
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  {isLink ? (
+                                    <Link className="h-4 w-4 flex-shrink-0 text-primary" />
+                                  ) : isImage ? (
+                                    <Image className="h-4 w-4 flex-shrink-0 text-primary" />
+                                  ) : (
+                                    <File className="h-4 w-4 flex-shrink-0 text-primary" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm break-words whitespace-normal">
+                                      {attachment.name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {attachment.uploadedAt ? new Date(attachment.uploadedAt).toLocaleDateString('pt-BR') : ''}
+                                      {attachment.size > 0 && ` • ${(attachment.size / 1024 / 1024).toFixed(2)} MB`}
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  {isPDF && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(attachment.url, '_blank');
+                                      }}
+                                      className="h-8 px-2"
+                                      title="Visualizar PDF"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                      </svg>
+                                    </Button>
+                                  )}
+                                  {isLink ? (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(attachment.url, '_blank');
+                                      }}
+                                      className="h-8 px-2"
+                                      title="Abrir link"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                        <polyline points="15 3 21 3 21 9"/>
+                                        <line x1="10" x2="21" y1="14" y2="3"/>
+                                      </svg>
+                                    </Button>
+                                  ) : (
+                                    <>
+                                      {isImage && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.open(attachment.url, '_blank');
+                                          }}
+                                          className="h-8 px-2"
+                                          title="Ver imagem"
+                                        >
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                            <circle cx="12" cy="12" r="3"/>
+                                          </svg>
+                                        </Button>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const link = document.createElement('a');
+                                          link.href = attachment.url;
+                                          link.download = attachment.name;
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                        }}
+                                        className="h-8 px-2"
+                                        title="Baixar"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                          <polyline points="7 10 12 15 17 10"/>
+                                          <line x1="12" x2="12" y1="15" y2="3"/>
+                                        </svg>
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     );

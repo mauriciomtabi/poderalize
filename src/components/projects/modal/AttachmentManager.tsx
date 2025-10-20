@@ -229,51 +229,116 @@ export const AttachmentManager = ({
                 </p>
               )}
               
-              {currentAttachments.map((attachment) => (
-                <div
-                  key={attachment.id}
-                  className="flex items-center gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 flex-1">
-                    {getFileIcon(attachment.type)}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm break-all whitespace-normal">{attachment.name}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{formatFileSize(attachment.size)}</span>
-                        {attachment.size > 0 && <span>•</span>}
-                        <span>{new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}</span>
+              {currentAttachments.map((attachment) => {
+                const isPDF = attachment.type === 'application/pdf' || attachment.name?.toLowerCase().endsWith('.pdf');
+                const isImage = attachment.type?.startsWith('image/');
+                const isLink = attachment.type === 'link';
+                
+                return (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center justify-between gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {getFileIcon(attachment.type)}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm break-all whitespace-normal">{attachment.name}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{formatFileSize(attachment.size)}</span>
+                          {attachment.size > 0 && <span>•</span>}
+                          <span>{new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}</span>
+                        </div>
                       </div>
                     </div>
+                    
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {isPDF && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(attachment.url, '_blank');
+                          }}
+                          title="Visualizar PDF"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </Button>
+                      )}
+                      {isLink ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(attachment.url, '_blank');
+                          }}
+                          title="Abrir link"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/>
+                            <line x1="10" x2="21" y1="14" y2="3"/>
+                          </svg>
+                        </Button>
+                      ) : (
+                        <>
+                          {(isImage || isPDF) && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(attachment.url, '_blank');
+                              }}
+                              title={isPDF ? "Visualizar PDF" : "Ver imagem"}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const link = document.createElement('a');
+                              link.href = attachment.url;
+                              link.download = attachment.name;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                            title="Baixar"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                              <polyline points="7 10 12 15 17 10"/>
+                              <line x1="12" x2="12" y1="15" y2="3"/>
+                            </svg>
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          handleRemoveAttachment(attachment.id); 
+                        }}
+                        title="Remover"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (attachment.type === 'link') {
-                  window.open(attachment.url, '_blank');
-                } else {
-                  const link = document.createElement('a');
-                  link.href = attachment.url;
-                  link.download = attachment.name;
-                  link.click();
-                }
-              }}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={(e) => { e.stopPropagation(); handleRemoveAttachment(attachment.id); }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
         </div>
