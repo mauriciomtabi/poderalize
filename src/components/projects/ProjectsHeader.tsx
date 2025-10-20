@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { LayoutGrid, Table, Calendar, BarChart3, Search, Filter, Plus, Settings, Users, Star, Zap, Eye, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { LayoutGrid, Table, Calendar, BarChart3, Search, Filter, Plus, Settings, Users, Star, Zap, Eye } from "lucide-react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { ViewType } from "@/types/projects";
 import { cn } from "@/lib/utils";
@@ -55,73 +54,7 @@ export const ProjectsHeader = ({
     if (typeof filter === 'string') return filter.length > 0;
     return filter !== null;
   }).length;
-
-  // Calculate metrics
-  const metrics = useMemo(() => {
-    const allCards = state.currentBoard?.lists.flatMap(list => list.cards) || [];
-    const totalCards = allCards.length;
-    const inProgress = allCards.filter(card => !card.archived && card.status !== 'done').length;
-    const completed = allCards.filter(card => card.status === 'done').length;
-    const overdue = allCards.filter(card => {
-      if (card.archived || card.status === 'done' || !card.dueDate) return false;
-      return new Date(card.dueDate) < new Date();
-    }).length;
-
-    return [
-      {
-        title: "Total de Cartões",
-        value: totalCards,
-        icon: LayoutGrid,
-        bgColor: "bg-primary/10",
-        color: "text-primary"
-      },
-      {
-        title: "Em Andamento",
-        value: inProgress,
-        icon: Clock,
-        bgColor: "bg-orange-500/10",
-        color: "text-orange-600 dark:text-orange-400"
-      },
-      {
-        title: "Concluídos",
-        value: completed,
-        icon: CheckCircle2,
-        bgColor: "bg-green-500/10",
-        color: "text-green-600 dark:text-green-400"
-      },
-      {
-        title: "Vencidos",
-        value: overdue,
-        icon: AlertCircle,
-        bgColor: "bg-destructive/10",
-        color: "text-destructive"
-      }
-    ];
-  }, [state.currentBoard]);
-
-  return <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 space-y-4 pb-3">
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
-        {metrics.map((metric, index) => (
-          <Card key={index} className="p-3 sm:p-4 hover:shadow-md transition-shadow border-muted">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 truncate">
-                  {metric.title}
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground">
-                  {metric.value}
-                </p>
-              </div>
-              <div className={`p-2 sm:p-3 rounded-full ${metric.bgColor} flex-shrink-0 ml-2`}>
-                <metric.icon className={`h-4 w-4 sm:h-6 sm:w-6 ${metric.color}`} />
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Header Controls */}
+  return <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="flex flex-row items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
         
         {/* 1. View Selector */}
