@@ -71,7 +71,6 @@ export const useProjectCards = (listId?: string) => {
           created_by, client_id, created_at, updated_at,
           checklists:custom_fields->checklists,
           comments:custom_fields->comments,
-          attachments:custom_fields->attachments,
           project_lists!inner(board_id)
         ` as any)
         .eq('project_lists.board_id', boardId)
@@ -96,14 +95,14 @@ export const useProjectCards = (listId?: string) => {
       
       // Reconstruct custom_fields without attachments (loaded on-demand in modal)
       const cleanedData = (data || []).map(card => {
-        const { checklists, comments, attachments, ...rest } = card as any;
+        const { checklists, comments, ...rest } = card as any;
         return {
           ...rest,
-          attachments_count: Array.isArray(attachments) ? attachments.length : 0,
+          attachments_count: 0, // mantemos leve; contagem real carregada no modal
           custom_fields: {
             checklists: checklists || [],
             comments: comments || []
-            // attachments will be loaded on-demand when modal opens
+            // attachments serão carregados sob demanda ao abrir o modal
           }
         };
       });

@@ -373,14 +373,14 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           
           // Map RPC response: card_position → position, preserve checklists/comments
           const mapped = (Array.isArray(allCardsAdmin) ? allCardsAdmin : []).map((c: any) => {
-            const card = {
+            const card: any = {
               ...c,
               position: c.card_position, // RPC retorna card_position
-              attachments_count: c.attachments_count ?? 0, // Contagem de anexos
+              attachments_count: c.attachments_count ?? (Array.isArray((c as any).attachments) ? (c as any).attachments.length : 0), // Contagem de anexos, sem carregar payload
               custom_fields: {
                 checklists: c.checklists || [],
-                comments: c.comments || [],
-                attachments: c.attachments || []
+                comments: c.comments || []
+                // NÃO incluir attachments aqui para manter a página leve
               }
             };
             delete card.card_position; // Remover campo temporário

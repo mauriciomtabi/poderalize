@@ -236,8 +236,9 @@ export const KanbanView = () => {
                     {state.currentBoard.lists
                       .filter(list => !list.archived)
                       .map((list, index) => {
-                        // Apply filters to cards in this list
-                        const filteredCards = actions.getFilteredCards().filter(card => card.listId === list.id);
+                        // Apply filters to cards in this list (respect admin aggregated grouping)
+                        const allowedIds = new Set(actions.getFilteredCards().map(c => c.id));
+                        const filteredCards = (list.cards || []).filter(c => allowedIds.has(c.id));
                         
                         return (
                           <Draggable key={list.id} draggableId={list.id} index={index}>
