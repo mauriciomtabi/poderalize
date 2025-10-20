@@ -317,68 +317,62 @@ const Financeiro = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Filtros de Período */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar size={20} />
-            Filtros de Período
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center">
-            <div className="flex-1 min-w-[150px]">
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-card border rounded-lg p-4">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Calendar size={18} />
+          <span>Período:</span>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-3 flex-1 md:max-w-2xl">
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            <div className="flex-1 min-w-[180px]">
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Mês" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(month => (
-                    <SelectItem key={month.value} value={month.value}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Mês" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map(month => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSelectedYear(currentYear.toString());
-                setSelectedMonth(currentMonth.toString());
-              }}
-              className="w-full sm:w-auto"
-            >
-              Limpar filtros
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setSelectedYear(currentYear.toString());
+              setSelectedMonth(currentMonth.toString());
+            }}
+            className="w-full sm:w-auto"
+          >
+            Limpar
+          </Button>
+        </div>
+      </div>
 
       {/* Tabs para Dashboard e Detalhado */}
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full max-w-full sm:max-w-md grid-cols-2">
-          <TabsTrigger value="dashboard" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-            <BarChart3 size={16} className="hidden sm:block" />
+        <TabsList className="inline-flex">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <BarChart3 size={16} />
             Dashboard
           </TabsTrigger>
-          <TabsTrigger value="detalhado" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-            <FileText size={16} className="hidden sm:block" />
+          <TabsTrigger value="detalhado" className="flex items-center gap-2">
+            <FileText size={16} />
             Detalhado
           </TabsTrigger>
         </TabsList>
@@ -390,7 +384,7 @@ const Financeiro = () => {
         <TabsContent value="detalhado" className="mt-6 space-y-6">
 
       {/* Resumo Financeiro */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="card-interactive hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -399,7 +393,7 @@ const Financeiro = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-2xl md:text-3xl font-bold text-green-600">
               {formatCurrency(totalReceitas)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -416,7 +410,7 @@ const Financeiro = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-600">
+            <div className="text-2xl md:text-3xl font-bold text-red-600">
               {formatCurrency(totalDespesas)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -433,7 +427,7 @@ const Financeiro = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-2xl md:text-3xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(saldo)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -441,45 +435,46 @@ const Financeiro = () => {
             </p>
           </CardContent>
         </Card>
-
-        {selectedMonth !== 'all' && (
-          <>
-            <Card className="card-interactive hover-lift border-green-500/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-green-600" />
-                  Contratos Pagos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-600">
-                  {contratosPagos}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  pagamentos confirmados
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="card-interactive hover-lift border-orange-500/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Clock size={16} className="text-orange-600" />
-                  Pendentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-orange-600">
-                  {contratosPendentes + contratosAtrasados}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {contratosAtrasados > 0 && `${contratosAtrasados} atrasado(s)`}
-                </p>
-              </CardContent>
-            </Card>
-          </>
-        )}
       </div>
+
+      {/* Indicadores de Contratos */}
+      {selectedMonth !== 'all' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="card-interactive hover-lift border-green-500/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-green-600" />
+                Contratos Pagos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl md:text-3xl font-bold text-green-600">
+                {contratosPagos}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                pagamentos confirmados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-interactive hover-lift border-orange-500/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock size={16} className="text-orange-600" />
+                Contratos Pendentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl md:text-3xl font-bold text-orange-600">
+                {contratosPendentes + contratosAtrasados}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {contratosAtrasados > 0 ? `${contratosAtrasados} atrasado(s)` : 'aguardando pagamento'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Receitas - Clientes */}
       <Card>
