@@ -341,13 +341,11 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         _role: 'admin'
       });
       const isAdmin = !!isAdminFn;
-      // Determine if we should try admin-all mode for this load
-      let adminAllMode = isAdmin && viewAllCards;
       
       console.log(`🔍 Loading cards for board ${boardId}. Admin: ${isAdmin}, ViewAll: ${viewAllCards}`);
       
       // Fetch cards: use admin RPC when toggle is ON (ALL BOARDS), else board-only query
-      if (adminAllMode) {
+      if (isAdmin && viewAllCards) {
         // Admin with "view all" ON: Load cards from ALL boards using LIGHTWEIGHT query
         console.time('⚡ Admin load all cards');
         try {
@@ -359,31 +357,18 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           if (adminError) {
             console.error('Error fetching admin cards:', adminError);
             
-            // Handle timeout specifically with graceful fallback to board-only query
+            // Handle timeout specifically
             if (adminError.code === '57014') {
               toast({
                 title: "Carregamento demorado",
-                description: "A consulta geral demorou. Mostrando apenas os cartões deste quadro.",
+                description: "A consulta demorou mais que o esperado. Mantendo dados anteriores.",
                 variant: "default",
               });
-              // Fallback: load only current board cards
-              const boardCards = await cardsHook.fetchAllBoardCards(boardId);
-              if (boardCards) {
-                allCards.push(...boardCards.map(transformDBCard));
-              }
-              // Disable admin-all mode for the rest of this load so grouping is board-only
-              adminAllMode = false;
-              // Continue execution without throwing
-            } else {
-              // For other errors, also fallback to board-only to avoid blank screen
-              const boardCards = await cardsHook.fetchAllBoardCards(boardId);
-              if (boardCards) {
-                allCards.push(...boardCards.map(transformDBCard));
-                adminAllMode = false;
-              } else {
-                throw adminError;
-              }
+              // Don't clear state - keep previous cards visible
+              setState(prev => ({ ...prev, isLoading: false }));
+              return;
             }
+            throw adminError;
           }
           
           // Map RPC response: card_position → position, preserve checklists/comments
@@ -476,7 +461,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       const isBoardOwner = boardOwner?.user_id === currentUser?.id;
       
-      if (adminAllMode) {
+      if (isAdmin && viewAllCards) {
         // Admin viewing all: Group ALL cards by list title into current board's lists
         // Fetch ALL lists from ALL boards to map by title and position index per board
         const { data: allListsData } = await supabase

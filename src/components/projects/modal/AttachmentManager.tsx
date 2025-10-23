@@ -41,7 +41,7 @@ export const AttachmentManager = ({
   onAttachmentsChange,
   isCreationMode = false
 }: AttachmentManagerProps) => {
-  const { actions, state } = useProjects();
+  const { actions } = useProjects();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddingLink, setIsAddingLink] = useState(false);
@@ -115,7 +115,7 @@ export const AttachmentManager = ({
   const handleFileUpload = (files: FileList) => {
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         const attachment: Attachment = {
           id: `attachment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: file.name,
@@ -129,45 +129,24 @@ export const AttachmentManager = ({
         if (isCreationMode && onAttachmentsChange) {
           onAttachmentsChange([...currentAttachments, attachment]);
         } else if (card) {
-          // Load fresh card data to preserve all fields
-          const { data: freshCard } = await supabase
-            .from('project_cards')
-            .select('custom_fields')
-            .eq('id', card.id)
-            .single();
-          
-          const existingCustomFields = (freshCard?.custom_fields as any) || {};
-          const existingAttachments = Array.isArray(existingCustomFields.attachments) 
-            ? existingCustomFields.attachments 
-            : [];
-          
-          const updatedAttachments = [...existingAttachments, attachment];
+          // Use loadedAttachments to preserve existing attachments
+          const updatedAttachments = [...loadedAttachments, attachment];
           setLoadedAttachments(updatedAttachments);
           
-          // Update only custom_fields to preserve other card data
-          await supabase
-            .from('project_cards')
-            .update({
-              custom_fields: {
-                ...existingCustomFields,
-                attachments: updatedAttachments
-              }
-            })
-            .eq('id', card.id);
+          const updatedCard = {
+            ...card,
+            attachments: updatedAttachments
+          };
           
+          actions.updateCard(updatedCard);
           actions.addActivity(card.id, 'attachment', `anexou "${attachment.name}"`);
-          
-          // Reload board to reflect changes
-          if (state.currentBoard) {
-            await actions.setCurrentBoard(state.currentBoard);
-          }
         }
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const handleAddLink = async () => {
+  const handleAddLink = () => {
     if (linkUrl.trim()) {
       const attachment: Attachment = {
         id: `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -182,38 +161,17 @@ export const AttachmentManager = ({
       if (isCreationMode && onAttachmentsChange) {
         onAttachmentsChange([...currentAttachments, attachment]);
       } else if (card) {
-        // Load fresh card data to preserve all fields
-        const { data: freshCard } = await supabase
-          .from('project_cards')
-          .select('custom_fields')
-          .eq('id', card.id)
-          .single();
-        
-        const existingCustomFields = (freshCard?.custom_fields as any) || {};
-        const existingAttachments = Array.isArray(existingCustomFields.attachments) 
-          ? existingCustomFields.attachments 
-          : [];
-        
-        const updatedAttachments = [...existingAttachments, attachment];
+        // Use loadedAttachments to preserve existing attachments
+        const updatedAttachments = [...loadedAttachments, attachment];
         setLoadedAttachments(updatedAttachments);
         
-        // Update only custom_fields to preserve other card data
-        await supabase
-          .from('project_cards')
-          .update({
-            custom_fields: {
-              ...existingCustomFields,
-              attachments: updatedAttachments
-            }
-          })
-          .eq('id', card.id);
+        const updatedCard = {
+          ...card,
+          attachments: updatedAttachments
+        };
         
+        actions.updateCard(updatedCard);
         actions.addActivity(card.id, 'attachment', `anexou link "${attachment.name}"`);
-        
-        // Reload board to reflect changes
-        if (state.currentBoard) {
-          await actions.setCurrentBoard(state.currentBoard);
-        }
       }
       
       setLinkUrl("");
@@ -222,45 +180,24 @@ export const AttachmentManager = ({
     }
   };
 
-  const handleRemoveAttachment = async (attachmentId: string) => {
+  const handleRemoveAttachment = (attachmentId: string) => {
     const attachment = currentAttachments.find(a => a.id === attachmentId);
     
     if (isCreationMode && onAttachmentsChange) {
       onAttachmentsChange(currentAttachments.filter(a => a.id !== attachmentId));
     } else if (card) {
-      // Load fresh card data to preserve all fields
-      const { data: freshCard } = await supabase
-        .from('project_cards')
-        .select('custom_fields')
-        .eq('id', card.id)
-        .single();
-      
-      const existingCustomFields = (freshCard?.custom_fields as any) || {};
-      const existingAttachments = Array.isArray(existingCustomFields.attachments) 
-        ? existingCustomFields.attachments 
-        : [];
-      
-      const updatedAttachments = existingAttachments.filter((a: Attachment) => a.id !== attachmentId);
+      // Use loadedAttachments to preserve other existing attachments
+      const updatedAttachments = loadedAttachments.filter(a => a.id !== attachmentId);
       setLoadedAttachments(updatedAttachments);
       
-      // Update only custom_fields to preserve other card data
-      await supabase
-        .from('project_cards')
-        .update({
-          custom_fields: {
-            ...existingCustomFields,
-            attachments: updatedAttachments
-          }
-        })
-        .eq('id', card.id);
+      const updatedCard = {
+        ...card,
+        attachments: updatedAttachments
+      };
+      actions.updateCard(updatedCard);
       
       if (attachment) {
         actions.addActivity(card.id, 'attachment', `removeu anexo "${attachment.name}"`);
-      }
-      
-      // Reload board to reflect changes
-      if (state.currentBoard) {
-        await actions.setCurrentBoard(state.currentBoard);
       }
     }
   };
