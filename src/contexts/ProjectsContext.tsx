@@ -960,6 +960,28 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
         }
 
+        // Preserve attachments when in admin "view all" mode
+        let attachmentsToPersist = card.attachments || [];
+        const adminAllMode = state.viewAllCardsAsAdmin;
+        const hasAttachmentsInDb = (card.attachments_count ?? 0) > 0;
+        
+        if (adminAllMode && attachmentsToPersist.length === 0 && hasAttachmentsInDb) {
+          try {
+            const { data: existingCard } = await supabase
+              .from('project_cards')
+              .select('custom_fields')
+              .eq('id', card.id)
+              .single();
+            
+            const customFields = existingCard?.custom_fields as any;
+            if (customFields?.attachments && Array.isArray(customFields.attachments)) {
+              attachmentsToPersist = customFields.attachments;
+            }
+          } catch (error) {
+            console.error('Error fetching attachments for preservation:', error);
+          }
+        }
+
         // Update main card fields
         const result = await cardsHook.updateCard(card.id, {
           title: card.title,
@@ -977,7 +999,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             ...(card.customFields || {}),
             checklists: card.checklists || [],
             comments: card.comments || [],
-            attachments: card.attachments || [],
+            attachments: attachmentsToPersist,
             activities: card.activities || []
           },
           archived: card.archived,
