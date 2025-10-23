@@ -162,9 +162,9 @@ export const CardDetailModal = ({
           customFields = fallback?.custom_fields;
         }
         
-        if (mounted && customFields?.attachments) {
+        if (mounted) {
           setAttachmentsOverride(
-            Array.isArray(customFields.attachments) ? customFields.attachments : []
+            Array.isArray(customFields?.attachments) ? customFields.attachments : []
           );
         }
       } catch (error) {
