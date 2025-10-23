@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
 import { ProjectCard, Attachment } from "@/types/projects";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AttachmentManagerProps {
   isOpen: boolean;
@@ -42,12 +43,74 @@ export const AttachmentManager = ({
 }: AttachmentManagerProps) => {
   const { actions } = useProjects();
   
-  // Use either card attachments or provided attachments
-  const currentAttachments = isCreationMode ? (attachments || []) : (card?.attachments || []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddingLink, setIsAddingLink] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkName, setLinkName] = useState("");
+  
+  // Load attachments from database when modal opens
+  const [loadedAttachments, setLoadedAttachments] = useState<Attachment[]>([]);
+  
+  // Use loaded attachments for existing cards, or provided attachments for creation mode
+  const currentAttachments = isCreationMode ? (attachments || []) : loadedAttachments;
+  
+  // Load attachments from database when modal opens (edit mode only)
+  useEffect(() => {
+    if (!isOpen || isCreationMode || !card?.id) {
+      return;
+    }
+    
+    let mounted = true;
+    
+    (async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const userId = authData.user?.id;
+        
+        if (!userId) return;
+        
+        let customFields: any = null;
+        
+        // Try admin RPC first
+        const { data: adminFull, error: adminErr } = await supabase
+          .rpc('get_card_full_admin' as any, { 
+            _user_id: userId, 
+            _card_id: card.id 
+          })
+          .maybeSingle() as any;
+        
+        if (adminFull && !adminErr) {
+          customFields = adminFull.custom_fields;
+        } else {
+          // Fallback for non-admin users
+          const { data: fallback } = await supabase
+            .from('project_cards')
+            .select('custom_fields')
+            .eq('id', card.id)
+            .maybeSingle();
+          
+          customFields = fallback?.custom_fields;
+        }
+        
+        if (mounted && customFields?.attachments) {
+          setLoadedAttachments(
+            Array.isArray(customFields.attachments) ? customFields.attachments : []
+          );
+        } else if (mounted) {
+          setLoadedAttachments([]);
+        }
+      } catch (error) {
+        console.error('Error loading attachments:', error);
+        if (mounted) {
+          setLoadedAttachments([]);
+        }
+      }
+    })();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [isOpen, card?.id, isCreationMode]);
 
   const handleFileUpload = (files: FileList) => {
     Array.from(files).forEach((file) => {
@@ -66,9 +129,13 @@ export const AttachmentManager = ({
         if (isCreationMode && onAttachmentsChange) {
           onAttachmentsChange([...currentAttachments, attachment]);
         } else if (card) {
+          // Use loadedAttachments to preserve existing attachments
+          const updatedAttachments = [...loadedAttachments, attachment];
+          setLoadedAttachments(updatedAttachments);
+          
           const updatedCard = {
             ...card,
-            attachments: [...(card.attachments || []), attachment]
+            attachments: updatedAttachments
           };
           
           actions.updateCard(updatedCard);
@@ -94,9 +161,13 @@ export const AttachmentManager = ({
       if (isCreationMode && onAttachmentsChange) {
         onAttachmentsChange([...currentAttachments, attachment]);
       } else if (card) {
+        // Use loadedAttachments to preserve existing attachments
+        const updatedAttachments = [...loadedAttachments, attachment];
+        setLoadedAttachments(updatedAttachments);
+        
         const updatedCard = {
           ...card,
-          attachments: [...(card.attachments || []), attachment]
+          attachments: updatedAttachments
         };
         
         actions.updateCard(updatedCard);
@@ -115,9 +186,13 @@ export const AttachmentManager = ({
     if (isCreationMode && onAttachmentsChange) {
       onAttachmentsChange(currentAttachments.filter(a => a.id !== attachmentId));
     } else if (card) {
+      // Use loadedAttachments to preserve other existing attachments
+      const updatedAttachments = loadedAttachments.filter(a => a.id !== attachmentId);
+      setLoadedAttachments(updatedAttachments);
+      
       const updatedCard = {
         ...card,
-        attachments: (card.attachments || []).filter(a => a.id !== attachmentId)
+        attachments: updatedAttachments
       };
       actions.updateCard(updatedCard);
       
