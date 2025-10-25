@@ -239,25 +239,24 @@ const Financeiro = () => {
 
     // Verificar serviços recorrentes
     if (cliente.servicos_recorrentes) {
-      const servicosKeys = ['social_media', 'trafego_pago', 'treinamento_vendas', 'google_ads', 'assinatura_jornada'];
+      const servicos = Object.values(cliente.servicos_recorrentes || {}) as any[];
       
-    servicosKeys.forEach(key => {
-      const servico = (cliente.servicos_recorrentes as any)?.[key];
-      if (servico?.ativo) {
-        const modo = servico.modo_pagamento;
-        
-        if (!modoDetectado) modoDetectado = modo;
-        
-        if (modo === 'dinheiro') {
-          totalDinheiro += servico.valor || 0;
-        } else if (modo === 'permuta') {
-          totalPermuta += servico.valor_permuta || servico.valor || 0;
-        } else if (modo === 'dinheiro_permuta') {
-          totalDinheiro += servico.valor_dinheiro || 0;
-          totalPermuta += servico.valor_permuta || 0;
+      servicos.forEach(servico => {
+        if (servico?.ativo) {
+          const modo = servico.modo_pagamento;
+          
+          if (!modoDetectado) modoDetectado = modo;
+          
+          if (modo === 'dinheiro' || !modo) {
+            totalDinheiro += servico.valor || 0;
+          } else if (modo === 'permuta') {
+            totalPermuta += servico.valor_permuta || servico.valor || 0;
+          } else if (modo === 'dinheiro_permuta') {
+            totalDinheiro += servico.valor_dinheiro || 0;
+            totalPermuta += servico.valor_permuta || 0;
+          }
         }
-      }
-    });
+      });
     }
 
     return { dinheiro: totalDinheiro, permuta: totalPermuta, modo: modoDetectado };

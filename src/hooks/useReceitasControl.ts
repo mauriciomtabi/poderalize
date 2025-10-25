@@ -57,7 +57,8 @@ export const useReceitasControl = (
 
     // Processar clientes com pagamento recorrente
     clientes.forEach(cliente => {
-      if (!cliente.pagamento_mensal) return;
+      const hasActiveRecurring = Object.values(cliente.servicos_recorrentes || {}).some((s: any) => s?.ativo);
+      if (!hasActiveRecurring) return;
       
       const breakdown = calculateRecurrentPaymentBreakdown(cliente);
       
