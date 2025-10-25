@@ -486,6 +486,158 @@ const Clientes = () => {
                   </div>
                 )}
 
+                {/* Serviços Recorrentes */}
+                {selectedCliente.servicos_recorrentes && Object.values(selectedCliente.servicos_recorrentes).some((s: any) => s?.ativo) && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-primary">SERVIÇOS RECORRENTES ATIVOS</h3>
+                    <div className="space-y-3">
+                      {selectedCliente.servicos_recorrentes.social_media?.ativo && (
+                        <Card className="p-4">
+                          <h4 className="font-semibold mb-2">Social Mídia</h4>
+                          {selectedCliente.servicos_recorrentes.social_media.plano && (
+                            <p className="text-sm text-muted-foreground mb-2">{selectedCliente.servicos_recorrentes.social_media.plano}</p>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div><span className="font-medium">Valor:</span> {formatCurrency(selectedCliente.servicos_recorrentes.social_media.valor)}</div>
+                            {selectedCliente.servicos_recorrentes.social_media.qtde_feed && (
+                              <div><span className="font-medium">Feed:</span> {selectedCliente.servicos_recorrentes.social_media.qtde_feed}</div>
+                            )}
+                            {selectedCliente.servicos_recorrentes.social_media.qtde_reels && (
+                              <div><span className="font-medium">Reels:</span> {selectedCliente.servicos_recorrentes.social_media.qtde_reels}</div>
+                            )}
+                            {selectedCliente.servicos_recorrentes.social_media.qtde_stories_semanais && (
+                              <div><span className="font-medium">Stories:</span> {selectedCliente.servicos_recorrentes.social_media.qtde_stories_semanais}/semana</div>
+                            )}
+                          </div>
+                        </Card>
+                      )}
+                      
+                      {selectedCliente.servicos_recorrentes.trafego_pago?.ativo && (
+                        <Card className="p-4">
+                          <h4 className="font-semibold mb-2">Tráfego Pago</h4>
+                          {selectedCliente.servicos_recorrentes.trafego_pago.plano && (
+                            <p className="text-sm text-muted-foreground mb-2">{selectedCliente.servicos_recorrentes.trafego_pago.plano}</p>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div><span className="font-medium">Valor:</span> {formatCurrency(selectedCliente.servicos_recorrentes.trafego_pago.valor)}</div>
+                            {selectedCliente.servicos_recorrentes.trafego_pago.qtde_campanhas && (
+                              <div><span className="font-medium">Campanhas:</span> {selectedCliente.servicos_recorrentes.trafego_pago.qtde_campanhas}</div>
+                            )}
+                          </div>
+                        </Card>
+                      )}
+                      
+                      {selectedCliente.servicos_recorrentes.treinamento_vendas?.ativo && (
+                        <Card className="p-4">
+                          <h4 className="font-semibold mb-2">Treinamento de Vendas</h4>
+                          {selectedCliente.servicos_recorrentes.treinamento_vendas.plano && (
+                            <p className="text-sm text-muted-foreground mb-2">{selectedCliente.servicos_recorrentes.treinamento_vendas.plano}</p>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div><span className="font-medium">Valor:</span> {formatCurrency(selectedCliente.servicos_recorrentes.treinamento_vendas.valor)}</div>
+                            {selectedCliente.servicos_recorrentes.treinamento_vendas.periodo && (
+                              <div><span className="font-medium">Período:</span> {selectedCliente.servicos_recorrentes.treinamento_vendas.periodo}</div>
+                            )}
+                          </div>
+                        </Card>
+                      )}
+                      
+                      {selectedCliente.servicos_recorrentes.google_ads?.ativo && (
+                        <Card className="p-4">
+                          <h4 className="font-semibold mb-2">Google Ads</h4>
+                          {selectedCliente.servicos_recorrentes.google_ads.plano && (
+                            <p className="text-sm text-muted-foreground mb-2">{selectedCliente.servicos_recorrentes.google_ads.plano}</p>
+                          )}
+                          <div className="text-sm">
+                            <span className="font-medium">Valor:</span> {formatCurrency(selectedCliente.servicos_recorrentes.google_ads.valor)}
+                          </div>
+                        </Card>
+                      )}
+                      
+                      {selectedCliente.servicos_recorrentes.assinatura_jornada?.ativo && (
+                        <Card className="p-4">
+                          <h4 className="font-semibold mb-2">Assinatura Jornada Poderalize</h4>
+                          <div className="text-sm">
+                            <span className="font-medium">Valor:</span> {formatCurrency(selectedCliente.servicos_recorrentes.assinatura_jornada.valor)}
+                          </div>
+                        </Card>
+                      )}
+                      
+                      <div className="pt-2 border-t">
+                        <p className="text-sm font-semibold">
+                          Total Mensal Recorrente: {formatCurrency(
+                            (selectedCliente.servicos_recorrentes.social_media?.ativo ? (selectedCliente.servicos_recorrentes.social_media.valor || 0) : 0) +
+                            (selectedCliente.servicos_recorrentes.trafego_pago?.ativo ? (selectedCliente.servicos_recorrentes.trafego_pago.valor || 0) : 0) +
+                            (selectedCliente.servicos_recorrentes.treinamento_vendas?.ativo ? (selectedCliente.servicos_recorrentes.treinamento_vendas.valor || 0) : 0) +
+                            (selectedCliente.servicos_recorrentes.google_ads?.ativo ? (selectedCliente.servicos_recorrentes.google_ads.valor || 0) : 0) +
+                            (selectedCliente.servicos_recorrentes.assinatura_jornada?.ativo ? (selectedCliente.servicos_recorrentes.assinatura_jornada.valor || 0) : 0)
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Serviços Únicos */}
+                {selectedCliente.servicos_unicos && Object.values(selectedCliente.servicos_unicos).some((s: any) => s?.selecionado) && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-primary">HISTÓRICO DE SERVIÇOS ÚNICOS</h3>
+                    <div className="space-y-3">
+                      {selectedCliente.servicos_unicos.criacao_site?.selecionado && (
+                        <Card className="p-4">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-semibold">Criação de Site</h4>
+                            <Badge variant="secondary">{formatCurrency(selectedCliente.servicos_unicos.criacao_site.valor)}</Badge>
+                          </div>
+                        </Card>
+                      )}
+                      
+                      {selectedCliente.servicos_unicos.identidade_visual?.selecionado && (
+                        <Card className="p-4">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-semibold">Identidade Visual</h4>
+                            <Badge variant="secondary">{formatCurrency(selectedCliente.servicos_unicos.identidade_visual.valor)}</Badge>
+                          </div>
+                        </Card>
+                      )}
+                      
+                      {selectedCliente.servicos_unicos.plataforma_vendas?.selecionado && (
+                        <Card className="p-4">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-semibold">Plataforma de Vendas On-line</h4>
+                            <Badge variant="secondary">{formatCurrency(selectedCliente.servicos_unicos.plataforma_vendas.valor)}</Badge>
+                          </div>
+                        </Card>
+                      )}
+                      
+                      {selectedCliente.servicos_unicos.outros?.selecionado && (
+                        <Card className="p-4">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-semibold">Outros</h4>
+                              {selectedCliente.servicos_unicos.outros.descricao && (
+                                <p className="text-sm text-muted-foreground mt-1">{selectedCliente.servicos_unicos.outros.descricao}</p>
+                              )}
+                            </div>
+                            <Badge variant="secondary">{formatCurrency(selectedCliente.servicos_unicos.outros.valor)}</Badge>
+                          </div>
+                        </Card>
+                      )}
+                      
+                      <div className="pt-2 border-t">
+                        <p className="text-sm font-semibold">
+                          Total de Investimento Único: {formatCurrency(
+                            (selectedCliente.servicos_unicos.criacao_site?.selecionado ? (selectedCliente.servicos_unicos.criacao_site.valor || 0) : 0) +
+                            (selectedCliente.servicos_unicos.identidade_visual?.selecionado ? (selectedCliente.servicos_unicos.identidade_visual.valor || 0) : 0) +
+                            (selectedCliente.servicos_unicos.plataforma_vendas?.selecionado ? (selectedCliente.servicos_unicos.plataforma_vendas.valor || 0) : 0) +
+                            (selectedCliente.servicos_unicos.outros?.selecionado ? (selectedCliente.servicos_unicos.outros.valor || 0) : 0)
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Observations */}
                 {selectedCliente.observacoes && <div>
                     <label className="text-sm font-medium">Observações</label>

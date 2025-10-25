@@ -255,11 +255,13 @@ export function useLeads() {
         fonte_original: lead.fonte,
         vendedor_id: lead.vendedor_id,
         vendedor_nome: lead.vendedor_nome,
+        servicos_recorrentes: {},
+        servicos_unicos: {},
       };
 
       const { data, error } = await supabase
         .from('clientes')
-        .insert([{ ...clienteData, user_id: user.id }])
+        .insert([{ ...clienteData, user_id: user.id } as any])
         .select()
         .single();
 

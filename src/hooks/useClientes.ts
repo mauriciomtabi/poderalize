@@ -43,6 +43,10 @@ const clienteSchema = z.object({
   // Pagamento mensal
   pagamento_mensal: z.boolean().optional(),
   dia_pagamento: z.number().min(1).max(31).optional(),
+  
+  // Serviços recorrentes e únicos
+  servicos_recorrentes: z.any().optional(),
+  servicos_unicos: z.any().optional(),
 }).refine(
   (data) => {
     if (data.pagamento_mensal && !data.dia_pagamento) {
@@ -55,6 +59,58 @@ const clienteSchema = z.object({
     path: ["dia_pagamento"],
   }
 );
+
+export interface ServicoRecorrente {
+  social_media?: {
+    ativo: boolean;
+    plano?: string;
+    valor?: number;
+    qtde_feed?: number;
+    qtde_reels?: number;
+    qtde_stories_semanais?: number;
+  };
+  trafego_pago?: {
+    ativo: boolean;
+    plano?: string;
+    valor?: number;
+    qtde_campanhas?: number;
+  };
+  treinamento_vendas?: {
+    ativo: boolean;
+    plano?: string;
+    valor?: number;
+    periodo?: string;
+  };
+  google_ads?: {
+    ativo: boolean;
+    plano?: string;
+    valor?: number;
+  };
+  assinatura_jornada?: {
+    ativo: boolean;
+    valor?: number;
+  };
+}
+
+export interface ServicoUnico {
+  criacao_site?: {
+    selecionado: boolean;
+    valor?: number;
+  };
+  identidade_visual?: {
+    selecionado: boolean;
+    valor?: number;
+  };
+  plataforma_vendas?: {
+    selecionado: boolean;
+    valor?: number;
+  };
+  outros?: {
+    selecionado: boolean;
+    descricao?: string;
+    valor?: number;
+  };
+}
 
 export interface Cliente {
   id: string;
@@ -96,6 +152,10 @@ export interface Cliente {
   pagamento_mensal?: boolean;
   dia_pagamento?: number;
   
+  // Serviços
+  servicos_recorrentes?: ServicoRecorrente;
+  servicos_unicos?: ServicoUnico;
+  
   created_at: string;
   updated_at: string;
 }
@@ -129,7 +189,7 @@ export function useClientes() {
         return;
       }
 
-      setClientes(data || []);
+      setClientes((data as Cliente[]) || []);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
       toast.error('Erro ao carregar clientes');
@@ -169,7 +229,7 @@ export function useClientes() {
         return null;
       }
 
-      setClientes(prev => [data, ...prev]);
+      setClientes(prev => [data as Cliente, ...prev]);
       toast.success('Cliente adicionado com sucesso!');
       return data;
     } catch (error) {
@@ -218,7 +278,7 @@ export function useClientes() {
         return null;
       }
 
-      setClientes(prev => prev.map(cliente => cliente.id === id ? data : cliente));
+      setClientes(prev => prev.map(cliente => cliente.id === id ? (data as Cliente) : cliente));
       toast.success('Cliente atualizado com sucesso!');
       return data;
     } catch (error) {

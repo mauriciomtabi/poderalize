@@ -8,13 +8,15 @@ import { toast } from "sonner";
 import { CreateClienteData, Cliente } from "@/hooks/useClientes";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save } from "lucide-react";
+import { CalendarIcon, Save, Calculator } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ServicosRecorrentesForm } from "./ServicosRecorrentesForm";
+import { ServicosUnicosForm } from "./ServicosUnicosForm";
 
 interface ClienteFormProps {
   onSubmit: (clienteData: CreateClienteData) => void;
@@ -107,6 +109,9 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
   });
   
   const [novoCliente, setNovoCliente] = useState(getInitialFormData());
+  const [servicosRecorrentes, setServicosRecorrentes] = useState(initialData?.servicos_recorrentes || {});
+  const [servicosUnicos, setServicosUnicos] = useState(initialData?.servicos_unicos || {});
+  const [totalServicosRecorrentes, setTotalServicosRecorrentes] = useState(0);
 
   const [date, setDate] = useState<Date>(() => {
     if (initialData?.data_fechamento) return parseISO(initialData.data_fechamento);
@@ -128,13 +133,25 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
           ...novoCliente,
-          avatar_url: avatarUrl
+          avatar_url: avatarUrl,
+          servicos_recorrentes: servicosRecorrentes,
+          servicos_unicos: servicosUnicos,
         }));
       } catch (error) {
         console.error('Error saving form draft:', error);
       }
     }
-  }, [novoCliente, avatarUrl, initialData]);
+  }, [novoCliente, avatarUrl, servicosRecorrentes, servicosUnicos, initialData]);
+
+  // Auto-calculate valor_fechamento from servicos recorrentes
+  useEffect(() => {
+    if (totalServicosRecorrentes > 0) {
+      setNovoCliente(prev => ({
+        ...prev,
+        valor_fechamento: totalServicosRecorrentes.toString()
+      }));
+    }
+  }, [totalServicosRecorrentes]);
 
   // Save scroll position periodically
   useEffect(() => {
@@ -286,6 +303,8 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
       observacoes_comportamento: novoCliente.observacoes_comportamento || undefined,
       pagamento_mensal: novoCliente.pagamento_mensal || false,
       dia_pagamento: novoCliente.dia_pagamento ? parseInt(novoCliente.dia_pagamento) : undefined,
+      servicos_recorrentes: servicosRecorrentes,
+      servicos_unicos: servicosUnicos,
     };
 
     // Clear localStorage draft and scroll position after successful submission
@@ -439,6 +458,14 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
           </div>
           <div>
             <Label htmlFor="valor_fechamento">Valor do Fechamento (R$)</Label>
+            {totalServicosRecorrentes > 0 && (
+              <div className="flex items-center gap-2 mb-1">
+                <Calculator className="h-3 w-3 text-green-600" />
+                <span className="text-xs text-green-600 font-medium">
+                  Calculado automaticamente: R$ {totalServicosRecorrentes.toFixed(2)}
+                </span>
+              </div>
+            )}
             <Input
               id="valor_fechamento"
               type="number"
@@ -446,6 +473,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
               value={novoCliente.valor_fechamento}
               onChange={(e) => setNovoCliente({...novoCliente, valor_fechamento: e.target.value})}
               placeholder="2600.00"
+              className={totalServicosRecorrentes > 0 ? "border-green-500" : ""}
             />
           </div>
         </div>
@@ -692,6 +720,19 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
           />
         </div>
       </div>
+
+      {/* Serviços Recorrentes */}
+      <ServicosRecorrentesForm 
+        value={servicosRecorrentes}
+        onChange={setServicosRecorrentes}
+        onTotalChange={setTotalServicosRecorrentes}
+      />
+
+      {/* Serviços Únicos */}
+      <ServicosUnicosForm 
+        value={servicosUnicos}
+        onChange={setServicosUnicos}
+      />
 
       {/* Observações */}
       <div className="space-y-4">

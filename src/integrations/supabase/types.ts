@@ -679,6 +679,8 @@ export type Database = {
           observacoes_comportamento: string | null
           outras_redes_sociais: string | null
           pagamento_mensal: boolean | null
+          servicos_recorrentes: Json | null
+          servicos_unicos: Json | null
           site: string | null
           telefone: string | null
           updated_at: string
@@ -711,6 +713,8 @@ export type Database = {
           observacoes_comportamento?: string | null
           outras_redes_sociais?: string | null
           pagamento_mensal?: boolean | null
+          servicos_recorrentes?: Json | null
+          servicos_unicos?: Json | null
           site?: string | null
           telefone?: string | null
           updated_at?: string
@@ -743,6 +747,8 @@ export type Database = {
           observacoes_comportamento?: string | null
           outras_redes_sociais?: string | null
           pagamento_mensal?: boolean | null
+          servicos_recorrentes?: Json | null
+          servicos_unicos?: Json | null
           site?: string | null
           telefone?: string | null
           updated_at?: string
@@ -2428,10 +2434,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      consolidate_user_boards: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      consolidate_user_boards: { Args: never; Returns: undefined }
       create_notification: {
         Args: {
           p_description: string
@@ -2469,6 +2472,12 @@ export type Database = {
           updated_at: string
           watching: boolean
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "project_cards"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_all_cards_admin_light: {
         Args: { _user_id: string }
@@ -2522,6 +2531,12 @@ export type Database = {
           updated_at: string
           watching: boolean
         }
+        SetofOptions: {
+          from: "*"
+          to: "project_cards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       has_role: {
         Args: {
@@ -2530,14 +2545,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      remove_user_completely: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      sync_board_members: {
-        Args: { p_board_id: string }
-        Returns: undefined
-      }
+      remove_user_completely: { Args: { _user_id: string }; Returns: boolean }
+      sync_board_members: { Args: { p_board_id: string }; Returns: undefined }
       user_can_manage_card_on_list: {
         Args: { _list_id: string; _user_id: string }
         Returns: boolean
