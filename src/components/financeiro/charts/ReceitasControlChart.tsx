@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
 
 interface ReceitaStatusData {
   mes: string;
@@ -14,22 +14,60 @@ interface ReceitasControlChartProps {
   formatCurrency: (value: number) => string;
 }
 
+// Função para formatar valores em k (milhares)
+const formatToK = (value: number): string => {
+  if (value === 0) return '';
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}k`;
+  }
+  return value.toFixed(0);
+};
+
+// Componente para renderizar o label customizado
+const CustomLabel = (props: any) => {
+  const { x, y, width, value, data, index } = props;
+  
+  // Calcular o total da coluna (soma de todos os valores empilhados)
+  const dataPoint = data[index];
+  const total = (dataPoint.pago || 0) + (dataPoint.pendente || 0) + 
+                (dataPoint.atrasado || 0) + (dataPoint.projecao || 0);
+  
+  if (total === 0) return null;
+  
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 8}
+      fill="hsl(var(--foreground))"
+      textAnchor="middle"
+      fontSize="13"
+      fontWeight="600"
+      className="drop-shadow-sm"
+    >
+      {formatToK(total)}
+    </text>
+  );
+};
+
 const CustomTooltip = ({ active, payload, label, formatCurrency }: any) => {
   if (active && payload && payload.length) {
     const total = payload.reduce((sum: number, p: any) => sum + p.value, 0);
     
     return (
-      <div className="bg-card p-3 border border-border shadow-lg rounded-lg">
-        <p className="font-semibold text-card-foreground mb-2">{label}</p>
+      <div className="bg-card/95 backdrop-blur-sm p-4 border border-border shadow-xl rounded-xl">
+        <p className="font-bold text-card-foreground mb-3 text-base">{label}</p>
         {payload.map((p: any) => (
-          <div key={p.name} className="flex justify-between gap-4 text-sm mb-1">
-            <span style={{ color: p.fill }} className="font-medium">{p.name}:</span>
-            <span className="text-card-foreground">{formatCurrency(p.value)}</span>
+          <div key={p.name} className="flex justify-between gap-6 text-sm mb-2">
+            <span style={{ color: p.fill }} className="font-semibold flex items-center gap-2">
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: p.fill }}></span>
+              {p.name}:
+            </span>
+            <span className="text-card-foreground font-medium">{formatCurrency(p.value)}</span>
           </div>
         ))}
-        <div className="border-t border-border mt-2 pt-2 flex justify-between font-bold text-card-foreground">
+        <div className="border-t border-border mt-3 pt-3 flex justify-between font-bold text-card-foreground text-base">
           <span>Total:</span>
-          <span>{formatCurrency(total)}</span>
+          <span className="text-primary">{formatCurrency(total)}</span>
         </div>
       </div>
     );
@@ -102,30 +140,82 @@ export const ReceitasControlChart = ({ data, formatCurrency }: ReceitasControlCh
         </div>
 
         {/* Gráfico de colunas empilhadas */}
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <ResponsiveContainer width="100%" height={450}>
+          <BarChart 
+            data={data}
+            margin={{ top: 30, right: 20, left: 20, bottom: 5 }}
+          >
+            <defs>
+              {/* Gradientes modernos */}
+              <linearGradient id="colorPago" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#059669" stopOpacity={0.9}/>
+              </linearGradient>
+              <linearGradient id="colorPendente" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#fbbf24" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.9}/>
+              </linearGradient>
+              <linearGradient id="colorAtrasado" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f87171" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.9}/>
+              </linearGradient>
+              <linearGradient id="colorProjecao" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#60a5fa" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.9}/>
+              </linearGradient>
+            </defs>
+            
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
             <XAxis 
               dataKey="mes" 
               stroke="hsl(var(--muted-foreground))"
-              style={{ fontSize: '12px' }}
+              style={{ fontSize: '13px', fontWeight: '500' }}
+              tickLine={false}
             />
             <YAxis 
               stroke="hsl(var(--muted-foreground))"
               style={{ fontSize: '12px' }}
-              tickFormatter={(value) => formatCurrency(value)}
+              tickFormatter={(value) => formatToK(value)}
+              tickLine={false}
             />
             <Tooltip content={<CustomTooltip formatCurrency={formatCurrency} />} />
             <Legend 
-              wrapperStyle={{ fontSize: '14px' }}
-              iconType="square"
+              wrapperStyle={{ fontSize: '14px', fontWeight: '500' }}
+              iconType="circle"
             />
             
-            {/* Colunas empilhadas */}
-            <Bar dataKey="pago" stackId="a" fill="#10b981" name="Pago" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="pendente" stackId="a" fill="#f59e0b" name="Pendente" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="atrasado" stackId="a" fill="#ef4444" name="Atrasado" radius={[0, 0, 0, 0]} />
-            <Bar dataKey="projecao" stackId="a" fill="#3b82f6" name="Projeção" radius={[4, 4, 0, 0]} />
+            {/* Colunas empilhadas com visual moderno */}
+            <Bar 
+              dataKey="pago" 
+              stackId="a" 
+              fill="url(#colorPago)" 
+              name="Pago" 
+              radius={[0, 0, 0, 0]}
+            />
+            <Bar 
+              dataKey="pendente" 
+              stackId="a" 
+              fill="url(#colorPendente)" 
+              name="Pendente" 
+              radius={[0, 0, 0, 0]}
+            />
+            <Bar 
+              dataKey="atrasado" 
+              stackId="a" 
+              fill="url(#colorAtrasado)" 
+              name="Atrasado" 
+              radius={[0, 0, 0, 0]}
+            />
+            <Bar 
+              dataKey="projecao" 
+              stackId="a" 
+              fill="url(#colorProjecao)" 
+              name="Projeção" 
+              radius={[8, 8, 0, 0]}
+            >
+              {/* Label com o total acima de cada coluna */}
+              <LabelList content={<CustomLabel data={data} />} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
