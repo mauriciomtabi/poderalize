@@ -415,53 +415,7 @@ const Financeiro = () => {
       </div>
 
       {/* Resumo Geral */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="card-interactive hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp size={16} className="text-green-600" />
-              Receitas Totais
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-green-600">
-              {formatCurrency(totalReceitas)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Clientes + Outras receitas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-interactive hover-lift">
-          
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-red-600">
-              {formatCurrency(totalDespesas)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Salários + Outras despesas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className={`card-interactive hover-lift ${saldo >= 0 ? 'border-green-600/50' : 'border-red-600/50'}`}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <DollarSign size={16} className={saldo >= 0 ? 'text-green-600' : 'text-red-600'} />
-              Saldo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl md:text-3xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(saldo)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {saldo >= 0 ? 'Saldo positivo' : 'Saldo negativo'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      
 
       {/* Tabs para Dashboard, Receitas e Despesas */}
       <Tabs defaultValue="dashboard" className="w-full">
