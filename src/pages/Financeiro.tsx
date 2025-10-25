@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle, AlertCircle } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle, AlertCircle, BarChart3 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { format, isAfter, isBefore, startOfMonth, endOfMonth } from "date-fns";
@@ -166,35 +166,128 @@ const Financeiro = () => {
   const filteredReceitas = useMemo(() => filterByPeriod(receitas, 'data'), [receitas, selectedYear, selectedMonth]);
   const filteredDespesas = useMemo(() => filterByPeriod(despesas, 'data'), [despesas, selectedYear, selectedMonth]);
 
-  // Calcular totais considerando filtros
-  const totalReceitasClientes = useMemo(() => {
-    return filteredClientes.reduce((sum, cliente) => {
-      if (!cliente.pagamento_mensal) {
-        // Para clientes sem pagamento mensal, considerar apenas se a data está no período
-        const filtered = filterByPeriod([{
-          data_fechamento: cliente.data_fechamento
-        }], 'data_fechamento');
-        if (filtered.length > 0) {
-          return sum + (cliente.valor_fechamento || 0);
+  // Calcular breakdown de pagamento recorrente (dinheiro vs permuta)
+  const calculateRecurrentPaymentBreakdown = (cliente: Cliente): {
+    dinheiro: number;
+    permuta: number;
+    modo: 'dinheiro' | 'permuta' | 'dinheiro_permuta' | null;
+  } => {
+    let totalDinheiro = 0;
+    let totalPermuta = 0;
+    let modoDetectado: 'dinheiro' | 'permuta' | 'dinheiro_permuta' | null = null;
+
+    // Verificar serviços recorrentes
+    if (cliente.servicos_recorrentes) {
+      const servicos = Object.values(cliente.servicos_recorrentes || {}) as any[];
+      servicos.forEach(servico => {
+        if (servico?.ativo) {
+          const modo = servico.modo_pagamento;
+          if (!modoDetectado) modoDetectado = modo;
+          if (modo === 'dinheiro' || !modo) {
+            totalDinheiro += servico.valor || 0;
+          } else if (modo === 'permuta') {
+            totalPermuta += servico.valor_permuta || servico.valor || 0;
+          } else if (modo === 'dinheiro_permuta') {
+            totalDinheiro += servico.valor_dinheiro || 0;
+            totalPermuta += servico.valor_permuta || 0;
+          }
         }
-        return sum;
+      });
+    }
+    return {
+      dinheiro: totalDinheiro,
+      permuta: totalPermuta,
+      modo: modoDetectado
+    };
+  };
+
+  // Calcular totais de Dinheiro e Permuta separadamente, considerando filtros
+  const { totalDinheiro, totalPermuta, totalReceitas } = useMemo(() => {
+    let dinheiro = 0;
+    let permuta = 0;
+
+    // 1. Processar clientes com pagamento recorrente
+    filteredClientes.forEach(cliente => {
+      if (!cliente.pagamento_mensal) {
+        // Cliente sem pagamento mensal - verificar período
+        const filtered = filterByPeriod([{ data_fechamento: cliente.data_fechamento }], 'data_fechamento');
+        if (filtered.length > 0) {
+          const breakdown = calculateRecurrentPaymentBreakdown(cliente);
+          dinheiro += breakdown.dinheiro;
+          permuta += breakdown.permuta;
+        }
+        return;
+      }
+
+      // Cliente com pagamento mensal
+      const breakdown = calculateRecurrentPaymentBreakdown(cliente);
+      
+      if (selectedMonth === 'all') {
+        // Todos os meses: somar pagamentos confirmados
+        const ano = parseInt(selectedYear);
+        const pagamentosAno = pagamentos.filter(
+          p => p.cliente_id === cliente.id && p.ano === ano && p.status === 'pago'
+        );
+        
+        pagamentosAno.forEach(() => {
+          dinheiro += breakdown.dinheiro;
+          permuta += breakdown.permuta;
+        });
       } else {
-        // Para clientes com pagamento mensal, considerar o valor pago no período
+        // Mês específico
         const ano = parseInt(selectedYear);
         const mes = parseInt(selectedMonth);
         const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
-        if (selectedMonth === 'all') {
-          // Se for "todos os meses", contar todos os pagamentos do ano
-          const pagamentosAno = pagamentos.filter(p => p.cliente_id === cliente.id && p.ano === ano && p.status === 'pago');
-          return sum + pagamentosAno.reduce((s, p) => s + p.valor_pago, 0);
-        } else {
-          return sum + (pagamento?.status === 'pago' ? pagamento.valor_pago : 0);
+        
+        if (pagamento?.status === 'pago') {
+          dinheiro += breakdown.dinheiro;
+          permuta += breakdown.permuta;
         }
       }
-    }, 0);
-  }, [filteredClientes, pagamentos, selectedYear, selectedMonth, getPagamentoByPeriodo]);
-  const totalReceitasManuais = useMemo(() => filteredReceitas.reduce((sum, receita) => sum + receita.valor, 0), [filteredReceitas]);
-  const totalReceitas = totalReceitasClientes + totalReceitasManuais;
+    });
+
+    // 2. Processar receitas manuais (assume como dinheiro)
+    const receitasManuais = filteredReceitas.reduce((sum, receita) => sum + receita.valor, 0);
+    dinheiro += receitasManuais;
+
+    // 3. Processar serviços únicos filtrados pelo período
+    filteredClientes.forEach(cliente => {
+      const servicosUnicos = cliente.servicos_unicos || {};
+      Object.values(servicosUnicos).forEach((servico: any) => {
+        if (!servico?.selecionado) return;
+        
+        const dataPagamento = servico.data_prevista_pagamento || servico.data_pagamento;
+        if (!dataPagamento) return;
+        
+        const filtered = filterByPeriod([{ data: dataPagamento }], 'data');
+        
+        if (filtered.length > 0 && servico.pagamento_confirmado) {
+          const modoPagamento = servico.modo_pagamento || 'dinheiro';
+          
+          if (modoPagamento === 'dinheiro') {
+            dinheiro += servico.valor || 0;
+          } else if (modoPagamento === 'permuta') {
+            permuta += servico.valor_permuta || servico.valor || 0;
+          } else if (modoPagamento === 'dinheiro_permuta') {
+            dinheiro += servico.valor_dinheiro || 0;
+            permuta += servico.valor_permuta || 0;
+          }
+        }
+      });
+    });
+
+    // 4. Aplicar filtro de tipo de pagamento para totalReceitas
+    let total = 0;
+    if (paymentFilter === 'total') {
+      total = dinheiro + permuta;
+    } else if (paymentFilter === 'dinheiro') {
+      total = dinheiro;
+    } else if (paymentFilter === 'permuta') {
+      total = permuta;
+    }
+
+    return { totalDinheiro: dinheiro, totalPermuta: permuta, totalReceitas: total };
+  }, [filteredClientes, pagamentos, selectedYear, selectedMonth, paymentFilter, filteredReceitas, getPagamentoByPeriodo, calculateRecurrentPaymentBreakdown, filterByPeriod]);
 
   // Função para verificar se salário foi pago
   const getSalaryPaymentStatus = (colaboradorId: string): 'pago' | 'pendente' => {
@@ -252,41 +345,6 @@ const Financeiro = () => {
       style: "currency",
       currency: "BRL"
     }).format(value);
-  };
-
-  // Calcular breakdown de pagamento recorrente (dinheiro vs permuta)
-  const calculateRecurrentPaymentBreakdown = (cliente: Cliente): {
-    dinheiro: number;
-    permuta: number;
-    modo: 'dinheiro' | 'permuta' | 'dinheiro_permuta' | null;
-  } => {
-    let totalDinheiro = 0;
-    let totalPermuta = 0;
-    let modoDetectado: 'dinheiro' | 'permuta' | 'dinheiro_permuta' | null = null;
-
-    // Verificar serviços recorrentes
-    if (cliente.servicos_recorrentes) {
-      const servicos = Object.values(cliente.servicos_recorrentes || {}) as any[];
-      servicos.forEach(servico => {
-        if (servico?.ativo) {
-          const modo = servico.modo_pagamento;
-          if (!modoDetectado) modoDetectado = modo;
-          if (modo === 'dinheiro' || !modo) {
-            totalDinheiro += servico.valor || 0;
-          } else if (modo === 'permuta') {
-            totalPermuta += servico.valor_permuta || servico.valor || 0;
-          } else if (modo === 'dinheiro_permuta') {
-            totalDinheiro += servico.valor_dinheiro || 0;
-            totalPermuta += servico.valor_permuta || 0;
-          }
-        }
-      });
-    }
-    return {
-      dinheiro: totalDinheiro,
-      permuta: totalPermuta,
-      modo: modoDetectado
-    };
   };
 
   // Usar hook para dados do gráfico de receitas
@@ -442,6 +500,109 @@ const Financeiro = () => {
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Cards KPI Principais - Afetados por TODOS os filtros */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <BarChart3 size={20} />
+          Resumo do Período
+        </h2>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Card 1: Total Receitas */}
+          <Card className="transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <TrendingUp size={16} className="text-green-600" />
+                Total Receitas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">
+                {formatCurrency(totalReceitas)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {paymentFilter === 'total' ? 'Dinheiro + Permuta' : 
+                 paymentFilter === 'dinheiro' ? 'Somente Dinheiro' : 'Somente Permuta'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Total Dinheiro */}
+          <Card className="transition-all duration-300 hover:shadow-lg border-green-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <DollarSign size={16} className="text-green-600" />
+                Dinheiro
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-700">
+                {formatCurrency(totalDinheiro)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Receitas em dinheiro
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: Total Permuta */}
+          <Card className="transition-all duration-300 hover:shadow-lg border-yellow-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <DollarSign size={16} className="text-yellow-600" />
+                Permuta
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-700">
+                {formatCurrency(totalPermuta)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Receitas em permuta
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 4: Total Despesas */}
+          <Card className="transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <TrendingDown size={16} className="text-red-600" />
+                Total Despesas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">
+                {formatCurrency(totalDespesas)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Salários + Outras
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 5: Saldo */}
+          <Card className={`transition-all duration-300 hover:shadow-lg ${
+            saldo >= 0 ? 'border-green-300 bg-green-50/50' : 'border-red-300 bg-red-50/50'
+          }`}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <DollarSign size={16} className={saldo >= 0 ? 'text-green-600' : 'text-red-600'} />
+                Saldo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(saldo)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Receitas - Despesas
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Tabs para Dashboard, Receitas e Despesas */}
       <Tabs defaultValue="dashboard" className="w-full">
