@@ -5,6 +5,7 @@ import { useDespesas } from "@/hooks/useDespesas";
 import { useReceitas } from "@/hooks/useReceitas";
 import { usePagamentosClientes } from "@/hooks/usePagamentosClientes";
 import { usePagamentosSalarios } from "@/hooks/usePagamentosSalarios";
+import { useReceitasControl } from "@/hooks/useReceitasControl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import { DespesaForm } from "@/components/financeiro/DespesaForm";
 import { ReceitaForm } from "@/components/financeiro/ReceitaForm";
 import { ConfirmPaymentDialog } from "@/components/financeiro/ConfirmPaymentDialog";
 import { ConfirmSalaryPaymentDialog } from "@/components/financeiro/ConfirmSalaryPaymentDialog";
+import { ReceitasControlChart } from "@/components/financeiro/charts/ReceitasControlChart";
+import { SectionDivider } from "@/components/financeiro/SectionDivider";
 
 import { CreateDespesaData } from "@/hooks/useDespesas";
 import { CreateReceitaData } from "@/hooks/useReceitas";
@@ -258,6 +261,14 @@ const Financeiro = () => {
     return { dinheiro: totalDinheiro, permuta: totalPermuta, modo: modoDetectado };
   };
 
+  // Usar hook para dados do gráfico de receitas
+  const receitasControlData = useReceitasControl(
+    clientes,
+    pagamentos,
+    selectedYear,
+    calculateRecurrentPaymentBreakdown
+  );
+
   const handleAddDespesa = async (despesaData: CreateDespesaData) => {
     const success = await addDespesa(despesaData);
     if (success) {
@@ -491,6 +502,15 @@ const Financeiro = () => {
         )}
       </div>
 
+      {/* Gráfico de Controle de Receitas */}
+      <ReceitasControlChart 
+        data={receitasControlData}
+        formatCurrency={formatCurrency}
+      />
+
+      {/* SEÇÃO DE RECEITAS */}
+      <SectionDivider title="Receitas" icon={TrendingUp} color="green" />
+
       {/* Receitas - Clientes (Pagamentos Recorrentes) */}
       <Card>
         <CardHeader>
@@ -689,6 +709,9 @@ const Financeiro = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* SEÇÃO DE DESPESAS */}
+      <SectionDivider title="Despesas" icon={TrendingDown} color="red" />
 
       {/* Despesas - Salários */}
       <Card>
