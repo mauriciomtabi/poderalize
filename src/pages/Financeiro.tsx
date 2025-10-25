@@ -226,6 +226,38 @@ const Financeiro = () => {
     }).format(value);
   };
 
+  // Calcular breakdown de pagamento recorrente (dinheiro vs permuta)
+  const calculateRecurrentPaymentBreakdown = (cliente: Cliente): { dinheiro: number; permuta: number; modo: 'dinheiro' | 'permuta' | 'dinheiro_permuta' | null } => {
+    let totalDinheiro = 0;
+    let totalPermuta = 0;
+    let modoDetectado: 'dinheiro' | 'permuta' | 'dinheiro_permuta' | null = null;
+
+    // Verificar serviços recorrentes
+    if (cliente.servicos_recorrentes) {
+      const servicosKeys = ['social_media', 'trafego_pago', 'treinamento_vendas', 'google_ads', 'assinatura_jornada'];
+      
+      servicosKeys.forEach(key => {
+        const servico = (cliente.servicos_recorrentes as any)?.[key];
+        if (servico?.selecionado) {
+          const modo = servico.modo_pagamento;
+          
+          if (!modoDetectado) modoDetectado = modo;
+          
+          if (modo === 'dinheiro') {
+            totalDinheiro += servico.valor || 0;
+          } else if (modo === 'permuta') {
+            totalPermuta += servico.valor_permuta || servico.valor || 0;
+          } else if (modo === 'dinheiro_permuta') {
+            totalDinheiro += servico.valor_dinheiro || 0;
+            totalPermuta += servico.valor_permuta || 0;
+          }
+        }
+      });
+    }
+
+    return { dinheiro: totalDinheiro, permuta: totalPermuta, modo: modoDetectado };
+  };
+
   const handleAddDespesa = async (despesaData: CreateDespesaData) => {
     const success = await addDespesa(despesaData);
     if (success) {
@@ -367,14 +399,6 @@ const Financeiro = () => {
       {/* Conteúdo Financeiro */}
       <div className="space-y-6">
 
-      {/* Serviços Únicos */}
-      <ServicosUnicosSection 
-        clientes={clientes}
-        formatCurrency={formatCurrency}
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-      />
-
       {/* Resumo Financeiro e Indicadores */}
       <div className="grid grid-cols-5 gap-4">
         <Card className="card-interactive hover-lift">
@@ -467,12 +491,12 @@ const Financeiro = () => {
         )}
       </div>
 
-      {/* Receitas - Clientes */}
+      {/* Receitas - Clientes (Pagamentos Recorrentes) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Building size={20} className="flex-shrink-0" />
-            Receitas - Clientes
+            Receitas - Clientes (Pagamentos Recorrentes)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -489,7 +513,9 @@ const Financeiro = () => {
                     <TableHead>Empresa</TableHead>
                     <TableHead>Data/Dia Pagamento</TableHead>
                     <TableHead>Status Pagamento</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Valor Dinheiro</TableHead>
+                    <TableHead className="text-right">Valor Permuta</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                     <TableHead className="w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -499,6 +525,8 @@ const Financeiro = () => {
                     const ano = parseInt(selectedYear);
                     const mes = parseInt(selectedMonth);
                     const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
+                    const breakdown = calculateRecurrentPaymentBreakdown(cliente);
+                    const totalValor = pagamento?.valor_pago || cliente.valor_fechamento || 0;
 
                     return (
                       <TableRow key={cliente.id}>
@@ -539,8 +567,37 @@ const Financeiro = () => {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            {formatCurrency(pagamento?.valor_pago || cliente.valor_fechamento || 0)}
+                          {breakdown.dinheiro > 0 ? (
+                            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 flex items-center gap-1 w-fit ml-auto">
+                              <DollarSign className="h-3 w-3" />
+                              {formatCurrency(breakdown.dinheiro)}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {breakdown.permuta > 0 ? (
+                            <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-300 flex items-center gap-1 w-fit ml-auto">
+                              <DollarSign className="h-3 w-3" />
+                              {formatCurrency(breakdown.permuta)}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              breakdown.modo === 'dinheiro' 
+                                ? 'bg-green-50 text-green-700 border-green-300' 
+                                : breakdown.modo === 'permuta'
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                                : 'bg-blue-50 text-blue-700 border-blue-300'
+                            }
+                          >
+                            {formatCurrency(totalValor)}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -562,6 +619,14 @@ const Financeiro = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Serviços Únicos */}
+      <ServicosUnicosSection 
+        clientes={clientes}
+        formatCurrency={formatCurrency}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+      />
 
       {/* Outras Receitas */}
       <Card>
