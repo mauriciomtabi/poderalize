@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { format, isAfter, isBefore, startOfMonth, endOfMonth } from "date-fns";
@@ -290,6 +291,15 @@ const Financeiro = () => {
 
   // Usar hook para dados do gráfico de receitas
   const receitasControlData = useReceitasControl(clientes, pagamentos, selectedYear, calculateRecurrentPaymentBreakdown, paymentFilter);
+
+  // Detectar clientes com valor_fechamento mas sem serviços configurados
+  const clientesSemServicos = useMemo(() => {
+    return clientes.filter(cliente => {
+      const hasValorFechamento = (cliente.valor_fechamento || 0) > 0;
+      const hasActiveRecurring = Object.values(cliente.servicos_recorrentes || {}).some((s: any) => s?.ativo);
+      return hasValorFechamento && !hasActiveRecurring;
+    });
+  }, [clientes]);
   const handleAddDespesa = async (despesaData: CreateDespesaData) => {
     const success = await addDespesa(despesaData);
     if (success) {
@@ -416,6 +426,22 @@ const Financeiro = () => {
 
       {/* Resumo Geral */}
       
+
+      {/* Alerta de dados inconsistentes */}
+      {clientesSemServicos.length > 0 && (
+        <Alert className="border-warning bg-warning/10">
+          <AlertCircle className="h-4 w-4 text-warning" />
+          <AlertTitle>Atenção: Dados Inconsistentes</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>
+              {clientesSemServicos.length} {clientesSemServicos.length === 1 ? 'cliente tem' : 'clientes têm'} valor de fechamento definido mas não {clientesSemServicos.length === 1 ? 'possui' : 'possuem'} serviços recorrentes configurados.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              O gráfico está exibindo esses valores como "dinheiro" por padrão. Para maior precisão nos relatórios, configure os serviços recorrentes na página de Clientes.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Tabs para Dashboard, Receitas e Despesas */}
       <Tabs defaultValue="dashboard" className="w-full">

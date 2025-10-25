@@ -6,6 +6,7 @@ interface Cliente {
   id: string;
   pagamento_mensal?: boolean;
   dia_pagamento?: number;
+  valor_fechamento?: number;
   servicos_recorrentes?: any;
   servicos_unicos?: any;
 }
@@ -58,18 +59,31 @@ export const useReceitasControl = (
     // Processar clientes com pagamento recorrente
     clientes.forEach(cliente => {
       const hasActiveRecurring = Object.values(cliente.servicos_recorrentes || {}).some((s: any) => s?.ativo);
-      if (!hasActiveRecurring) return;
+      const hasValorFechamento = (cliente.valor_fechamento || 0) > 0;
       
-      const breakdown = calculateRecurrentPaymentBreakdown(cliente);
+      // Se não tem nem serviços ativos nem valor de fechamento, pula
+      if (!hasActiveRecurring && !hasValorFechamento) return;
       
-      // Aplicar filtro de tipo de pagamento
       let valorTotal = 0;
-      if (paymentFilter === 'total') {
-        valorTotal = breakdown.dinheiro + breakdown.permuta;
-      } else if (paymentFilter === 'dinheiro') {
-        valorTotal = breakdown.dinheiro;
-      } else if (paymentFilter === 'permuta') {
-        valorTotal = breakdown.permuta;
+      
+      if (hasActiveRecurring) {
+        // Usa breakdown detalhado dos serviços
+        const breakdown = calculateRecurrentPaymentBreakdown(cliente);
+        
+        if (paymentFilter === 'total') {
+          valorTotal = breakdown.dinheiro + breakdown.permuta;
+        } else if (paymentFilter === 'dinheiro') {
+          valorTotal = breakdown.dinheiro;
+        } else if (paymentFilter === 'permuta') {
+          valorTotal = breakdown.permuta;
+        }
+      } else if (hasValorFechamento) {
+        // Cliente tem valor_fechamento mas sem serviços configurados
+        // Assume que é dinheiro para manter compatibilidade
+        if (paymentFilter === 'total' || paymentFilter === 'dinheiro') {
+          valorTotal = cliente.valor_fechamento || 0;
+        }
+        // Se filtro for 'permuta', valorTotal fica 0 (ignora este cliente)
       }
 
       if (valorTotal === 0) return;
