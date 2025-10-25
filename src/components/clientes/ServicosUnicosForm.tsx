@@ -127,21 +127,24 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
                         !servico?.data_contratacao && "text-muted-foreground"
                       )}
                     >
-                      {servico?.data_contratacao
-                        ? format(new Date(servico.data_contratacao), "dd/MM/yyyy", { locale: ptBR })
-                        : "Selecionar"}
+                    {servico?.data_contratacao
+                      ? format(new Date(servico.data_contratacao + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
+                      : "Selecionar"}
                       <CalendarIcon className="h-4 w-4" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={servico?.data_contratacao ? new Date(servico.data_contratacao) : undefined}
-                      onSelect={(date) =>
-                        updateServico(key, {
-                          data_contratacao: date?.toISOString().split("T")[0],
-                        })
-                      }
+                      selected={servico?.data_contratacao ? new Date(servico.data_contratacao + 'T12:00:00') : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          updateServico(key, { data_contratacao: `${year}-${month}-${day}` });
+                        }
+                      }}
                       locale={ptBR}
                       initialFocus
                     />
@@ -159,21 +162,24 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
                         !servico?.data_entrega && "text-muted-foreground"
                       )}
                     >
-                      {servico?.data_entrega
-                        ? format(new Date(servico.data_entrega), "dd/MM/yyyy", { locale: ptBR })
-                        : "Selecionar"}
+                    {servico?.data_entrega
+                      ? format(new Date(servico.data_entrega + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
+                      : "Selecionar"}
                       <CalendarIcon className="h-4 w-4" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
-                      selected={servico?.data_entrega ? new Date(servico.data_entrega) : undefined}
-                      onSelect={(date) =>
-                        updateServico(key, {
-                          data_entrega: date?.toISOString().split("T")[0],
-                        })
-                      }
+                      selected={servico?.data_entrega ? new Date(servico.data_entrega + 'T12:00:00') : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, '0');
+                          const day = String(date.getDate()).padStart(2, '0');
+                          updateServico(key, { data_entrega: `${year}-${month}-${day}` });
+                        }
+                      }}
                       locale={ptBR}
                       initialFocus
                     />
@@ -189,12 +195,16 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
               <Switch
                 id={`${key}-pagamento`}
                 checked={servico?.pagamento_confirmado || false}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked) => {
+                  const today = new Date();
+                  const year = today.getFullYear();
+                  const month = String(today.getMonth() + 1).padStart(2, '0');
+                  const day = String(today.getDate()).padStart(2, '0');
                   updateServico(key, { 
                     pagamento_confirmado: checked as boolean,
-                    data_pagamento: checked ? (servico?.data_pagamento || new Date().toISOString().split("T")[0]) : undefined
-                  })
-                }
+                    data_pagamento: checked ? (servico?.data_pagamento || `${year}-${month}-${day}`) : undefined
+                  });
+                }}
               />
             </div>
 
@@ -212,10 +222,10 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
                   >
                     {servico?.pagamento_confirmado
                       ? (servico?.data_pagamento
-                          ? format(new Date(servico.data_pagamento), "dd/MM/yyyy", { locale: ptBR })
+                          ? format(new Date(servico.data_pagamento + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
                           : "Selecionar")
                       : (servico?.data_prevista_pagamento
-                          ? format(new Date(servico.data_prevista_pagamento), "dd/MM/yyyy", { locale: ptBR })
+                          ? format(new Date(servico.data_prevista_pagamento + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
                           : "Selecionar")}
                     <CalendarIcon className="h-4 w-4" />
                   </button>
@@ -225,15 +235,21 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
                     mode="single"
                     selected={
                       servico?.pagamento_confirmado
-                        ? (servico?.data_pagamento ? new Date(servico.data_pagamento) : undefined)
-                        : (servico?.data_prevista_pagamento ? new Date(servico.data_prevista_pagamento) : undefined)
+                        ? (servico?.data_pagamento ? new Date(servico.data_pagamento + 'T12:00:00') : undefined)
+                        : (servico?.data_prevista_pagamento ? new Date(servico.data_prevista_pagamento + 'T12:00:00') : undefined)
                     }
-                    onSelect={(date) =>
-                      updateServico(key, servico?.pagamento_confirmado
-                        ? { data_pagamento: date?.toISOString().split("T")[0] }
-                        : { data_prevista_pagamento: date?.toISOString().split("T")[0] }
-                      )
-                    }
+                    onSelect={(date) => {
+                      if (date) {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const dateStr = `${year}-${month}-${day}`;
+                        updateServico(key, servico?.pagamento_confirmado
+                          ? { data_pagamento: dateStr }
+                          : { data_prevista_pagamento: dateStr }
+                        );
+                      }
+                    }}
                     locale={ptBR}
                     initialFocus
                   />

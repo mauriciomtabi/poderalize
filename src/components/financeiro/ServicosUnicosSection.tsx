@@ -201,19 +201,19 @@ export const ServicosUnicosSection = ({
                     </TableCell>
                     <TableCell className="text-sm">
                       {servico.data_contratacao
-                        ? format(new Date(servico.data_contratacao), 'dd/MM/yyyy', { locale: ptBR })
+                        ? format(new Date(servico.data_contratacao + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
                         : '-'}
                     </TableCell>
                     <TableCell className="text-sm">
                       {servico.data_entrega
-                        ? format(new Date(servico.data_entrega), 'dd/MM/yyyy', { locale: ptBR })
+                        ? format(new Date(servico.data_entrega + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
                         : '-'}
                     </TableCell>
                     <TableCell className="text-sm">
                       {servico.pagamento_confirmado && servico.data_pagamento
-                        ? format(new Date(servico.data_pagamento), 'dd/MM/yyyy', { locale: ptBR })
+                        ? format(new Date(servico.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
                         : servico.data_prevista_pagamento
-                        ? `Prev: ${format(new Date(servico.data_prevista_pagamento), 'dd/MM/yyyy', { locale: ptBR })}`
+                        ? `Prev: ${format(new Date(servico.data_prevista_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}`
                         : '-'}
                     </TableCell>
                     <TableCell>

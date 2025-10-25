@@ -24,6 +24,7 @@ import { CreateDespesaData } from "@/hooks/useDespesas";
 import { CreateReceitaData } from "@/hooks/useReceitas";
 import { Cliente } from "@/hooks/useClientes";
 import { Colaborador } from "@/types/colaboradores";
+import { ServicosUnicosSection } from "@/components/financeiro/ServicosUnicosSection";
 
 const Financeiro = () => {
   const { clientes, isLoading: loadingClientes } = useClientes();
@@ -365,6 +366,14 @@ const Financeiro = () => {
 
       {/* Conteúdo Financeiro */}
       <div className="space-y-6">
+
+      {/* Serviços Únicos */}
+      <ServicosUnicosSection 
+        clientes={clientes}
+        formatCurrency={formatCurrency}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+      />
 
       {/* Resumo Financeiro e Indicadores */}
       <div className="grid grid-cols-5 gap-4">
