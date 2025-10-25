@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ServicoUnico } from "@/hooks/useClientes";
@@ -61,15 +61,15 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
 
       {/* Criação de Site */}
       <Card className="p-4 space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox
+        <div className="flex items-center justify-between">
+          <Label htmlFor="site-check" className="text-base font-semibold cursor-pointer">
+            Criação de Site
+          </Label>
+          <Switch
             id="site-check"
             checked={servicos.criacao_site?.selecionado || false}
             onCheckedChange={(checked) => updateServico('criacao_site', { selecionado: checked as boolean })}
           />
-          <Label htmlFor="site-check" className="text-base font-semibold cursor-pointer">
-            Criação de Site
-          </Label>
         </div>
         
         {servicos.criacao_site?.selecionado && (
@@ -89,15 +89,15 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
 
       {/* Identidade Visual */}
       <Card className="p-4 space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox
+        <div className="flex items-center justify-between">
+          <Label htmlFor="identidade-check" className="text-base font-semibold cursor-pointer">
+            Identidade Visual
+          </Label>
+          <Switch
             id="identidade-check"
             checked={servicos.identidade_visual?.selecionado || false}
             onCheckedChange={(checked) => updateServico('identidade_visual', { selecionado: checked as boolean })}
           />
-          <Label htmlFor="identidade-check" className="text-base font-semibold cursor-pointer">
-            Identidade Visual
-          </Label>
         </div>
         
         {servicos.identidade_visual?.selecionado && (
@@ -117,15 +117,15 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
 
       {/* Plataforma de Vendas Online */}
       <Card className="p-4 space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox
+        <div className="flex items-center justify-between">
+          <Label htmlFor="plataforma-check" className="text-base font-semibold cursor-pointer">
+            Plataforma de Vendas On-line
+          </Label>
+          <Switch
             id="plataforma-check"
             checked={servicos.plataforma_vendas?.selecionado || false}
             onCheckedChange={(checked) => updateServico('plataforma_vendas', { selecionado: checked as boolean })}
           />
-          <Label htmlFor="plataforma-check" className="text-base font-semibold cursor-pointer">
-            Plataforma de Vendas On-line
-          </Label>
         </div>
         
         {servicos.plataforma_vendas?.selecionado && (
@@ -145,15 +145,15 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
 
       {/* Outros */}
       <Card className="p-4 space-y-3">
-        <div className="flex items-center space-x-2">
-          <Checkbox
+        <div className="flex items-center justify-between">
+          <Label htmlFor="outros-check" className="text-base font-semibold cursor-pointer">
+            Outros
+          </Label>
+          <Switch
             id="outros-check"
             checked={servicos.outros?.selecionado || false}
             onCheckedChange={(checked) => updateServico('outros', { selecionado: checked as boolean })}
           />
-          <Label htmlFor="outros-check" className="text-base font-semibold cursor-pointer">
-            Outros
-          </Label>
         </div>
         
         {servicos.outros?.selecionado && (
