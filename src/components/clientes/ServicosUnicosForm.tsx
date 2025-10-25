@@ -4,7 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ServicoUnico } from "@/hooks/useClientes";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { ServicoUnico, ServicoUnicoItem } from "@/hooks/useClientes";
 
 interface ServicosUnicosFormProps {
   value: ServicoUnico;
@@ -14,31 +20,231 @@ interface ServicosUnicosFormProps {
 export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps) => {
   const [servicos, setServicos] = useState<ServicoUnico>(value || {});
 
-  const updateServico = (tipo: keyof ServicoUnico, updates: any) => {
+  const updateServico = (
+    key: keyof ServicoUnico,
+    updates: Partial<ServicoUnicoItem>
+  ) => {
     const updated = {
       ...servicos,
-      [tipo]: {
-        ...servicos[tipo],
-        ...updates
-      }
+      [key]: {
+        ...(servicos[key] || { selecionado: false, pagamento_confirmado: false }),
+        ...updates,
+      },
     };
     setServicos(updated);
     onChange(updated);
   };
 
-  const selectedCount = [
-    servicos.criacao_site?.selecionado,
-    servicos.identidade_visual?.selecionado,
-    servicos.plataforma_vendas?.selecionado,
-    servicos.outros?.selecionado,
-  ].filter(Boolean).length;
+  const formatCurrency = (value?: number) => {
+    if (!value) return "R$ 0,00";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
 
-  const totalValue = [
-    servicos.criacao_site?.selecionado ? (servicos.criacao_site?.valor || 0) : 0,
-    servicos.identidade_visual?.selecionado ? (servicos.identidade_visual?.valor || 0) : 0,
-    servicos.plataforma_vendas?.selecionado ? (servicos.plataforma_vendas?.valor || 0) : 0,
-    servicos.outros?.selecionado ? (servicos.outros?.valor || 0) : 0,
-  ].reduce((sum, val) => sum + val, 0);
+  const calculateTotals = () => {
+    let selectedCount = 0;
+    let totalValue = 0;
+
+    Object.values(servicos).forEach((servico) => {
+      if (servico?.selecionado) {
+        selectedCount++;
+        totalValue += servico.valor || 0;
+      }
+    });
+
+    return { selectedCount, totalValue };
+  };
+
+  const { selectedCount, totalValue } = calculateTotals();
+
+  const renderServicoCard = (
+    key: keyof ServicoUnico,
+    title: string,
+    hasDescription: boolean = false
+  ) => {
+    const servico = servicos[key];
+    const selecionado = servico?.selecionado || false;
+
+    return (
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <Label htmlFor={`${key}-check`} className="text-base font-semibold cursor-pointer">
+            {title}
+          </Label>
+          <Switch
+            id={`${key}-check`}
+            checked={selecionado}
+            onCheckedChange={(checked) =>
+              updateServico(key, { 
+                selecionado: checked as boolean,
+                pagamento_confirmado: checked ? (servico?.pagamento_confirmado || false) : false
+              })
+            }
+          />
+        </div>
+
+        {selecionado && (
+          <div className="space-y-3 pt-2 border-t">
+            {hasDescription && (
+              <div>
+                <Label htmlFor={`${key}-desc`} className="text-sm">Descrição</Label>
+                <Input
+                  id={`${key}-desc`}
+                  value={servico?.descricao || ""}
+                  onChange={(e) =>
+                    updateServico(key, { descricao: e.target.value })
+                  }
+                  placeholder="Descreva o serviço"
+                  className="mt-1"
+                />
+              </div>
+            )}
+            
+            <div>
+              <Label htmlFor={`${key}-valor`} className="text-sm">Valor (R$)</Label>
+              <Input
+                id={`${key}-valor`}
+                type="number"
+                value={servico?.valor || ""}
+                onChange={(e) =>
+                  updateServico(key, { valor: Number(e.target.value) })
+                }
+                placeholder="0,00"
+                className="mt-1"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm">Data da Contratação</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "w-full mt-1 flex items-center justify-between rounded-md border px-3 py-2 text-sm",
+                        !servico?.data_contratacao && "text-muted-foreground"
+                      )}
+                    >
+                      {servico?.data_contratacao
+                        ? format(new Date(servico.data_contratacao), "dd/MM/yyyy", { locale: ptBR })
+                        : "Selecionar"}
+                      <CalendarIcon className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={servico?.data_contratacao ? new Date(servico.data_contratacao) : undefined}
+                      onSelect={(date) =>
+                        updateServico(key, {
+                          data_contratacao: date?.toISOString().split("T")[0],
+                        })
+                      }
+                      locale={ptBR}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label className="text-sm">Data de Entrega</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "w-full mt-1 flex items-center justify-between rounded-md border px-3 py-2 text-sm",
+                        !servico?.data_entrega && "text-muted-foreground"
+                      )}
+                    >
+                      {servico?.data_entrega
+                        ? format(new Date(servico.data_entrega), "dd/MM/yyyy", { locale: ptBR })
+                        : "Selecionar"}
+                      <CalendarIcon className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={servico?.data_entrega ? new Date(servico.data_entrega) : undefined}
+                      onSelect={(date) =>
+                        updateServico(key, {
+                          data_entrega: date?.toISOString().split("T")[0],
+                        })
+                      }
+                      locale={ptBR}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+              <Label htmlFor={`${key}-pagamento`} className="text-sm cursor-pointer">
+                Confirmar Pagamento
+              </Label>
+              <Switch
+                id={`${key}-pagamento`}
+                checked={servico?.pagamento_confirmado || false}
+                onCheckedChange={(checked) =>
+                  updateServico(key, { 
+                    pagamento_confirmado: checked as boolean,
+                    data_pagamento: checked ? (servico?.data_pagamento || new Date().toISOString().split("T")[0]) : undefined
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm">
+                {servico?.pagamento_confirmado ? "Data de Pagamento" : "Data Prevista de Pagamento"}
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "w-full mt-1 flex items-center justify-between rounded-md border px-3 py-2 text-sm",
+                      !(servico?.pagamento_confirmado ? servico?.data_pagamento : servico?.data_prevista_pagamento) && "text-muted-foreground"
+                    )}
+                  >
+                    {servico?.pagamento_confirmado
+                      ? (servico?.data_pagamento
+                          ? format(new Date(servico.data_pagamento), "dd/MM/yyyy", { locale: ptBR })
+                          : "Selecionar")
+                      : (servico?.data_prevista_pagamento
+                          ? format(new Date(servico.data_prevista_pagamento), "dd/MM/yyyy", { locale: ptBR })
+                          : "Selecionar")}
+                    <CalendarIcon className="h-4 w-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={
+                      servico?.pagamento_confirmado
+                        ? (servico?.data_pagamento ? new Date(servico.data_pagamento) : undefined)
+                        : (servico?.data_prevista_pagamento ? new Date(servico.data_prevista_pagamento) : undefined)
+                    }
+                    onSelect={(date) =>
+                      updateServico(key, servico?.pagamento_confirmado
+                        ? { data_pagamento: date?.toISOString().split("T")[0] }
+                        : { data_prevista_pagamento: date?.toISOString().split("T")[0] }
+                      )
+                    }
+                    locale={ptBR}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -53,134 +259,17 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
               {selectedCount} {selectedCount === 1 ? 'serviço' : 'serviços'}
             </Badge>
             <p className="text-sm font-semibold">
-              Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+              Total: {formatCurrency(totalValue)}
             </p>
           </div>
         )}
       </div>
 
-      {/* Criação de Site */}
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="site-check" className="text-base font-semibold cursor-pointer">
-            Criação de Site
-          </Label>
-          <Switch
-            id="site-check"
-            checked={servicos.criacao_site?.selecionado || false}
-            onCheckedChange={(checked) => updateServico('criacao_site', { selecionado: checked as boolean })}
-          />
-        </div>
-        
-        {servicos.criacao_site?.selecionado && (
-          <div className="pt-2 border-t">
-            <Label htmlFor="site-valor">Valor (R$)</Label>
-            <Input
-              id="site-valor"
-              type="number"
-              step="0.01"
-              value={servicos.criacao_site?.valor || ""}
-              onChange={(e) => updateServico('criacao_site', { valor: parseFloat(e.target.value) || 0 })}
-              placeholder="0.00"
-            />
-          </div>
-        )}
-      </Card>
-
-      {/* Identidade Visual */}
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="identidade-check" className="text-base font-semibold cursor-pointer">
-            Identidade Visual
-          </Label>
-          <Switch
-            id="identidade-check"
-            checked={servicos.identidade_visual?.selecionado || false}
-            onCheckedChange={(checked) => updateServico('identidade_visual', { selecionado: checked as boolean })}
-          />
-        </div>
-        
-        {servicos.identidade_visual?.selecionado && (
-          <div className="pt-2 border-t">
-            <Label htmlFor="identidade-valor">Valor (R$)</Label>
-            <Input
-              id="identidade-valor"
-              type="number"
-              step="0.01"
-              value={servicos.identidade_visual?.valor || ""}
-              onChange={(e) => updateServico('identidade_visual', { valor: parseFloat(e.target.value) || 0 })}
-              placeholder="0.00"
-            />
-          </div>
-        )}
-      </Card>
-
-      {/* Plataforma de Vendas Online */}
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="plataforma-check" className="text-base font-semibold cursor-pointer">
-            Plataforma de Vendas On-line
-          </Label>
-          <Switch
-            id="plataforma-check"
-            checked={servicos.plataforma_vendas?.selecionado || false}
-            onCheckedChange={(checked) => updateServico('plataforma_vendas', { selecionado: checked as boolean })}
-          />
-        </div>
-        
-        {servicos.plataforma_vendas?.selecionado && (
-          <div className="pt-2 border-t">
-            <Label htmlFor="plataforma-valor">Valor (R$)</Label>
-            <Input
-              id="plataforma-valor"
-              type="number"
-              step="0.01"
-              value={servicos.plataforma_vendas?.valor || ""}
-              onChange={(e) => updateServico('plataforma_vendas', { valor: parseFloat(e.target.value) || 0 })}
-              placeholder="0.00"
-            />
-          </div>
-        )}
-      </Card>
-
-      {/* Outros */}
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="outros-check" className="text-base font-semibold cursor-pointer">
-            Outros
-          </Label>
-          <Switch
-            id="outros-check"
-            checked={servicos.outros?.selecionado || false}
-            onCheckedChange={(checked) => updateServico('outros', { selecionado: checked as boolean })}
-          />
-        </div>
-        
-        {servicos.outros?.selecionado && (
-          <div className="space-y-3 pt-2 border-t">
-            <div>
-              <Label htmlFor="outros-desc">Descrição do Serviço</Label>
-              <Input
-                id="outros-desc"
-                value={servicos.outros?.descricao || ""}
-                onChange={(e) => updateServico('outros', { descricao: e.target.value })}
-                placeholder="Ex: Landing pages, etc."
-              />
-            </div>
-            <div>
-              <Label htmlFor="outros-valor">Valor (R$)</Label>
-              <Input
-                id="outros-valor"
-                type="number"
-                step="0.01"
-                value={servicos.outros?.valor || ""}
-                onChange={(e) => updateServico('outros', { valor: parseFloat(e.target.value) || 0 })}
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-        )}
-      </Card>
+      {/* Serviços */}
+      {renderServicoCard("criacao_site", "Criação de Site")}
+      {renderServicoCard("identidade_visual", "Identidade Visual")}
+      {renderServicoCard("plataforma_vendas", "Plataforma de Vendas On-line")}
+      {renderServicoCard("outros", "Outros", true)}
     </div>
   );
 };

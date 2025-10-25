@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ServicosRecorrentesForm } from "./ServicosRecorrentesForm";
 import { ServicosUnicosForm } from "./ServicosUnicosForm";
+import { useServicosUnicosSync } from "@/hooks/useServicosUnicosSync";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ClienteFormProps {
   onSubmit: (clienteData: CreateClienteData) => void;
@@ -28,6 +30,8 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
   const STORAGE_KEY = 'cliente-form-draft';
   const SCROLL_KEY = 'cliente-form-scroll';
   const isRestoringScroll = useRef(false);
+  const { syncServicosUnicos } = useServicosUnicosSync();
+  const { user } = useAuth();
   
   // Load from localStorage if no initialData (new client form)
   const getInitialFormData = () => {
@@ -266,9 +270,14 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
     "Baixo"
   ];
 
-  const handleAddCliente = () => {
+  const handleAddCliente = async () => {
     if (!novoCliente.nome || !novoCliente.empresa || !novoCliente.email) {
       toast.error("Preencha todos os campos obrigatórios (Nome, Empresa e Email)");
+      return;
+    }
+
+    if (!user) {
+      toast.error("Usuário não autenticado");
       return;
     }
 

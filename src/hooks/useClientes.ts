@@ -92,24 +92,23 @@ export interface ServicoRecorrente {
   };
 }
 
+export interface ServicoUnicoItem {
+  selecionado: boolean;
+  valor?: number;
+  descricao?: string; // Para "Outros"
+  data_contratacao?: string;
+  data_entrega?: string;
+  pagamento_confirmado: boolean;
+  data_prevista_pagamento?: string;
+  data_pagamento?: string; // Preenchido quando pagamento_confirmado = true
+  receita_id?: string; // Referência à receita criada automaticamente
+}
+
 export interface ServicoUnico {
-  criacao_site?: {
-    selecionado: boolean;
-    valor?: number;
-  };
-  identidade_visual?: {
-    selecionado: boolean;
-    valor?: number;
-  };
-  plataforma_vendas?: {
-    selecionado: boolean;
-    valor?: number;
-  };
-  outros?: {
-    selecionado: boolean;
-    descricao?: string;
-    valor?: number;
-  };
+  criacao_site?: ServicoUnicoItem;
+  identidade_visual?: ServicoUnicoItem;
+  plataforma_vendas?: ServicoUnicoItem;
+  outros?: ServicoUnicoItem;
 }
 
 export interface Cliente {

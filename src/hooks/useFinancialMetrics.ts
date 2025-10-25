@@ -48,6 +48,14 @@ export interface FinancialMetrics {
   // Tendências
   tendenciaReceitas: 'crescente' | 'decrescente' | 'estavel';
   tendenciaDespesas: 'crescente' | 'decrescente' | 'estavel';
+
+  // Serviços Únicos
+  totalServicosUnicos: number;
+  servicosUnicosPagos: number;
+  servicosUnicosPendentes: number;
+  valorServicosUnicos: number;
+  valorServicosUnicosPagos: number;
+  valorServicosUnicosPendentes: number;
 }
 
 export const useFinancialMetrics = (year?: string, month?: string): FinancialMetrics => {
@@ -169,6 +177,62 @@ export const useFinancialMetrics = (year?: string, month?: string): FinancialMet
     const tendenciaReceitas = calculateTrend(historicoReceitas);
     const tendenciaDespesas = calculateTrend(historicoDespesas);
 
+    // Calcular métricas de Serviços Únicos
+    let totalServicosUnicos = 0;
+    let servicosUnicosPagos = 0;
+    let servicosUnicosPendentes = 0;
+    let valorServicosUnicos = 0;
+    let valorServicosUnicosPagos = 0;
+    let valorServicosUnicosPendentes = 0;
+
+    clientes.forEach(cliente => {
+      const servicos = cliente.servicos_unicos;
+      if (!servicos) return;
+
+      Object.values(servicos).forEach((servico: any) => {
+        if (!servico?.selecionado) return;
+
+        // Filtrar por período se aplicável
+        let incluir = true;
+        if (month && month !== 'all') {
+          const dataPagamento = servico.pagamento_confirmado 
+            ? servico.data_pagamento 
+            : servico.data_prevista_pagamento;
+          
+          if (dataPagamento) {
+            const dataServico = new Date(dataPagamento);
+            const anoServico = dataServico.getFullYear();
+            const mesServico = dataServico.getMonth() + 1;
+            
+            incluir = anoServico === parseInt(year || new Date().getFullYear().toString()) 
+                      && mesServico === parseInt(month);
+          }
+        } else if (year) {
+          const dataPagamento = servico.pagamento_confirmado 
+            ? servico.data_pagamento 
+            : servico.data_prevista_pagamento;
+          
+          if (dataPagamento) {
+            const anoServico = new Date(dataPagamento).getFullYear();
+            incluir = anoServico === parseInt(year);
+          }
+        }
+
+        if (incluir) {
+          totalServicosUnicos++;
+          valorServicosUnicos += servico.valor || 0;
+
+          if (servico.pagamento_confirmado) {
+            servicosUnicosPagos++;
+            valorServicosUnicosPagos += servico.valor || 0;
+          } else {
+            servicosUnicosPendentes++;
+            valorServicosUnicosPendentes += servico.valor || 0;
+          }
+        }
+      });
+    });
+
     return {
       totalReceitas,
       totalDespesas,
@@ -188,6 +252,12 @@ export const useFinancialMetrics = (year?: string, month?: string): FinancialMet
       previsaoCaixa90d,
       tendenciaReceitas,
       tendenciaDespesas,
+      totalServicosUnicos,
+      servicosUnicosPagos,
+      servicosUnicosPendentes,
+      valorServicosUnicos,
+      valorServicosUnicosPagos,
+      valorServicosUnicosPendentes,
     };
   }, [clientes, colaboradores, despesas, receitas, pagamentos, pagamentosSalarios, year, month]);
 };

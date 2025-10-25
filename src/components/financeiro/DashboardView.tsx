@@ -4,7 +4,9 @@ import { FluxoCaixaChart } from "./charts/FluxoCaixaChart";
 import { DespesasPorCategoriaChart } from "./charts/DespesasPorCategoriaChart";
 import { ReceitasPorFonteChart } from "./charts/ReceitasPorFonteChart";
 import { EvolucaoMensalChart } from "./charts/EvolucaoMensalChart";
+import { ServicosUnicosSection } from "./ServicosUnicosSection";
 import { useFinancialMetrics } from "@/hooks/useFinancialMetrics";
+import { useClientes } from "@/hooks/useClientes";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface DashboardViewProps {
@@ -14,8 +16,17 @@ interface DashboardViewProps {
 
 export const DashboardView = ({ selectedYear, selectedMonth }: DashboardViewProps) => {
   const metrics = useFinancialMetrics(selectedYear, selectedMonth);
+  const { clientes } = useClientes();
 
   const hasData = metrics.historicoReceitas.length > 0 || metrics.historicoDespesas.length > 0;
+
+  const formatCurrency = (value?: number) => {
+    if (!value) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
 
   if (!hasData) {
     return (
@@ -30,6 +41,14 @@ export const DashboardView = ({ selectedYear, selectedMonth }: DashboardViewProp
     <div className="space-y-6">
       {/* KPIs */}
       <FinancialKPIs metrics={metrics} />
+
+      {/* Serviços Únicos */}
+      <ServicosUnicosSection 
+        clientes={clientes}
+        formatCurrency={formatCurrency}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+      />
 
       {/* Gráficos Principais */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
