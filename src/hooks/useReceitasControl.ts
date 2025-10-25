@@ -116,7 +116,13 @@ export const useReceitasControl = (
         const modoPagamento = servico.modo_pagamento || 'dinheiro';
         
         if (paymentFilter === 'total') {
-          valor = servico.valor || 0;
+          if (modoPagamento === 'dinheiro') {
+            valor = servico.valor || 0;
+          } else if (modoPagamento === 'permuta') {
+            valor = servico.valor_permuta || servico.valor || 0;
+          } else if (modoPagamento === 'dinheiro_permuta') {
+            valor = (servico.valor_dinheiro || 0) + (servico.valor_permuta || 0);
+          }
         } else if (paymentFilter === 'dinheiro') {
           if (modoPagamento === 'dinheiro') {
             valor = servico.valor || 0;
