@@ -241,45 +241,48 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
               </>
             ) : servico?.modo_pagamento === 'permuta' ? (
               <>
-                {/* Modo permuta puro - valor total editável */}
+                {/* Modo permuta - valor da permuta editável, valor total bloqueado */}
                 <div>
-                  <Label htmlFor={`${key}-valor`} className="text-sm">Valor Total (R$)</Label>
-                  <Input
-                    id={`${key}-valor`}
-                    type="number"
-                    value={servico?.valor || ""}
-                    onChange={(e) =>
-                      updateServico(key, { valor: Number(e.target.value) })
-                    }
-                    placeholder="0,00"
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`${key}-valor-permuta`} className="text-sm">Valor da Permuta (R$)</Label>
+                  <Label htmlFor={`${key}-valor-permuta`}>Valor da Permuta (R$)</Label>
                   <Input
                     id={`${key}-valor-permuta`}
                     type="number"
                     value={servico?.valor_permuta || ""}
-                    onChange={(e) =>
-                      updateServico(key, { valor_permuta: Number(e.target.value) })
-                    }
+                    onChange={(e) => {
+                      const valorPermuta = Number(e.target.value);
+                      updateServico(key, { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta
+                      });
+                    }}
                     placeholder="0,00"
-                    className="mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor={`${key}-desc-permuta`} className="text-sm">Descrição da Permuta</Label>
+                  <Label htmlFor={`${key}-valor`}>Valor Total (R$)</Label>
+                  <Input
+                    id={`${key}-valor`}
+                    type="text"
+                    value={formatCurrency(servico?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: igual ao valor da permuta
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor={`${key}-desc-permuta`}>Descrição da Permuta</Label>
                   <Textarea
                     id={`${key}-desc-permuta`}
                     value={servico?.descricao_permuta || ""}
                     onChange={(e) =>
                       updateServico(key, { descricao_permuta: e.target.value })
                     }
-                    placeholder="Descreva o que será permutado (ex: Banner 3x3m no evento)"
-                    className="mt-1"
+                    placeholder="Descreva o que será permutado"
                     rows={2}
                   />
                 </div>

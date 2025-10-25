@@ -180,26 +180,35 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             ) : servicos.social_media?.modo_pagamento === 'permuta' ? (
               <>
                 <div>
-                  <Label htmlFor="sm-valor">Valor Total (R$)</Label>
-                  <Input
-                    id="sm-valor"
-                    type="number"
-                    step="0.01"
-                    value={servicos.social_media?.valor || ""}
-                    onChange={(e) => updateServico('social_media', { valor: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="sm-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
                     id="sm-valor-permuta"
                     type="number"
                     step="0.01"
                     value={servicos.social_media?.valor_permuta || ""}
-                    onChange={(e) => updateServico('social_media', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      updateServico('social_media', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta
+                      });
+                    }}
                     placeholder="0.00"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="sm-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="sm-valor"
+                    type="text"
+                    value={formatCurrency(servicos.social_media?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: igual ao valor da permuta
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="sm-desc-permuta">Descrição da Permuta</Label>
@@ -372,26 +381,35 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             ) : servicos.trafego_pago?.modo_pagamento === 'permuta' ? (
               <>
                 <div>
-                  <Label htmlFor="tp-valor">Valor Total (R$)</Label>
-                  <Input
-                    id="tp-valor"
-                    type="number"
-                    step="0.01"
-                    value={servicos.trafego_pago?.valor || ""}
-                    onChange={(e) => updateServico('trafego_pago', { valor: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="tp-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
                     id="tp-valor-permuta"
                     type="number"
                     step="0.01"
                     value={servicos.trafego_pago?.valor_permuta || ""}
-                    onChange={(e) => updateServico('trafego_pago', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      updateServico('trafego_pago', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta
+                      });
+                    }}
                     placeholder="0.00"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="tp-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="tp-valor"
+                    type="text"
+                    value={formatCurrency(servicos.trafego_pago?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: igual ao valor da permuta
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="tp-desc-permuta">Descrição da Permuta</Label>
@@ -542,26 +560,35 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             ) : servicos.treinamento_vendas?.modo_pagamento === 'permuta' ? (
               <>
                 <div>
-                  <Label htmlFor="tv-valor">Valor Total (R$)</Label>
-                  <Input
-                    id="tv-valor"
-                    type="number"
-                    step="0.01"
-                    value={servicos.treinamento_vendas?.valor || ""}
-                    onChange={(e) => updateServico('treinamento_vendas', { valor: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="tv-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
                     id="tv-valor-permuta"
                     type="number"
                     step="0.01"
                     value={servicos.treinamento_vendas?.valor_permuta || ""}
-                    onChange={(e) => updateServico('treinamento_vendas', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      updateServico('treinamento_vendas', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta
+                      });
+                    }}
                     placeholder="0.00"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="tv-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="tv-valor"
+                    type="text"
+                    value={formatCurrency(servicos.treinamento_vendas?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: igual ao valor da permuta
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="tv-desc-permuta">Descrição da Permuta</Label>
@@ -719,26 +746,35 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             ) : servicos.google_ads?.modo_pagamento === 'permuta' ? (
               <>
                 <div>
-                  <Label htmlFor="ga-valor">Valor Total (R$)</Label>
-                  <Input
-                    id="ga-valor"
-                    type="number"
-                    step="0.01"
-                    value={servicos.google_ads?.valor || ""}
-                    onChange={(e) => updateServico('google_ads', { valor: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="ga-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
                     id="ga-valor-permuta"
                     type="number"
                     step="0.01"
                     value={servicos.google_ads?.valor_permuta || ""}
-                    onChange={(e) => updateServico('google_ads', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      updateServico('google_ads', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta
+                      });
+                    }}
                     placeholder="0.00"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="ga-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="ga-valor"
+                    type="text"
+                    value={formatCurrency(servicos.google_ads?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: igual ao valor da permuta
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="ga-desc-permuta">Descrição da Permuta</Label>
@@ -868,26 +904,35 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             ) : servicos.assinatura_jornada?.modo_pagamento === 'permuta' ? (
               <>
                 <div>
-                  <Label htmlFor="aj-valor">Valor Total (R$)</Label>
-                  <Input
-                    id="aj-valor"
-                    type="number"
-                    step="0.01"
-                    value={servicos.assinatura_jornada?.valor || ""}
-                    onChange={(e) => updateServico('assinatura_jornada', { valor: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="aj-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
                     id="aj-valor-permuta"
                     type="number"
                     step="0.01"
                     value={servicos.assinatura_jornada?.valor_permuta || ""}
-                    onChange={(e) => updateServico('assinatura_jornada', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      updateServico('assinatura_jornada', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta
+                      });
+                    }}
                     placeholder="0.00"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="aj-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="aj-valor"
+                    type="text"
+                    value={formatCurrency(servicos.assinatura_jornada?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: igual ao valor da permuta
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="aj-desc-permuta">Descrição da Permuta</Label>
