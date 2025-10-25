@@ -240,23 +240,23 @@ const Financeiro = () => {
     if (cliente.servicos_recorrentes) {
       const servicosKeys = ['social_media', 'trafego_pago', 'treinamento_vendas', 'google_ads', 'assinatura_jornada'];
       
-      servicosKeys.forEach(key => {
-        const servico = (cliente.servicos_recorrentes as any)?.[key];
-        if (servico?.selecionado) {
-          const modo = servico.modo_pagamento;
-          
-          if (!modoDetectado) modoDetectado = modo;
-          
-          if (modo === 'dinheiro') {
-            totalDinheiro += servico.valor || 0;
-          } else if (modo === 'permuta') {
-            totalPermuta += servico.valor_permuta || servico.valor || 0;
-          } else if (modo === 'dinheiro_permuta') {
-            totalDinheiro += servico.valor_dinheiro || 0;
-            totalPermuta += servico.valor_permuta || 0;
-          }
+    servicosKeys.forEach(key => {
+      const servico = (cliente.servicos_recorrentes as any)?.[key];
+      if (servico?.ativo) {
+        const modo = servico.modo_pagamento;
+        
+        if (!modoDetectado) modoDetectado = modo;
+        
+        if (modo === 'dinheiro') {
+          totalDinheiro += servico.valor || 0;
+        } else if (modo === 'permuta') {
+          totalPermuta += servico.valor_permuta || servico.valor || 0;
+        } else if (modo === 'dinheiro_permuta') {
+          totalDinheiro += servico.valor_dinheiro || 0;
+          totalPermuta += servico.valor_permuta || 0;
         }
-      });
+      }
+    });
     }
 
     return { dinheiro: totalDinheiro, permuta: totalPermuta, modo: modoDetectado };
