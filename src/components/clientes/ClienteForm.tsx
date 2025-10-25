@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { CreateClienteData, Cliente } from "@/hooks/useClientes";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save, Calculator } from "lucide-react";
+import { CalendarIcon, Save, Calculator, DollarSign, CheckCircle2, TrendingUp } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -456,106 +456,6 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="valor_fechamento">Valor do Fechamento (R$)</Label>
-            {totalServicosRecorrentes > 0 && (
-              <div className="flex items-center gap-2 mb-1">
-                <Calculator className="h-3 w-3 text-green-600" />
-                <span className="text-xs text-green-600 font-medium">
-                  Calculado automaticamente: R$ {totalServicosRecorrentes.toFixed(2)}
-                </span>
-              </div>
-            )}
-            <Input
-              id="valor_fechamento"
-              type="number"
-              step="0.01"
-              value={novoCliente.valor_fechamento}
-              onChange={(e) => setNovoCliente({...novoCliente, valor_fechamento: e.target.value})}
-              placeholder="2600.00"
-              className={totalServicosRecorrentes > 0 ? "border-green-500" : ""}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Data do Fechamento</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => {
-                    if (newDate) {
-                      setDate(newDate);
-                      setNovoCliente({
-                        ...novoCliente,
-                        data_fechamento: newDate.toISOString().split('T')[0]
-                      });
-                    }
-                  }}
-                  initialFocus
-                  locale={ptBR}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        {/* Pagamento Mensal */}
-        <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="pagamento_mensal"
-              checked={novoCliente.pagamento_mensal}
-              onCheckedChange={(checked) => 
-                setNovoCliente({
-                  ...novoCliente, 
-                  pagamento_mensal: checked as boolean,
-                  dia_pagamento: checked ? novoCliente.dia_pagamento : ""
-                })
-              }
-            />
-            <Label htmlFor="pagamento_mensal" className="font-semibold cursor-pointer">
-              Pagamento Mensal Recorrente
-            </Label>
-          </div>
-
-          {novoCliente.pagamento_mensal && (
-            <div>
-              <Label htmlFor="dia_pagamento">Dia do Pagamento (1-31)</Label>
-              <Select
-                value={novoCliente.dia_pagamento}
-                onValueChange={(value) => 
-                  setNovoCliente({...novoCliente, dia_pagamento: value})
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o dia" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({length: 31}, (_, i) => i + 1).map(dia => (
-                    <SelectItem key={dia} value={dia.toString()}>
-                      Dia {dia}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
         </div>
       </div>
 
@@ -721,12 +621,139 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
         </div>
       </div>
 
-      {/* Serviços Recorrentes */}
-      <ServicosRecorrentesForm 
-        value={servicosRecorrentes}
-        onChange={setServicosRecorrentes}
-        onTotalChange={setTotalServicosRecorrentes}
-      />
+      {/* Fechamento e Serviços */}
+      <div className="space-y-6 border-2 border-primary/20 rounded-lg p-6 bg-gradient-to-br from-primary/5 to-primary/10">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            FECHAMENTO E SERVIÇOS
+          </h3>
+          {totalServicosRecorrentes > 0 && (
+            <Badge variant="default">
+              <TrendingUp className="h-3 w-3 mr-1" />
+              {Object.values(servicosRecorrentes).filter((s: any) => s.ativo).length} serviços ativos
+            </Badge>
+          )}
+        </div>
+
+        {/* Serviços Recorrentes */}
+        <ServicosRecorrentesForm 
+          value={servicosRecorrentes}
+          onChange={setServicosRecorrentes}
+          onTotalChange={setTotalServicosRecorrentes}
+        />
+
+        {/* Dados do Fechamento */}
+        <div className="space-y-4 mt-6 p-4 bg-background/50 rounded-lg border-2 border-primary/30">
+          <h4 className="font-semibold text-primary flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Dados do Fechamento
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Valor do Fechamento */}
+            <div className="space-y-2">
+              <Label htmlFor="valor_fechamento">Valor do Fechamento (R$)</Label>
+              {totalServicosRecorrentes > 0 && (
+                <div className="flex items-center gap-2 mb-1">
+                  <Calculator className="h-3 w-3 text-green-600 dark:text-green-400" />
+                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                    Calculado automaticamente: R$ {totalServicosRecorrentes.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <Input
+                id="valor_fechamento"
+                type="number"
+                step="0.01"
+                value={novoCliente.valor_fechamento}
+                onChange={(e) => setNovoCliente({...novoCliente, valor_fechamento: e.target.value})}
+                placeholder="2600.00"
+                className={totalServicosRecorrentes > 0 ? "border-green-500" : ""}
+              />
+            </div>
+
+            {/* Data do Fechamento */}
+            <div className="space-y-2">
+              <Label>Data do Fechamento</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => {
+                      if (newDate) {
+                        setDate(newDate);
+                        setNovoCliente({
+                          ...novoCliente,
+                          data_fechamento: newDate.toISOString().split('T')[0]
+                        });
+                      }
+                    }}
+                    initialFocus
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Pagamento Mensal Recorrente */}
+          <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="pagamento_mensal"
+                checked={novoCliente.pagamento_mensal}
+                onCheckedChange={(checked) => 
+                  setNovoCliente({
+                    ...novoCliente, 
+                    pagamento_mensal: checked as boolean,
+                    dia_pagamento: checked ? novoCliente.dia_pagamento : ""
+                  })
+                }
+              />
+              <Label htmlFor="pagamento_mensal" className="font-semibold cursor-pointer">
+                Pagamento Mensal Recorrente
+              </Label>
+            </div>
+
+            {novoCliente.pagamento_mensal && (
+              <div>
+                <Label htmlFor="dia_pagamento">Dia do Pagamento (1-31)</Label>
+                <Select
+                  value={novoCliente.dia_pagamento}
+                  onValueChange={(value) => 
+                    setNovoCliente({...novoCliente, dia_pagamento: value})
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o dia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({length: 31}, (_, i) => i + 1).map(dia => (
+                      <SelectItem key={dia} value={dia.toString()}>
+                        Dia {dia}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Serviços Únicos */}
       <ServicosUnicosForm 
