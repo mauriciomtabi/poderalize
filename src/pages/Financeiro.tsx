@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -407,11 +408,8 @@ const Financeiro = () => {
         </div>
       </div>
 
-      {/* Conteúdo Financeiro */}
-      <div className="space-y-6">
-
-      {/* Resumo Financeiro e Indicadores */}
-      <div className="grid grid-cols-5 gap-4">
+      {/* Resumo Geral */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="card-interactive hover-lift">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -462,14 +460,31 @@ const Financeiro = () => {
             </p>
           </CardContent>
         </Card>
+      </div>
 
-        {selectedMonth !== 'all' && (
-          <>
-            <Card className="card-interactive hover-lift border-green-500/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-green-600" />
-                  Contratos Pagos
+      {/* Tabs para Receitas e Despesas */}
+      <Tabs defaultValue="receitas" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="receitas" className="flex items-center gap-2">
+            <TrendingUp size={16} />
+            Receitas
+          </TabsTrigger>
+          <TabsTrigger value="despesas" className="flex items-center gap-2">
+            <TrendingDown size={16} />
+            Despesas
+          </TabsTrigger>
+        </TabsList>
+
+        {/* TAB DE RECEITAS */}
+        <TabsContent value="receitas" className="space-y-6 mt-6">
+          {/* Indicadores de Contratos (apenas se mês selecionado) */}
+          {selectedMonth !== 'all' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="card-interactive hover-lift border-green-500/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <CheckCircle2 size={16} className="text-green-600" />
+                    Contratos Pagos
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -498,20 +513,16 @@ const Financeiro = () => {
                 </p>
               </CardContent>
             </Card>
-          </>
-        )}
-      </div>
+            </div>
+          )}
 
-      {/* Gráfico de Controle de Receitas */}
-      <ReceitasControlChart 
-        data={receitasControlData}
-        formatCurrency={formatCurrency}
-      />
+          {/* Gráfico de Controle de Receitas */}
+          <ReceitasControlChart 
+            data={receitasControlData}
+            formatCurrency={formatCurrency}
+          />
 
-      {/* SEÇÃO DE RECEITAS */}
-      <SectionDivider title="Receitas" icon={TrendingUp} color="green" />
-
-      {/* Receitas - Clientes (Pagamentos Recorrentes) */}
+          {/* Receitas - Clientes (Pagamentos Recorrentes) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -640,80 +651,80 @@ const Financeiro = () => {
         </CardContent>
       </Card>
 
-      {/* Serviços Únicos */}
-      <ServicosUnicosSection 
-        clientes={clientes}
-        formatCurrency={formatCurrency}
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-      />
+          {/* Serviços Únicos */}
+          <ServicosUnicosSection 
+            clientes={clientes}
+            formatCurrency={formatCurrency}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+          />
 
-      {/* Outras Receitas */}
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row gap-3 sm:gap-0 items-start sm:items-center justify-between space-y-0">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <TrendingUp size={20} className="flex-shrink-0" />
-            Outras Receitas
-          </CardTitle>
-          <Button onClick={() => setIsAddReceitaOpen(true)} size="sm" className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Lançar Receita
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {filteredReceitas.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhuma receita lançada no período selecionado
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="w-[80px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReceitas.map((receita) => (
-                    <TableRow key={receita.id}>
-                      <TableCell className="font-medium">{receita.descricao}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{receita.categoria}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(receita.data), "dd/MM/yyyy", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          {formatCurrency(receita.valor)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteReceita(receita.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          {/* Outras Receitas */}
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row gap-3 sm:gap-0 items-start sm:items-center justify-between space-y-0">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <TrendingUp size={20} className="flex-shrink-0" />
+                Outras Receitas
+              </CardTitle>
+              <Button onClick={() => setIsAddReceitaOpen(true)} size="sm" className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Lançar Receita
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {filteredReceitas.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma receita lançada no período selecionado
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead className="w-[80px]">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredReceitas.map((receita) => (
+                        <TableRow key={receita.id}>
+                          <TableCell className="font-medium">{receita.descricao}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{receita.categoria}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(receita.data), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              {formatCurrency(receita.valor)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteReceita(receita.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* SEÇÃO DE DESPESAS */}
-      <SectionDivider title="Despesas" icon={TrendingDown} color="red" />
-
-      {/* Despesas - Salários */}
+        {/* TAB DE DESPESAS */}
+        <TabsContent value="despesas" className="space-y-6 mt-6">
+          {/* Despesas - Salários */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -872,8 +883,10 @@ const Financeiro = () => {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       <Dialog open={isAddDespesaOpen} onOpenChange={setIsAddDespesaOpen}>
@@ -915,7 +928,6 @@ const Financeiro = () => {
         ano={parseInt(selectedYear)}
         mes={parseInt(selectedMonth)}
       />
-      </div>
     </div>
   );
 };
