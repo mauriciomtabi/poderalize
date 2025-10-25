@@ -462,9 +462,13 @@ const Financeiro = () => {
         </Card>
       </div>
 
-      {/* Tabs para Receitas e Despesas */}
-      <Tabs defaultValue="receitas" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      {/* Tabs para Dashboard, Receitas e Despesas */}
+      <Tabs defaultValue="dashboard" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <DollarSign size={16} />
+            Dashboard
+          </TabsTrigger>
           <TabsTrigger value="receitas" className="flex items-center gap-2">
             <TrendingUp size={16} />
             Receitas
@@ -475,8 +479,8 @@ const Financeiro = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB DE RECEITAS */}
-        <TabsContent value="receitas" className="space-y-6 mt-6">
+        {/* TAB DE DASHBOARD */}
+        <TabsContent value="dashboard" className="space-y-6 mt-6">
           {/* Indicadores de Contratos (apenas se mês selecionado) */}
           {selectedMonth !== 'all' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -521,6 +525,10 @@ const Financeiro = () => {
             data={receitasControlData}
             formatCurrency={formatCurrency}
           />
+        </TabsContent>
+
+        {/* TAB DE RECEITAS */}
+        <TabsContent value="receitas" className="space-y-6 mt-6">
 
           {/* Receitas - Clientes (Pagamentos Recorrentes) */}
       <Card>
