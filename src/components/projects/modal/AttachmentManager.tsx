@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { 
   Paperclip, 
   Upload, 
@@ -47,6 +48,8 @@ export const AttachmentManager = ({
   const [isAddingLink, setIsAddingLink] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkName, setLinkName] = useState("");
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+  const [attachmentToRemove, setAttachmentToRemove] = useState<string | null>(null);
   
   // Load attachments from database when modal opens
   const [loadedAttachments, setLoadedAttachments] = useState<Attachment[]>([]);
@@ -181,13 +184,20 @@ export const AttachmentManager = ({
   };
 
   const handleRemoveAttachment = (attachmentId: string) => {
-    const attachment = currentAttachments.find(a => a.id === attachmentId);
+    setAttachmentToRemove(attachmentId);
+    setConfirmRemoveOpen(true);
+  };
+
+  const confirmRemoveAttachment = () => {
+    if (!attachmentToRemove) return;
+    
+    const attachment = currentAttachments.find(a => a.id === attachmentToRemove);
     
     if (isCreationMode && onAttachmentsChange) {
-      onAttachmentsChange(currentAttachments.filter(a => a.id !== attachmentId));
+      onAttachmentsChange(currentAttachments.filter(a => a.id !== attachmentToRemove));
     } else if (card) {
       // Use loadedAttachments to preserve other existing attachments
-      const updatedAttachments = loadedAttachments.filter(a => a.id !== attachmentId);
+      const updatedAttachments = loadedAttachments.filter(a => a.id !== attachmentToRemove);
       setLoadedAttachments(updatedAttachments);
       
       const updatedCard = {
@@ -200,6 +210,8 @@ export const AttachmentManager = ({
         actions.addActivity(card.id, 'attachment', `removeu anexo "${attachment.name}"`);
       }
     }
+    
+    setAttachmentToRemove(null);
   };
 
   const getFileIcon = (type: string) => {
@@ -418,6 +430,20 @@ export const AttachmentManager = ({
           </ScrollArea>
         </div>
       </DialogContent>
+      
+      <ConfirmationDialog
+        isOpen={confirmRemoveOpen}
+        onClose={() => {
+          setConfirmRemoveOpen(false);
+          setAttachmentToRemove(null);
+        }}
+        onConfirm={confirmRemoveAttachment}
+        title="Remover anexo"
+        description="Tem certeza que deseja remover este anexo? Esta ação não pode ser desfeita."
+        confirmText="Remover"
+        cancelText="Cancelar"
+        variant="destructive"
+      />
     </Dialog>
   );
 };
