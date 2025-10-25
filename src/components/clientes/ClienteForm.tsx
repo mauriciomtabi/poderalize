@@ -117,6 +117,44 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
   const [servicosUnicos, setServicosUnicos] = useState(initialData?.servicos_unicos || {});
   const [totalServicosRecorrentes, setTotalServicosRecorrentes] = useState(0);
 
+  // Função para calcular totais de permuta e dinheiro
+  const calculatePaymentTotals = () => {
+    let totalPermuta = 0;
+    let totalDinheiro = 0;
+
+    // Serviços Únicos
+    Object.values(servicosUnicos || {}).forEach((servico) => {
+      if (servico?.selecionado) {
+        if (servico.modo_pagamento === 'dinheiro') {
+          totalDinheiro += servico.valor || 0;
+        } else if (servico.modo_pagamento === 'permuta') {
+          totalPermuta += servico.valor_permuta || 0;
+        } else if (servico.modo_pagamento === 'dinheiro_permuta') {
+          totalDinheiro += servico.valor_dinheiro || 0;
+          totalPermuta += servico.valor_permuta || 0;
+        }
+      }
+    });
+
+    // Serviços Recorrentes
+    Object.values(servicosRecorrentes || {}).forEach((servico: any) => {
+      if (servico?.ativo) {
+        if (servico.modo_pagamento === 'dinheiro' || !servico.modo_pagamento) {
+          totalDinheiro += servico.valor || 0;
+        } else if (servico.modo_pagamento === 'permuta') {
+          totalPermuta += servico.valor_permuta || 0;
+        } else if (servico.modo_pagamento === 'dinheiro_permuta') {
+          totalDinheiro += servico.valor_dinheiro || 0;
+          totalPermuta += servico.valor_permuta || 0;
+        }
+      }
+    });
+
+    return { totalPermuta, totalDinheiro };
+  };
+
+  const { totalPermuta, totalDinheiro } = calculatePaymentTotals();
+
   const [date, setDate] = useState<Date>(() => {
     if (initialData?.data_fechamento) return parseISO(initialData.data_fechamento);
     try {
@@ -659,7 +697,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
             Dados do Fechamento
           </h4>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Valor do Fechamento */}
             <div className="space-y-2">
               <Label htmlFor="valor_fechamento">Valor do Fechamento (R$)</Label>
@@ -667,7 +705,7 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
                 <div className="flex items-center gap-2 mb-1">
                   <Calculator className="h-3 w-3 text-green-600 dark:text-green-400" />
                   <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                    Calculado automaticamente: R$ {totalServicosRecorrentes.toFixed(2)}
+                    Calculado: R$ {totalServicosRecorrentes.toFixed(2)}
                   </span>
                 </div>
               )}
@@ -682,42 +720,128 @@ export const ClienteForm = ({ onSubmit, onCancel, initialData }: ClienteFormProp
               />
             </div>
 
-            {/* Data do Fechamento */}
+            {/* Valor Total da Permuta */}
             <div className="space-y-2">
-              <Label>Data do Fechamento</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={(newDate) => {
-                      if (newDate) {
-                        setDate(newDate);
-                        setNovoCliente({
-                          ...novoCliente,
-                          data_fechamento: newDate.toISOString().split('T')[0]
-                        });
-                      }
-                    }}
-                    initialFocus
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
+                Valor Total da Permuta (R$)
+              </Label>
+              <div className="text-xs text-muted-foreground mb-1">
+                Soma de todas as permutas
+              </div>
+              <Input
+                type="text"
+                value={new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totalPermuta)}
+                readOnly
+                disabled
+                className="bg-yellow-50 dark:bg-yellow-950 border-yellow-300 cursor-not-allowed font-semibold"
+              />
+            </div>
+
+            {/* Valor Total Dinheiro */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                Valor Total Dinheiro (R$)
+              </Label>
+              <div className="text-xs text-muted-foreground mb-1">
+                Soma de pagamentos em dinheiro
+              </div>
+              <Input
+                type="text"
+                value={new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(totalDinheiro)}
+                readOnly
+                disabled
+                className="bg-green-50 dark:bg-green-950 border-green-300 cursor-not-allowed font-semibold"
+              />
             </div>
           </div>
+
+          {/* Data do Fechamento */}
+          <div className="space-y-2">
+            <Label>Data do Fechamento</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(newDate) => {
+                    if (newDate) {
+                      setDate(newDate);
+                      setNovoCliente({
+                        ...novoCliente,
+                        data_fechamento: newDate.toISOString().split('T')[0]
+                      });
+                    }
+                  }}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Card de Resumo Geral */}
+          {(totalPermuta > 0 || totalDinheiro > 0) && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg border-2 border-primary/20">
+              <h5 className="font-semibold mb-3 flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Resumo Financeiro Geral
+              </h5>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <div className="text-muted-foreground">Dinheiro</div>
+                  <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(totalDinheiro)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Permuta</div>
+                  <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(totalPermuta)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Total Geral</div>
+                  <div className="text-lg font-bold text-primary">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(totalDinheiro + totalPermuta)}
+                  </div>
+                </div>
+              </div>
+              {totalPermuta > 0 && totalDinheiro > 0 && (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Percentual Permuta: {((totalPermuta / (totalDinheiro + totalPermuta)) * 100).toFixed(1)}%
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Pagamento Mensal Recorrente */}
           <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">

@@ -70,6 +70,7 @@ export interface ServicoRecorrente {
     qtde_stories_semanais?: number;
     modo_pagamento?: 'dinheiro' | 'permuta' | 'dinheiro_permuta';
     valor_permuta?: number;
+    valor_dinheiro?: number;
     descricao_permuta?: string;
   };
   trafego_pago?: {
@@ -79,6 +80,7 @@ export interface ServicoRecorrente {
     qtde_campanhas?: number;
     modo_pagamento?: 'dinheiro' | 'permuta' | 'dinheiro_permuta';
     valor_permuta?: number;
+    valor_dinheiro?: number;
     descricao_permuta?: string;
   };
   treinamento_vendas?: {
@@ -88,6 +90,7 @@ export interface ServicoRecorrente {
     periodo?: string;
     modo_pagamento?: 'dinheiro' | 'permuta' | 'dinheiro_permuta';
     valor_permuta?: number;
+    valor_dinheiro?: number;
     descricao_permuta?: string;
   };
   google_ads?: {
@@ -96,6 +99,7 @@ export interface ServicoRecorrente {
     valor?: number;
     modo_pagamento?: 'dinheiro' | 'permuta' | 'dinheiro_permuta';
     valor_permuta?: number;
+    valor_dinheiro?: number;
     descricao_permuta?: string;
   };
   assinatura_jornada?: {
@@ -103,6 +107,7 @@ export interface ServicoRecorrente {
     valor?: number;
     modo_pagamento?: 'dinheiro' | 'permuta' | 'dinheiro_permuta';
     valor_permuta?: number;
+    valor_dinheiro?: number;
     descricao_permuta?: string;
   };
 }
@@ -119,6 +124,7 @@ export interface ServicoUnicoItem {
   receita_id?: string; // Referência à receita criada automaticamente
   modo_pagamento?: 'dinheiro' | 'permuta' | 'dinheiro_permuta';
   valor_permuta?: number;
+  valor_dinheiro?: number;
   descricao_permuta?: string;
   receita_ids?: string[]; // Array com 2 IDs para modo misto: [id_dinheiro, id_permuta]
 }

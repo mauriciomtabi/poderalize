@@ -17,6 +17,15 @@ interface ServicosRecorrentesFormProps {
 export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: ServicosRecorrentesFormProps) => {
   const [servicos, setServicos] = useState<ServicoRecorrente>(value || {});
 
+  // Helper to format currency
+  const formatCurrency = (value?: number) => {
+    if (!value) return "R$ 0,00";
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
   // Calculate total whenever services change
   useEffect(() => {
     const total = [
@@ -86,17 +95,6 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="sm-valor">Valor Total (R$)</Label>
-                <Input
-                  id="sm-valor"
-                  type="number"
-                  step="0.01"
-                  value={servicos.social_media?.valor || ""}
-                  onChange={(e) => updateServico('social_media', { valor: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
                 <Label htmlFor="sm-modo">Modo de Pagamento</Label>
                 <Select
                   value={servicos.social_media?.modo_pagamento || 'dinheiro'}
@@ -116,8 +114,82 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
               </div>
             </div>
 
-            {(servicos.social_media?.modo_pagamento === 'permuta' || servicos.social_media?.modo_pagamento === 'dinheiro_permuta') && (
+            {servicos.social_media?.modo_pagamento === 'dinheiro_permuta' ? (
               <>
+                <div>
+                  <Label htmlFor="sm-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="sm-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.social_media?.valor_permuta || ""}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      const valorDinheiro = servicos.social_media?.valor_dinheiro || 0;
+                      updateServico('social_media', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sm-valor-dinheiro">Valor Dinheiro (R$)</Label>
+                  <Input
+                    id="sm-valor-dinheiro"
+                    type="number"
+                    step="0.01"
+                    value={servicos.social_media?.valor_dinheiro || ""}
+                    onChange={(e) => {
+                      const valorDinheiro = parseFloat(e.target.value) || 0;
+                      const valorPermuta = servicos.social_media?.valor_permuta || 0;
+                      updateServico('social_media', { 
+                        valor_dinheiro: valorDinheiro,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sm-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="sm-valor"
+                    type="text"
+                    value={formatCurrency(servicos.social_media?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: Permuta + Dinheiro
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="sm-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="sm-desc-permuta"
+                    value={servicos.social_media?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('social_media', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            ) : servicos.social_media?.modo_pagamento === 'permuta' ? (
+              <>
+                <div>
+                  <Label htmlFor="sm-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="sm-valor"
+                    type="number"
+                    step="0.01"
+                    value={servicos.social_media?.valor || ""}
+                    onChange={(e) => updateServico('social_media', { valor: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="sm-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
@@ -140,6 +212,18 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                   />
                 </div>
               </>
+            ) : (
+              <div>
+                <Label htmlFor="sm-valor">Valor Total (R$)</Label>
+                <Input
+                  id="sm-valor"
+                  type="number"
+                  step="0.01"
+                  value={servicos.social_media?.valor || ""}
+                  onChange={(e) => updateServico('social_media', { valor: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
             )}
 
             <div className="grid grid-cols-3 gap-3">
@@ -203,17 +287,6 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="tp-valor">Valor Total (R$)</Label>
-                <Input
-                  id="tp-valor"
-                  type="number"
-                  step="0.01"
-                  value={servicos.trafego_pago?.valor || ""}
-                  onChange={(e) => updateServico('trafego_pago', { valor: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
                 <Label htmlFor="tp-modo">Modo de Pagamento</Label>
                 <Select
                   value={servicos.trafego_pago?.modo_pagamento || 'dinheiro'}
@@ -233,8 +306,82 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
               </div>
             </div>
 
-            {(servicos.trafego_pago?.modo_pagamento === 'permuta' || servicos.trafego_pago?.modo_pagamento === 'dinheiro_permuta') && (
+            {servicos.trafego_pago?.modo_pagamento === 'dinheiro_permuta' ? (
               <>
+                <div>
+                  <Label htmlFor="tp-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="tp-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.trafego_pago?.valor_permuta || ""}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      const valorDinheiro = servicos.trafego_pago?.valor_dinheiro || 0;
+                      updateServico('trafego_pago', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tp-valor-dinheiro">Valor Dinheiro (R$)</Label>
+                  <Input
+                    id="tp-valor-dinheiro"
+                    type="number"
+                    step="0.01"
+                    value={servicos.trafego_pago?.valor_dinheiro || ""}
+                    onChange={(e) => {
+                      const valorDinheiro = parseFloat(e.target.value) || 0;
+                      const valorPermuta = servicos.trafego_pago?.valor_permuta || 0;
+                      updateServico('trafego_pago', { 
+                        valor_dinheiro: valorDinheiro,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tp-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="tp-valor"
+                    type="text"
+                    value={formatCurrency(servicos.trafego_pago?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: Permuta + Dinheiro
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="tp-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="tp-desc-permuta"
+                    value={servicos.trafego_pago?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('trafego_pago', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            ) : servicos.trafego_pago?.modo_pagamento === 'permuta' ? (
+              <>
+                <div>
+                  <Label htmlFor="tp-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="tp-valor"
+                    type="number"
+                    step="0.01"
+                    value={servicos.trafego_pago?.valor || ""}
+                    onChange={(e) => updateServico('trafego_pago', { valor: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="tp-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
@@ -257,6 +404,18 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                   />
                 </div>
               </>
+            ) : (
+              <div>
+                <Label htmlFor="tp-valor">Valor Total (R$)</Label>
+                <Input
+                  id="tp-valor"
+                  type="number"
+                  step="0.01"
+                  value={servicos.trafego_pago?.valor || ""}
+                  onChange={(e) => updateServico('trafego_pago', { valor: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
             )}
 
             <div>
@@ -298,17 +457,6 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="tv-valor">Valor Total (R$)</Label>
-                <Input
-                  id="tv-valor"
-                  type="number"
-                  step="0.01"
-                  value={servicos.treinamento_vendas?.valor || ""}
-                  onChange={(e) => updateServico('treinamento_vendas', { valor: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
                 <Label htmlFor="tv-modo">Modo de Pagamento</Label>
                 <Select
                   value={servicos.treinamento_vendas?.modo_pagamento || 'dinheiro'}
@@ -328,8 +476,82 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
               </div>
             </div>
 
-            {(servicos.treinamento_vendas?.modo_pagamento === 'permuta' || servicos.treinamento_vendas?.modo_pagamento === 'dinheiro_permuta') && (
+            {servicos.treinamento_vendas?.modo_pagamento === 'dinheiro_permuta' ? (
               <>
+                <div>
+                  <Label htmlFor="tv-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="tv-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.treinamento_vendas?.valor_permuta || ""}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      const valorDinheiro = servicos.treinamento_vendas?.valor_dinheiro || 0;
+                      updateServico('treinamento_vendas', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tv-valor-dinheiro">Valor Dinheiro (R$)</Label>
+                  <Input
+                    id="tv-valor-dinheiro"
+                    type="number"
+                    step="0.01"
+                    value={servicos.treinamento_vendas?.valor_dinheiro || ""}
+                    onChange={(e) => {
+                      const valorDinheiro = parseFloat(e.target.value) || 0;
+                      const valorPermuta = servicos.treinamento_vendas?.valor_permuta || 0;
+                      updateServico('treinamento_vendas', { 
+                        valor_dinheiro: valorDinheiro,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tv-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="tv-valor"
+                    type="text"
+                    value={formatCurrency(servicos.treinamento_vendas?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: Permuta + Dinheiro
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="tv-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="tv-desc-permuta"
+                    value={servicos.treinamento_vendas?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('treinamento_vendas', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            ) : servicos.treinamento_vendas?.modo_pagamento === 'permuta' ? (
+              <>
+                <div>
+                  <Label htmlFor="tv-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="tv-valor"
+                    type="number"
+                    step="0.01"
+                    value={servicos.treinamento_vendas?.valor || ""}
+                    onChange={(e) => updateServico('treinamento_vendas', { valor: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="tv-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
@@ -352,6 +574,18 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                   />
                 </div>
               </>
+            ) : (
+              <div>
+                <Label htmlFor="tv-valor">Valor Total (R$)</Label>
+                <Input
+                  id="tv-valor"
+                  type="number"
+                  step="0.01"
+                  value={servicos.treinamento_vendas?.valor || ""}
+                  onChange={(e) => updateServico('treinamento_vendas', { valor: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
             )}
 
             <div>
@@ -400,17 +634,6 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="ga-valor">Valor Total (R$)</Label>
-                <Input
-                  id="ga-valor"
-                  type="number"
-                  step="0.01"
-                  value={servicos.google_ads?.valor || ""}
-                  onChange={(e) => updateServico('google_ads', { valor: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
                 <Label htmlFor="ga-modo">Modo de Pagamento</Label>
                 <Select
                   value={servicos.google_ads?.modo_pagamento || 'dinheiro'}
@@ -430,8 +653,82 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
               </div>
             </div>
 
-            {(servicos.google_ads?.modo_pagamento === 'permuta' || servicos.google_ads?.modo_pagamento === 'dinheiro_permuta') && (
+            {servicos.google_ads?.modo_pagamento === 'dinheiro_permuta' ? (
               <>
+                <div>
+                  <Label htmlFor="ga-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="ga-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.google_ads?.valor_permuta || ""}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      const valorDinheiro = servicos.google_ads?.valor_dinheiro || 0;
+                      updateServico('google_ads', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ga-valor-dinheiro">Valor Dinheiro (R$)</Label>
+                  <Input
+                    id="ga-valor-dinheiro"
+                    type="number"
+                    step="0.01"
+                    value={servicos.google_ads?.valor_dinheiro || ""}
+                    onChange={(e) => {
+                      const valorDinheiro = parseFloat(e.target.value) || 0;
+                      const valorPermuta = servicos.google_ads?.valor_permuta || 0;
+                      updateServico('google_ads', { 
+                        valor_dinheiro: valorDinheiro,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ga-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="ga-valor"
+                    type="text"
+                    value={formatCurrency(servicos.google_ads?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: Permuta + Dinheiro
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="ga-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="ga-desc-permuta"
+                    value={servicos.google_ads?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('google_ads', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            ) : servicos.google_ads?.modo_pagamento === 'permuta' ? (
+              <>
+                <div>
+                  <Label htmlFor="ga-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="ga-valor"
+                    type="number"
+                    step="0.01"
+                    value={servicos.google_ads?.valor || ""}
+                    onChange={(e) => updateServico('google_ads', { valor: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="ga-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
@@ -454,6 +751,18 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                   />
                 </div>
               </>
+            ) : (
+              <div>
+                <Label htmlFor="ga-valor">Valor Total (R$)</Label>
+                <Input
+                  id="ga-valor"
+                  type="number"
+                  step="0.01"
+                  value={servicos.google_ads?.valor || ""}
+                  onChange={(e) => updateServico('google_ads', { valor: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
             )}
           </div>
         )}
@@ -474,17 +783,6 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
           <div className="space-y-3 pt-2 border-t">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="aj-valor">Valor Total (R$)</Label>
-                <Input
-                  id="aj-valor"
-                  type="number"
-                  step="0.01"
-                  value={servicos.assinatura_jornada?.valor || ""}
-                  onChange={(e) => updateServico('assinatura_jornada', { valor: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
                 <Label htmlFor="aj-modo">Modo de Pagamento</Label>
                 <Select
                   value={servicos.assinatura_jornada?.modo_pagamento || 'dinheiro'}
@@ -504,8 +802,82 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
               </div>
             </div>
 
-            {(servicos.assinatura_jornada?.modo_pagamento === 'permuta' || servicos.assinatura_jornada?.modo_pagamento === 'dinheiro_permuta') && (
+            {servicos.assinatura_jornada?.modo_pagamento === 'dinheiro_permuta' ? (
               <>
+                <div>
+                  <Label htmlFor="aj-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="aj-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.assinatura_jornada?.valor_permuta || ""}
+                    onChange={(e) => {
+                      const valorPermuta = parseFloat(e.target.value) || 0;
+                      const valorDinheiro = servicos.assinatura_jornada?.valor_dinheiro || 0;
+                      updateServico('assinatura_jornada', { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="aj-valor-dinheiro">Valor Dinheiro (R$)</Label>
+                  <Input
+                    id="aj-valor-dinheiro"
+                    type="number"
+                    step="0.01"
+                    value={servicos.assinatura_jornada?.valor_dinheiro || ""}
+                    onChange={(e) => {
+                      const valorDinheiro = parseFloat(e.target.value) || 0;
+                      const valorPermuta = servicos.assinatura_jornada?.valor_permuta || 0;
+                      updateServico('assinatura_jornada', { 
+                        valor_dinheiro: valorDinheiro,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="aj-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="aj-valor"
+                    type="text"
+                    value={formatCurrency(servicos.assinatura_jornada?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: Permuta + Dinheiro
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="aj-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="aj-desc-permuta"
+                    value={servicos.assinatura_jornada?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('assinatura_jornada', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            ) : servicos.assinatura_jornada?.modo_pagamento === 'permuta' ? (
+              <>
+                <div>
+                  <Label htmlFor="aj-valor">Valor Total (R$)</Label>
+                  <Input
+                    id="aj-valor"
+                    type="number"
+                    step="0.01"
+                    value={servicos.assinatura_jornada?.valor || ""}
+                    onChange={(e) => updateServico('assinatura_jornada', { valor: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="aj-valor-permuta">Valor da Permuta (R$)</Label>
                   <Input
@@ -528,6 +900,18 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                   />
                 </div>
               </>
+            ) : (
+              <div>
+                <Label htmlFor="aj-valor">Valor Total (R$)</Label>
+                <Input
+                  id="aj-valor"
+                  type="number"
+                  step="0.01"
+                  value={servicos.assinatura_jornada?.valor || ""}
+                  onChange={(e) => updateServico('assinatura_jornada', { valor: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
             )}
           </div>
         )}

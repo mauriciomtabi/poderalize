@@ -150,20 +150,6 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
             )}
             
             <div>
-              <Label htmlFor={`${key}-valor`} className="text-sm">Valor Total (R$)</Label>
-              <Input
-                id={`${key}-valor`}
-                type="number"
-                value={servico?.valor || ""}
-                onChange={(e) =>
-                  updateServico(key, { valor: Number(e.target.value) })
-                }
-                placeholder="0,00"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
               <Label htmlFor={`${key}-modo`} className="text-sm">Modo de Pagamento</Label>
               <Select
                 value={servico?.modo_pagamento || 'dinheiro'}
@@ -182,27 +168,62 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
               </Select>
             </div>
 
-            {(servico?.modo_pagamento === 'permuta' || servico?.modo_pagamento === 'dinheiro_permuta') && (
+            {servico?.modo_pagamento === 'dinheiro_permuta' ? (
               <>
+                {/* Dois campos editáveis para dinheiro_permuta */}
                 <div>
                   <Label htmlFor={`${key}-valor-permuta`} className="text-sm">Valor da Permuta (R$)</Label>
                   <Input
                     id={`${key}-valor-permuta`}
                     type="number"
                     value={servico?.valor_permuta || ""}
-                    onChange={(e) =>
-                      updateServico(key, { valor_permuta: Number(e.target.value) })
-                    }
+                    onChange={(e) => {
+                      const valorPermuta = Number(e.target.value);
+                      const valorDinheiro = servico?.valor_dinheiro || 0;
+                      updateServico(key, { 
+                        valor_permuta: valorPermuta,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
                     placeholder="0,00"
                     className="mt-1"
                   />
                 </div>
 
-                {servico?.modo_pagamento === 'dinheiro_permuta' && servico?.valor && servico?.valor_permuta && (
-                  <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded text-sm">
-                    <strong>Valor em Dinheiro:</strong> {formatCurrency(servico.valor - servico.valor_permuta)}
-                  </div>
-                )}
+                <div>
+                  <Label htmlFor={`${key}-valor-dinheiro`} className="text-sm">Valor Dinheiro (R$)</Label>
+                  <Input
+                    id={`${key}-valor-dinheiro`}
+                    type="number"
+                    value={servico?.valor_dinheiro || ""}
+                    onChange={(e) => {
+                      const valorDinheiro = Number(e.target.value);
+                      const valorPermuta = servico?.valor_permuta || 0;
+                      updateServico(key, { 
+                        valor_dinheiro: valorDinheiro,
+                        valor: valorPermuta + valorDinheiro
+                      });
+                    }}
+                    placeholder="0,00"
+                    className="mt-1"
+                  />
+                </div>
+
+                {/* Valor Total readonly calculado */}
+                <div>
+                  <Label htmlFor={`${key}-valor`} className="text-sm">Valor Total (R$)</Label>
+                  <Input
+                    id={`${key}-valor`}
+                    type="text"
+                    value={formatCurrency(servico?.valor || 0)}
+                    readOnly
+                    disabled
+                    className="mt-1 bg-muted cursor-not-allowed"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Calculado: Permuta + Dinheiro
+                  </p>
+                </div>
 
                 <div>
                   <Label htmlFor={`${key}-desc-permuta`} className="text-sm">Descrição da Permuta</Label>
@@ -218,6 +239,66 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
                   />
                 </div>
               </>
+            ) : servico?.modo_pagamento === 'permuta' ? (
+              <>
+                {/* Modo permuta puro - valor total editável */}
+                <div>
+                  <Label htmlFor={`${key}-valor`} className="text-sm">Valor Total (R$)</Label>
+                  <Input
+                    id={`${key}-valor`}
+                    type="number"
+                    value={servico?.valor || ""}
+                    onChange={(e) =>
+                      updateServico(key, { valor: Number(e.target.value) })
+                    }
+                    placeholder="0,00"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor={`${key}-valor-permuta`} className="text-sm">Valor da Permuta (R$)</Label>
+                  <Input
+                    id={`${key}-valor-permuta`}
+                    type="number"
+                    value={servico?.valor_permuta || ""}
+                    onChange={(e) =>
+                      updateServico(key, { valor_permuta: Number(e.target.value) })
+                    }
+                    placeholder="0,00"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor={`${key}-desc-permuta`} className="text-sm">Descrição da Permuta</Label>
+                  <Textarea
+                    id={`${key}-desc-permuta`}
+                    value={servico?.descricao_permuta || ""}
+                    onChange={(e) =>
+                      updateServico(key, { descricao_permuta: e.target.value })
+                    }
+                    placeholder="Descreva o que será permutado (ex: Banner 3x3m no evento)"
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+              </>
+            ) : (
+              /* Modo dinheiro - valor total editável */
+              <div>
+                <Label htmlFor={`${key}-valor`} className="text-sm">Valor Total (R$)</Label>
+                <Input
+                  id={`${key}-valor`}
+                  type="number"
+                  value={servico?.valor || ""}
+                  onChange={(e) =>
+                    updateServico(key, { valor: Number(e.target.value) })
+                  }
+                  placeholder="0,00"
+                  className="mt-1"
+                />
+              </div>
             )}
 
             <div className="grid grid-cols-2 gap-3">
