@@ -414,79 +414,82 @@ const Financeiro = () => {
         </div>
       </div>
 
-      {/* Resumo Geral */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="card-interactive hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp size={16} className="text-green-600" />
-              Receitas Totais
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-green-600">
-              {formatCurrency(totalReceitas)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Clientes + Outras receitas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-interactive hover-lift">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingDown size={16} className="text-red-600" />
-              Despesas Totais
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold text-red-600">
-              {formatCurrency(totalDespesas)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Salários + Outras despesas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className={`card-interactive hover-lift ${saldo >= 0 ? 'border-green-600/50' : 'border-red-600/50'}`}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <DollarSign size={16} className={saldo >= 0 ? 'text-green-600' : 'text-red-600'} />
-              Saldo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl md:text-3xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(saldo)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {saldo >= 0 ? 'Saldo positivo' : 'Saldo negativo'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs para Dashboard, Receitas e Despesas */}
-      <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="dashboard" className="flex items-center gap-2">
-            <DollarSign size={16} />
-            Dashboard
+      {/* Tabs de Navegação - MOVIDO PARA CIMA */}
+      <Tabs defaultValue="dashboard" className="w-full space-y-6">
+        <TabsList className="grid w-full grid-cols-3 h-12 bg-muted/50 p-1">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2 text-sm font-medium">
+            📊 Dashboard
           </TabsTrigger>
-          <TabsTrigger value="receitas" className="flex items-center gap-2">
-            <TrendingUp size={16} />
-            Receitas
+          <TabsTrigger value="receitas" className="flex items-center gap-2 text-sm font-medium">
+            💰 Receitas
           </TabsTrigger>
-          <TabsTrigger value="despesas" className="flex items-center gap-2">
-            <TrendingDown size={16} />
-            Despesas
+          <TabsTrigger value="despesas" className="flex items-center gap-2 text-sm font-medium">
+            📉 Despesas
           </TabsTrigger>
         </TabsList>
 
+        {/* Cards KPI - Sempre Visíveis */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <DollarSign size={20} />
+            Resumo do Período
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="card-interactive hover-lift transition-all duration-300 hover:shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <TrendingUp size={16} className="text-green-600" />
+                  Receitas Totais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl md:text-3xl font-bold text-green-600">
+                  {formatCurrency(totalReceitas)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Clientes + Outras receitas
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="card-interactive hover-lift transition-all duration-300 hover:shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <TrendingDown size={16} className="text-red-600" />
+                  Despesas Totais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl md:text-3xl font-bold text-red-600">
+                  {formatCurrency(totalDespesas)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Salários + Outras despesas
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className={`card-interactive hover-lift transition-all duration-300 hover:shadow-lg ${saldo >= 0 ? 'border-green-600/50' : 'border-red-600/50'}`}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <DollarSign size={16} className={saldo >= 0 ? 'text-green-600' : 'text-red-600'} />
+                  Saldo
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl md:text-3xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(saldo)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Receitas - Despesas
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* TAB DE DASHBOARD */}
-        <TabsContent value="dashboard" className="space-y-6 mt-6">
+        <TabsContent value="dashboard" className="space-y-6 animate-fade-in">
           {/* Indicadores de Contratos (apenas se mês selecionado) */}
           {selectedMonth !== 'all'}
 
@@ -495,7 +498,7 @@ const Financeiro = () => {
         </TabsContent>
 
         {/* TAB DE RECEITAS */}
-        <TabsContent value="receitas" className="space-y-6 mt-6">
+        <TabsContent value="receitas" className="space-y-6 animate-fade-in">
 
           {/* Receitas - Clientes (Pagamentos Recorrentes) */}
       <Card>
@@ -644,7 +647,7 @@ const Financeiro = () => {
         </TabsContent>
 
         {/* TAB DE DESPESAS */}
-        <TabsContent value="despesas" className="space-y-6 mt-6">
+        <TabsContent value="despesas" className="space-y-6 animate-fade-in">
           {/* Despesas - Salários */}
       <Card>
         <CardHeader>

@@ -92,47 +92,59 @@ export const ReceitasControlChart = ({ data, formatCurrency }: ReceitasControlCh
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Cards de resumo por status */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="border-green-200 dark:border-green-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">✅ Pago</CardTitle>
+        {/* Cards de resumo por status - Grid otimizado */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <Card className="border-2 border-green-500/30 dark:border-green-600/40 bg-green-50/50 dark:bg-green-950/20">
+            <CardHeader className="pb-2 px-4 pt-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <span className="text-lg">✅</span>
+                Pago
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-500">
+            <CardContent className="px-4 pb-3">
+              <p className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-500">
                 {formatCurrency(totals.pago)}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-yellow-200 dark:border-yellow-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">⏳ Pendente</CardTitle>
+          <Card className="border-2 border-yellow-500/30 dark:border-yellow-600/40 bg-yellow-50/50 dark:bg-yellow-950/20">
+            <CardHeader className="pb-2 px-4 pt-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <span className="text-lg">⏳</span>
+                Pendente
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">
+            <CardContent className="px-4 pb-3">
+              <p className="text-xl md:text-2xl font-bold text-yellow-600 dark:text-yellow-500">
                 {formatCurrency(totals.pendente)}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-red-200 dark:border-red-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">⚠️ Atrasado</CardTitle>
+          <Card className="border-2 border-red-500/30 dark:border-red-600/40 bg-red-50/50 dark:bg-red-950/20">
+            <CardHeader className="pb-2 px-4 pt-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <span className="text-lg">⚠️</span>
+                Atrasado
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-500">
+            <CardContent className="px-4 pb-3">
+              <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-500">
                 {formatCurrency(totals.atrasado)}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-blue-200 dark:border-blue-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">📊 Projeção</CardTitle>
+          <Card className="border-2 border-blue-500/30 dark:border-blue-600/40 bg-blue-50/50 dark:bg-blue-950/20">
+            <CardHeader className="pb-2 px-4 pt-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <span className="text-lg">📊</span>
+                Projeção
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-500">
+            <CardContent className="px-4 pb-3">
+              <p className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-500">
                 {formatCurrency(totals.projecao)}
               </p>
             </CardContent>
