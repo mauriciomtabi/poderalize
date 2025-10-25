@@ -12,6 +12,51 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ServicoUnico, ServicoUnicoItem } from "@/hooks/useClientes";
 
+// Date picker button that closes the popover on selection and fixes timezone issues
+type DatePickerButtonProps = {
+  value?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+};
+
+const DatePickerButton = ({ value, onChange, placeholder = "Selecionar" }: DatePickerButtonProps) => {
+  const [open, setOpen] = useState(false);
+  const display = value ? format(new Date(value + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : placeholder;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "w-full mt-1 flex items-center justify-between rounded-md border px-3 py-2 text-sm",
+            !value && "text-muted-foreground"
+          )}
+          aria-label="Abrir calendário"
+        >
+          {display}
+          <CalendarIcon className="h-4 w-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={value ? new Date(value + 'T12:00:00') : undefined}
+          onSelect={(date) => {
+            if (date) {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              onChange(`${year}-${month}-${day}`);
+              setOpen(false);
+            }
+          }}
+          locale={ptBR}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 interface ServicosUnicosFormProps {
   value: ServicoUnico;
   onChange: (servicos: ServicoUnico) => void;
@@ -119,72 +164,18 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-sm">Data da Contratação</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={cn(
-                        "w-full mt-1 flex items-center justify-between rounded-md border px-3 py-2 text-sm",
-                        !servico?.data_contratacao && "text-muted-foreground"
-                      )}
-                    >
-                    {servico?.data_contratacao
-                      ? format(new Date(servico.data_contratacao + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
-                      : "Selecionar"}
-                      <CalendarIcon className="h-4 w-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={servico?.data_contratacao ? new Date(servico.data_contratacao + 'T12:00:00') : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          const year = date.getFullYear();
-                          const month = String(date.getMonth() + 1).padStart(2, '0');
-                          const day = String(date.getDate()).padStart(2, '0');
-                          updateServico(key, { data_contratacao: `${year}-${month}-${day}` });
-                        }
-                      }}
-                      locale={ptBR}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePickerButton
+                  value={servico?.data_contratacao}
+                  onChange={(val) => updateServico(key, { data_contratacao: val })}
+                />
               </div>
 
               <div>
                 <Label className="text-sm">Data de Entrega</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={cn(
-                        "w-full mt-1 flex items-center justify-between rounded-md border px-3 py-2 text-sm",
-                        !servico?.data_entrega && "text-muted-foreground"
-                      )}
-                    >
-                    {servico?.data_entrega
-                      ? format(new Date(servico.data_entrega + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
-                      : "Selecionar"}
-                      <CalendarIcon className="h-4 w-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={servico?.data_entrega ? new Date(servico.data_entrega + 'T12:00:00') : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          const year = date.getFullYear();
-                          const month = String(date.getMonth() + 1).padStart(2, '0');
-                          const day = String(date.getDate()).padStart(2, '0');
-                          updateServico(key, { data_entrega: `${year}-${month}-${day}` });
-                        }
-                      }}
-                      locale={ptBR}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePickerButton
+                  value={servico?.data_entrega}
+                  onChange={(val) => updateServico(key, { data_entrega: val })}
+                />
               </div>
             </div>
 
@@ -212,49 +203,13 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
               <Label className="text-sm">
                 {servico?.pagamento_confirmado ? "Data de Pagamento" : "Data Prevista de Pagamento"}
               </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className={cn(
-                      "w-full mt-1 flex items-center justify-between rounded-md border px-3 py-2 text-sm",
-                      !(servico?.pagamento_confirmado ? servico?.data_pagamento : servico?.data_prevista_pagamento) && "text-muted-foreground"
-                    )}
-                  >
-                    {servico?.pagamento_confirmado
-                      ? (servico?.data_pagamento
-                          ? format(new Date(servico.data_pagamento + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
-                          : "Selecionar")
-                      : (servico?.data_prevista_pagamento
-                          ? format(new Date(servico.data_prevista_pagamento + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR })
-                          : "Selecionar")}
-                    <CalendarIcon className="h-4 w-4" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={
-                      servico?.pagamento_confirmado
-                        ? (servico?.data_pagamento ? new Date(servico.data_pagamento + 'T12:00:00') : undefined)
-                        : (servico?.data_prevista_pagamento ? new Date(servico.data_prevista_pagamento + 'T12:00:00') : undefined)
-                    }
-                    onSelect={(date) => {
-                      if (date) {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const dateStr = `${year}-${month}-${day}`;
-                        updateServico(key, servico?.pagamento_confirmado
-                          ? { data_pagamento: dateStr }
-                          : { data_prevista_pagamento: dateStr }
-                        );
-                      }
-                    }}
-                    locale={ptBR}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <DatePickerButton
+                value={servico?.pagamento_confirmado ? servico?.data_pagamento : servico?.data_prevista_pagamento}
+                onChange={(val) => updateServico(
+                  key,
+                  servico?.pagamento_confirmado ? { data_pagamento: val } : { data_prevista_pagamento: val }
+                )}
+              />
             </div>
           </div>
         )}
