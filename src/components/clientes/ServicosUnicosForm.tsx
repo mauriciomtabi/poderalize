@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -148,7 +150,7 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
             )}
             
             <div>
-              <Label htmlFor={`${key}-valor`} className="text-sm">Valor (R$)</Label>
+              <Label htmlFor={`${key}-valor`} className="text-sm">Valor Total (R$)</Label>
               <Input
                 id={`${key}-valor`}
                 type="number"
@@ -160,6 +162,63 @@ export const ServicosUnicosForm = ({ value, onChange }: ServicosUnicosFormProps)
                 className="mt-1"
               />
             </div>
+
+            <div>
+              <Label htmlFor={`${key}-modo`} className="text-sm">Modo de Pagamento</Label>
+              <Select
+                value={servico?.modo_pagamento || 'dinheiro'}
+                onValueChange={(value: 'dinheiro' | 'permuta' | 'dinheiro_permuta') =>
+                  updateServico(key, { modo_pagamento: value })
+                }
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                  <SelectItem value="permuta">Permuta</SelectItem>
+                  <SelectItem value="dinheiro_permuta">Dinheiro + Permuta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(servico?.modo_pagamento === 'permuta' || servico?.modo_pagamento === 'dinheiro_permuta') && (
+              <>
+                <div>
+                  <Label htmlFor={`${key}-valor-permuta`} className="text-sm">Valor da Permuta (R$)</Label>
+                  <Input
+                    id={`${key}-valor-permuta`}
+                    type="number"
+                    value={servico?.valor_permuta || ""}
+                    onChange={(e) =>
+                      updateServico(key, { valor_permuta: Number(e.target.value) })
+                    }
+                    placeholder="0,00"
+                    className="mt-1"
+                  />
+                </div>
+
+                {servico?.modo_pagamento === 'dinheiro_permuta' && servico?.valor && servico?.valor_permuta && (
+                  <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded text-sm">
+                    <strong>Valor em Dinheiro:</strong> {formatCurrency(servico.valor - servico.valor_permuta)}
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor={`${key}-desc-permuta`} className="text-sm">Descrição da Permuta</Label>
+                  <Textarea
+                    id={`${key}-desc-permuta`}
+                    value={servico?.descricao_permuta || ""}
+                    onChange={(e) =>
+                      updateServico(key, { descricao_permuta: e.target.value })
+                    }
+                    placeholder="Descreva o que será permutado (ex: Banner 3x3m no evento)"
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>

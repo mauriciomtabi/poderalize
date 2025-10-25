@@ -5,6 +5,7 @@ import { Cliente } from "@/hooks/useClientes";
 import { format, isAfter, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlertTriangle, CheckCircle2, Clock, Package } from "lucide-react";
+import { ModoPagamentoBadge } from "./ModoPagamentoBadge";
 
 interface ServicosUnicosSectionProps {
   clientes: Cliente[];
@@ -77,12 +78,22 @@ export const ServicosUnicosSection = ({
       }
 
       if (incluirServico) {
+        const modoPagamento = servico.modo_pagamento || 'dinheiro';
+        const valorPermuta = servico.valor_permuta || 0;
+        const valorDinheiro = modoPagamento === 'dinheiro_permuta' 
+          ? (servico.valor || 0) - valorPermuta
+          : modoPagamento === 'dinheiro' ? servico.valor || 0 : 0;
+
         servicosUnicos.push({
           cliente: cliente.nome,
           empresa: cliente.empresa,
           tipo: key,
           tipoNome: servico.descricao && key === 'outros' ? servico.descricao : getServicoNome(key),
           valor: servico.valor || 0,
+          modo_pagamento: modoPagamento,
+          valor_permuta: valorPermuta,
+          valor_dinheiro: valorDinheiro,
+          descricao_permuta: servico.descricao_permuta,
           data_contratacao: servico.data_contratacao,
           data_entrega: servico.data_entrega,
           pagamento_confirmado: servico.pagamento_confirmado,
@@ -177,10 +188,11 @@ export const ServicosUnicosSection = ({
               <TableRow>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Serviço</TableHead>
-                <TableHead>Valor</TableHead>
+                <TableHead>Modo</TableHead>
+                <TableHead>Valor Total</TableHead>
+                <TableHead>Dinheiro</TableHead>
+                <TableHead>Permuta</TableHead>
                 <TableHead>Contratação</TableHead>
-                <TableHead>Entrega</TableHead>
-                <TableHead>Pagamento</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -196,24 +208,24 @@ export const ServicosUnicosSection = ({
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{servico.tipoNome}</TableCell>
-                    <TableCell className="font-semibold text-green-600">
+                    <TableCell>
+                      <ModoPagamentoBadge 
+                        modo={servico.modo_pagamento}
+                        descricaoPermuta={servico.descricao_permuta}
+                      />
+                    </TableCell>
+                    <TableCell className="font-semibold">
                       {formatCurrency(servico.valor)}
+                    </TableCell>
+                    <TableCell className="text-green-600 font-medium">
+                      {servico.valor_dinheiro > 0 ? formatCurrency(servico.valor_dinheiro) : '-'}
+                    </TableCell>
+                    <TableCell className="text-yellow-600 font-medium">
+                      {servico.valor_permuta > 0 ? formatCurrency(servico.valor_permuta) : '-'}
                     </TableCell>
                     <TableCell className="text-sm">
                       {servico.data_contratacao
                         ? format(new Date(servico.data_contratacao + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
-                        : '-'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {servico.data_entrega
-                        ? format(new Date(servico.data_entrega + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
-                        : '-'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {servico.pagamento_confirmado && servico.data_pagamento
-                        ? format(new Date(servico.data_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })
-                        : servico.data_prevista_pagamento
-                        ? `Prev: ${format(new Date(servico.data_prevista_pagamento + 'T12:00:00'), 'dd/MM/yyyy', { locale: ptBR })}`
                         : '-'}
                     </TableCell>
                     <TableCell>

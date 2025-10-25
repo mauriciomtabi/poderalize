@@ -5,6 +5,7 @@ import { DespesasPorCategoriaChart } from "./charts/DespesasPorCategoriaChart";
 import { ReceitasPorFonteChart } from "./charts/ReceitasPorFonteChart";
 import { EvolucaoMensalChart } from "./charts/EvolucaoMensalChart";
 import { ServicosUnicosSection } from "./ServicosUnicosSection";
+import { PermutasSection } from "./PermutasSection";
 import { useFinancialMetrics } from "@/hooks/useFinancialMetrics";
 import { useClientes } from "@/hooks/useClientes";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -44,6 +45,14 @@ export const DashboardView = ({ selectedYear, selectedMonth }: DashboardViewProp
 
       {/* Serviços Únicos */}
       <ServicosUnicosSection 
+        clientes={clientes}
+        formatCurrency={formatCurrency}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+      />
+
+      {/* Permutas */}
+      <PermutasSection
         clientes={clientes}
         formatCurrency={formatCurrency}
         selectedYear={selectedYear}

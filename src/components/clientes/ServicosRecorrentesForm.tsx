@@ -86,7 +86,7 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="sm-valor">Valor (R$)</Label>
+                <Label htmlFor="sm-valor">Valor Total (R$)</Label>
                 <Input
                   id="sm-valor"
                   type="number"
@@ -96,6 +96,53 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                   placeholder="0.00"
                 />
               </div>
+              <div>
+                <Label htmlFor="sm-modo">Modo de Pagamento</Label>
+                <Select
+                  value={servicos.social_media?.modo_pagamento || 'dinheiro'}
+                  onValueChange={(value: 'dinheiro' | 'permuta' | 'dinheiro_permuta') =>
+                    updateServico('social_media', { modo_pagamento: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="permuta">Permuta</SelectItem>
+                    <SelectItem value="dinheiro_permuta">Dinheiro + Permuta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {(servicos.social_media?.modo_pagamento === 'permuta' || servicos.social_media?.modo_pagamento === 'dinheiro_permuta') && (
+              <>
+                <div>
+                  <Label htmlFor="sm-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="sm-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.social_media?.valor_permuta || ""}
+                    onChange={(e) => updateServico('social_media', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sm-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="sm-desc-permuta"
+                    value={servicos.social_media?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('social_media', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="sm-feed">Qtde Feed</Label>
                 <Input
@@ -156,7 +203,7 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="tp-valor">Valor (R$)</Label>
+                <Label htmlFor="tp-valor">Valor Total (R$)</Label>
                 <Input
                   id="tp-valor"
                   type="number"
@@ -167,15 +214,60 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                 />
               </div>
               <div>
-                <Label htmlFor="tp-campanhas">Qtde Campanhas</Label>
-                <Input
-                  id="tp-campanhas"
-                  type="number"
-                  value={servicos.trafego_pago?.qtde_campanhas || ""}
-                  onChange={(e) => updateServico('trafego_pago', { qtde_campanhas: parseInt(e.target.value) || 0 })}
-                  placeholder="0"
-                />
+                <Label htmlFor="tp-modo">Modo de Pagamento</Label>
+                <Select
+                  value={servicos.trafego_pago?.modo_pagamento || 'dinheiro'}
+                  onValueChange={(value: 'dinheiro' | 'permuta' | 'dinheiro_permuta') =>
+                    updateServico('trafego_pago', { modo_pagamento: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="permuta">Permuta</SelectItem>
+                    <SelectItem value="dinheiro_permuta">Dinheiro + Permuta</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+
+            {(servicos.trafego_pago?.modo_pagamento === 'permuta' || servicos.trafego_pago?.modo_pagamento === 'dinheiro_permuta') && (
+              <>
+                <div>
+                  <Label htmlFor="tp-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="tp-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.trafego_pago?.valor_permuta || ""}
+                    onChange={(e) => updateServico('trafego_pago', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tp-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="tp-desc-permuta"
+                    value={servicos.trafego_pago?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('trafego_pago', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
+
+            <div>
+              <Label htmlFor="tp-campanhas">Qtde Campanhas</Label>
+              <Input
+                id="tp-campanhas"
+                type="number"
+                value={servicos.trafego_pago?.qtde_campanhas || ""}
+                onChange={(e) => updateServico('trafego_pago', { qtde_campanhas: parseInt(e.target.value) || 0 })}
+                placeholder="0"
+              />
             </div>
           </div>
         )}
@@ -206,7 +298,7 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="tv-valor">Valor (R$)</Label>
+                <Label htmlFor="tv-valor">Valor Total (R$)</Label>
                 <Input
                   id="tv-valor"
                   type="number"
@@ -217,22 +309,67 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                 />
               </div>
               <div>
-                <Label htmlFor="tv-periodo">Período</Label>
+                <Label htmlFor="tv-modo">Modo de Pagamento</Label>
                 <Select
-                  value={servicos.treinamento_vendas?.periodo || ""}
-                  onValueChange={(value) => updateServico('treinamento_vendas', { periodo: value })}
+                  value={servicos.treinamento_vendas?.modo_pagamento || 'dinheiro'}
+                  onValueChange={(value: 'dinheiro' | 'permuta' | 'dinheiro_permuta') =>
+                    updateServico('treinamento_vendas', { modo_pagamento: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Semanal">Semanal</SelectItem>
-                    <SelectItem value="Quinzenal">Quinzenal</SelectItem>
-                    <SelectItem value="Mensal">Mensal</SelectItem>
-                    <SelectItem value="Único">Único</SelectItem>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="permuta">Permuta</SelectItem>
+                    <SelectItem value="dinheiro_permuta">Dinheiro + Permuta</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {(servicos.treinamento_vendas?.modo_pagamento === 'permuta' || servicos.treinamento_vendas?.modo_pagamento === 'dinheiro_permuta') && (
+              <>
+                <div>
+                  <Label htmlFor="tv-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="tv-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.treinamento_vendas?.valor_permuta || ""}
+                    onChange={(e) => updateServico('treinamento_vendas', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tv-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="tv-desc-permuta"
+                    value={servicos.treinamento_vendas?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('treinamento_vendas', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
+
+            <div>
+              <Label htmlFor="tv-periodo">Período</Label>
+              <Select
+                value={servicos.treinamento_vendas?.periodo || ""}
+                onValueChange={(value) => updateServico('treinamento_vendas', { periodo: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Semanal">Semanal</SelectItem>
+                  <SelectItem value="Quinzenal">Quinzenal</SelectItem>
+                  <SelectItem value="Mensal">Mensal</SelectItem>
+                  <SelectItem value="Único">Único</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
@@ -261,17 +398,63 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
                 rows={2}
               />
             </div>
-            <div>
-              <Label htmlFor="ga-valor">Valor (R$)</Label>
-              <Input
-                id="ga-valor"
-                type="number"
-                step="0.01"
-                value={servicos.google_ads?.valor || ""}
-                onChange={(e) => updateServico('google_ads', { valor: parseFloat(e.target.value) || 0 })}
-                placeholder="0.00"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ga-valor">Valor Total (R$)</Label>
+                <Input
+                  id="ga-valor"
+                  type="number"
+                  step="0.01"
+                  value={servicos.google_ads?.valor || ""}
+                  onChange={(e) => updateServico('google_ads', { valor: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ga-modo">Modo de Pagamento</Label>
+                <Select
+                  value={servicos.google_ads?.modo_pagamento || 'dinheiro'}
+                  onValueChange={(value: 'dinheiro' | 'permuta' | 'dinheiro_permuta') =>
+                    updateServico('google_ads', { modo_pagamento: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="permuta">Permuta</SelectItem>
+                    <SelectItem value="dinheiro_permuta">Dinheiro + Permuta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {(servicos.google_ads?.modo_pagamento === 'permuta' || servicos.google_ads?.modo_pagamento === 'dinheiro_permuta') && (
+              <>
+                <div>
+                  <Label htmlFor="ga-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="ga-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.google_ads?.valor_permuta || ""}
+                    onChange={(e) => updateServico('google_ads', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ga-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="ga-desc-permuta"
+                    value={servicos.google_ads?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('google_ads', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
       </Card>
@@ -288,16 +471,64 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
         </div>
         
         {servicos.assinatura_jornada?.ativo && (
-          <div className="pt-2 border-t">
-            <Label htmlFor="aj-valor">Valor (R$)</Label>
-            <Input
-              id="aj-valor"
-              type="number"
-              step="0.01"
-              value={servicos.assinatura_jornada?.valor || ""}
-              onChange={(e) => updateServico('assinatura_jornada', { valor: parseFloat(e.target.value) || 0 })}
-              placeholder="0.00"
-            />
+          <div className="space-y-3 pt-2 border-t">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="aj-valor">Valor Total (R$)</Label>
+                <Input
+                  id="aj-valor"
+                  type="number"
+                  step="0.01"
+                  value={servicos.assinatura_jornada?.valor || ""}
+                  onChange={(e) => updateServico('assinatura_jornada', { valor: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="aj-modo">Modo de Pagamento</Label>
+                <Select
+                  value={servicos.assinatura_jornada?.modo_pagamento || 'dinheiro'}
+                  onValueChange={(value: 'dinheiro' | 'permuta' | 'dinheiro_permuta') =>
+                    updateServico('assinatura_jornada', { modo_pagamento: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="permuta">Permuta</SelectItem>
+                    <SelectItem value="dinheiro_permuta">Dinheiro + Permuta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {(servicos.assinatura_jornada?.modo_pagamento === 'permuta' || servicos.assinatura_jornada?.modo_pagamento === 'dinheiro_permuta') && (
+              <>
+                <div>
+                  <Label htmlFor="aj-valor-permuta">Valor da Permuta (R$)</Label>
+                  <Input
+                    id="aj-valor-permuta"
+                    type="number"
+                    step="0.01"
+                    value={servicos.assinatura_jornada?.valor_permuta || ""}
+                    onChange={(e) => updateServico('assinatura_jornada', { valor_permuta: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="aj-desc-permuta">Descrição da Permuta</Label>
+                  <Textarea
+                    id="aj-desc-permuta"
+                    value={servicos.assinatura_jornada?.descricao_permuta || ""}
+                    onChange={(e) => updateServico('assinatura_jornada', { descricao_permuta: e.target.value })}
+                    placeholder="Descreva o que será permutado"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
       </Card>
