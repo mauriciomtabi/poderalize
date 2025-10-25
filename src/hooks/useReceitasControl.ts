@@ -31,7 +31,8 @@ export const useReceitasControl = (
   clientes: Cliente[],
   pagamentos: PagamentoCliente[],
   selectedYear: string,
-  calculateRecurrentPaymentBreakdown: (cliente: Cliente) => { dinheiro: number; permuta: number; modo: string }
+  calculateRecurrentPaymentBreakdown: (cliente: Cliente) => { dinheiro: number; permuta: number; modo: string },
+  paymentFilter: 'total' | 'dinheiro' | 'permuta' = 'total'
 ) => {
   return useMemo(() => {
     const meses: ReceitaStatusData[] = Array.from({ length: 12 }, (_, i) => ({
@@ -59,7 +60,16 @@ export const useReceitasControl = (
       if (!cliente.pagamento_mensal) return;
       
       const breakdown = calculateRecurrentPaymentBreakdown(cliente);
-      const valorTotal = breakdown.dinheiro + breakdown.permuta;
+      
+      // Aplicar filtro de tipo de pagamento
+      let valorTotal = 0;
+      if (paymentFilter === 'total') {
+        valorTotal = breakdown.dinheiro + breakdown.permuta;
+      } else if (paymentFilter === 'dinheiro') {
+        valorTotal = breakdown.dinheiro;
+      } else if (paymentFilter === 'permuta') {
+        valorTotal = breakdown.permuta;
+      }
 
       if (valorTotal === 0) return;
 
@@ -101,7 +111,27 @@ export const useReceitasControl = (
         const mesData = meses.find(m => m.mesNumero === mesServico);
         if (!mesData) return;
 
-        const valor = servico.valor || 0;
+        // Aplicar filtro de tipo de pagamento
+        let valor = 0;
+        const modoPagamento = servico.modo_pagamento || 'dinheiro';
+        
+        if (paymentFilter === 'total') {
+          valor = servico.valor || 0;
+        } else if (paymentFilter === 'dinheiro') {
+          if (modoPagamento === 'dinheiro') {
+            valor = servico.valor || 0;
+          } else if (modoPagamento === 'dinheiro_permuta') {
+            valor = servico.valor_dinheiro || 0;
+          }
+        } else if (paymentFilter === 'permuta') {
+          if (modoPagamento === 'permuta') {
+            valor = servico.valor_permuta || servico.valor || 0;
+          } else if (modoPagamento === 'dinheiro_permuta') {
+            valor = servico.valor_permuta || 0;
+          }
+        }
+        
+        if (valor === 0) return;
 
         if (servico.pagamento_confirmado) {
           mesData.pago += valor;
@@ -116,5 +146,5 @@ export const useReceitasControl = (
     });
 
     return meses;
-  }, [clientes, pagamentos, selectedYear, calculateRecurrentPaymentBreakdown]);
+  }, [clientes, pagamentos, selectedYear, calculateRecurrentPaymentBreakdown, paymentFilter]);
 };

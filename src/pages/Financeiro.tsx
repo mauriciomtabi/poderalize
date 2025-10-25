@@ -50,6 +50,7 @@ const Financeiro = () => {
   const currentMonth = new Date().getMonth() + 1;
   const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString());
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth.toString());
+  const [paymentFilter, setPaymentFilter] = useState<'total' | 'dinheiro' | 'permuta'>('total');
 
   const loading = loadingClientes || loadingColaboradores || loadingDespesas || loadingReceitas;
 
@@ -267,7 +268,8 @@ const Financeiro = () => {
     clientes,
     pagamentos,
     selectedYear,
-    calculateRecurrentPaymentBreakdown
+    calculateRecurrentPaymentBreakdown,
+    paymentFilter
   );
 
   const handleAddDespesa = async (despesaData: CreateDespesaData) => {
@@ -391,6 +393,17 @@ const Financeiro = () => {
                   {month.label}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={paymentFilter} onValueChange={(value: 'total' | 'dinheiro' | 'permuta') => setPaymentFilter(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="total">Total (Dinheiro + Permuta)</SelectItem>
+              <SelectItem value="dinheiro">Somente Dinheiro</SelectItem>
+              <SelectItem value="permuta">Somente Permuta</SelectItem>
             </SelectContent>
           </Select>
 
