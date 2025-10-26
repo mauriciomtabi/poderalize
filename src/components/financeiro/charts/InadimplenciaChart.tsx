@@ -40,19 +40,36 @@ export const InadimplenciaChart = ({
     return formatCurrency(value);
   };
 
-  // Calcular clientes inadimplentes
+  // Helper para obter nome do serviço
+  const getServicoNome = (key: string): string => {
+    const nomes: Record<string, string> = {
+      'manutencao_redes': 'Manutenção de Redes',
+      'design_grafico': 'Design Gráfico',
+      'trafego_pago': 'Tráfego Pago',
+      'desenvolvimento_web': 'Desenvolvimento Web',
+      'consultoria': 'Consultoria',
+      'fotografia': 'Fotografia',
+      'video': 'Vídeo',
+      'copywriting': 'Copywriting',
+      'outro': 'Outro'
+    };
+    return nomes[key] || key;
+  };
+
+  // Calcular inadimplentes
   const chartData = (() => {
     // Só processar se houver mês específico selecionado
     if (selectedMonth === 'all') {
       return [];
     }
 
-    const clientesInadimplentes = clientes
+    const ano = parseInt(selectedYear);
+    const mes = parseInt(selectedMonth);
+
+    // 1. Clientes recorrentes inadimplentes
+    const clientesRecorrentes = clientes
       .filter(cliente => {
-        // Apenas clientes com pagamento mensal
         if (!cliente.pagamento_mensal) return false;
-        
-        // Verificar se está atrasado
         const status = getPaymentStatus(cliente);
         return status === 'atrasado';
       })
@@ -67,10 +84,57 @@ export const InadimplenciaChart = ({
           permuta: breakdown.permuta
         };
       })
-      .filter(item => item.valor > 0) // Remover clientes com valor zero
-      .sort((a, b) => b.valor - a.valor); // Ordenar do maior para o menor
+      .filter(item => item.valor > 0);
 
-    return clientesInadimplentes;
+    // 2. Serviços únicos atrasados
+    const servicosAtrasados: Array<{nome: string; valor: number; dinheiro: number; permuta: number}> = [];
+    
+    clientes.forEach(cliente => {
+      if (!cliente.servicos_unicos) return;
+      
+      Object.entries(cliente.servicos_unicos).forEach(([key, servico]: [string, any]) => {
+        if (!servico || typeof servico !== 'object') return;
+        
+        // Verificar se tem data de contratação
+        const dataContratacao = servico.data_contratacao ? new Date(servico.data_contratacao) : null;
+        if (!dataContratacao) return;
+        
+        // Verificar se é do período selecionado
+        if (dataContratacao.getFullYear() !== ano || dataContratacao.getMonth() + 1 !== mes) return;
+        
+        // Verificar se NÃO está confirmado
+        if (servico.confirmado_pagamento === true) return;
+        
+        // Verificar se está atrasado (data já passou)
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        dataContratacao.setHours(0, 0, 0, 0);
+        
+        if (dataContratacao >= hoje) return; // Ainda não venceu
+        
+        // Calcular valores
+        const valorDinheiro = servico.modo_pagamento === 'dinheiro' || servico.modo_pagamento === 'dinheiro_permuta'
+          ? (servico.valor_dinheiro || 0)
+          : 0;
+        const valorPermuta = servico.modo_pagamento === 'permuta' || servico.modo_pagamento === 'dinheiro_permuta'
+          ? (servico.valor_permuta || 0)
+          : 0;
+        const valorTotal = valorDinheiro + valorPermuta;
+        
+        if (valorTotal <= 0) return;
+        
+        servicosAtrasados.push({
+          nome: `${cliente.nome || cliente.empresa || 'Cliente'} - ${getServicoNome(key)}`,
+          valor: valorTotal,
+          dinheiro: valorDinheiro,
+          permuta: valorPermuta
+        });
+      });
+    });
+
+    // Combinar e ordenar
+    return [...clientesRecorrentes, ...servicosAtrasados]
+      .sort((a, b) => b.valor - a.valor);
   })();
 
   // Cores gradientes do vermelho
