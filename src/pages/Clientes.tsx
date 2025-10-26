@@ -156,7 +156,7 @@ const Clientes = () => {
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-1 min-[768px]:grid-cols-5 gap-4">
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
           <Card className="p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
