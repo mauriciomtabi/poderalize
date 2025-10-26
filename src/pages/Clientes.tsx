@@ -59,8 +59,12 @@ const Clientes = () => {
 
   // Calculate metrics
   const totalClientes = clientes.length;
-  const totalValue = clientes.reduce((sum, cliente) => sum + (cliente.valor_fechamento || 0), 0);
-  const averageValue = totalClientes > 0 ? totalValue / totalClientes : 0;
+  const clientesAtivos = clientes.filter(c => c.status !== 'inativo').length;
+  const clientesInativos = clientes.filter(c => c.status === 'inativo').length;
+  const totalValue = clientes
+    .filter(c => c.status !== 'inativo')
+    .reduce((sum, cliente) => sum + (cliente.valor_fechamento || 0), 0);
+  const averageValue = clientesAtivos > 0 ? totalValue / clientesAtivos : 0;
   const handleCardClick = (cliente: Cliente) => {
     setSelectedCliente(cliente);
     setIsViewModalOpen(true);
@@ -152,7 +156,7 @@ const Clientes = () => {
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -161,6 +165,30 @@ const Clientes = () => {
               </div>
               <div className="p-3 rounded-full bg-muted">
                 <Users className="h-6 w-6 text-muted-foreground" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Clientes Ativos</p>
+                <p className="text-2xl font-bold text-green-600">{clientesAtivos}</p>
+              </div>
+              <div className="p-3 rounded-full bg-green-100 dark:bg-green-950">
+                <Users className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Clientes Inativos</p>
+                <p className="text-2xl font-bold text-red-600">{clientesInativos}</p>
+              </div>
+              <div className="p-3 rounded-full bg-red-100 dark:bg-red-950">
+                <Users className="h-6 w-6 text-red-600" />
               </div>
             </div>
           </Card>

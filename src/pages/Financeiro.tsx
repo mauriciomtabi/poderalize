@@ -164,8 +164,10 @@ const Financeiro = () => {
 
   // Dados filtrados
   const filteredClientes = useMemo(() => {
-    if (selectedMonth === 'all') return clientes;
-    return clientes; // Clientes não são filtrados por período, só seu pagamento
+    // Filtrar apenas clientes ativos
+    const clientesAtivos = clientes.filter(c => c.status !== 'inativo');
+    if (selectedMonth === 'all') return clientesAtivos;
+    return clientesAtivos; // Clientes não são filtrados por período, só seu pagamento
   }, [clientes, selectedMonth]);
   const filteredReceitas = useMemo(() => filterByPeriod(receitas, 'data'), [receitas, selectedYear, selectedMonth]);
   const filteredDespesas = useMemo(() => filterByPeriod(despesas, 'data'), [despesas, selectedYear, selectedMonth]);
@@ -352,11 +354,18 @@ const Financeiro = () => {
   };
 
   // Usar hook para dados do gráfico de receitas
-  const receitasControlData = useReceitasControl(clientes, pagamentos, selectedYear, calculateRecurrentPaymentBreakdown, paymentFilter);
+  const receitasControlData = useReceitasControl(
+    clientes.filter(c => c.status !== 'inativo'), 
+    pagamentos, 
+    selectedYear, 
+    calculateRecurrentPaymentBreakdown, 
+    paymentFilter
+  );
 
   // Detectar clientes com valor_fechamento mas sem serviços configurados
   const clientesSemServicos = useMemo(() => {
     return clientes.filter(cliente => {
+      if (cliente.status === 'inativo') return false; // Ignorar inativos
       const hasValorFechamento = (cliente.valor_fechamento || 0) > 0;
       const hasActiveRecurring = Object.values(cliente.servicos_recorrentes || {}).some((s: any) => s?.ativo);
       return hasValorFechamento && !hasActiveRecurring;
@@ -787,7 +796,12 @@ const Financeiro = () => {
       </Card>
 
           {/* Serviços Únicos */}
-          <ServicosUnicosSection clientes={clientes} formatCurrency={formatCurrency} selectedYear={selectedYear} selectedMonth={selectedMonth} />
+          <ServicosUnicosSection 
+            clientes={clientes.filter(c => c.status !== 'inativo')} 
+            formatCurrency={formatCurrency} 
+            selectedYear={selectedYear} 
+            selectedMonth={selectedMonth} 
+          />
 
           {/* Outras Receitas */}
           <Card>
