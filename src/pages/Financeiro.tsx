@@ -31,6 +31,7 @@ import { Colaborador } from "@/types/colaboradores";
 import { ServicosUnicosSection } from "@/components/financeiro/ServicosUnicosSection";
 import { ServicosContratadosChart } from "@/components/financeiro/charts/ServicosContratadosChart";
 import { DespesasPorTipoChart } from "@/components/financeiro/charts/DespesasPorTipoChart";
+import { InadimplenciaChart } from "@/components/financeiro/charts/InadimplenciaChart";
 const Financeiro = () => {
   const {
     clientes,
@@ -731,6 +732,16 @@ const Financeiro = () => {
             despesas={filteredDespesas}
             colaboradores={colaboradores}
             totalSalarios={totalSalarios}
+          />
+
+          {/* Gráfico de Inadimplência */}
+          <InadimplenciaChart 
+            clientes={clientes.filter(c => c.status !== 'inativo')}
+            getPagamentoByPeriodo={getPagamentoByPeriodo}
+            calculateRecurrentPaymentBreakdown={calculateRecurrentPaymentBreakdown}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            getPaymentStatus={getPaymentStatus}
           />
         </TabsContent>
 
