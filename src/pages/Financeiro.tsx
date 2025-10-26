@@ -348,7 +348,30 @@ const Financeiro = () => {
     };
   }, [filteredClientes, selectedYear, selectedMonth, pagamentos, getPagamentoByPeriodo]);
 
-  // Format currency
+  // Calcular valor total esperado para o período
+  const valorTotalEsperado = useMemo(() => {
+    return clientes
+      .filter(c => c.status !== 'inativo')
+      .reduce((sum, c) => {
+        const breakdown = calculateRecurrentPaymentBreakdown(c);
+        return sum + breakdown.dinheiro + breakdown.permuta;
+      }, 0);
+  }, [clientes, calculateRecurrentPaymentBreakdown]);
+
+  // Calcular percentual de receitas confirmadas
+  const percentualReceitas = useMemo(() => {
+    if (valorTotalEsperado === 0) return 0;
+    return Math.min((totalReceitas / valorTotalEsperado) * 100, 100);
+  }, [totalReceitas, valorTotalEsperado]);
+
+  // Determinar cor da barra de progresso
+  const getProgressColor = (percent: number) => {
+    if (percent <= 25) return 'bg-red-500';
+    if (percent <= 50) return 'bg-orange-500';
+    if (percent <= 75) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -537,15 +560,26 @@ const Financeiro = () => {
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
         <Card className="overflow-hidden hover:shadow-md transition-shadow">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
+            <div className="flex items-center justify-between mb-3">
+              <div className="space-y-1 flex-1">
                 <p className="text-sm font-medium text-muted-foreground">Total de Receitas</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-500">
                   {formatCurrency(totalReceitas)}
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  de {formatCurrency(valorTotalEsperado)} ({percentualReceitas.toFixed(0)}%)
+                </p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-500" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                <div 
+                  className={`h-full transition-all ${getProgressColor(percentualReceitas)}`}
+                  style={{ width: `${percentualReceitas}%` }}
+                />
               </div>
             </div>
           </CardContent>
