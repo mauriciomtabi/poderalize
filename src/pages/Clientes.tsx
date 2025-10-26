@@ -237,8 +237,8 @@ const Clientes = () => {
         </div>
 
         {/* Metrics */}
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
-          <Card className="p-4 hover:shadow-md transition-shadow">
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+          <Card className="p-4 hover:shadow-md transition-shadow overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Total de Clientes</p>
@@ -250,7 +250,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Clientes Ativos</p>
@@ -262,7 +262,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Clientes Inativos</p>
@@ -274,7 +274,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Valor Total</p>
@@ -286,7 +286,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Ticket Médio</p>
@@ -298,7 +298,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Valor Dinheiro</p>
@@ -310,7 +310,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow overflow-hidden">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Valor Permuta</p>
