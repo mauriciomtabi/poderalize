@@ -23,7 +23,6 @@ import { DespesaForm } from "@/components/financeiro/DespesaForm";
 import { ReceitaForm } from "@/components/financeiro/ReceitaForm";
 import { ConfirmPaymentDialog } from "@/components/financeiro/ConfirmPaymentDialog";
 import { ConfirmSalaryPaymentDialog } from "@/components/financeiro/ConfirmSalaryPaymentDialog";
-import { ReceitasControlChart } from "@/components/financeiro/charts/ReceitasControlChart";
 import { SectionDivider } from "@/components/financeiro/SectionDivider";
 import { CreateDespesaData } from "@/hooks/useDespesas";
 import { CreateReceitaData } from "@/hooks/useReceitas";
@@ -585,11 +584,72 @@ const Financeiro = () => {
 
         {/* TAB DE DASHBOARD */}
         <TabsContent value="dashboard" className="space-y-6 mt-6">
-          {/* Indicadores de Contratos (apenas se mês selecionado) */}
-          {selectedMonth !== 'all'}
+          {/* Controle de Receitas por Status - Cards apenas */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                📊 Controle de Receitas por Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Cards de resumo por status - Grid otimizado */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border-2 border-green-500/30 dark:border-green-600/40 bg-green-50/50 dark:bg-green-950/20">
+                  <CardHeader className="pb-2 px-4 pt-3">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <span className="text-lg">✅</span>
+                      Pago
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-3">
+                    <p className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-500">
+                      {formatCurrency(
+                        receitasControlData
+                          .filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth))
+                          .reduce((sum, item) => sum + item.pago, 0)
+                      )}
+                    </p>
+                  </CardContent>
+                </Card>
 
-          {/* Gráfico de Controle de Receitas */}
-          <ReceitasControlChart data={receitasControlData} formatCurrency={formatCurrency} />
+                <Card className="border-2 border-yellow-500/30 dark:border-yellow-600/40 bg-yellow-50/50 dark:bg-yellow-950/20">
+                  <CardHeader className="pb-2 px-4 pt-3">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <span className="text-lg">⏳</span>
+                      Pendente
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-3">
+                    <p className="text-xl md:text-2xl font-bold text-yellow-600 dark:text-yellow-500">
+                      {formatCurrency(
+                        receitasControlData
+                          .filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth))
+                          .reduce((sum, item) => sum + item.pendente, 0)
+                      )}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 border-red-500/30 dark:border-red-600/40 bg-red-50/50 dark:bg-red-950/20">
+                  <CardHeader className="pb-2 px-4 pt-3">
+                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                      <span className="text-lg">⚠️</span>
+                      Atrasado
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-3">
+                    <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-500">
+                      {formatCurrency(
+                        receitasControlData
+                          .filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth))
+                          .reduce((sum, item) => sum + item.atrasado, 0)
+                      )}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* TAB DE RECEITAS */}
