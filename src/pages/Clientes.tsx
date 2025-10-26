@@ -156,8 +156,8 @@ const Clientes = () => {
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card className="p-4 hover:shadow-md transition-shadow">
+        <div className="flex flex-col md:flex-row gap-4">
+          <Card className="p-4 hover:shadow-md transition-shadow flex-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Total de Clientes</p>
@@ -169,7 +169,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow flex-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Clientes Ativos</p>
@@ -181,7 +181,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow flex-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Clientes Inativos</p>
@@ -193,7 +193,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow flex-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Valor Total</p>
@@ -205,7 +205,7 @@ const Clientes = () => {
             </div>
           </Card>
 
-          <Card className="p-4 hover:shadow-md transition-shadow">
+          <Card className="p-4 hover:shadow-md transition-shadow flex-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-1">Ticket Médio</p>
