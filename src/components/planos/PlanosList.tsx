@@ -104,8 +104,10 @@ export function PlanosList({ tipo }: PlanosListProps) {
       {editingId && (
         <EditPlanoDialog
           planoId={editingId}
-          open={!!editingId}
-          onOpenChange={(open) => !open && setEditingId(null)}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditingId(null);
+          }}
         />
       )}
 
