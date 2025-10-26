@@ -74,18 +74,26 @@ const Clientes = () => {
       
       // Serviços recorrentes
       if (cliente.servicos_recorrentes) {
-        Object.values(cliente.servicos_recorrentes).forEach(servico => {
-          if (servico?.ativo && servico.valor_dinheiro) {
-            clienteTotal += servico.valor_dinheiro;
+        Object.entries(cliente.servicos_recorrentes).forEach(([key, servico]: [string, any]) => {
+          if (servico?.ativo) {
+            if (servico.modo_pagamento === 'dinheiro') {
+              clienteTotal += servico.valor || 0;
+            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
+              clienteTotal += servico.valor_dinheiro || 0;
+            }
           }
         });
       }
       
       // Serviços únicos
       if (cliente.servicos_unicos) {
-        Object.values(cliente.servicos_unicos).forEach(servico => {
-          if (servico?.selecionado && servico.valor_dinheiro) {
-            clienteTotal += servico.valor_dinheiro;
+        Object.entries(cliente.servicos_unicos).forEach(([key, servico]: [string, any]) => {
+          if (servico?.selecionado) {
+            if (servico.modo_pagamento === 'dinheiro') {
+              clienteTotal += servico.valor || 0;
+            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
+              clienteTotal += servico.valor_dinheiro || 0;
+            }
           }
         });
       }
@@ -100,18 +108,26 @@ const Clientes = () => {
       
       // Serviços recorrentes
       if (cliente.servicos_recorrentes) {
-        Object.values(cliente.servicos_recorrentes).forEach(servico => {
-          if (servico?.ativo && servico.valor_permuta) {
-            clienteTotal += servico.valor_permuta;
+        Object.entries(cliente.servicos_recorrentes).forEach(([key, servico]: [string, any]) => {
+          if (servico?.ativo) {
+            if (servico.modo_pagamento === 'permuta') {
+              clienteTotal += servico.valor || 0;
+            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
+              clienteTotal += servico.valor_permuta || 0;
+            }
           }
         });
       }
       
       // Serviços únicos
       if (cliente.servicos_unicos) {
-        Object.values(cliente.servicos_unicos).forEach(servico => {
-          if (servico?.selecionado && servico.valor_permuta) {
-            clienteTotal += servico.valor_permuta;
+        Object.entries(cliente.servicos_unicos).forEach(([key, servico]: [string, any]) => {
+          if (servico?.selecionado) {
+            if (servico.modo_pagamento === 'permuta') {
+              clienteTotal += servico.valor || 0;
+            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
+              clienteTotal += servico.valor_permuta || 0;
+            }
           }
         });
       }
