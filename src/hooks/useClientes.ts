@@ -150,6 +150,11 @@ export interface Cliente {
   observacoes?: string;
   avatar_url?: string;
   
+  // Status
+  status?: 'ativo' | 'inativo';
+  motivo_inativo?: string;
+  data_inativacao?: string;
+  
   // Presença Digital
   site?: string;
   instagram?: string;

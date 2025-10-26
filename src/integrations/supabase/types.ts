@@ -660,6 +660,7 @@ export type Database = {
           cnpj: string | null
           created_at: string
           data_fechamento: string
+          data_inativacao: string | null
           dia_pagamento: number | null
           email: string
           empresa: string
@@ -673,6 +674,7 @@ export type Database = {
           indicador_potencial: string | null
           instagram: string | null
           lead_id: string | null
+          motivo_inativo: string | null
           nivel_consciencia: string | null
           nome: string
           observacoes: string | null
@@ -682,6 +684,7 @@ export type Database = {
           servicos_recorrentes: Json | null
           servicos_unicos: Json | null
           site: string | null
+          status: string | null
           telefone: string | null
           updated_at: string
           user_id: string
@@ -694,6 +697,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           data_fechamento?: string
+          data_inativacao?: string | null
           dia_pagamento?: number | null
           email: string
           empresa: string
@@ -707,6 +711,7 @@ export type Database = {
           indicador_potencial?: string | null
           instagram?: string | null
           lead_id?: string | null
+          motivo_inativo?: string | null
           nivel_consciencia?: string | null
           nome: string
           observacoes?: string | null
@@ -716,6 +721,7 @@ export type Database = {
           servicos_recorrentes?: Json | null
           servicos_unicos?: Json | null
           site?: string | null
+          status?: string | null
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -728,6 +734,7 @@ export type Database = {
           cnpj?: string | null
           created_at?: string
           data_fechamento?: string
+          data_inativacao?: string | null
           dia_pagamento?: number | null
           email?: string
           empresa?: string
@@ -741,6 +748,7 @@ export type Database = {
           indicador_potencial?: string | null
           instagram?: string | null
           lead_id?: string | null
+          motivo_inativo?: string | null
           nivel_consciencia?: string | null
           nome?: string
           observacoes?: string | null
@@ -750,6 +758,7 @@ export type Database = {
           servicos_recorrentes?: Json | null
           servicos_unicos?: Json | null
           site?: string | null
+          status?: string | null
           telefone?: string | null
           updated_at?: string
           user_id?: string

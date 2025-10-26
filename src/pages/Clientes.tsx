@@ -14,6 +14,8 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Cliente, CreateClienteData, UpdateClienteData } from '@/hooks/useClientes';
 import { ClienteForm } from '@/components/clientes/ClienteForm';
+import { Switch } from '@/components/ui/switch';
+import { InativarClienteDialog } from '@/components/clientes/InativarClienteDialog';
 const Clientes = () => {
   const {
     clientes,
@@ -30,6 +32,8 @@ const Clientes = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [inativarDialogOpen, setInativarDialogOpen] = useState(false);
+  const [clienteToInativar, setClienteToInativar] = useState<Cliente | null>(null);
   if (!user) {
     return <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Você precisa estar logado para acessar os clientes</p>
@@ -101,6 +105,34 @@ const Clientes = () => {
         setSelectedCliente(null);
       }
     }
+  };
+
+  const handleToggleStatus = async (cliente: Cliente, novoStatus: boolean) => {
+    // Se está ativando, apenas atualizar
+    if (novoStatus) {
+      await updateCliente(cliente.id, {
+        status: 'ativo',
+        motivo_inativo: undefined,
+        data_inativacao: undefined,
+      });
+      return;
+    }
+
+    // Se está inativando, mostrar modal
+    setClienteToInativar(cliente);
+    setInativarDialogOpen(true);
+  };
+
+  const handleConfirmInativar = async (motivo: string) => {
+    if (!clienteToInativar) return;
+
+    await updateCliente(clienteToInativar.id, {
+      status: 'inativo',
+      motivo_inativo: motivo,
+      data_inativacao: new Date().toISOString(),
+    });
+
+    setClienteToInativar(null);
   };
   return <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
@@ -187,7 +219,21 @@ const Clientes = () => {
                       <CardTitle className="text-lg truncate">{cliente.nome}</CardTitle>
                       <p className="text-sm text-muted-foreground truncate">{cliente.empresa}</p>
                     </div>
-                    <Badge variant="secondary" className="flex-shrink-0">Cliente</Badge>
+                    <div className="flex flex-col gap-2 items-end flex-shrink-0">
+                      <Badge 
+                        variant={cliente.status === 'inativo' ? 'destructive' : 'secondary'}
+                        className="flex-shrink-0"
+                      >
+                        {cliente.status === 'inativo' ? 'Inativo' : 'Cliente'}
+                      </Badge>
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Switch
+                          checked={cliente.status !== 'inativo'}
+                          onCheckedChange={(checked) => handleToggleStatus(cliente, checked)}
+                          className="scale-75"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -238,6 +284,16 @@ const Clientes = () => {
                 </CardContent>
               </Card>)}
           </div>}
+
+        {/* Inativar Dialog */}
+        {clienteToInativar && (
+          <InativarClienteDialog
+            open={inativarDialogOpen}
+            onOpenChange={setInativarDialogOpen}
+            onConfirm={handleConfirmInativar}
+            clienteNome={clienteToInativar.nome}
+          />
+        )}
 
         {/* Add Modal */}
         <Dialog open={isAddModalOpen} onOpenChange={(open) => {
@@ -319,6 +375,11 @@ const Clientes = () => {
                   <div>
                     <h3 className="text-xl font-semibold">{selectedCliente.nome}</h3>
                     <p className="text-muted-foreground">{selectedCliente.empresa}</p>
+                    <div className="mt-2">
+                      <Badge variant={selectedCliente.status === 'inativo' ? 'destructive' : 'default'}>
+                        {selectedCliente.status === 'inativo' ? 'Cliente Inativo' : 'Cliente Ativo'}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
 
@@ -345,6 +406,27 @@ const Clientes = () => {
                     <p className="text-sm text-muted-foreground mt-1">{selectedCliente.telefone ? formatPhone(selectedCliente.telefone) : 'Não informado'}</p>
                   </div>
                 </div>
+
+                {/* Status de Inativação */}
+                {selectedCliente.status === 'inativo' && selectedCliente.motivo_inativo && (
+                  <div className="p-4 border border-destructive/30 bg-destructive/5 rounded-lg">
+                    <h3 className="text-sm font-semibold text-destructive mb-3">INFORMAÇÕES DE INATIVAÇÃO</h3>
+                    <div className="space-y-2">
+                      <div>
+                        <label className="text-sm font-medium">Motivo</label>
+                        <p className="text-sm text-muted-foreground mt-1">{selectedCliente.motivo_inativo}</p>
+                      </div>
+                      {selectedCliente.data_inativacao && (
+                        <div>
+                          <label className="text-sm font-medium">Data de Inativação</label>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {format(parseISO(selectedCliente.data_inativacao), 'dd/MM/yyyy', { locale: ptBR })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Financial Information */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
