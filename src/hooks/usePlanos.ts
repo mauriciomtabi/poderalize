@@ -72,15 +72,27 @@ export function usePlanos() {
     if (!user) return false;
 
     try {
-      const { error } = await supabase.from('planos').insert({
-        ...data,
-        user_id: user.id,
-      });
+      const { data: newPlano, error } = await supabase
+        .from('planos')
+        .insert({
+          ...data,
+          user_id: user.id,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
       
+      // Atualização otimista: adicionar ao estado imediatamente
+      if (newPlano) {
+        setPlanos(prevPlanos => [...prevPlanos, newPlano as Plano]);
+      }
+      
       toast.success('Plano criado com sucesso!');
-      await loadPlanos();
+      
+      // Sincronizar com servidor em background
+      loadPlanos();
+      
       return true;
     } catch (error: any) {
       toast.error('Erro ao criar plano: ' + error.message);
@@ -90,15 +102,27 @@ export function usePlanos() {
 
   const updatePlano = async (id: string, data: UpdatePlanoData): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { data: updatedPlano, error } = await supabase
         .from('planos')
         .update(data)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
       
+      // Atualização otimista: atualizar no estado imediatamente
+      if (updatedPlano) {
+        setPlanos(prevPlanos => 
+          prevPlanos.map(p => p.id === id ? updatedPlano as Plano : p)
+        );
+      }
+      
       toast.success('Plano atualizado com sucesso!');
-      await loadPlanos();
+      
+      // Sincronizar com servidor em background
+      loadPlanos();
+      
       return true;
     } catch (error: any) {
       toast.error('Erro ao atualizar plano: ' + error.message);
@@ -115,8 +139,14 @@ export function usePlanos() {
 
       if (error) throw error;
       
+      // Atualização otimista: remover do estado imediatamente
+      setPlanos(prevPlanos => prevPlanos.filter(p => p.id !== id));
+      
       toast.success('Plano excluído com sucesso!');
-      await loadPlanos();
+      
+      // Sincronizar com servidor em background
+      loadPlanos();
+      
       return true;
     } catch (error: any) {
       toast.error('Erro ao excluir plano: ' + error.message);
