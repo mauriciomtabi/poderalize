@@ -219,21 +219,12 @@ const Clientes = () => {
                       <CardTitle className="text-lg truncate">{cliente.nome}</CardTitle>
                       <p className="text-sm text-muted-foreground truncate">{cliente.empresa}</p>
                     </div>
-                    <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                      <Badge 
-                        variant={cliente.status === 'inativo' ? 'destructive' : 'secondary'}
-                        className="flex-shrink-0"
-                      >
-                        {cliente.status === 'inativo' ? 'Inativo' : 'Cliente'}
-                      </Badge>
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <Switch
-                          checked={cliente.status !== 'inativo'}
-                          onCheckedChange={(checked) => handleToggleStatus(cliente, checked)}
-                          className="scale-75"
-                        />
-                      </div>
-                    </div>
+                    <Badge 
+                      variant={cliente.status === 'inativo' ? 'destructive' : 'secondary'}
+                      className="flex-shrink-0"
+                    >
+                      {cliente.status === 'inativo' ? 'Inativo' : 'Cliente'}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -372,7 +363,7 @@ const Clientes = () => {
                       <User className="h-10 w-10" />
                     </AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-xl font-semibold">{selectedCliente.nome}</h3>
                     <p className="text-muted-foreground">{selectedCliente.empresa}</p>
                     <div className="mt-2">
@@ -380,6 +371,18 @@ const Clientes = () => {
                         {selectedCliente.status === 'inativo' ? 'Cliente Inativo' : 'Cliente Ativo'}
                       </Badge>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-3 border-l pl-4">
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground mb-1">Status do Cliente</p>
+                      <p className="text-sm font-medium">
+                        {selectedCliente.status === 'inativo' ? 'Inativo' : 'Ativo'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={selectedCliente.status !== 'inativo'}
+                      onCheckedChange={(checked) => handleToggleStatus(selectedCliente, checked)}
+                    />
                   </div>
                 </div>
 
