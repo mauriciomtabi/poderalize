@@ -114,7 +114,9 @@ export const ServicosContratadosChart = ({ clientes, paymentFilter }: ServicosCo
         dinheiro: valores.dinheiro,
         permuta: valores.permuta,
       };
-    }).filter(item => item.valor > 0); // Mostrar apenas serviços com valores
+    })
+    .filter(item => item.valor > 0) // Mostrar apenas serviços com valores
+    .sort((a, b) => b.valor - a.valor); // Ordenar do maior para o menor
   }, [clientes, paymentFilter]);
 
   if (chartData.length === 0) {
