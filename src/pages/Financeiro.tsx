@@ -546,10 +546,7 @@ const Financeiro = () => {
 
       {/* Cards KPI Principais - Afetados por TODOS os filtros */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <BarChart3 size={20} />
-          Resumo do Período
-        </h2>
+        
         
         
       </div>
