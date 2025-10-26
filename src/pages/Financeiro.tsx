@@ -617,28 +617,6 @@ const Financeiro = () => {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">Valor Total (Clientes Ativos)</p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-500">
-                  {formatCurrency(
-                    clientes
-                      .filter(c => c.status !== 'inativo')
-                      .reduce((sum, c) => {
-                        const breakdown = calculateRecurrentPaymentBreakdown(c);
-                        return sum + breakdown.dinheiro + breakdown.permuta;
-                      }, 0)
-                  )}
-                </p>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="overflow-hidden hover:shadow-md transition-shadow">
           <CardContent className="p-6">
