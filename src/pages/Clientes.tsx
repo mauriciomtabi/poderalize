@@ -65,6 +65,59 @@ const Clientes = () => {
     .filter(c => c.status !== 'inativo')
     .reduce((sum, cliente) => sum + (cliente.valor_fechamento || 0), 0);
   const averageValue = clientesAtivos > 0 ? totalValue / clientesAtivos : 0;
+
+  // Calculate dinheiro and permuta totals
+  const totalDinheiro = clientes
+    .filter(c => c.status !== 'inativo')
+    .reduce((sum, cliente) => {
+      let clienteTotal = 0;
+      
+      // Serviços recorrentes
+      if (cliente.servicos_recorrentes) {
+        Object.values(cliente.servicos_recorrentes).forEach(servico => {
+          if (servico?.ativo && servico.valor_dinheiro) {
+            clienteTotal += servico.valor_dinheiro;
+          }
+        });
+      }
+      
+      // Serviços únicos
+      if (cliente.servicos_unicos) {
+        Object.values(cliente.servicos_unicos).forEach(servico => {
+          if (servico?.selecionado && servico.valor_dinheiro) {
+            clienteTotal += servico.valor_dinheiro;
+          }
+        });
+      }
+      
+      return sum + clienteTotal;
+    }, 0);
+
+  const totalPermuta = clientes
+    .filter(c => c.status !== 'inativo')
+    .reduce((sum, cliente) => {
+      let clienteTotal = 0;
+      
+      // Serviços recorrentes
+      if (cliente.servicos_recorrentes) {
+        Object.values(cliente.servicos_recorrentes).forEach(servico => {
+          if (servico?.ativo && servico.valor_permuta) {
+            clienteTotal += servico.valor_permuta;
+          }
+        });
+      }
+      
+      // Serviços únicos
+      if (cliente.servicos_unicos) {
+        Object.values(cliente.servicos_unicos).forEach(servico => {
+          if (servico?.selecionado && servico.valor_permuta) {
+            clienteTotal += servico.valor_permuta;
+          }
+        });
+      }
+      
+      return sum + clienteTotal;
+    }, 0);
   const handleCardClick = (cliente: Cliente) => {
     setSelectedCliente(cliente);
     setIsViewModalOpen(true);
@@ -156,7 +209,7 @@ const Clientes = () => {
         </div>
 
         {/* Metrics */}
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }}>
+        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
           <Card className="p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -213,6 +266,30 @@ const Clientes = () => {
               </div>
               <div className="p-3 rounded-full bg-muted">
                 <DollarSign className="h-6 w-6 text-muted-foreground" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Valor Dinheiro</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalDinheiro)}</p>
+              </div>
+              <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-950">
+                <DollarSign className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Valor Permuta</p>
+                <p className="text-2xl font-bold text-purple-600">{formatCurrency(totalPermuta)}</p>
+              </div>
+              <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-950">
+                <DollarSign className="h-6 w-6 text-purple-600" />
               </div>
             </div>
           </Card>
