@@ -146,7 +146,7 @@ const Financeiro = () => {
   };
 
   // Verificar status de pagamento do cliente
-  const getPaymentStatus = (cliente: Cliente): 'pago' | 'pendente' | 'atrasado' => {
+  const getPaymentStatus = (cliente: Cliente): 'pago' | 'no_prazo' | 'atrasado' => {
     if (!cliente.pagamento_mensal) return 'pago'; // Clientes sem pagamento mensal são considerados pagos
 
     const ano = parseInt(selectedYear);
@@ -161,7 +161,7 @@ const Financeiro = () => {
     if (isAfter(today, dueDate) && !pagamento) {
       return 'atrasado';
     }
-    return 'pendente';
+    return 'no_prazo';
   };
 
   // Dados filtrados
@@ -300,12 +300,12 @@ const Financeiro = () => {
   }, [filteredClientes, pagamentos, selectedYear, selectedMonth, paymentFilter, filteredReceitas, getPagamentoByPeriodo, calculateRecurrentPaymentBreakdown, filterByPeriod]);
 
   // Função para verificar se salário foi pago
-  const getSalaryPaymentStatus = (colaboradorId: string): 'pago' | 'pendente' => {
-    if (selectedMonth === 'all') return 'pendente';
+  const getSalaryPaymentStatus = (colaboradorId: string): 'pago' | 'no_prazo' => {
+    if (selectedMonth === 'all') return 'no_prazo';
     const ano = parseInt(selectedYear);
     const mes = parseInt(selectedMonth);
     const pagamento = pagamentosSalarios.find(p => p.colaborador_id === colaboradorId && p.ano === ano && p.mes === mes);
-    return pagamento ? 'pago' : 'pendente';
+    return pagamento ? 'pago' : 'no_prazo';
   };
   const totalSalarios = useMemo(() => {
     const activeColaboradores = colaboradores.filter(c => c.status === "ativo");
@@ -341,10 +341,10 @@ const Financeiro = () => {
     const clientesMensais = filteredClientes.filter(c => c.pagamento_mensal);
     const pagos = clientesMensais.filter(c => getPaymentStatus(c) === 'pago').length;
     const atrasados = clientesMensais.filter(c => getPaymentStatus(c) === 'atrasado').length;
-    const pendentes = clientesMensais.filter(c => getPaymentStatus(c) === 'pendente').length;
+    const noPrazo = clientesMensais.filter(c => getPaymentStatus(c) === 'no_prazo').length;
     return {
       contratosPagos: pagos,
-      contratosPendentes: pendentes,
+      contratosPendentes: noPrazo,
       contratosAtrasados: atrasados
     };
   }, [filteredClientes, selectedYear, selectedMonth, pagamentos, getPagamentoByPeriodo]);
@@ -460,7 +460,7 @@ const Financeiro = () => {
       observacoes: data.observacoes
     });
   };
-  const handleTogglePayment = async (cliente: Cliente, currentStatus: 'pago' | 'pendente' | 'atrasado') => {
+  const handleTogglePayment = async (cliente: Cliente, currentStatus: 'pago' | 'no_prazo' | 'atrasado') => {
     const ano = parseInt(selectedYear);
     const mes = parseInt(selectedMonth);
     const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
@@ -489,7 +489,7 @@ const Financeiro = () => {
       }
     }
   };
-  const handleToggleSalaryPayment = async (colaborador: Colaborador, currentStatus: 'pago' | 'pendente') => {
+  const handleToggleSalaryPayment = async (colaborador: Colaborador, currentStatus: 'pago' | 'no_prazo') => {
     const ano = parseInt(selectedYear);
     const mes = parseInt(selectedMonth);
     const pagamento = pagamentosSalarios.find(p => p.colaborador_id === colaborador.id && p.ano === ano && p.mes === mes);
@@ -695,12 +695,12 @@ const Financeiro = () => {
                 <CardHeader className="pb-2 px-4 pt-4">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <span className="text-xl">⏳</span>
-                    Pendente
+                    No Prazo
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4">
                   <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">
-                    {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.pendente, 0))}
+                    {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.noPrazo, 0))}
                   </p>
                 </CardContent>
               </Card>
@@ -803,7 +803,7 @@ const Financeiro = () => {
                                 Atrasado
                               </Badge> : <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
                                 <Clock className="h-3 w-3 mr-1" />
-                                Pendente
+                                No Prazo
                               </Badge> : <span className="text-muted-foreground text-sm">-</span>}
                         </TableCell>
                         <TableCell className="text-right">
@@ -944,7 +944,7 @@ const Financeiro = () => {
                                     Pago
                                   </Badge> : <Badge variant="outline" className="text-orange-600 border-orange-600">
                                     <Clock className="h-3 w-3 mr-1" />
-                                    Pendente
+                                    No Prazo
                                   </Badge>}
                               </TableCell>
                               <TableCell>

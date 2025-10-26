@@ -47,7 +47,7 @@ export const ServicosUnicosSection = ({
       }
     }
     
-    return { status: 'pendente', color: 'warning', icon: Clock, label: 'Pendente' };
+    return { status: 'no_prazo', color: 'warning', icon: Clock, label: 'No Prazo' };
   };
 
   // Coletar todos os serviços únicos de todos os clientes
@@ -108,12 +108,12 @@ export const ServicosUnicosSection = ({
   // Calcular totais
   const totalServicos = servicosUnicos.length;
   const servicosPagos = servicosUnicos.filter(s => s.pagamento_confirmado).length;
-  const servicosPendentes = servicosUnicos.filter(s => !s.pagamento_confirmado && s.status?.status === 'pendente').length;
+  const servicosNoPrazo = servicosUnicos.filter(s => !s.pagamento_confirmado && s.status?.status === 'no_prazo').length;
   const servicosAtrasados = servicosUnicos.filter(s => s.status?.status === 'atrasado').length;
   
   const valorTotal = servicosUnicos.reduce((sum, s) => sum + s.valor, 0);
   const valorPago = servicosUnicos.filter(s => s.pagamento_confirmado).reduce((sum, s) => sum + s.valor, 0);
-  const valorPendente = servicosUnicos.filter(s => !s.pagamento_confirmado).reduce((sum, s) => sum + s.valor, 0);
+  const valorNoPrazo = servicosUnicos.filter(s => !s.pagamento_confirmado).reduce((sum, s) => sum + s.valor, 0);
 
   if (totalServicos === 0) return null;
 
@@ -152,14 +152,14 @@ export const ServicosUnicosSection = ({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pendentes</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">No Prazo</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-yellow-600" />
-              <div className="text-2xl font-bold">{servicosPendentes}</div>
+              <div className="text-2xl font-bold">{servicosNoPrazo}</div>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{formatCurrency(valorPendente)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{formatCurrency(valorNoPrazo)}</p>
           </CardContent>
         </Card>
 

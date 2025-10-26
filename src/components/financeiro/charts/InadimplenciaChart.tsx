@@ -13,7 +13,7 @@ interface InadimplenciaChartProps {
   };
   selectedYear: string;
   selectedMonth: string;
-  getPaymentStatus: (cliente: Cliente) => 'pago' | 'pendente' | 'atrasado';
+  getPaymentStatus: (cliente: Cliente) => 'pago' | 'no_prazo' | 'atrasado';
 }
 
 export const InadimplenciaChart = ({

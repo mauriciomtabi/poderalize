@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 interface ReceitaStatusData {
   mes: string;
   pago: number;
-  pendente: number;
+  noPrazo: number;
   atrasado: number;
   projecao: number;
 }
@@ -29,7 +29,7 @@ const CustomLabel = (props: any) => {
   
   // Calcular o total da coluna (soma de todos os valores empilhados)
   const dataPoint = data[index];
-  const total = (dataPoint.pago || 0) + (dataPoint.pendente || 0) + 
+  const total = (dataPoint.pago || 0) + (dataPoint.noPrazo || 0) + 
                 (dataPoint.atrasado || 0) + (dataPoint.projecao || 0);
   
   if (total === 0) return null;
@@ -79,10 +79,10 @@ export const ReceitasControlChart = ({ data, formatCurrency }: ReceitasControlCh
   // Calcular totais para os cards
   const totals = data.reduce((acc, item) => ({
     pago: acc.pago + item.pago,
-    pendente: acc.pendente + item.pendente,
+    noPrazo: acc.noPrazo + item.noPrazo,
     atrasado: acc.atrasado + item.atrasado,
     projecao: acc.projecao + item.projecao,
-  }), { pago: 0, pendente: 0, atrasado: 0, projecao: 0 });
+  }), { pago: 0, noPrazo: 0, atrasado: 0, projecao: 0 });
 
   return (
     <Card>
@@ -112,12 +112,12 @@ export const ReceitasControlChart = ({ data, formatCurrency }: ReceitasControlCh
             <CardHeader className="pb-2 px-4 pt-3">
               <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <span className="text-lg">⏳</span>
-                Pendente
+                No Prazo
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-3">
               <p className="text-xl md:text-2xl font-bold text-yellow-600 dark:text-yellow-500">
-                {formatCurrency(totals.pendente)}
+                {formatCurrency(totals.noPrazo)}
               </p>
             </CardContent>
           </Card>
@@ -163,7 +163,7 @@ export const ReceitasControlChart = ({ data, formatCurrency }: ReceitasControlCh
                 <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
                 <stop offset="100%" stopColor="#059669" stopOpacity={0.9}/>
               </linearGradient>
-              <linearGradient id="colorPendente" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="colorNoPrazo" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#fbbf24" stopOpacity={1}/>
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.9}/>
               </linearGradient>
@@ -205,10 +205,10 @@ export const ReceitasControlChart = ({ data, formatCurrency }: ReceitasControlCh
               radius={[0, 0, 0, 0]}
             />
             <Bar 
-              dataKey="pendente" 
+              dataKey="noPrazo" 
               stackId="a" 
-              fill="url(#colorPendente)" 
-              name="Pendente" 
+              fill="url(#colorNoPrazo)" 
+              name="No Prazo" 
               radius={[0, 0, 0, 0]}
             />
             <Bar 

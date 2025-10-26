@@ -23,7 +23,7 @@ interface ReceitaStatusData {
   mes: string;
   mesNumero: number;
   pago: number;
-  pendente: number;
+  noPrazo: number;
   atrasado: number;
   projecao: number;
 }
@@ -40,7 +40,7 @@ export const useReceitasControl = (
       mes: format(new Date(2024, i), 'MMM', { locale: ptBR }),
       mesNumero: i + 1,
       pago: 0,
-      pendente: 0,
+      noPrazo: 0,
       atrasado: 0,
       projecao: 0,
     }));
@@ -100,7 +100,7 @@ export const useReceitasControl = (
         } else if (mesVenceu) {
           m.atrasado += valorTotal;
         } else if (m.mesNumero === mesAtual) {
-          m.pendente += valorTotal;
+          m.noPrazo += valorTotal;
         } else if (m.mesNumero > mesAtual) {
           m.projecao += valorTotal;
         }
@@ -159,7 +159,7 @@ export const useReceitasControl = (
         } else if (isAfter(hoje, dataServico)) {
           mesData.atrasado += valor;
         } else if (mesServico === mesAtual) {
-          mesData.pendente += valor;
+          mesData.noPrazo += valor;
         } else if (mesServico > mesAtual) {
           mesData.projecao += valor;
         }
