@@ -30,6 +30,7 @@ import { Cliente } from "@/hooks/useClientes";
 import { Colaborador } from "@/types/colaboradores";
 import { ServicosUnicosSection } from "@/components/financeiro/ServicosUnicosSection";
 import { ServicosContratadosChart } from "@/components/financeiro/charts/ServicosContratadosChart";
+import { DespesasPorTipoChart } from "@/components/financeiro/charts/DespesasPorTipoChart";
 const Financeiro = () => {
   const {
     clientes,
@@ -711,6 +712,13 @@ const Financeiro = () => {
           <ServicosContratadosChart 
             clientes={clientes.filter(c => c.status !== 'inativo')} 
             paymentFilter={paymentFilter}
+          />
+
+          {/* Gráfico de Despesas por Tipo */}
+          <DespesasPorTipoChart 
+            despesas={filteredDespesas}
+            colaboradores={colaboradores}
+            totalSalarios={totalSalarios}
           />
         </TabsContent>
 
