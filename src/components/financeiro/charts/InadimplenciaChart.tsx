@@ -94,33 +94,44 @@ export const InadimplenciaChart = ({
       
       Object.entries(cliente.servicos_unicos).forEach(([key, servico]: [string, any]) => {
         if (!servico || typeof servico !== 'object') return;
+        if (!servico.selecionado) return;
         
-        // Verificar se tem data de contratação
-        const dataContratacao = servico.data_contratacao ? new Date(servico.data_contratacao) : null;
-        if (!dataContratacao) return;
+        // Usar data_prevista_pagamento ou data_pagamento
+        const dataPagamento = servico.data_prevista_pagamento || servico.data_pagamento;
+        if (!dataPagamento) return;
+        
+        const dataServico = new Date(dataPagamento + 'T12:00:00');
+        const anoServico = dataServico.getFullYear();
+        const mesServico = dataServico.getMonth() + 1;
         
         // Verificar se é do período selecionado
-        if (dataContratacao.getFullYear() !== ano || dataContratacao.getMonth() + 1 !== mes) return;
+        if (anoServico !== ano || mesServico !== mes) return;
         
-        // Verificar se NÃO está confirmado
-        if (servico.confirmado_pagamento === true) return;
+        // Verificar se já foi pago
+        if (servico.pagamento_confirmado === true) return;
         
         // Verificar se está atrasado (data já passou)
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
-        dataContratacao.setHours(0, 0, 0, 0);
+        dataServico.setHours(0, 0, 0, 0);
         
-        if (dataContratacao >= hoje) return; // Ainda não venceu
+        if (dataServico >= hoje) return; // Ainda não venceu
         
         // Calcular valores
-        const valorDinheiro = servico.modo_pagamento === 'dinheiro' || servico.modo_pagamento === 'dinheiro_permuta'
-          ? (servico.valor_dinheiro || 0)
-          : 0;
-        const valorPermuta = servico.modo_pagamento === 'permuta' || servico.modo_pagamento === 'dinheiro_permuta'
-          ? (servico.valor_permuta || 0)
-          : 0;
-        const valorTotal = valorDinheiro + valorPermuta;
+        const modoPagamento = servico.modo_pagamento || 'dinheiro';
+        let valorDinheiro = 0;
+        let valorPermuta = 0;
         
+        if (modoPagamento === 'dinheiro') {
+          valorDinheiro = servico.valor || 0;
+        } else if (modoPagamento === 'permuta') {
+          valorPermuta = servico.valor_permuta || servico.valor || 0;
+        } else if (modoPagamento === 'dinheiro_permuta') {
+          valorDinheiro = servico.valor_dinheiro || 0;
+          valorPermuta = servico.valor_permuta || 0;
+        }
+        
+        const valorTotal = valorDinheiro + valorPermuta;
         if (valorTotal <= 0) return;
         
         servicosAtrasados.push({

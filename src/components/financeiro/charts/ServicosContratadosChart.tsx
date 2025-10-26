@@ -166,13 +166,9 @@ export const ServicosContratadosChart = ({ clientes, paymentFilter }: ServicosCo
               formatter={(value: number) => formatCurrency(value)}
               labelStyle={{ color: 'hsl(var(--foreground))' }}
             />
-            <Legend 
-              wrapperStyle={{ color: 'hsl(var(--foreground))' }}
-            />
             <Bar 
               dataKey="valor" 
               fill="hsl(var(--primary))" 
-              name="Valor Total"
               radius={[8, 8, 0, 0]}
             >
               <LabelList 
