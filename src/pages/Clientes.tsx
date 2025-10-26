@@ -66,91 +66,86 @@ const Clientes = () => {
     .reduce((sum, cliente) => sum + (cliente.valor_fechamento || 0), 0);
   const averageValue = clientesAtivos > 0 ? totalValue / clientesAtivos : 0;
 
-  // Calculate dinheiro and permuta totals
-  const totalDinheiro = clientes
-    .filter(c => c.status !== 'inativo')
-    .reduce((sum, cliente) => {
-      let clienteTotal = 0;
-      let contouDetalhe = false;
+  // Calculate dinheiro and permuta totals so that Dinheiro + Permuta = Valor Total
+  const { totalDinheiro, totalPermuta } = clientes
+    .filter((c) => c.status !== 'inativo')
+    .reduce(
+      (acc, cliente) => {
+        const base = Number(cliente.valor_fechamento || 0);
 
-      // Serviços recorrentes
-      if (cliente.servicos_recorrentes) {
-        Object.values(cliente.servicos_recorrentes as Record<string, any>).forEach((servico: any) => {
-          if (servico?.ativo) {
-            if (servico.modo_pagamento === 'dinheiro') {
-              clienteTotal += servico.valor || 0;
-              contouDetalhe = true;
-            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
-              clienteTotal += servico.valor_dinheiro || 0;
-              contouDetalhe = true;
-            } else if (!servico.modo_pagamento) {
-              // Fallback: se não vier modo_pagamento mas há valor, considerar como dinheiro
-              clienteTotal += servico.valor || 0;
-              contouDetalhe = true;
+        let moneyDetail = 0;
+        let permutaDetail = 0;
+
+        // Serviços recorrentes
+        if (cliente.servicos_recorrentes) {
+          Object.values(cliente.servicos_recorrentes as Record<string, any>).forEach((servico: any) => {
+            if (!servico) return;
+            if (servico.ativo === false) return;
+            const modo = servico.modo_pagamento as
+              | 'dinheiro'
+              | 'permuta'
+              | 'dinheiro_permuta'
+              | undefined;
+            const valor = Number(servico.valor || 0);
+            const vDin = Number(servico.valor_dinheiro || 0);
+            const vPer = Number(servico.valor_permuta || 0);
+
+            if (modo === 'dinheiro') moneyDetail += valor;
+            else if (modo === 'permuta') permutaDetail += valor;
+            else if (modo === 'dinheiro_permuta') {
+              moneyDetail += vDin;
+              permutaDetail += vPer;
+            } else {
+              // Sem identificação: considerar como dinheiro
+              moneyDetail += valor;
             }
-          }
-        });
-      }
+          });
+        }
 
-      // Serviços únicos
-      if (cliente.servicos_unicos) {
-        Object.values(cliente.servicos_unicos as Record<string, any>).forEach((servico: any) => {
-          if (servico?.selecionado) {
-            if (servico.modo_pagamento === 'dinheiro') {
-              clienteTotal += servico.valor || 0;
-              contouDetalhe = true;
-            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
-              clienteTotal += servico.valor_dinheiro || 0;
-              contouDetalhe = true;
-            } else if (!servico.modo_pagamento) {
-              clienteTotal += servico.valor || 0;
-              contouDetalhe = true;
+        // Serviços únicos
+        if (cliente.servicos_unicos) {
+          Object.values(cliente.servicos_unicos as Record<string, any>).forEach((servico: any) => {
+            if (!servico?.selecionado) return;
+            const modo = servico.modo_pagamento as
+              | 'dinheiro'
+              | 'permuta'
+              | 'dinheiro_permuta'
+              | undefined;
+            const valor = Number(servico.valor || 0);
+            const vDin = Number(servico.valor_dinheiro || 0);
+            const vPer = Number(servico.valor_permuta || 0);
+
+            if (modo === 'dinheiro') moneyDetail += valor;
+            else if (modo === 'permuta') permutaDetail += valor;
+            else if (modo === 'dinheiro_permuta') {
+              moneyDetail += vDin;
+              permutaDetail += vPer;
+            } else {
+              // Sem identificação: considerar como dinheiro
+              moneyDetail += valor;
             }
+          });
+        }
+
+        // Se houver detalhamento, normalizar para o valor de fechamento (quando existir)
+        if (moneyDetail + permutaDetail > 0) {
+          if (base > 0) {
+            const sumDetail = moneyDetail + permutaDetail;
+            const factor = sumDetail > 0 ? base / sumDetail : 0;
+            moneyDetail = moneyDetail * factor;
+            permutaDetail = permutaDetail * factor;
           }
-        });
-      }
+          acc.totalDinheiro += moneyDetail;
+          acc.totalPermuta += permutaDetail;
+        } else {
+          // Sem detalhamento: tudo conta como dinheiro
+          acc.totalDinheiro += base;
+        }
 
-      // Fallback: se não há detalhe de serviços, usar valor_fechamento como dinheiro
-      if (!contouDetalhe) {
-        clienteTotal += cliente.valor_fechamento || 0;
-      }
-
-      return sum + clienteTotal;
-    }, 0);
-
-  const totalPermuta = clientes
-    .filter(c => c.status !== 'inativo')
-    .reduce((sum, cliente) => {
-      let clienteTotal = 0;
-
-      // Serviços recorrentes
-      if (cliente.servicos_recorrentes) {
-        Object.values(cliente.servicos_recorrentes as Record<string, any>).forEach((servico: any) => {
-          if (servico?.ativo) {
-            if (servico.modo_pagamento === 'permuta') {
-              clienteTotal += servico.valor || 0;
-            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
-              clienteTotal += servico.valor_permuta || 0;
-            }
-          }
-        });
-      }
-
-      // Serviços únicos
-      if (cliente.servicos_unicos) {
-        Object.values(cliente.servicos_unicos as Record<string, any>).forEach((servico: any) => {
-          if (servico?.selecionado) {
-            if (servico.modo_pagamento === 'permuta') {
-              clienteTotal += servico.valor || 0;
-            } else if (servico.modo_pagamento === 'dinheiro_permuta') {
-              clienteTotal += servico.valor_permuta || 0;
-            }
-          }
-        });
-      }
-
-      return sum + clienteTotal;
-    }, 0);
+        return acc;
+      },
+      { totalDinheiro: 0, totalPermuta: 0 }
+    );
   const handleCardClick = (cliente: Cliente) => {
     setSelectedCliente(cliente);
     setIsViewModalOpen(true);
