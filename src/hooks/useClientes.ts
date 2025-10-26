@@ -298,8 +298,7 @@ export function useClientes() {
         .from('clientes')
         .update(validatedData)
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
       if (error) {
         console.error('Erro ao atualizar cliente:', error);
@@ -307,9 +306,13 @@ export function useClientes() {
         return null;
       }
 
-      setClientes(prev => prev.map(cliente => cliente.id === id ? (data as Cliente) : cliente));
+      const updatedCliente = data?.[0];
+      if (updatedCliente) {
+        setClientes(prev => prev.map(cliente => cliente.id === id ? (updatedCliente as Cliente) : cliente));
+      }
+      
       toast.success('Cliente atualizado com sucesso!');
-      return data;
+      return updatedCliente;
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.issues[0];
