@@ -122,11 +122,11 @@ export const ServicosContratadosChart = ({ clientes, paymentFilter }: ServicosCo
   if (chartData.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            📊 Serviços Contratados por Tipo
-          </CardTitle>
-        </CardHeader>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          📊 Serviços Contratados por Tipo
+        </CardTitle>
+      </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             Nenhum serviço contratado no momento
@@ -139,7 +139,7 @@ export const ServicosContratadosChart = ({ clientes, paymentFilter }: ServicosCo
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
           📊 Serviços Contratados por Tipo
         </CardTitle>
       </CardHeader>
