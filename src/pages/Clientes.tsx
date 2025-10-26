@@ -71,33 +71,50 @@ const Clientes = () => {
     .filter(c => c.status !== 'inativo')
     .reduce((sum, cliente) => {
       let clienteTotal = 0;
-      
+      let contouDetalhe = false;
+
       // Serviços recorrentes
       if (cliente.servicos_recorrentes) {
-        Object.entries(cliente.servicos_recorrentes).forEach(([key, servico]: [string, any]) => {
+        Object.values(cliente.servicos_recorrentes as Record<string, any>).forEach((servico: any) => {
           if (servico?.ativo) {
             if (servico.modo_pagamento === 'dinheiro') {
               clienteTotal += servico.valor || 0;
+              contouDetalhe = true;
             } else if (servico.modo_pagamento === 'dinheiro_permuta') {
               clienteTotal += servico.valor_dinheiro || 0;
+              contouDetalhe = true;
+            } else if (!servico.modo_pagamento) {
+              // Fallback: se não vier modo_pagamento mas há valor, considerar como dinheiro
+              clienteTotal += servico.valor || 0;
+              contouDetalhe = true;
             }
           }
         });
       }
-      
+
       // Serviços únicos
       if (cliente.servicos_unicos) {
-        Object.entries(cliente.servicos_unicos).forEach(([key, servico]: [string, any]) => {
+        Object.values(cliente.servicos_unicos as Record<string, any>).forEach((servico: any) => {
           if (servico?.selecionado) {
             if (servico.modo_pagamento === 'dinheiro') {
               clienteTotal += servico.valor || 0;
+              contouDetalhe = true;
             } else if (servico.modo_pagamento === 'dinheiro_permuta') {
               clienteTotal += servico.valor_dinheiro || 0;
+              contouDetalhe = true;
+            } else if (!servico.modo_pagamento) {
+              clienteTotal += servico.valor || 0;
+              contouDetalhe = true;
             }
           }
         });
       }
-      
+
+      // Fallback: se não há detalhe de serviços, usar valor_fechamento como dinheiro
+      if (!contouDetalhe) {
+        clienteTotal += cliente.valor_fechamento || 0;
+      }
+
       return sum + clienteTotal;
     }, 0);
 
@@ -105,10 +122,10 @@ const Clientes = () => {
     .filter(c => c.status !== 'inativo')
     .reduce((sum, cliente) => {
       let clienteTotal = 0;
-      
+
       // Serviços recorrentes
       if (cliente.servicos_recorrentes) {
-        Object.entries(cliente.servicos_recorrentes).forEach(([key, servico]: [string, any]) => {
+        Object.values(cliente.servicos_recorrentes as Record<string, any>).forEach((servico: any) => {
           if (servico?.ativo) {
             if (servico.modo_pagamento === 'permuta') {
               clienteTotal += servico.valor || 0;
@@ -118,10 +135,10 @@ const Clientes = () => {
           }
         });
       }
-      
+
       // Serviços únicos
       if (cliente.servicos_unicos) {
-        Object.entries(cliente.servicos_unicos).forEach(([key, servico]: [string, any]) => {
+        Object.values(cliente.servicos_unicos as Record<string, any>).forEach((servico: any) => {
           if (servico?.selecionado) {
             if (servico.modo_pagamento === 'permuta') {
               clienteTotal += servico.valor || 0;
@@ -131,7 +148,7 @@ const Clientes = () => {
           }
         });
       }
-      
+
       return sum + clienteTotal;
     }, 0);
   const handleCardClick = (cliente: Cliente) => {
