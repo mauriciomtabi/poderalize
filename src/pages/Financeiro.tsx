@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Calendar, Building, Users, CheckCircle2, Clock, AlertTriangle, AlertCircle, BarChart3 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { format, isAfter, isBefore, startOfMonth, endOfMonth } from "date-fns";
@@ -53,11 +54,14 @@ const Financeiro = () => {
   const {
     pagamentos,
     registrarPagamento,
+    updatePagamento,
+    deletePagamento,
     getPagamentoByPeriodo
   } = usePagamentosClientes();
   const {
     pagamentosSalarios,
-    addPagamentoSalario
+    addPagamentoSalario,
+    deletePagamentoSalario
   } = usePagamentosSalarios();
   const [isAddDespesaOpen, setIsAddDespesaOpen] = useState(false);
   const [isAddReceitaOpen, setIsAddReceitaOpen] = useState(false);
@@ -426,6 +430,62 @@ const Financeiro = () => {
       observacoes: data.observacoes
     });
   };
+  
+  const handleTogglePayment = async (cliente: Cliente, currentStatus: 'pago' | 'pendente' | 'atrasado') => {
+    const ano = parseInt(selectedYear);
+    const mes = parseInt(selectedMonth);
+    const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
+    
+    if (currentStatus === 'pago' && pagamento) {
+      // Desmarcar - deletar o pagamento
+      await deletePagamento(pagamento.id);
+    } else {
+      // Marcar como pago - criar ou atualizar pagamento
+      const breakdown = calculateRecurrentPaymentBreakdown(cliente);
+      const totalValor = breakdown.dinheiro + breakdown.permuta;
+      
+      if (pagamento) {
+        await updatePagamento(pagamento.id, {
+          status: 'pago',
+          data_pagamento: new Date().toISOString().split('T')[0],
+          valor_pago: totalValor
+        });
+      } else {
+        await registrarPagamento({
+          cliente_id: cliente.id,
+          ano,
+          mes,
+          valor_pago: totalValor,
+          data_pagamento: new Date().toISOString().split('T')[0],
+          status: 'pago'
+        });
+      }
+    }
+  };
+
+  const handleToggleSalaryPayment = async (colaborador: Colaborador, currentStatus: 'pago' | 'pendente') => {
+    const ano = parseInt(selectedYear);
+    const mes = parseInt(selectedMonth);
+    const pagamento = pagamentosSalarios.find(
+      p => p.colaborador_id === colaborador.id && p.ano === ano && p.mes === mes
+    );
+    
+    if (currentStatus === 'pago' && pagamento) {
+      // Desmarcar - deletar o pagamento
+      await deletePagamentoSalario(pagamento.id);
+    } else {
+      // Marcar como pago - criar pagamento
+      await addPagamentoSalario({
+        colaborador_id: colaborador.id,
+        ano,
+        mes,
+        valor_pago: colaborador.salario,
+        data_pagamento: new Date().toISOString().split('T')[0],
+        status: 'pago'
+      });
+    }
+  };
+  
   if (loading) {
     return <div className="flex justify-center items-center h-64">
         <LoadingSpinner />
@@ -709,9 +769,14 @@ const Financeiro = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {cliente.pagamento_mensal && selectedMonth !== 'all' && status !== 'pago' && <Button size="sm" onClick={() => handleOpenConfirmPayment(cliente)}>
-                              Confirmar
-                            </Button>}
+                          {cliente.pagamento_mensal && selectedMonth !== 'all' && (
+                            <div className="flex items-center justify-center">
+                              <Switch
+                                checked={status === 'pago'}
+                                onCheckedChange={() => handleTogglePayment(cliente, status)}
+                              />
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>;
                   })}
@@ -833,10 +898,12 @@ const Financeiro = () => {
                                   </Badge>}
                               </TableCell>
                               <TableCell>
-                                {status === 'pendente' && <Button size="sm" variant="outline" onClick={() => handleOpenConfirmSalaryPayment(colaborador)}>
-                                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                                    Confirmar
-                                  </Button>}
+                                <div className="flex items-center justify-center">
+                                  <Switch
+                                    checked={status === 'pago'}
+                                    onCheckedChange={() => handleToggleSalaryPayment(colaborador, status)}
+                                  />
+                                </div>
                               </TableCell>
                             </>}
                           {selectedMonth === 'all' && <TableCell className="text-right">
