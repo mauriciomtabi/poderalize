@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ServicoRecorrente } from "@/hooks/useClientes";
+import { usePlanos, TipoPlano } from "@/hooks/usePlanos";
 
 interface ServicosRecorrentesFormProps {
   value: ServicoRecorrente;
@@ -16,6 +17,7 @@ interface ServicosRecorrentesFormProps {
 
 export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: ServicosRecorrentesFormProps) => {
   const [servicos, setServicos] = useState<ServicoRecorrente>(value || {});
+  const { planos } = usePlanos();
 
   // Helper to format currency
   const formatCurrency = (value?: number) => {
@@ -51,6 +53,59 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
     onChange(updated);
   };
 
+  const handleSelectPlano = (tipoServico: keyof ServicoRecorrente, planoId: string) => {
+    if (planoId === 'personalizado') {
+      return;
+    }
+
+    const planoSelecionado = planos.find(p => p.id === planoId);
+    if (!planoSelecionado) return;
+
+    const configuracoes = planoSelecionado.configuracoes;
+    
+    let updates: any = {
+      plano: planoSelecionado.descricao || planoSelecionado.nome,
+      modo_pagamento: planoSelecionado.modo_pagamento_padrao,
+      valor: planoSelecionado.valor_sugerido || 0,
+    };
+
+    // Configurações específicas por tipo
+    if (tipoServico === 'social_media') {
+      updates = {
+        ...updates,
+        qtde_feed: configuracoes.qtde_feed || 0,
+        qtde_reels: configuracoes.qtde_reels || 0,
+        qtde_stories_semanais: configuracoes.stories_semanais || 0,
+      };
+    } else if (tipoServico === 'trafego_pago') {
+      updates = {
+        ...updates,
+        qtde_campanhas: configuracoes.qtde_campanhas || 0,
+      };
+    } else if (tipoServico === 'google_ads') {
+      updates = {
+        ...updates,
+        qtde_campanhas: configuracoes.qtde_campanhas || 0,
+      };
+    } else if (tipoServico === 'treinamento_vendas') {
+      updates = {
+        ...updates,
+        periodo: configuracoes.periodo || '',
+      };
+    } else if (tipoServico === 'assinatura_jornada') {
+      updates = {
+        ...updates,
+        periodo: configuracoes.periodo || '',
+      };
+    }
+
+    updateServico(tipoServico, updates);
+  };
+
+  const getPlanosByTipo = (tipo: TipoPlano) => {
+    return planos.filter(p => p.tipo === tipo && p.ativo);
+  };
+
   const activeCount = [
     servicos.social_media?.ativo,
     servicos.trafego_pago?.ativo,
@@ -83,8 +138,31 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
         
         {servicos.social_media?.ativo && (
           <div className="space-y-3 pt-2 border-t">
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Label htmlFor="sm-plano-template">Aplicar Plano Padrão (Opcional)</Label>
+              <Select
+                onValueChange={(value) => handleSelectPlano('social_media', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um plano ou personalize" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personalizado">
+                    ✏️ Personalizado
+                  </SelectItem>
+                  {getPlanosByTipo('social_media').map(plano => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - {formatCurrency(plano.valor_sugerido)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecione um plano para preencher automaticamente os campos abaixo
+              </p>
+            </div>
             <div>
-              <Label htmlFor="sm-plano">Plano</Label>
+              <Label htmlFor="sm-plano">Descrição do Plano</Label>
               <Textarea
                 id="sm-plano"
                 value={servicos.social_media?.plano || ""}
@@ -284,8 +362,31 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
         
         {servicos.trafego_pago?.ativo && (
           <div className="space-y-3 pt-2 border-t">
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Label htmlFor="tp-plano-template">Aplicar Plano Padrão (Opcional)</Label>
+              <Select
+                onValueChange={(value) => handleSelectPlano('trafego_pago', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um plano ou personalize" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personalizado">
+                    ✏️ Personalizado
+                  </SelectItem>
+                  {getPlanosByTipo('trafego_pago').map(plano => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - {formatCurrency(plano.valor_sugerido)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecione um plano para preencher automaticamente os campos abaixo
+              </p>
+            </div>
             <div>
-              <Label htmlFor="tp-plano">Plano</Label>
+              <Label htmlFor="tp-plano">Descrição do Plano</Label>
               <Textarea
                 id="tp-plano"
                 value={servicos.trafego_pago?.plano || ""}
@@ -463,8 +564,31 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
         
         {servicos.treinamento_vendas?.ativo && (
           <div className="space-y-3 pt-2 border-t">
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Label htmlFor="tv-plano-template">Aplicar Plano Padrão (Opcional)</Label>
+              <Select
+                onValueChange={(value) => handleSelectPlano('treinamento_vendas', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um plano ou personalize" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personalizado">
+                    ✏️ Personalizado
+                  </SelectItem>
+                  {getPlanosByTipo('treinamento_vendas').map(plano => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - {formatCurrency(plano.valor_sugerido)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecione um plano para preencher automaticamente os campos abaixo
+              </p>
+            </div>
             <div>
-              <Label htmlFor="tv-plano">Plano</Label>
+              <Label htmlFor="tv-plano">Descrição do Plano</Label>
               <Textarea
                 id="tv-plano"
                 value={servicos.treinamento_vendas?.plano || ""}
@@ -649,8 +773,31 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
         
         {servicos.google_ads?.ativo && (
           <div className="space-y-3 pt-2 border-t">
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Label htmlFor="ga-plano-template">Aplicar Plano Padrão (Opcional)</Label>
+              <Select
+                onValueChange={(value) => handleSelectPlano('google_ads', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um plano ou personalize" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personalizado">
+                    ✏️ Personalizado
+                  </SelectItem>
+                  {getPlanosByTipo('google_ads').map(plano => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - {formatCurrency(plano.valor_sugerido)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecione um plano para preencher automaticamente os campos abaixo
+              </p>
+            </div>
             <div>
-              <Label htmlFor="ga-plano">Plano</Label>
+              <Label htmlFor="ga-plano">Descrição do Plano</Label>
               <Textarea
                 id="ga-plano"
                 value={servicos.google_ads?.plano || ""}
@@ -817,6 +964,29 @@ export const ServicosRecorrentesForm = ({ value, onChange, onTotalChange }: Serv
         
         {servicos.assinatura_jornada?.ativo && (
           <div className="space-y-3 pt-2 border-t">
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Label htmlFor="aj-plano-template">Aplicar Plano Padrão (Opcional)</Label>
+              <Select
+                onValueChange={(value) => handleSelectPlano('assinatura_jornada', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um plano ou personalize" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personalizado">
+                    ✏️ Personalizado
+                  </SelectItem>
+                  {getPlanosByTipo('assinatura_jornada').map(plano => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - {formatCurrency(plano.valor_sugerido)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Selecione um plano para preencher automaticamente os campos abaixo
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="aj-modo">Modo de Pagamento</Label>
