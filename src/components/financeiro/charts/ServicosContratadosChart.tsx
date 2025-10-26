@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from "recharts";
 import { Cliente } from "@/hooks/useClientes";
 
 interface ServicosContratadosChartProps {
@@ -172,7 +172,14 @@ export const ServicosContratadosChart = ({ clientes, paymentFilter }: ServicosCo
               fill="hsl(var(--primary))" 
               name="Valor Total"
               radius={[8, 8, 0, 0]}
-            />
+            >
+              <LabelList 
+                dataKey="valor" 
+                position="top" 
+                formatter={(value: number) => formatCurrency(value)}
+                style={{ fill: 'hsl(var(--foreground))', fontSize: '12px', fontWeight: 600 }}
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
