@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { Cliente } from "@/hooks/useClientes";
 
 interface ServicosContratadosChartProps {
@@ -143,12 +143,12 @@ export const ServicosContratadosChart = ({ clientes, paymentFilter }: ServicosCo
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <BarChart data={chartData} margin={{ top: 40, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis 
               dataKey="nome" 
-              className="text-sm"
-              tick={{ fill: 'hsl(var(--foreground))' }}
+              tick={false}
+              axisLine={false}
             />
             <YAxis 
               className="text-sm"
@@ -172,7 +172,17 @@ export const ServicosContratadosChart = ({ clientes, paymentFilter }: ServicosCo
               fill="hsl(var(--primary))" 
               name="Valor Total"
               radius={[8, 8, 0, 0]}
-            />
+            >
+              <LabelList 
+                dataKey="nome" 
+                position="top" 
+                style={{ 
+                  fill: 'hsl(var(--foreground))',
+                  fontSize: '12px',
+                  fontWeight: 500
+                }}
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
