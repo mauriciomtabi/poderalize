@@ -29,6 +29,7 @@ import { CreateReceitaData } from "@/hooks/useReceitas";
 import { Cliente } from "@/hooks/useClientes";
 import { Colaborador } from "@/types/colaboradores";
 import { ServicosUnicosSection } from "@/components/financeiro/ServicosUnicosSection";
+import { ServicosContratadosChart } from "@/components/financeiro/charts/ServicosContratadosChart";
 const Financeiro = () => {
   const {
     clientes,
@@ -489,15 +490,15 @@ const Financeiro = () => {
   }
   return <div className="space-y-6 animate-fade-in">
       {/* Filtros de Período */}
-      <div className="flex flex-row flex-wrap items-center justify-between bg-card border rounded-lg p-4">
+      <div className="flex flex-row flex-wrap items-center justify-between bg-card border rounded-lg p-5 gap-4">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Calendar size={18} />
           <span>Período:</span>
         </div>
         
-        <div className="flex flex-row flex-wrap gap-3 flex-1">
+        <div className="flex flex-row flex-wrap gap-4 flex-1">
           <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Ano" />
             </SelectTrigger>
             <SelectContent>
@@ -508,7 +509,7 @@ const Financeiro = () => {
           </Select>
 
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Mês" />
             </SelectTrigger>
             <SelectContent>
@@ -519,7 +520,7 @@ const Financeiro = () => {
           </Select>
 
           <Select value={paymentFilter} onValueChange={(value: 'total' | 'dinheiro' | 'permuta') => setPaymentFilter(value)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[280px]">
               <SelectValue placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
@@ -528,27 +529,81 @@ const Financeiro = () => {
               <SelectItem value="permuta">Somente Permuta</SelectItem>
             </SelectContent>
           </Select>
-
-          <Button variant="outline" size="sm" onClick={() => {
-          setSelectedYear(currentYear.toString());
-          setSelectedMonth(currentMonth.toString());
-        }} className="w-auto">
-            Limpar
-          </Button>
         </div>
       </div>
 
-      {/* Resumo Geral */}
-      
+      {/* Dashboard Cards Principais */}
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+        <Card className="overflow-hidden hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Total de Receitas</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-500">
+                  {formatCurrency(totalReceitas)}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-950 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Alerta de dados inconsistentes */}
-      {clientesSemServicos.length > 0}
+        <Card className="overflow-hidden hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Total de Despesas</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-500">
+                  {formatCurrency(totalDespesas)}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-950 flex items-center justify-center">
+                <TrendingDown className="h-6 w-6 text-red-600 dark:text-red-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Cards KPI Principais - Afetados por TODOS os filtros */}
-      <div className="space-y-3">
-        
-        
-        
+        <Card className="overflow-hidden hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Saldo</p>
+                <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-blue-600 dark:text-blue-500' : 'text-red-600 dark:text-red-500'}`}>
+                  {formatCurrency(saldo)}
+                </p>
+              </div>
+              <div className={`h-12 w-12 rounded-full ${saldo >= 0 ? 'bg-blue-100 dark:bg-blue-950' : 'bg-red-100 dark:bg-red-950'} flex items-center justify-center`}>
+                <DollarSign className={`h-6 w-6 ${saldo >= 0 ? 'text-blue-600 dark:text-blue-500' : 'text-red-600 dark:text-red-500'}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Valor Total (Clientes Ativos)</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-500">
+                  {formatCurrency(
+                    clientes
+                      .filter(c => c.status !== 'inativo')
+                      .reduce((sum, c) => {
+                        const breakdown = calculateRecurrentPaymentBreakdown(c);
+                        return sum + breakdown.dinheiro + breakdown.permuta;
+                      }, 0)
+                  )}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs para Dashboard, Receitas e Despesas */}
@@ -580,7 +635,7 @@ const Financeiro = () => {
             <CardContent>
               {/* Cards de resumo por status - Grid otimizado */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-2 border-green-500/30 dark:border-green-600/40 bg-green-50/50 dark:bg-green-950/20">
+                <Card className="overflow-hidden border-2 border-green-500/30 dark:border-green-600/40 bg-green-50/50 dark:bg-green-950/20">
                   <CardHeader className="pb-2 px-4 pt-3">
                     <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                       <span className="text-lg">✅</span>
@@ -594,7 +649,7 @@ const Financeiro = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="border-2 border-yellow-500/30 dark:border-yellow-600/40 bg-yellow-50/50 dark:bg-yellow-950/20">
+                <Card className="overflow-hidden border-2 border-yellow-500/30 dark:border-yellow-600/40 bg-yellow-50/50 dark:bg-yellow-950/20">
                   <CardHeader className="pb-2 px-4 pt-3">
                     <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                       <span className="text-lg">⏳</span>
@@ -608,7 +663,7 @@ const Financeiro = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="border-2 border-red-500/30 dark:border-red-600/40 bg-red-50/50 dark:bg-red-950/20">
+                <Card className="overflow-hidden border-2 border-red-500/30 dark:border-red-600/40 bg-red-50/50 dark:bg-red-950/20">
                   <CardHeader className="pb-2 px-4 pt-3">
                     <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                       <span className="text-lg">⚠️</span>
@@ -624,6 +679,12 @@ const Financeiro = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Gráfico de Serviços Contratados */}
+          <ServicosContratadosChart 
+            clientes={clientes.filter(c => c.status !== 'inativo')} 
+            paymentFilter={paymentFilter}
+          />
         </TabsContent>
 
         {/* TAB DE RECEITAS */}
