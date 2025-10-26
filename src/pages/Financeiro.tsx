@@ -542,18 +542,7 @@ const Financeiro = () => {
       
 
       {/* Alerta de dados inconsistentes */}
-      {clientesSemServicos.length > 0 && <Alert className="border-warning bg-warning/10">
-          <AlertCircle className="h-4 w-4 text-warning" />
-          <AlertTitle>Atenção: Dados Inconsistentes</AlertTitle>
-          <AlertDescription className="flex flex-col gap-2">
-            <p>
-              {clientesSemServicos.length} {clientesSemServicos.length === 1 ? 'cliente tem' : 'clientes têm'} valor de fechamento definido mas não {clientesSemServicos.length === 1 ? 'possui' : 'possuem'} serviços recorrentes configurados.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              O gráfico está exibindo esses valores como "dinheiro" por padrão. Para maior precisão nos relatórios, configure os serviços recorrentes na página de Clientes.
-            </p>
-          </AlertDescription>
-        </Alert>}
+      {clientesSemServicos.length > 0}
 
       {/* Cards KPI Principais - Afetados por TODOS os filtros */}
       <div className="space-y-3">
@@ -603,11 +592,7 @@ const Financeiro = () => {
                   </CardHeader>
                   <CardContent className="px-4 pb-3">
                     <p className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-500">
-                      {formatCurrency(
-                        receitasControlData
-                          .filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth))
-                          .reduce((sum, item) => sum + item.pago, 0)
-                      )}
+                      {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.pago, 0))}
                     </p>
                   </CardContent>
                 </Card>
@@ -621,11 +606,7 @@ const Financeiro = () => {
                   </CardHeader>
                   <CardContent className="px-4 pb-3">
                     <p className="text-xl md:text-2xl font-bold text-yellow-600 dark:text-yellow-500">
-                      {formatCurrency(
-                        receitasControlData
-                          .filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth))
-                          .reduce((sum, item) => sum + item.pendente, 0)
-                      )}
+                      {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.pendente, 0))}
                     </p>
                   </CardContent>
                 </Card>
@@ -639,11 +620,7 @@ const Financeiro = () => {
                   </CardHeader>
                   <CardContent className="px-4 pb-3">
                     <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-500">
-                      {formatCurrency(
-                        receitasControlData
-                          .filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth))
-                          .reduce((sum, item) => sum + item.atrasado, 0)
-                      )}
+                      {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.atrasado, 0))}
                     </p>
                   </CardContent>
                 </Card>
