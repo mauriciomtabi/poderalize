@@ -604,6 +604,38 @@ const Financeiro = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="overflow-hidden hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Valor Dinheiro</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(totalDinheiro)}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Valor Permuta</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {formatCurrency(totalPermuta)}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-950 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs para Dashboard, Receitas e Despesas */}
@@ -625,60 +657,55 @@ const Financeiro = () => {
 
         {/* TAB DE DASHBOARD */}
         <TabsContent value="dashboard" className="space-y-6 mt-6">
-          {/* Controle de Receitas por Status - Cards apenas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                📊 Controle de Receitas por Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Cards de resumo por status - Grid otimizado */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="overflow-hidden border-2 border-green-500/30 dark:border-green-600/40 bg-green-50/50 dark:bg-green-950/20">
-                  <CardHeader className="pb-2 px-4 pt-3">
-                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                      <span className="text-lg">✅</span>
-                      Pago
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-3">
-                    <p className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-500">
-                      {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.pago, 0))}
-                    </p>
-                  </CardContent>
-                </Card>
+          {/* Controle de Receitas por Status - Cards lado a lado */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              📊 Controle de Receitas por Status
+            </h3>
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+              <Card className="overflow-hidden border-2 border-green-500/30 dark:border-green-600/40 bg-green-50/50 dark:bg-green-950/20 hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2 px-4 pt-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <span className="text-xl">✅</span>
+                    Pago
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-500">
+                    {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.pago, 0))}
+                  </p>
+                </CardContent>
+              </Card>
 
-                <Card className="overflow-hidden border-2 border-yellow-500/30 dark:border-yellow-600/40 bg-yellow-50/50 dark:bg-yellow-950/20">
-                  <CardHeader className="pb-2 px-4 pt-3">
-                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                      <span className="text-lg">⏳</span>
-                      Pendente
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-3">
-                    <p className="text-xl md:text-2xl font-bold text-yellow-600 dark:text-yellow-500">
-                      {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.pendente, 0))}
-                    </p>
-                  </CardContent>
-                </Card>
+              <Card className="overflow-hidden border-2 border-yellow-500/30 dark:border-yellow-600/40 bg-yellow-50/50 dark:bg-yellow-950/20 hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2 px-4 pt-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <span className="text-xl">⏳</span>
+                    Pendente
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">
+                    {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.pendente, 0))}
+                  </p>
+                </CardContent>
+              </Card>
 
-                <Card className="overflow-hidden border-2 border-red-500/30 dark:border-red-600/40 bg-red-50/50 dark:bg-red-950/20">
-                  <CardHeader className="pb-2 px-4 pt-3">
-                    <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                      <span className="text-lg">⚠️</span>
-                      Atrasado
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-3">
-                    <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-500">
-                      {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.atrasado, 0))}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
+              <Card className="overflow-hidden border-2 border-red-500/30 dark:border-red-600/40 bg-red-50/50 dark:bg-red-950/20 hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2 px-4 pt-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <span className="text-xl">⚠️</span>
+                    Atrasado
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-500">
+                    {formatCurrency(receitasControlData.filter(item => selectedMonth === 'all' ? true : item.mesNumero === parseInt(selectedMonth)).reduce((sum, item) => sum + item.atrasado, 0))}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
           {/* Gráfico de Serviços Contratados */}
           <ServicosContratadosChart 
