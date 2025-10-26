@@ -1503,6 +1503,48 @@ export type Database = {
           },
         ]
       }
+      planos: {
+        Row: {
+          ativo: boolean | null
+          configuracoes: Json | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          modo_pagamento_padrao: string | null
+          nome: string
+          tipo: string
+          updated_at: string | null
+          user_id: string
+          valor_sugerido: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          configuracoes?: Json | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          modo_pagamento_padrao?: string | null
+          nome: string
+          tipo: string
+          updated_at?: string | null
+          user_id: string
+          valor_sugerido?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          configuracoes?: Json | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          modo_pagamento_padrao?: string | null
+          nome?: string
+          tipo?: string
+          updated_at?: string | null
+          user_id?: string
+          valor_sugerido?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

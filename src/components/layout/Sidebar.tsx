@@ -12,6 +12,7 @@ import {
   PieChart,
   UserCheck,
   DollarSign,
+  Package,
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ const menuItems = [
   { icon: PieChart, label: "CRM", href: "/crm", page: "crm" as PagePermission },
   { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
   { icon: UserCheck, label: "Clientes", href: "/clientes", page: "clientes" as PagePermission },
+  { icon: Package, label: "Planos", href: "/planos", page: "planos" as PagePermission },
   { icon: DollarSign, label: "Financeiro", href: "/financeiro", page: "financeiro" as PagePermission, adminOnly: true },
 ];
 
