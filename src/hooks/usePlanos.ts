@@ -38,8 +38,17 @@ export interface Plano {
 export type CreatePlanoData = Omit<Plano, 'id' | 'user_id' | 'created_at' | 'updated_at'>;
 export type UpdatePlanoData = Partial<CreatePlanoData>;
 
+// Global cache to share planos state across all hook instances
+export type PlanosListener = (planos: Plano[]) => void;
+let planosCache: Plano[] = [];
+const planosListeners = new Set<PlanosListener>();
+const setPlanosCache = (next: Plano[]) => {
+  planosCache = next;
+  planosListeners.forEach((l) => l(planosCache));
+};
+
 export function usePlanos() {
-  const [planos, setPlanos] = useState<Plano[]>([]);
+  const [planos, setPlanos] = useState<Plano[]>(planosCache);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
@@ -56,7 +65,8 @@ export function usePlanos() {
         .order('nome', { ascending: true });
 
       if (error) throw error;
-      setPlanos((data || []) as Plano[]);
+      const next = (data || []) as Plano[];
+      setPlanosCache(next);
     } catch (error: any) {
       toast.error('Erro ao carregar planos: ' + error.message);
     } finally {
@@ -65,7 +75,16 @@ export function usePlanos() {
   }, [user]);
 
   useEffect(() => {
-    loadPlanos();
+    const listener: PlanosListener = (next) => setPlanos(next);
+    planosListeners.add(listener);
+    if (planosCache.length === 0) {
+      loadPlanos();
+    } else {
+      setPlanos(planosCache);
+    }
+    return () => {
+      planosListeners.delete(listener);
+    };
   }, [loadPlanos]);
 
   const createPlano = async (data: CreatePlanoData): Promise<boolean> => {
@@ -83,9 +102,9 @@ export function usePlanos() {
 
       if (error) throw error;
       
-      // Atualização otimista: adicionar ao estado imediatamente
+      // Atualização otimista global: adicionar ao cache compartilhado
       if (newPlano) {
-        setPlanos(prevPlanos => [...prevPlanos, newPlano as Plano]);
+        setPlanosCache([...planosCache, newPlano as Plano]);
       }
       
       toast.success('Plano criado com sucesso!');
@@ -111,10 +130,10 @@ export function usePlanos() {
 
       if (error) throw error;
       
-      // Atualização otimista: atualizar no estado imediatamente
+      // Atualização otimista global: atualizar no cache compartilhado
       if (updatedPlano) {
-        setPlanos(prevPlanos => 
-          prevPlanos.map(p => p.id === id ? updatedPlano as Plano : p)
+        setPlanosCache(
+          planosCache.map(p => p.id === id ? (updatedPlano as Plano) : p)
         );
       }
       
@@ -139,8 +158,8 @@ export function usePlanos() {
 
       if (error) throw error;
       
-      // Atualização otimista: remover do estado imediatamente
-      setPlanos(prevPlanos => prevPlanos.filter(p => p.id !== id));
+      // Atualização otimista global: remover do cache compartilhado
+      setPlanosCache(planosCache.filter(p => p.id !== id));
       
       toast.success('Plano excluído com sucesso!');
       
