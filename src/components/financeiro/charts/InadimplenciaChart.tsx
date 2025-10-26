@@ -66,25 +66,41 @@ export const InadimplenciaChart = ({
     const ano = parseInt(selectedYear);
     const mes = parseInt(selectedMonth);
 
-    // 1. Clientes recorrentes inadimplentes
+    // 1. Clientes recorrentes/valor_fechamento inadimplentes
     const clientesRecorrentes = clientes
-      .filter(cliente => {
-        if (!cliente.pagamento_mensal) return false;
-        const status = getPaymentStatus(cliente);
-        return status === 'atrasado';
-      })
       .map(cliente => {
-        const breakdown = calculateRecurrentPaymentBreakdown(cliente);
-        const valorTotal = breakdown.dinheiro + breakdown.permuta;
-        
+        const hasActiveRecurring = Object.values(cliente.servicos_recorrentes || {}).some((s: any) => s?.ativo);
+        const hasValorFechamento = (cliente as any).valor_fechamento && Number((cliente as any).valor_fechamento) > 0;
+        if (!hasActiveRecurring && !hasValorFechamento) return null;
+
+        const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
+        const diaPagamento = (cliente as any).dia_pagamento || 5;
+        const dataVencimento = new Date(ano, mes - 1, diaPagamento);
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth() + 1;
+        const mesVenceu = mes < mesAtual || (mes === mesAtual && hoje > dataVencimento);
+
+        // Só conta se não há registro de pago e o mês venceu
+        if (pagamento?.status === 'pago' || !mesVenceu) return null;
+
+        let valorTotal = 0;
+        if (hasActiveRecurring) {
+          const breakdown = calculateRecurrentPaymentBreakdown(cliente);
+          valorTotal = breakdown.dinheiro + breakdown.permuta;
+        } else if (hasValorFechamento) {
+          valorTotal = Number((cliente as any).valor_fechamento) || 0;
+        }
+
+        if (valorTotal <= 0) return null;
+
         return {
           nome: cliente.nome || cliente.empresa || 'Cliente sem nome',
           valor: valorTotal,
-          dinheiro: breakdown.dinheiro,
-          permuta: breakdown.permuta
+          dinheiro: hasActiveRecurring ? calculateRecurrentPaymentBreakdown(cliente).dinheiro : (Number((cliente as any).valor_fechamento) || 0),
+          permuta: hasActiveRecurring ? calculateRecurrentPaymentBreakdown(cliente).permuta : 0,
         };
       })
-      .filter(item => item.valor > 0);
+      .filter((item): item is {nome: string; valor: number; dinheiro: number; permuta: number} => !!item);
 
     // 2. Serviços únicos atrasados
     const servicosAtrasados: Array<{nome: string; valor: number; dinheiro: number; permuta: number}> = [];
