@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Users, Search, DollarSign, Calendar, Building2, Phone, Mail, Globe, Plus, Pencil, User, Trash2, FileText } from 'lucide-react';
-import { formatCNPJ, formatPhone, ensureUrlProtocol, getInstagramUrl, getFacebookUrl } from '@/lib/utils';
+import { formatCNPJ, formatPhone, ensureUrlProtocol, getInstagramUrl, getFacebookUrl, cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -126,11 +126,19 @@ const Clientes = () => {
   const handleConfirmInativar = async (motivo: string) => {
     if (!clienteToInativar) return;
 
-    await updateCliente(clienteToInativar.id, {
+    const success = await updateCliente(clienteToInativar.id, {
       status: 'inativo',
       motivo_inativo: motivo,
       data_inativacao: new Date().toISOString(),
     });
+
+    if (success) {
+      // Fechar o modal de visualização se estiver aberto
+      if (selectedCliente?.id === clienteToInativar.id) {
+        setIsViewModalOpen(false);
+        setSelectedCliente(null);
+      }
+    }
 
     setClienteToInativar(null);
   };
@@ -206,7 +214,14 @@ const Clientes = () => {
               </p>
             </CardContent>
           </Card> : <div className="grid grid-cols-3 gap-6">
-            {filteredClientes.map(cliente => <Card key={cliente.id} className="cursor-pointer hover:shadow-lg transition-shadow p-6 landscape:p-3" onClick={() => handleCardClick(cliente)}>
+            {filteredClientes.map(cliente => <Card 
+                key={cliente.id} 
+                className={cn(
+                  "cursor-pointer hover:shadow-lg transition-shadow p-6 landscape:p-3",
+                  cliente.status === 'inativo' && "opacity-60 bg-muted/50 border-muted-foreground/20"
+                )}
+                onClick={() => handleCardClick(cliente)}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-3">
                     <Avatar className="h-12 w-12 flex-shrink-0">

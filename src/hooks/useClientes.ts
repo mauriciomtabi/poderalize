@@ -15,6 +15,11 @@ const clienteSchema = z.object({
   data_fechamento: z.string().optional(),
   observacoes: z.string().trim().max(1000, "Observações devem ter no máximo 1000 caracteres").optional(),
   
+  // Status
+  status: z.enum(['ativo', 'inativo']).optional(),
+  motivo_inativo: z.string().trim().optional(),
+  data_inativacao: z.string().optional(),
+  
   // Presença Digital
   site: z.string().trim().optional(),
   instagram: z.string().trim().optional(),
