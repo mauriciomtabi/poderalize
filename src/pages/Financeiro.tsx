@@ -208,7 +208,11 @@ const Financeiro = () => {
   };
 
   // Calcular totais de Dinheiro e Permuta separadamente, considerando filtros
-  const { totalDinheiro, totalPermuta, totalReceitas } = useMemo(() => {
+  const {
+    totalDinheiro,
+    totalPermuta,
+    totalReceitas
+  } = useMemo(() => {
     let dinheiro = 0;
     let permuta = 0;
 
@@ -216,7 +220,9 @@ const Financeiro = () => {
     filteredClientes.forEach(cliente => {
       if (!cliente.pagamento_mensal) {
         // Cliente sem pagamento mensal - verificar período
-        const filtered = filterByPeriod([{ data_fechamento: cliente.data_fechamento }], 'data_fechamento');
+        const filtered = filterByPeriod([{
+          data_fechamento: cliente.data_fechamento
+        }], 'data_fechamento');
         if (filtered.length > 0) {
           const breakdown = calculateRecurrentPaymentBreakdown(cliente);
           dinheiro += breakdown.dinheiro;
@@ -227,14 +233,10 @@ const Financeiro = () => {
 
       // Cliente com pagamento mensal
       const breakdown = calculateRecurrentPaymentBreakdown(cliente);
-      
       if (selectedMonth === 'all') {
         // Todos os meses: somar pagamentos confirmados
         const ano = parseInt(selectedYear);
-        const pagamentosAno = pagamentos.filter(
-          p => p.cliente_id === cliente.id && p.ano === ano && p.status === 'pago'
-        );
-        
+        const pagamentosAno = pagamentos.filter(p => p.cliente_id === cliente.id && p.ano === ano && p.status === 'pago');
         pagamentosAno.forEach(() => {
           dinheiro += breakdown.dinheiro;
           permuta += breakdown.permuta;
@@ -244,7 +246,6 @@ const Financeiro = () => {
         const ano = parseInt(selectedYear);
         const mes = parseInt(selectedMonth);
         const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
-        
         if (pagamento?.status === 'pago') {
           dinheiro += breakdown.dinheiro;
           permuta += breakdown.permuta;
@@ -261,15 +262,13 @@ const Financeiro = () => {
       const servicosUnicos = cliente.servicos_unicos || {};
       Object.values(servicosUnicos).forEach((servico: any) => {
         if (!servico?.selecionado) return;
-        
         const dataPagamento = servico.data_prevista_pagamento || servico.data_pagamento;
         if (!dataPagamento) return;
-        
-        const filtered = filterByPeriod([{ data: dataPagamento }], 'data');
-        
+        const filtered = filterByPeriod([{
+          data: dataPagamento
+        }], 'data');
         if (filtered.length > 0 && servico.pagamento_confirmado) {
           const modoPagamento = servico.modo_pagamento || 'dinheiro';
-          
           if (modoPagamento === 'dinheiro') {
             dinheiro += servico.valor || 0;
           } else if (modoPagamento === 'permuta') {
@@ -291,8 +290,11 @@ const Financeiro = () => {
     } else if (paymentFilter === 'permuta') {
       total = permuta;
     }
-
-    return { totalDinheiro: dinheiro, totalPermuta: permuta, totalReceitas: total };
+    return {
+      totalDinheiro: dinheiro,
+      totalPermuta: permuta,
+      totalReceitas: total
+    };
   }, [filteredClientes, pagamentos, selectedYear, selectedMonth, paymentFilter, filteredReceitas, getPagamentoByPeriodo, calculateRecurrentPaymentBreakdown, filterByPeriod]);
 
   // Função para verificar se salário foi pago
@@ -354,13 +356,7 @@ const Financeiro = () => {
   };
 
   // Usar hook para dados do gráfico de receitas
-  const receitasControlData = useReceitasControl(
-    clientes.filter(c => c.status !== 'inativo'), 
-    pagamentos, 
-    selectedYear, 
-    calculateRecurrentPaymentBreakdown, 
-    paymentFilter
-  );
+  const receitasControlData = useReceitasControl(clientes.filter(c => c.status !== 'inativo'), pagamentos, selectedYear, calculateRecurrentPaymentBreakdown, paymentFilter);
 
   // Detectar clientes com valor_fechamento mas sem serviços configurados
   const clientesSemServicos = useMemo(() => {
@@ -439,12 +435,10 @@ const Financeiro = () => {
       observacoes: data.observacoes
     });
   };
-  
   const handleTogglePayment = async (cliente: Cliente, currentStatus: 'pago' | 'pendente' | 'atrasado') => {
     const ano = parseInt(selectedYear);
     const mes = parseInt(selectedMonth);
     const pagamento = getPagamentoByPeriodo(cliente.id, ano, mes);
-    
     if (currentStatus === 'pago' && pagamento) {
       // Desmarcar - deletar o pagamento
       await deletePagamento(pagamento.id);
@@ -452,7 +446,6 @@ const Financeiro = () => {
       // Marcar como pago - criar ou atualizar pagamento
       const breakdown = calculateRecurrentPaymentBreakdown(cliente);
       const totalValor = breakdown.dinheiro + breakdown.permuta;
-      
       if (pagamento) {
         await updatePagamento(pagamento.id, {
           status: 'pago',
@@ -471,14 +464,10 @@ const Financeiro = () => {
       }
     }
   };
-
   const handleToggleSalaryPayment = async (colaborador: Colaborador, currentStatus: 'pago' | 'pendente') => {
     const ano = parseInt(selectedYear);
     const mes = parseInt(selectedMonth);
-    const pagamento = pagamentosSalarios.find(
-      p => p.colaborador_id === colaborador.id && p.ano === ano && p.mes === mes
-    );
-    
+    const pagamento = pagamentosSalarios.find(p => p.colaborador_id === colaborador.id && p.ano === ano && p.mes === mes);
     if (currentStatus === 'pago' && pagamento) {
       // Desmarcar - deletar o pagamento
       await deletePagamentoSalario(pagamento.id);
@@ -494,7 +483,6 @@ const Financeiro = () => {
       });
     }
   };
-  
   if (loading) {
     return <div className="flex justify-center items-center h-64">
         <LoadingSpinner />
@@ -555,8 +543,7 @@ const Financeiro = () => {
       
 
       {/* Alerta de dados inconsistentes */}
-      {clientesSemServicos.length > 0 && (
-        <Alert className="border-warning bg-warning/10">
+      {clientesSemServicos.length > 0 && <Alert className="border-warning bg-warning/10">
           <AlertCircle className="h-4 w-4 text-warning" />
           <AlertTitle>Atenção: Dados Inconsistentes</AlertTitle>
           <AlertDescription className="flex flex-col gap-2">
@@ -567,8 +554,7 @@ const Financeiro = () => {
               O gráfico está exibindo esses valores como "dinheiro" por padrão. Para maior precisão nos relatórios, configure os serviços recorrentes na página de Clientes.
             </p>
           </AlertDescription>
-        </Alert>
-      )}
+        </Alert>}
 
       {/* Cards KPI Principais - Afetados por TODOS os filtros */}
       <div className="space-y-3">
@@ -577,100 +563,7 @@ const Financeiro = () => {
           Resumo do Período
         </h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* Card 1: Total Receitas */}
-          <Card className="transition-all duration-300 hover:shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp size={16} className="text-green-600" />
-                Total Receitas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(totalReceitas)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {paymentFilter === 'total' ? 'Dinheiro + Permuta' : 
-                 paymentFilter === 'dinheiro' ? 'Somente Dinheiro' : 'Somente Permuta'}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Card 2: Total Dinheiro */}
-          <Card className="transition-all duration-300 hover:shadow-lg border-green-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign size={16} className="text-green-600" />
-                Dinheiro
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-700">
-                {formatCurrency(totalDinheiro)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Receitas em dinheiro
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Card 3: Total Permuta */}
-          <Card className="transition-all duration-300 hover:shadow-lg border-yellow-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign size={16} className="text-yellow-600" />
-                Permuta
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-700">
-                {formatCurrency(totalPermuta)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Receitas em permuta
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Card 4: Total Despesas */}
-          <Card className="transition-all duration-300 hover:shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingDown size={16} className="text-red-600" />
-                Total Despesas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {formatCurrency(totalDespesas)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Salários + Outras
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Card 5: Saldo */}
-          <Card className={`transition-all duration-300 hover:shadow-lg ${
-            saldo >= 0 ? 'border-green-300 bg-green-50/50' : 'border-red-300 bg-red-50/50'
-          }`}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign size={16} className={saldo >= 0 ? 'text-green-600' : 'text-red-600'} />
-                Saldo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(saldo)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Receitas - Despesas
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        
       </div>
 
       {/* Tabs para Dashboard, Receitas e Despesas */}
@@ -778,14 +671,9 @@ const Financeiro = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {cliente.pagamento_mensal && selectedMonth !== 'all' && (
-                            <div className="flex items-center justify-center">
-                              <Switch
-                                checked={status === 'pago'}
-                                onCheckedChange={() => handleTogglePayment(cliente, status)}
-                              />
-                            </div>
-                          )}
+                          {cliente.pagamento_mensal && selectedMonth !== 'all' && <div className="flex items-center justify-center">
+                              <Switch checked={status === 'pago'} onCheckedChange={() => handleTogglePayment(cliente, status)} />
+                            </div>}
                         </TableCell>
                       </TableRow>;
                   })}
@@ -796,12 +684,7 @@ const Financeiro = () => {
       </Card>
 
           {/* Serviços Únicos */}
-          <ServicosUnicosSection 
-            clientes={clientes.filter(c => c.status !== 'inativo')} 
-            formatCurrency={formatCurrency} 
-            selectedYear={selectedYear} 
-            selectedMonth={selectedMonth} 
-          />
+          <ServicosUnicosSection clientes={clientes.filter(c => c.status !== 'inativo')} formatCurrency={formatCurrency} selectedYear={selectedYear} selectedMonth={selectedMonth} />
 
           {/* Outras Receitas */}
           <Card>
@@ -913,10 +796,7 @@ const Financeiro = () => {
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center justify-center">
-                                  <Switch
-                                    checked={status === 'pago'}
-                                    onCheckedChange={() => handleToggleSalaryPayment(colaborador, status)}
-                                  />
+                                  <Switch checked={status === 'pago'} onCheckedChange={() => handleToggleSalaryPayment(colaborador, status)} />
                                 </div>
                               </TableCell>
                             </>}
