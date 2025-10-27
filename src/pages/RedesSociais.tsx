@@ -33,17 +33,7 @@ export default function RedesSociais() {
 
       {/* Dashboard Card */}
       <Card className={`${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}>
-        <CardHeader className={isFullscreen ? 'flex flex-row items-center justify-between' : ''}>
-          <div>
-            <CardTitle>Looker Studio Analytics</CardTitle>
-            <CardDescription>
-              Dashboard integrado com métricas em tempo real
-            </CardDescription>
-          </div>
-          {isFullscreen && <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
-              <Minimize2 className="w-4 h-4" />
-            </Button>}
-        </CardHeader>
+        
         <CardContent className="p-0 md:p-6">
           <div className="relative w-full" style={{
           minHeight: isFullscreen ? 'calc(100vh - 200px)' : '600px'
