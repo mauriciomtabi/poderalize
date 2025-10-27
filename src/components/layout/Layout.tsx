@@ -30,6 +30,8 @@ const getPageTitle = (pathname: string): string => {
     '/leads': 'Leads',
     '/clientes': 'Clientes',
     '/vendas': 'Vendas',
+    '/planos': 'Planos',
+    '/redes-sociais': 'Redes Sociais',
     '/acompanhamento': 'Acompanhamento',
     '/relatorios': 'Relatórios',
     '/configuracoes': 'Configurações',

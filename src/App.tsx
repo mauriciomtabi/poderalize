@@ -17,6 +17,7 @@ import Clientes from "./pages/Clientes";
 import Vendas from "./pages/Vendas";
 import Financeiro from "./pages/Financeiro";
 import Planos from "./pages/Planos";
+import RedesSociais from "./pages/RedesSociais";
 import { Auth } from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -71,6 +72,7 @@ const App = () => (
                   <Route path="clientes" element={<Clientes />} />
                   <Route path="vendas" element={<Vendas />} />
                   <Route path="planos" element={<Planos />} />
+                  <Route path="redes-sociais" element={<RedesSociais />} />
                   <Route path="financeiro" element={
                     <AuthGuard requiredRole="admin">
                       <Financeiro />

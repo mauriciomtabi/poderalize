@@ -13,7 +13,8 @@ import {
   UserCheck,
   DollarSign,
   Package,
-  X
+  X,
+  TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ const menuItems = [
   { icon: Target, label: "Leads", href: "/leads", page: "leads" as PagePermission },
   { icon: UserCheck, label: "Clientes", href: "/clientes", page: "clientes" as PagePermission },
   { icon: Package, label: "Planos", href: "/planos", page: "planos" as PagePermission },
+  { icon: TrendingUp, label: "Redes Sociais", href: "/redes-sociais", page: "redes-sociais" as PagePermission },
   { icon: DollarSign, label: "Financeiro", href: "/financeiro", page: "financeiro" as PagePermission, adminOnly: true },
 ];
 
