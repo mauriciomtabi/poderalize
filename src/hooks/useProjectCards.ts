@@ -68,9 +68,10 @@ export const useProjectCards = (listId?: string) => {
           id, list_id, title, description, status, priority, 
           due_date, start_date, estimated_hours, actual_hours, 
           position, cover, location, archived, watching, 
-          created_by, client_id, created_at, updated_at,
+          created_by, client_id, created_at, updated_at, custom_fields,
           checklists:custom_fields->checklists,
           comments:custom_fields->comments,
+          attachments:custom_fields->attachments,
           project_lists!inner(board_id)
         ` as any)
         .eq('project_lists.board_id', boardId)
@@ -93,16 +94,19 @@ export const useProjectCards = (listId?: string) => {
 
       console.timeEnd('⚡ Fetch board cards');
       
-      // Reconstruct custom_fields without attachments (loaded on-demand in modal)
+      // Reconstruct custom_fields with attachments count
       const cleanedData = (data || []).map(card => {
-        const { checklists, comments, ...rest } = card as any;
+        const { checklists, comments, attachments, ...rest } = card as any;
+        const attachmentsArray = attachments || rest.custom_fields?.attachments || [];
+        const attachmentsCount = Array.isArray(attachmentsArray) ? attachmentsArray.length : 0;
+        
         return {
           ...rest,
-          attachments_count: 0, // mantemos leve; contagem real carregada no modal
+          attachments_count: attachmentsCount,
           custom_fields: {
             checklists: checklists || [],
             comments: comments || []
-            // attachments serão carregados sob demanda ao abrir o modal
+            // attachments completos serão carregados sob demanda ao abrir o modal
           }
         };
       });
