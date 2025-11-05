@@ -960,13 +960,12 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
         }
 
-        // ⚡ SEMPRE preservar anexos existentes do banco de dados
+        // ⚡ PROTEÇÃO ROBUSTA: SEMPRE preservar anexos do banco
         let attachmentsToPersist = card.attachments || [];
-        const hasAttachmentsInDb = (card.attachments_count ?? 0) > 0;
         
-        // Se os anexos não estão carregados MAS existem no banco, buscar
-        if (attachmentsToPersist.length === 0 && hasAttachmentsInDb) {
-          console.log('🔄 Preservando anexos existentes do banco para card:', card.id);
+        // Se os anexos não estão carregados no card atual, SEMPRE buscar do banco
+        if (attachmentsToPersist.length === 0) {
+          console.log('🔄 Buscando anexos do banco para preservação (card:', card.id, ')');
           try {
             const { data: existingCard } = await supabase
               .from('project_cards')
@@ -976,11 +975,16 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             
             const customFields = existingCard?.custom_fields as any;
             if (customFields?.attachments && Array.isArray(customFields.attachments)) {
-              attachmentsToPersist = customFields.attachments;
-              console.log(`✅ ${attachmentsToPersist.length} anexos preservados`);
+              const dbAttachments = customFields.attachments;
+              if (dbAttachments.length > 0) {
+                attachmentsToPersist = dbAttachments;
+                console.log(`✅ ${attachmentsToPersist.length} anexos preservados do banco`);
+              } else {
+                console.log('ℹ️ Nenhum anexo encontrado no banco');
+              }
             }
           } catch (error) {
-            console.error('❌ Erro ao preservar anexos:', error);
+            console.error('❌ Erro ao buscar anexos:', error);
           }
         }
 
