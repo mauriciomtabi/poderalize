@@ -960,12 +960,13 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
         }
 
-        // Preserve attachments when in admin "view all" mode
+        // ⚡ SEMPRE preservar anexos existentes do banco de dados
         let attachmentsToPersist = card.attachments || [];
-        const adminAllMode = state.viewAllCardsAsAdmin;
         const hasAttachmentsInDb = (card.attachments_count ?? 0) > 0;
         
-        if (adminAllMode && attachmentsToPersist.length === 0 && hasAttachmentsInDb) {
+        // Se os anexos não estão carregados MAS existem no banco, buscar
+        if (attachmentsToPersist.length === 0 && hasAttachmentsInDb) {
+          console.log('🔄 Preservando anexos existentes do banco para card:', card.id);
           try {
             const { data: existingCard } = await supabase
               .from('project_cards')
@@ -976,9 +977,10 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             const customFields = existingCard?.custom_fields as any;
             if (customFields?.attachments && Array.isArray(customFields.attachments)) {
               attachmentsToPersist = customFields.attachments;
+              console.log(`✅ ${attachmentsToPersist.length} anexos preservados`);
             }
           } catch (error) {
-            console.error('Error fetching attachments for preservation:', error);
+            console.error('❌ Erro ao preservar anexos:', error);
           }
         }
 
