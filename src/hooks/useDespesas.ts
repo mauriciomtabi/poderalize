@@ -20,11 +20,18 @@ export interface Despesa {
   categoria: string;
   data: string;
   observacoes?: string | null;
+  conta_id?: string | null;
+  cartao_credito_id?: string | null;
+  forma_pagamento?: string;
+  parcelas?: number;
+  parcela_atual?: number;
+  despesa_pai_id?: string | null;
+  is_parcelada?: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export type CreateDespesaData = Omit<Despesa, "id" | "user_id" | "created_at" | "updated_at">;
+export type CreateDespesaData = Omit<Despesa, "id" | "user_id" | "created_at" | "updated_at" | "parcela_atual" | "despesa_pai_id" | "is_parcelada">;
 export type UpdateDespesaData = Partial<CreateDespesaData>;
 
 export function useDespesas() {
@@ -73,16 +80,61 @@ export function useDespesas() {
     try {
       despesaSchema.parse(data);
 
-      const { error } = await supabase.from("despesas").insert({
-        ...data,
-        user_id: user.id,
-      });
+      const parcelas = data.parcelas || 1;
+      const valorParcela = data.valor / parcelas;
+      const is_parcelada = parcelas > 1;
 
-      if (error) throw error;
+      // Criar despesa original (primeira parcela)
+      const { data: despesaOriginal, error: errorOriginal } = await supabase
+        .from("despesas")
+        .insert({
+          ...data,
+          user_id: user.id,
+          valor: valorParcela,
+          parcela_atual: 1,
+          parcelas: parcelas,
+          is_parcelada: is_parcelada,
+          despesa_pai_id: null,
+        })
+        .select()
+        .single();
+
+      if (errorOriginal) throw errorOriginal;
+
+      // Se for parcelado, criar as parcelas seguintes
+      if (is_parcelada && parcelas > 1) {
+        const parcelasRestantes = [];
+        const dataOriginal = new Date(data.data);
+
+        for (let i = 2; i <= parcelas; i++) {
+          const dataParcela = new Date(dataOriginal);
+          dataParcela.setMonth(dataParcela.getMonth() + (i - 1));
+
+          parcelasRestantes.push({
+            ...data,
+            user_id: user.id,
+            descricao: `${data.descricao} (${i}/${parcelas})`,
+            valor: valorParcela,
+            data: dataParcela.toISOString().split('T')[0],
+            parcela_atual: i,
+            parcelas: parcelas,
+            is_parcelada: true,
+            despesa_pai_id: despesaOriginal.id,
+          });
+        }
+
+        const { error: errorParcelas } = await supabase
+          .from("despesas")
+          .insert(parcelasRestantes);
+
+        if (errorParcelas) throw errorParcelas;
+      }
 
       toast({
         title: "Sucesso",
-        description: "Despesa lançada com sucesso",
+        description: is_parcelada 
+          ? `Despesa parcelada em ${parcelas}x lançada com sucesso`
+          : "Despesa lançada com sucesso",
       });
 
       await loadDespesas();

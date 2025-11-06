@@ -987,6 +987,8 @@ const Financeiro = () => {
                   <TableRow>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Categoria</TableHead>
+                    <TableHead>Forma de Pagamento</TableHead>
+                    <TableHead>Parcela</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                     <TableHead className="w-[80px]">Ações</TableHead>
@@ -997,6 +999,23 @@ const Financeiro = () => {
                       <TableCell className="font-medium">{despesa.descricao}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{despesa.categoria}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {despesa.forma_pagamento === 'cartao_credito' && 'Cartão de Crédito'}
+                          {despesa.forma_pagamento === 'pix' && 'PIX'}
+                          {despesa.forma_pagamento === 'debito' && 'Débito'}
+                          {despesa.forma_pagamento === 'transferencia' && 'Transferência'}
+                          {(!despesa.forma_pagamento || despesa.forma_pagamento === 'dinheiro') && 'Dinheiro'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {despesa.is_parcelada 
+                          ? <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                              {despesa.parcela_atual}/{despesa.parcelas}
+                            </Badge>
+                          : <span className="text-muted-foreground text-sm">-</span>
+                        }
                       </TableCell>
                       <TableCell>
                         {format(new Date(despesa.data), "dd/MM/yyyy", {

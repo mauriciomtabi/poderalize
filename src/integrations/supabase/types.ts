@@ -553,6 +553,54 @@ export type Database = {
         }
         Relationships: []
       }
+      cartoes_credito: {
+        Row: {
+          ativo: boolean | null
+          bandeira: string
+          cor: string | null
+          created_at: string | null
+          dia_fechamento: number
+          dia_vencimento: number
+          icone: string | null
+          id: string
+          limite: number | null
+          nome: string
+          ultimos_digitos: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          bandeira: string
+          cor?: string | null
+          created_at?: string | null
+          dia_fechamento?: number
+          dia_vencimento?: number
+          icone?: string | null
+          id?: string
+          limite?: number | null
+          nome: string
+          ultimos_digitos?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          bandeira?: string
+          cor?: string | null
+          created_at?: string | null
+          dia_fechamento?: number
+          dia_vencimento?: number
+          icone?: string | null
+          id?: string
+          limite?: number | null
+          nome?: string
+          ultimos_digitos?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       categorias: {
         Row: {
           cor: string | null
@@ -863,39 +911,82 @@ export type Database = {
       }
       despesas: {
         Row: {
+          cartao_credito_id: string | null
           categoria: string
+          conta_id: string | null
           created_at: string
           data: string
           descricao: string
+          despesa_pai_id: string | null
+          forma_pagamento: string | null
           id: string
+          is_parcelada: boolean | null
           observacoes: string | null
+          parcela_atual: number | null
+          parcelas: number | null
           updated_at: string
           user_id: string
           valor: number
         }
         Insert: {
+          cartao_credito_id?: string | null
           categoria: string
+          conta_id?: string | null
           created_at?: string
           data?: string
           descricao: string
+          despesa_pai_id?: string | null
+          forma_pagamento?: string | null
           id?: string
+          is_parcelada?: boolean | null
           observacoes?: string | null
+          parcela_atual?: number | null
+          parcelas?: number | null
           updated_at?: string
           user_id: string
           valor: number
         }
         Update: {
+          cartao_credito_id?: string | null
           categoria?: string
+          conta_id?: string | null
           created_at?: string
           data?: string
           descricao?: string
+          despesa_pai_id?: string | null
+          forma_pagamento?: string | null
           id?: string
+          is_parcelada?: boolean | null
           observacoes?: string | null
+          parcela_atual?: number | null
+          parcelas?: number | null
           updated_at?: string
           user_id?: string
           valor?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "despesas_cartao_credito_id_fkey"
+            columns: ["cartao_credito_id"]
+            isOneToOne: false
+            referencedRelation: "cartoes_credito"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "despesas_despesa_pai_id_fkey"
+            columns: ["despesa_pai_id"]
+            isOneToOne: false
+            referencedRelation: "despesas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emprestimos: {
         Row: {
