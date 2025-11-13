@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Mail, Phone, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw, Shield, Crown } from "lucide-react";
+import { Plus, Search, Mail, Phone, Trash2, Users, Building, UserCheck, Edit3, Save, X, Clock, UserX, RefreshCw, Shield, Crown, RotateCcw } from "lucide-react";
 import { useColaboradores } from "@/hooks/useColaboradores";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useApprovedUsers } from "@/hooks/useApprovedUsers";
@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PermissionsDialog } from "@/components/colaboradores/PermissionsDialog";
 import { PromoteToAdminDialog } from "@/components/colaboradores/PromoteToAdminDialog";
+import { InativarColaboradorDialog } from "@/components/colaboradores/InativarColaboradorDialog";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { getInitials } from "@/lib/utils";
 import { AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +33,8 @@ const Colaboradores = () => {
     addColaborador,
     updateColaborador,
     deleteColaborador,
+    inativarColaborador,
+    reativarColaborador,
     syncApprovedUsers
   } = useColaboradores();
   const {
@@ -49,6 +52,8 @@ const Colaboradores = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [colaboradorToDelete, setColaboradorToDelete] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isInativarDialogOpen, setIsInativarDialogOpen] = useState(false);
+  const [colaboradorToInativar, setColaboradorToInativar] = useState<Colaborador | null>(null);
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false);
   const [selectedUserIdForPermissions, setSelectedUserIdForPermissions] = useState<string>("");
   const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
@@ -85,30 +90,37 @@ const Colaboradores = () => {
   const {
     profiles: approvedProfiles
   } = useApprovedUsers();
-  const allActiveColaboradores: Colaborador[] = useMemo(() => {
-    const existingByEmail = new Set(colaboradores.map(c => c.email));
+  const colaboradoresAtivos = useMemo(() => {
+    const activeFromDb = colaboradores.filter(c => c.status === 'ativo');
+    const existingByEmail = new Set(activeFromDb.map(c => c.email));
     const nowIso = new Date().toISOString();
     const virtuals: Colaborador[] = (approvedProfiles || []).filter(p => p.email && !existingByEmail.has(p.email)).map(p => ({
       id: `virtual-${p.user_id}`,
       user_id: p.user_id,
-      nome: (p.full_name || p.email || 'Colaborador') as string,
-      email: (p.email || '') as string,
-      funcao: 'A definir',
+      nome: p.full_name || 'Sem nome',
+      email: p.email,
+      funcao: '',
       telefone: null,
       departamento: null,
       status: 'ativo',
+      data_contratacao: null,
+      salario: null,
       avatar_url: null,
       created_at: nowIso,
       updated_at: nowIso
     }));
-    return [...colaboradores, ...virtuals].sort((a, b) => a.nome.localeCompare(b.nome));
+    return [...activeFromDb, ...virtuals].sort((a, b) => a.nome.localeCompare(b.nome));
   }, [colaboradores, approvedProfiles]);
+
+  const colaboradoresInativos = useMemo(() => {
+    return colaboradores.filter(c => c.status === 'inativo' || c.status === 'afastado').sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [colaboradores]);
 
   // Carregar status de admin para todos os colaboradores
   useEffect(() => {
     const loadAdminStatus = async () => {
       const adminSet = new Set<string>();
-      for (const colab of allActiveColaboradores) {
+      for (const colab of colaboradoresAtivos) {
         if (colab.user_id) {
           const isAdmin = await checkIsAdmin(colab.user_id);
           if (isAdmin) {
@@ -118,10 +130,10 @@ const Colaboradores = () => {
       }
       setAdminUsers(adminSet);
     };
-    if (allActiveColaboradores.length > 0) {
+    if (colaboradoresAtivos.length > 0) {
       loadAdminStatus();
     }
-  }, [allActiveColaboradores, checkIsAdmin]);
+  }, [colaboradoresAtivos, checkIsAdmin]);
 
   // Verificar se o usuário atual é admin
   useEffect(() => {
@@ -139,7 +151,17 @@ const Colaboradores = () => {
     };
     checkCurrent();
   }, [checkIsAdmin]);
-  const filteredColaboradores = allActiveColaboradores.filter(colaborador => colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) || colaborador.email.toLowerCase().includes(searchTerm.toLowerCase()) || colaborador.funcao.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredColaboradoresAtivos = colaboradoresAtivos.filter(colaborador => 
+    colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    colaborador.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    colaborador.funcao.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredColaboradoresInativos = colaboradoresInativos.filter(colaborador => 
+    colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    colaborador.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    colaborador.funcao.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   const handleAddColaborador = async () => {
     if (!novoColaborador.nome || !novoColaborador.email || !novoColaborador.funcao) {
       return;
@@ -242,7 +264,7 @@ const Colaboradores = () => {
   const handleDeleteColaborador = async (id: string) => {
     try {
       // Primeiro, determinar qual colaborador está sendo deletado
-      const colaboradorToRemove = allActiveColaboradores.find(c => c.id === id);
+      const colaboradorToRemove = colaboradoresAtivos.find(c => c.id === id);
       await deleteColaborador(id);
 
       // Atualizar o estado local imediatamente após a remoção bem-sucedida
@@ -261,6 +283,22 @@ const Colaboradores = () => {
       // Error handling is done in the hook
     }
   };
+
+  const handleInativarColaborador = async (motivo: string) => {
+    if (!colaboradorToInativar) return;
+    
+    const success = await inativarColaborador(colaboradorToInativar.id, motivo);
+    if (success) {
+      setIsInativarDialogOpen(false);
+      setColaboradorToInativar(null);
+      setIsDetailsOpen(false);
+    }
+  };
+
+  const handleReativarColaborador = async (id: string) => {
+    await reativarColaborador(id);
+  };
+  
   const handlePromoteToAdmin = async (userId: string, userName: string, isCurrentlyAdmin: boolean) => {
     setSelectedUserForPromotion({
       id: userId,
@@ -333,12 +371,19 @@ const Colaboradores = () => {
   }
   return <div className="space-y-6 animate-fade-in">
       <Tabs defaultValue="colaboradores" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="colaboradores" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="ativos" className="flex items-center gap-2">
               <Users size={16} />
               Colaboradores Ativos
               <Badge variant="secondary" className="ml-2">
-                {allActiveColaboradores.length}
+                {colaboradoresAtivos.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="inativos" className="flex items-center gap-2">
+              <UserX size={16} />
+              Inativos
+              <Badge variant="secondary" className="ml-2">
+                {colaboradoresInativos.length}
               </Badge>
             </TabsTrigger>
           <TabsTrigger value="pendentes" className="flex items-center gap-2">
@@ -350,7 +395,7 @@ const Colaboradores = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="colaboradores" className="space-y-6">
+        <TabsContent value="ativos" className="space-y-6">
           {/* Header com busca e botão de adicionar */}
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="relative flex-1 max-w-md">
@@ -440,9 +485,9 @@ const Colaboradores = () => {
             </div>
           </div>
 
-        {/* Grid de colaboradores */}
+        {/* Grid de colaboradores ativos */}
         <div className="grid grid-cols-3 gap-6">
-          {filteredColaboradores.map(colaborador => {
+          {filteredColaboradoresAtivos.map(colaborador => {
             const isAdmin = colaborador.user_id && adminUsers.has(colaborador.user_id);
             return <Card key={colaborador.id} className={`card-interactive hover-lift cursor-pointer transition-all duration-200 ${isAdmin ? 'border-2 border-primary/50 shadow-lg' : ''}`} onClick={() => handleCardClick(colaborador)}>
                 <CardHeader className="pb-3">
@@ -496,7 +541,7 @@ const Colaboradores = () => {
           })}
         </div>
 
-          {filteredColaboradores.length === 0 && <div className="text-center py-12">
+          {filteredColaboradoresAtivos.length === 0 && <div className="text-center py-12">
               <Users size={48} className="mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold text-muted-foreground">
                 Nenhum colaborador encontrado
@@ -505,6 +550,104 @@ const Colaboradores = () => {
                 {searchTerm ? "Tente buscar com outros termos" : "Adicione o primeiro colaborador"}
               </p>
             </div>}
+        </TabsContent>
+
+        <TabsContent value="inativos" className="space-y-6">
+          {/* Header com busca */}
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <Input 
+                placeholder="Buscar colaboradores inativos..." 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+                className="pl-9" 
+              />
+            </div>
+          </div>
+
+          {/* Grid de colaboradores inativos */}
+          <div className="grid grid-cols-3 gap-6">
+            {filteredColaboradoresInativos.map(colaborador => {
+              const isAdmin = colaborador.user_id && adminUsers.has(colaborador.user_id);
+              return (
+                <Card 
+                  key={colaborador.id} 
+                  className={`card-interactive hover-lift cursor-pointer transition-all duration-200 opacity-75 ${isAdmin ? 'border-2 border-primary/50 shadow-lg' : ''}`}
+                  onClick={() => handleCardClick(colaborador)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <Avatar className="w-12 h-12 grayscale">
+                            {colaborador.avatar_url && <AvatarImage src={colaborador.avatar_url} alt={colaborador.nome} />}
+                            <AvatarFallback className="font-semibold bg-muted text-muted-foreground">
+                              {getInitials(colaborador.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{colaborador.nome}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{colaborador.funcao}</p>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="bg-muted">
+                        {colaborador.status === 'afastado' ? 'Afastado' : 'Inativo'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Mail size={14} className="text-muted-foreground" />
+                        <span className="text-muted-foreground">{colaborador.email}</span>
+                      </div>
+                      {colaborador.telefone && (
+                        <div className="flex items-center space-x-2 text-sm">
+                          <Phone size={14} className="text-muted-foreground" />
+                          <span className="text-muted-foreground">{colaborador.telefone}</span>
+                        </div>
+                      )}
+                      {colaborador.departamento && (
+                        <div>
+                          <Badge variant="secondary" className={`${getBadgeColor(colaborador.departamento)} text-white opacity-75`}>
+                            {colaborador.departamento}
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="pt-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReativarColaborador(colaborador.id);
+                          }}
+                        >
+                          <RotateCcw size={14} className="mr-2" />
+                          Reativar
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {filteredColaboradoresInativos.length === 0 && (
+            <div className="text-center py-12">
+              <UserX size={48} className="mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold text-muted-foreground">
+                Nenhum colaborador inativo
+              </h3>
+              <p className="text-muted-foreground">
+                {searchTerm ? "Tente buscar com outros termos" : "Todos os colaboradores estão ativos"}
+              </p>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="pendentes" className="space-y-6">
@@ -710,6 +853,28 @@ const Colaboradores = () => {
                         <Button variant="outline" size="icon" onClick={handleEditColaborador} title="Editar">
                           <Edit3 size={16} />
                         </Button>
+                        {selectedColaborador.status === 'ativo' ? (
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => {
+                              setColaboradorToInativar(selectedColaborador);
+                              setIsInativarDialogOpen(true);
+                            }} 
+                            title="Inativar"
+                          >
+                            <UserX size={16} />
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => handleReativarColaborador(selectedColaborador.id)} 
+                            title="Reativar"
+                          >
+                            <RotateCcw size={16} />
+                          </Button>
+                        )}
                         <Button variant="destructive" size="icon" onClick={() => setColaboradorToDelete(selectedColaborador.id)} title="Remover">
                           <Trash2 size={16} />
                         </Button>
@@ -748,6 +913,17 @@ const Colaboradores = () => {
       setIsPromoteDialogOpen(false);
       setSelectedUserForPromotion(null);
     }} onConfirm={confirmPromoteToAdmin} userName={selectedUserForPromotion.name} isAdmin={selectedUserForPromotion.isAdmin} />}
+    
+        {/* Dialog de Inativação de Colaborador */}
+        <InativarColaboradorDialog
+          isOpen={isInativarDialogOpen}
+          onClose={() => {
+            setIsInativarDialogOpen(false);
+            setColaboradorToInativar(null);
+          }}
+          onConfirm={handleInativarColaborador}
+          colaboradorNome={colaboradorToInativar?.nome || ''}
+        />
     </div>;
 };
 export default Colaboradores;

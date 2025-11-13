@@ -405,12 +405,101 @@ export function useColaboradores() {
     };
   }, []);
 
+  const inativarColaborador = async (id: string, motivo?: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('Usuário não autenticado');
+
+      const updateData: any = {
+        status: 'inativo',
+        updated_at: new Date().toISOString()
+      };
+
+      // Se há motivo, adiciona às observações
+      if (motivo?.trim()) {
+        updateData.observacoes = `Inativado: ${motivo.trim()}`;
+      }
+
+      const { data, error } = await supabase
+        .from('colaboradores')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setColaboradores(prev => 
+        prev.map(colaborador => 
+          colaborador.id === id ? data : colaborador
+        )
+      );
+
+      toast({
+        title: "Colaborador inativado",
+        description: "O colaborador foi movido para a lista de inativos"
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao inativar colaborador:', error);
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao inativar colaborador",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const reativarColaborador = async (id: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('colaboradores')
+        .update({
+          status: 'ativo',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setColaboradores(prev => 
+        prev.map(colaborador => 
+          colaborador.id === id ? data : colaborador
+        )
+      );
+
+      toast({
+        title: "Colaborador reativado",
+        description: "O colaborador foi movido para a lista de ativos"
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao reativar colaborador:', error);
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao reativar colaborador",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   return {
     colaboradores,
     loading,
     addColaborador,
     updateColaborador,
     deleteColaborador,
+    inativarColaborador,
+    reativarColaborador,
     refetch: fetchColaboradores,
     syncApprovedUsers
   };
