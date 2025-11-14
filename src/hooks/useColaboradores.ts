@@ -412,10 +412,6 @@ export function useColaboradores() {
         updated_at: new Date().toISOString()
       };
 
-      // Se há motivo, adiciona às observações
-      if (motivo?.trim()) {
-        updateData.observacoes = `Inativado: ${motivo.trim()}`;
-      }
 
       const { data, error } = await supabase
         .from('colaboradores')
