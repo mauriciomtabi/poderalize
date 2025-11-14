@@ -92,23 +92,29 @@ const Colaboradores = () => {
   } = useApprovedUsers();
   const colaboradoresAtivos = useMemo(() => {
     const activeFromDb = colaboradores.filter(c => c.status === 'ativo');
-    const existingByEmail = new Set(activeFromDb.map(c => c.email));
+    // Evitar duplicar perfis aprovados já existentes como colaboradores (em qualquer status)
+    const existingEmails = new Set(colaboradores.map(c => c.email).filter(Boolean));
+    const existingUserIds = new Set(
+      colaboradores.map(c => c.user_id).filter(Boolean) as string[]
+    );
     const nowIso = new Date().toISOString();
-    const virtuals: Colaborador[] = (approvedProfiles || []).filter(p => p.email && !existingByEmail.has(p.email)).map(p => ({
-      id: `virtual-${p.user_id}`,
-      user_id: p.user_id,
-      nome: p.full_name || 'Sem nome',
-      email: p.email,
-      funcao: '',
-      telefone: null,
-      departamento: null,
-      status: 'ativo',
-      data_contratacao: null,
-      salario: null,
-      avatar_url: null,
-      created_at: nowIso,
-      updated_at: nowIso
-    }));
+    const virtuals: Colaborador[] = (approvedProfiles || [])
+      .filter(p => p.email && !existingEmails.has(p.email) && p.user_id && !existingUserIds.has(p.user_id))
+      .map(p => ({
+        id: `virtual-${p.user_id}`,
+        user_id: p.user_id,
+        nome: p.full_name || 'Sem nome',
+        email: p.email!,
+        funcao: '',
+        telefone: null,
+        departamento: null,
+        status: 'ativo',
+        data_contratacao: null,
+        salario: null,
+        avatar_url: null,
+        created_at: nowIso,
+        updated_at: nowIso
+      }));
     return [...activeFromDb, ...virtuals].sort((a, b) => a.nome.localeCompare(b.nome));
   }, [colaboradores, approvedProfiles]);
 
