@@ -370,7 +370,7 @@ const Colaboradores = () => {
       </div>;
   }
   return <div className="space-y-6 animate-fade-in">
-      <Tabs defaultValue="colaboradores" className="w-full">
+      <Tabs defaultValue="ativos" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="ativos" className="flex items-center gap-2">
               <Users size={16} />
