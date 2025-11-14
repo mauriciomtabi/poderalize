@@ -407,9 +407,6 @@ export function useColaboradores() {
 
   const inativarColaborador = async (id: string, motivo?: string) => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) throw new Error('Usuário não autenticado');
-
       const updateData: any = {
         status: 'inativo',
         updated_at: new Date().toISOString()
@@ -425,15 +422,20 @@ export function useColaboradores() {
         .update(updateData)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro do Supabase ao inativar:', error);
+        throw error;
+      }
 
-      setColaboradores(prev => 
-        prev.map(colaborador => 
-          colaborador.id === id ? data : colaborador
-        )
-      );
+      if (data) {
+        setColaboradores(prev => 
+          prev.map(colaborador => 
+            colaborador.id === id ? data : colaborador
+          )
+        );
+      }
 
       toast({
         title: "Colaborador inativado",
@@ -454,9 +456,6 @@ export function useColaboradores() {
 
   const reativarColaborador = async (id: string) => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) throw new Error('Usuário não autenticado');
-
       const { data, error } = await supabase
         .from('colaboradores')
         .update({
@@ -465,15 +464,20 @@ export function useColaboradores() {
         })
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro do Supabase ao reativar:', error);
+        throw error;
+      }
 
-      setColaboradores(prev => 
-        prev.map(colaborador => 
-          colaborador.id === id ? data : colaborador
-        )
-      );
+      if (data) {
+        setColaboradores(prev => 
+          prev.map(colaborador => 
+            colaborador.id === id ? data : colaborador
+          )
+        );
+      }
 
       toast({
         title: "Colaborador reativado",
