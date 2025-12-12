@@ -165,6 +165,7 @@ interface ProjectsContextType {
     moveCard: (cardId: string, sourceListId: string, destListId: string, newPosition: number) => Promise<boolean>;
     duplicateCard: (cardId: string) => Promise<boolean>;
     archiveCard: (cardId: string) => Promise<boolean>;
+    archiveAllCardsInList: (listId: string) => Promise<boolean>;
     
     // Label actions
     addLabel: (name: string, color: string, description?: string) => Promise<boolean>;
@@ -1196,6 +1197,61 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         await loadBoard(state.currentBoard.id);
       }
       return result;
+    },
+
+    archiveAllCardsInList: async (listId: string) => {
+      if (!state.currentBoard || !user) return false;
+      
+      // Find all non-archived cards in this list
+      const list = state.currentBoard.lists.find(l => l.id === listId);
+      if (!list || list.cards.length === 0) return false;
+      
+      const nonArchivedCards = list.cards.filter(c => !c.archived);
+      if (nonArchivedCards.length === 0) return false;
+      
+      try {
+        // Archive all cards in parallel
+        const archivePromises = nonArchivedCards.map(card =>
+          supabase
+            .from('project_cards')
+            .update({ archived: true })
+            .eq('id', card.id)
+        );
+        
+        await Promise.all(archivePromises);
+        
+        // Add activity for each card
+        const activityPromises = nonArchivedCards.map(card =>
+          supabase
+            .from('project_activities')
+            .insert({
+              card_id: card.id,
+              type: 'archive',
+              description: 'arquivou o cartão (arquivamento em massa)',
+              author: user.id,
+              author_name: user.full_name || user.email || 'Usuário',
+            })
+        );
+        
+        await Promise.all(activityPromises);
+        
+        await loadBoard(state.currentBoard.id);
+        
+        toast({
+          title: "Cards arquivados",
+          description: `${nonArchivedCards.length} card(s) foram arquivados com sucesso`,
+        });
+        
+        return true;
+      } catch (error) {
+        console.error('Error archiving all cards in list:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível arquivar os cards",
+          variant: "destructive",
+        });
+        return false;
+      }
     },
 
     // Label actions

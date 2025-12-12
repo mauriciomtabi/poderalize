@@ -3,8 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, MessageCircle, Paperclip, MoreHorizontal, Clock, AlertCircle, Zap, CheckCircle2, Copy, Trash2, CheckSquare, Check } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Calendar, MessageCircle, Paperclip, MoreHorizontal, Clock, AlertCircle, Zap, CheckCircle2, Copy, Trash2, CheckSquare, Check, Archive } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ProjectCard } from "@/types/projects";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { AttachmentSelectorDialog } from "@/components/projects/modal/AttachmentSelectorDialog";
@@ -12,6 +12,7 @@ import { cn, getInitials, isDateOverdue, getDueDateColorClass } from "@/lib/util
 import { useState } from "react";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthContext } from "@/contexts/AuthContext";
 const priorityConfig = {
   low: {
     icon: Clock,
@@ -57,6 +58,7 @@ export const EnhancedProjectCard = ({
   const [loadedAttachments, setLoadedAttachments] = useState<any[]>([]);
   const { state, actions } = useProjects();
   const { toast } = useToast();
+  const { isAdmin } = useAuthContext();
   const PriorityIcon = priorityConfig[card.priority].icon;
   const completedTasks = card.checklists.reduce((acc, checklist) => acc + checklist.items.filter(item => item.completed).length, 0);
   const totalTasks = card.checklists.reduce((acc, checklist) => acc + checklist.items.length, 0);
@@ -265,6 +267,23 @@ export const EnhancedProjectCard = ({
             }} className="text-red-600">
                 Excluir
               </DropdownMenuItem>
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={e => {
+                    e.stopPropagation();
+                    actions.updateCard({ ...card, archived: true });
+                    actions.addActivity(card.id, 'archive', 'arquivou o card');
+                    toast({
+                      title: "Card arquivado",
+                      description: "O card foi movido para os arquivados",
+                    });
+                  }} className="text-muted-foreground">
+                    <Archive className="h-4 w-4 mr-2" />
+                    Arquivar
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

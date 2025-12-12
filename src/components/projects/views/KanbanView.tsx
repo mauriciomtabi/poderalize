@@ -389,6 +389,7 @@ export const KanbanView = () => {
           onUpdateList={actions.updateList}
           onArchiveList={actions.archiveList}
           onDeleteList={actions.deleteList}
+          onArchiveAllCards={actions.archiveAllCardsInList}
         />
       </div>
     </LoadingOverlay>
