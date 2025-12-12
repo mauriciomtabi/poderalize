@@ -372,15 +372,16 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
           
           // Map RPC response: card_position → position, preserve checklists/comments
+          // A função RPC agora retorna apenas attachments_count, não o conteúdo completo
           const mapped = (Array.isArray(allCardsAdmin) ? allCardsAdmin : []).map((c: any) => {
             const card: any = {
               ...c,
               position: c.card_position, // RPC retorna card_position
-              attachments_count: c.attachments_count ?? (Array.isArray((c as any).attachments) ? (c as any).attachments.length : 0), // Contagem de anexos, sem carregar payload
+              attachments_count: c.attachments_count ?? 0, // Contagem de anexos retornada pela RPC
               custom_fields: {
                 checklists: c.checklists || [],
-                comments: c.comments || []
-                // NÃO incluir attachments aqui para manter a página leve
+                comments: c.comments || [],
+                attachments: [] // Attachments serão carregados on-demand no modal
               }
             };
             delete card.card_position; // Remover campo temporário
