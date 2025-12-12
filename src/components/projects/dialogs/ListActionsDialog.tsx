@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ProjectList } from "@/types/projects";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { Archive } from "lucide-react";
 
 interface ListActionsDialogProps {
   list: ProjectList | null;
@@ -14,6 +16,7 @@ interface ListActionsDialogProps {
   onUpdateList: (listId: string, updates: Partial<ProjectList>) => void;
   onArchiveList: (listId: string) => void;
   onDeleteList: (listId: string) => void;
+  onArchiveAllCards?: (listId: string) => void;
 }
 
 const predefinedColors = [
@@ -35,10 +38,12 @@ export const ListActionsDialog = ({
   onClose, 
   onUpdateList, 
   onArchiveList,
-  onDeleteList 
+  onDeleteList,
+  onArchiveAllCards
 }: ListActionsDialogProps) => {
   const [title, setTitle] = useState(list?.title || '');
   const [selectedColor, setSelectedColor] = useState(list?.color || predefinedColors[0].value);
+  const { isAdmin } = useAuthContext();
 
   const handleSave = () => {
     if (!list || !title.trim()) return;
@@ -136,6 +141,27 @@ export const ListActionsDialog = ({
               >
                 📦 Arquivar Lista
               </Button>
+              
+              {isAdmin && onArchiveAllCards && list && list.cards.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      const confirmed = window.confirm(
+                        `Tem certeza que deseja arquivar todos os ${list.cards.length} cartão(s) desta lista?`
+                      );
+                      if (confirmed) {
+                        onArchiveAllCards(list.id);
+                        onClose();
+                      }
+                    }}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    Arquivar todos os cards ({list.cards.length})
+                  </Button>
+                </>
+              )}
               
               <Separator />
               
