@@ -628,12 +628,97 @@ serve(async (req) => {
       }
     }
 
+    // Process auto-archive for lists with auto_archive_after_days configured
+    console.log('Processing auto-archive for lists...');
+    
+    const { data: listsWithAutoArchive, error: listsError } = await supabase
+      .from('project_lists')
+      .select('id, board_id, title, rules')
+      .eq('archived', false);
+
+    if (listsError) {
+      console.error('Error fetching lists for auto-archive:', listsError);
+    }
+
+    let autoArchivedCount = 0;
+    
+    for (const list of listsWithAutoArchive || []) {
+      try {
+        // Parse rules to get auto_archive_after_days
+        const rules = typeof list.rules === 'string' 
+          ? JSON.parse(list.rules || '{}') 
+          : (list.rules || {});
+        
+        const autoArchiveDays = rules?.auto_archive_after_days;
+        
+        if (!autoArchiveDays || autoArchiveDays <= 0) continue;
+        
+        console.log(`List "${list.title}" has auto-archive after ${autoArchiveDays} days`);
+        
+        // Calculate the cutoff date
+        const cutoffDate = new Date(now.getTime() - autoArchiveDays * 24 * 60 * 60 * 1000);
+        
+        // Find cards that have been in this list longer than the configured days
+        const { data: cardsToArchive, error: cardsError } = await supabase
+          .from('project_cards')
+          .select('id, title, moved_to_list_at')
+          .eq('list_id', list.id)
+          .eq('archived', false)
+          .lte('moved_to_list_at', cutoffDate.toISOString());
+        
+        if (cardsError) {
+          console.error(`Error fetching cards for list ${list.id}:`, cardsError);
+          continue;
+        }
+        
+        if (!cardsToArchive || cardsToArchive.length === 0) continue;
+        
+        console.log(`Found ${cardsToArchive.length} cards to auto-archive in list "${list.title}"`);
+        
+        // Archive each card
+        for (const card of cardsToArchive) {
+          const { error: archiveError } = await supabase
+            .from('project_cards')
+            .update({ archived: true })
+            .eq('id', card.id);
+          
+          if (archiveError) {
+            console.error(`Error archiving card ${card.id}:`, archiveError);
+            continue;
+          }
+          
+          autoArchivedCount++;
+          console.log(`Auto-archived card: ${card.title}`);
+          
+          // Log the action
+          await supabase.from('automation_logs').insert({
+            board_id: list.board_id,
+            automation_type: 'auto_archive',
+            automation_id: list.id,
+            action: `Auto-archived card: ${card.title}`,
+            status: 'success',
+            metadata: {
+              card_id: card.id,
+              card_title: card.title,
+              days_in_list: autoArchiveDays,
+              moved_to_list_at: card.moved_to_list_at
+            }
+          });
+        }
+      } catch (error: any) {
+        console.error(`Error processing auto-archive for list ${list.id}:`, error);
+      }
+    }
+    
+    console.log(`Auto-archived ${autoArchivedCount} cards total`);
+
     return new Response(
       JSON.stringify({ 
         success: true,
         processed: {
           recurring: recurringCards?.length || 0,
           scheduled: scheduledCards?.length || 0,
+          auto_archived: autoArchivedCount,
         }
       }),
       { 

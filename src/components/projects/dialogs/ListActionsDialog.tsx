@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { ProjectList } from "@/types/projects";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Archive } from "lucide-react";
+import { Archive, Clock } from "lucide-react";
 
 interface ListActionsDialogProps {
   list: ProjectList | null;
@@ -43,14 +44,41 @@ export const ListActionsDialog = ({
 }: ListActionsDialogProps) => {
   const [title, setTitle] = useState(list?.title || '');
   const [selectedColor, setSelectedColor] = useState(list?.color || predefinedColors[0].value);
+  const [autoArchiveEnabled, setAutoArchiveEnabled] = useState(false);
+  const [autoArchiveDays, setAutoArchiveDays] = useState(30);
   const { isAdmin } = useAuthContext();
+
+  // Parse list rules for auto-archive config
+  useEffect(() => {
+    if (list?.rules) {
+      const rules = typeof list.rules === 'string' ? JSON.parse(list.rules) : list.rules;
+      if (rules?.auto_archive_after_days) {
+        setAutoArchiveEnabled(true);
+        setAutoArchiveDays(rules.auto_archive_after_days);
+      } else {
+        setAutoArchiveEnabled(false);
+        setAutoArchiveDays(30);
+      }
+    } else {
+      setAutoArchiveEnabled(false);
+      setAutoArchiveDays(30);
+    }
+  }, [list]);
 
   const handleSave = () => {
     if (!list || !title.trim()) return;
     
+    // Build rules with auto-archive config
+    const existingRules = typeof list.rules === 'string' ? JSON.parse(list.rules || '{}') : (list.rules || {});
+    const newRules = {
+      ...existingRules,
+      auto_archive_after_days: autoArchiveEnabled ? autoArchiveDays : null
+    };
+    
     onUpdateList(list.id, {
       title: title.trim(),
-      color: selectedColor
+      color: selectedColor,
+      rules: newRules
     });
     onClose();
   };
@@ -121,6 +149,44 @@ export const ListActionsDialog = ({
                 ))}
               </div>
             </div>
+
+            {isAdmin && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Arquivamento Automático
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Arquivar cards automaticamente após um período
+                      </p>
+                    </div>
+                    <Switch
+                      checked={autoArchiveEnabled}
+                      onCheckedChange={setAutoArchiveEnabled}
+                    />
+                  </div>
+                  
+                  {autoArchiveEnabled && (
+                    <div className="flex items-center gap-2 pl-6">
+                      <span className="text-sm text-muted-foreground">Após</span>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={autoArchiveDays}
+                        onChange={(e) => setAutoArchiveDays(parseInt(e.target.value) || 30)}
+                        className="w-20"
+                      />
+                      <span className="text-sm text-muted-foreground">dias nesta lista</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button variant="outline" onClick={onClose}>
