@@ -42,16 +42,20 @@ export const ListActionsDialog = ({
   onDeleteList,
   onArchiveAllCards
 }: ListActionsDialogProps) => {
-  const [title, setTitle] = useState(list?.title || '');
-  const [selectedColor, setSelectedColor] = useState(list?.color || predefinedColors[0].value);
+  const [title, setTitle] = useState('');
+  const [selectedColor, setSelectedColor] = useState(predefinedColors[0].value);
   const [autoArchiveEnabled, setAutoArchiveEnabled] = useState(false);
   const [autoArchiveDays, setAutoArchiveDays] = useState(30);
   const { isAdmin } = useAuthContext();
 
-  // Parse list rules for auto-archive config
+  // Sync all states when list changes
   useEffect(() => {
-    if (list?.rules) {
-      const rules = typeof list.rules === 'string' ? JSON.parse(list.rules) : list.rules;
+    if (list) {
+      setTitle(list.title || '');
+      setSelectedColor(list.color || predefinedColors[0].value);
+      
+      // Parse rules for auto-archive config
+      const rules = typeof list.rules === 'string' ? JSON.parse(list.rules || '{}') : (list.rules || {});
       if (rules?.auto_archive_after_days) {
         setAutoArchiveEnabled(true);
         setAutoArchiveDays(rules.auto_archive_after_days);
@@ -59,9 +63,6 @@ export const ListActionsDialog = ({
         setAutoArchiveEnabled(false);
         setAutoArchiveDays(30);
       }
-    } else {
-      setAutoArchiveEnabled(false);
-      setAutoArchiveDays(30);
     }
   }, [list]);
 
