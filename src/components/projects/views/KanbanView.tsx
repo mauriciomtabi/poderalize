@@ -4,8 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   MoreHorizontal, 
-  Plus
+  Plus,
+  Clock
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -258,18 +265,39 @@ export const KanbanView = () => {
                                     {...provided.dragHandleProps}
                                     className="pb-3 cursor-grab active:cursor-grabbing flex-shrink-0"
                                   >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center space-x-2">
-                                        <InlineEdit
-                                          value={list.title}
-                                          onSave={(newTitle) => actions.updateList(list.id, { title: newTitle })}
-                                          className="text-sm font-semibold text-white"
-                                          placeholder="Título da lista"
-                                        />
-                                        <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
-                                          {filteredCards.length}
-                                        </Badge>
-                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-2">
+                                          <InlineEdit
+                                            value={list.title}
+                                            onSave={(newTitle) => actions.updateList(list.id, { title: newTitle })}
+                                            className="text-sm font-semibold text-white"
+                                            placeholder="Título da lista"
+                                          />
+                                          <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                                            {filteredCards.length}
+                                          </Badge>
+                                          {(() => {
+                                            const rules = typeof list.rules === 'string' 
+                                              ? JSON.parse(list.rules || '{}') 
+                                              : (list.rules || {});
+                                            const autoArchiveDays = rules?.auto_archive_after_days;
+                                            if (autoArchiveDays) {
+                                              return (
+                                                <TooltipProvider>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <Clock className="h-3.5 w-3.5 text-white/70" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <p>Arquivamento automático após {autoArchiveDays} dias</p>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
+                                              );
+                                            }
+                                            return null;
+                                          })()}
+                                        </div>
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                           <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">

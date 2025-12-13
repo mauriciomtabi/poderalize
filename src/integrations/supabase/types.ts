@@ -1883,6 +1883,7 @@ export type Database = {
           id: string
           list_id: string
           location: Json | null
+          moved_to_list_at: string | null
           position: number
           priority: string
           start_date: string | null
@@ -1905,6 +1906,7 @@ export type Database = {
           id?: string
           list_id: string
           location?: Json | null
+          moved_to_list_at?: string | null
           position?: number
           priority?: string
           start_date?: string | null
@@ -1927,6 +1929,7 @@ export type Database = {
           id?: string
           list_id?: string
           location?: Json | null
+          moved_to_list_at?: string | null
           position?: number
           priority?: string
           start_date?: string | null
@@ -2606,6 +2609,7 @@ export type Database = {
           id: string
           list_id: string
           location: Json | null
+          moved_to_list_at: string | null
           position: number
           priority: string
           start_date: string | null
@@ -2664,6 +2668,7 @@ export type Database = {
           id: string
           list_id: string
           location: Json | null
+          moved_to_list_at: string | null
           position: number
           priority: string
           start_date: string | null
