@@ -60,22 +60,16 @@ export const useProjectCards = (listId?: string) => {
   };
 
   const fetchAllBoardCards = async (boardId: string) => {
+    if (!user) return [];
+    
     console.time('⚡ Fetch board cards');
     try {
+      // Use optimized RPC that bypasses expensive per-row RLS checks
       const { data, error } = await supabase
-        .from('project_cards')
-        .select(`
-          id, list_id, title, description, status, priority, 
-          due_date, start_date, estimated_hours, actual_hours, 
-          position, cover, location, archived, watching, 
-          created_by, client_id, created_at, updated_at, custom_fields,
-          checklists:custom_fields->checklists,
-          comments:custom_fields->comments,
-          attachments:custom_fields->attachments,
-          project_lists!inner(board_id)
-        ` as any)
-        .eq('project_lists.board_id', boardId)
-        .order('position', { ascending: true }) as any;
+        .rpc('get_user_board_cards', {
+          _user_id: user.id,
+          _board_id: boardId
+        });
 
       if (error) {
         console.error('Error fetching board cards:', error);
@@ -94,22 +88,33 @@ export const useProjectCards = (listId?: string) => {
 
       console.timeEnd('⚡ Fetch board cards');
       
-      // Reconstruct custom_fields with attachments count
-      const cleanedData = (data || []).map(card => {
-        const { checklists, comments, attachments, ...rest } = card as any;
-        const attachmentsArray = attachments || rest.custom_fields?.attachments || [];
-        const attachmentsCount = Array.isArray(attachmentsArray) ? attachmentsArray.length : 0;
-        
-        return {
-          ...rest,
-          attachments_count: attachmentsCount,
-          custom_fields: {
-            checklists: checklists || [],
-            comments: comments || []
-            // attachments completos serão carregados sob demanda ao abrir o modal
-          }
-        };
-      });
+      // Map RPC result to expected format
+      const cleanedData = (data || []).map((card: any) => ({
+        id: card.id,
+        list_id: card.list_id,
+        title: card.title,
+        description: card.description,
+        status: card.status,
+        priority: card.priority,
+        due_date: card.due_date,
+        start_date: card.start_date,
+        estimated_hours: card.estimated_hours,
+        actual_hours: card.actual_hours,
+        position: card.card_position,
+        cover: card.cover,
+        location: card.location,
+        archived: card.archived,
+        watching: card.watching,
+        created_by: card.created_by,
+        client_id: card.client_id,
+        created_at: card.created_at,
+        updated_at: card.updated_at,
+        attachments_count: card.attachments_count || 0,
+        custom_fields: {
+          checklists: card.checklists || [],
+          comments: card.comments || []
+        }
+      }));
       
       return cleanedData;
     } catch (error) {
