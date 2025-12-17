@@ -2684,6 +2684,33 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_user_board_cards: {
+        Args: { _board_id: string; _user_id: string }
+        Returns: {
+          actual_hours: number
+          archived: boolean
+          attachments_count: number
+          card_position: number
+          checklists: Json
+          client_id: string
+          comments: Json
+          cover: string
+          created_at: string
+          created_by: string
+          description: string
+          due_date: string
+          estimated_hours: number
+          id: string
+          list_id: string
+          location: Json
+          priority: string
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+          watching: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["user_role"]
