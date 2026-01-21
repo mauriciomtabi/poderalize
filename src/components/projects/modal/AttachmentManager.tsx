@@ -115,14 +115,37 @@ export const AttachmentManager = ({
     };
   }, [isOpen, card?.id, isCreationMode]);
 
-  const handleFileUpload = (files: FileList) => {
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
+  const handleFileUpload = async (files: FileList) => {
+    for (const file of Array.from(files)) {
+      try {
+        // Generate unique file path
+        const cardId = card?.id || 'new-card';
+        const timestamp = Date.now();
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const filePath = `${cardId}/${timestamp}-${safeFileName}`;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('project-attachments')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+        
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('project-attachments')
+          .getPublicUrl(filePath);
+        
         const attachment: Attachment = {
-          id: `attachment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `attachment-${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
           name: file.name,
-          url: e.target?.result as string,
+          url: urlData.publicUrl,
           type: file.type,
           size: file.size,
           uploadedAt: new Date().toISOString(),
@@ -144,9 +167,10 @@ export const AttachmentManager = ({
           actions.updateCard(updatedCard);
           actions.addActivity(card.id, 'attachment', `anexou "${attachment.name}"`);
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
   };
 
   const handleAddLink = () => {
@@ -320,16 +344,25 @@ export const AttachmentManager = ({
                 const isPDF = attachment.type === 'application/pdf' || attachment.name?.toLowerCase().endsWith('.pdf');
                 const isImage = attachment.type?.startsWith('image/');
                 const isLink = attachment.type === 'link';
+                const isRemoved = attachment.url === '[arquivo-removido-por-performance]';
                 
                 return (
                   <div
                     key={attachment.id}
-                    className="flex items-center justify-between gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors"
+                    className={cn(
+                      "flex items-center justify-between gap-3 p-3 border rounded-md hover:bg-muted/50 transition-colors",
+                      isRemoved && "opacity-60 bg-muted/30"
+                    )}
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {getFileIcon(attachment.type)}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm break-all whitespace-normal">{attachment.name}</p>
+                        <p className="font-medium text-sm break-all whitespace-normal">
+                          {attachment.name}
+                          {isRemoved && (
+                            <span className="ml-2 text-xs text-muted-foreground">(arquivo removido)</span>
+                          )}
+                        </p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{formatFileSize(attachment.size)}</span>
                           {attachment.size > 0 && <span>•</span>}
@@ -339,7 +372,7 @@ export const AttachmentManager = ({
                     </div>
                     
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      {isPDF && (
+                      {!isRemoved && isPDF && (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -355,7 +388,7 @@ export const AttachmentManager = ({
                           </svg>
                         </Button>
                       )}
-                      {isLink ? (
+                      {!isRemoved && isLink ? (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -371,7 +404,7 @@ export const AttachmentManager = ({
                             <line x1="10" x2="21" y1="14" y2="3"/>
                           </svg>
                         </Button>
-                      ) : (
+                      ) : !isRemoved ? (
                         <>
                           {(isImage || isPDF) && (
                             <Button
@@ -410,7 +443,7 @@ export const AttachmentManager = ({
                             </svg>
                           </Button>
                         </>
-                      )}
+                      ) : null}
                       <Button
                         size="sm"
                         variant="ghost"
