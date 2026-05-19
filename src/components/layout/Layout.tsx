@@ -21,7 +21,6 @@ export const useSidebarContext = () => {
   return context;
 };
 
-// Page titles mapping
 const getPageTitle = (pathname: string): string => {
   const titles: Record<string, string> = {
     '/': 'Dashboard',
@@ -38,42 +37,27 @@ const getPageTitle = (pathname: string): string => {
     '/colaboradores': 'Colaboradores',
     '/financeiro': 'Financeiro'
   };
-  
   return titles[pathname] || 'Sistema Poderalize';
 };
 
 export const Layout = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true); // Default to collapsed for more screen real estate
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isLandscape, setIsLandscape] = useState(false);
   const location = useLocation();
   const title = getPageTitle(location.pathname);
 
+  // Close mobile sidebar on route change
   useEffect(() => {
-    const checkOrientation = () => {
-      setIsLandscape(
-        window.innerHeight < 600 && 
-        window.innerWidth > window.innerHeight
-      );
-    };
-    
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
-    
-    return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
-    };
-  }, []);
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex">
         <Sidebar />
-        <div className={`flex flex-col min-h-screen transition-all duration-300 ${isLandscape ? 'ml-0' : 'ml-0 md:ml-16 lg:' + (collapsed ? 'ml-16' : 'ml-64')}`}>
+        <div className={`flex flex-col flex-1 min-w-0 transition-all duration-300 ${collapsed ? 'md:pl-16' : 'md:pl-64'}`}>
           <Header title={title} />
-          <main className="flex-1 p-3 landscape:p-2 sm:p-4 md:p-6 overflow-hidden">
+          <main className="flex-1 p-4 md:p-6 overflow-hidden flex flex-col">
             <Outlet />
           </main>
         </div>
