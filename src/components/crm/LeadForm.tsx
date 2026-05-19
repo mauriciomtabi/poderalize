@@ -181,7 +181,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
   ];
 
   const handleAddLead = () => {
-    if (!novoLead.nome || !novoLead.empresa || !novoLead.email || !novoLead.produtoInteresse) {
+    if (!novoLead.nome) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios (Nome, Empresa, Email e Produto de Interesse)",
@@ -258,7 +258,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
             />
           </div>
           <div>
-            <Label htmlFor="empresa">Empresa *</Label>
+            <Label htmlFor="empresa">Empresa</Label>
             <Input
               id="empresa"
               value={novoLead.empresa}
@@ -270,7 +270,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="email">E-mail *</Label>
+            <Label htmlFor="email">E-mail</Label>
             <Input
               id="email"
               type="email"
@@ -351,7 +351,7 @@ export const LeadForm = ({ onSubmit, initialData }: LeadFormProps) => {
             />
           </div>
           <div>
-            <Label htmlFor="produtoInteresse">Produto de Interesse *</Label>
+            <Label htmlFor="produtoInteresse">Produto de Interesse</Label>
             <Input
               id="produtoInteresse"
               value={novoLead.produtoInteresse}

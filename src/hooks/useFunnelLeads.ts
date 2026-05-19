@@ -199,12 +199,19 @@ export const useFunnelLeads = (funnelId?: string) => {
     if (!user) return [];
 
     try {
-      const { data: leads, error } = await supabase
+      let query = supabase
         .from('leads')
         .select('*')
         .eq('user_id', user.id)
-        .is('funnel_id', null)
         .order('created_at', { ascending: false });
+
+      if (funnelId) {
+        query = query.or('funnel_id.is.null,funnel_id.neq.' + funnelId);
+      } else {
+        query = query.is('funnel_id', null);
+      }
+
+      const { data: leads, error } = await query;
 
       if (error) {
         console.error('Error loading unassigned leads:', error);
