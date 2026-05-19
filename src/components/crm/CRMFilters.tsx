@@ -87,7 +87,7 @@ export const CRMFilters = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="flex flex-col gap-4">
         {/* Date Range */}
         <div className="space-y-2">
           <Label>Período</Label>

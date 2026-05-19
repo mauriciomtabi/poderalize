@@ -8,6 +8,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { useCRM } from "@/contexts/CRMContext";
 import { CreateFunnelDialog } from "./CreateFunnelDialog";
 import { EditFunnelDialog } from "./EditFunnelDialog";
+import { AddLeadToFunnelDialog } from "./AddLeadToFunnelDialog";
 import { CRMFilters } from "./CRMFilters";
 import { CRMSettings } from "./CRMSettings";
 
@@ -17,6 +18,7 @@ export const CRMHeader = () => {
   const [showEditFunnel, setShowEditFunnel] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAddLead, setShowAddLead] = useState(false);
 
   const handleFunnelChange = (funnelId: string) => {
     const funnel = funnels.find(f => f.id === funnelId);
@@ -90,6 +92,15 @@ export const CRMHeader = () => {
 
           <Button
             size="sm"
+            onClick={() => setShowAddLead(true)}
+            className="h-8 px-3 shadow-sm bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus size={16} className="sm:mr-1" />
+            <span className="hidden sm:inline">Novo Lead</span>
+          </Button>
+
+          <Button
+            size="sm"
             onClick={() => setShowCreateFunnel(true)}
             className="h-8 px-3 shadow-sm"
           >
@@ -141,6 +152,14 @@ export const CRMHeader = () => {
           open={showEditFunnel}
           onOpenChange={setShowEditFunnel}
           funnel={currentFunnel}
+        />
+      )}
+
+      {currentFunnel && (
+        <AddLeadToFunnelDialog
+          open={showAddLead}
+          onOpenChange={setShowAddLead}
+          stageId={currentFunnel.stages?.[0]?.id || ''}
         />
       )}
 

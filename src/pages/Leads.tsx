@@ -105,8 +105,8 @@ const Leads = () => {
 
   // Função para adicionar lead
   const handleAddLead = async () => {
-    if (!novoLead.nome || !novoLead.empresa || !novoLead.email || !novoLead.fonte) {
-      toast.error('Por favor, preencha todos os campos obrigatórios');
+    if (!novoLead.nome) {
+      toast.error('Por favor, preencha o Nome do contato');
       return;
     }
     const success = await addLead({
@@ -435,7 +435,7 @@ const Leads = () => {
                   })} placeholder="Nome do contato" />
                   </div>
                   <div>
-                    <Label htmlFor="empresa">Empresa *</Label>
+                    <Label htmlFor="empresa">Empresa</Label>
                     <Input id="empresa" value={novoLead.empresa} onChange={e => setNovoLead({
                     ...novoLead,
                     empresa: e.target.value
@@ -445,7 +445,7 @@ const Leads = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="email">E-mail *</Label>
+                    <Label htmlFor="email">E-mail</Label>
                     <Input id="email" type="email" value={novoLead.email} onChange={e => setNovoLead({
                     ...novoLead,
                     email: e.target.value
@@ -462,7 +462,7 @@ const Leads = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="fonte">Fonte *</Label>
+                    <Label htmlFor="fonte">Fonte</Label>
                     <Select value={novoLead.fonte} onValueChange={value => setNovoLead({
                     ...novoLead,
                     fonte: value
