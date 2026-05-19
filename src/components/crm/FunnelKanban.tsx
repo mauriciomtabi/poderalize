@@ -117,25 +117,14 @@ export const FunnelKanban = ({ funnel }: FunnelKanbanProps) => {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="mb-4 sm:mb-6 flex items-end justify-between gap-3">
-        <div>
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-secondary tracking-tight">{funnel.name}</h2>
-          {funnel.description && (
-            <p className="mt-1 text-sm sm:text-base text-muted-foreground">{funnel.description}</p>
-          )}
-        </div>
-        <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-          {funnel.stages.length} etapas
-        </div>
-      </div>
+
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div ref={scrollContainerRef} className="flex gap-4 sm:gap-6 pb-4 flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
           {funnel.stages.map((stage, index) => (
             <div key={stage.id} data-stage-id={stage.id} className="flex-shrink-0 w-80">
               <Card
-                className="h-[calc(100vh-14rem)] flex flex-col overflow-hidden border-border bg-surface-subtle shadow-sm"
+                className="h-[calc(100vh-10rem)] flex flex-col overflow-hidden border-border bg-surface-subtle shadow-sm"
               >
                 {/* Stage Header */}
                 <div

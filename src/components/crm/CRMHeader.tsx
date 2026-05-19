@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useCRM } from "@/contexts/CRMContext";
 import { CreateFunnelDialog } from "./CreateFunnelDialog";
 import { EditFunnelDialog } from "./EditFunnelDialog";
@@ -36,94 +37,63 @@ export const CRMHeader = () => {
   ];
 
   return (
-    <div className="space-y-6">
-{/* Metrics Row — Compact and elegant */}
-      <div className="flex flex-wrap items-center gap-3">
-        {metricsData.map((metric, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-3 rounded-full border border-border bg-surface-elevated px-4 py-2 shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-default"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-primary ring-1 ring-primary/10">
-              <metric.icon className="h-4 w-4" strokeWidth={2.2} />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground leading-none mb-1">
-                {metric.title}
-              </p>
-              <div className="flex items-baseline gap-1">
-                <p className="font-display text-sm font-bold text-secondary leading-none">
-                  {metric.value}
-                </p>
-                {metric.suffix && (
-                  <span className="text-[10px] font-medium text-muted-foreground ml-1">{metric.suffix}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Toolbar — funnel + search + actions */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-border bg-surface-elevated px-4 py-3 shadow-sm">
+    <div className="sticky top-0 z-30 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-b border-border pb-2 pt-2 -mx-4 px-4 sm:-mx-6 sm:px-6">
+      <div className="flex flex-row items-center justify-between gap-3">
+        
         {/* 1. Funnel Selector */}
-        <div className="flex-shrink-0 flex items-center gap-2">
-          <div className="hidden sm:flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+        <div className="flex-shrink-0">
           <Select
             value={currentFunnel?.id || ""}
             onValueChange={handleFunnelChange}
           >
-            <SelectTrigger className="h-10 text-sm min-w-[200px] border-border bg-background font-medium">
+            <SelectTrigger className="h-8 text-sm min-w-[200px] bg-muted border-transparent font-medium shadow-none">
               <SelectValue placeholder="Selecionar funil" />
             </SelectTrigger>
             <SelectContent>
               {funnels.filter(funnel => funnel.id && funnel.id.trim()).map((funnel) => (
                 <SelectItem key={funnel.id} value={funnel.id}>
-                  <div className="flex items-center gap-2">
-                    <span>{funnel.name}</span>
-                    {funnel.isActive && (
-                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                        Ativo
-                      </Badge>
-                    )}
-                  </div>
+                  {funnel.name} {funnel.isActive && "(Ativo)"}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* 2. Search */}
-        <div className="flex-1 min-w-0 max-w-md">
+        {/* 2. Campo de Busca */}
+        <div className="flex-1 min-w-[200px] max-w-md">
           <div className="relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar leads..."
               value={filters.search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-10 h-10 text-sm bg-background border-border"
+              className="w-full pl-9 h-8 text-sm bg-muted border-transparent shadow-none focus-visible:ring-1"
             />
           </div>
         </div>
 
-        {/* 3. Action Buttons */}
-        <div className="flex gap-1.5 flex-shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className={`h-10 px-3 ${showFilters ? "bg-accent text-primary border-primary/30" : ""}`}
-          >
-            <Filter size={16} className="sm:mr-1.5" />
-            <span className="hidden sm:inline">Filtros</span>
-          </Button>
+        {/* 3. Botões de Ação */}
+        <div className="flex gap-2 flex-shrink-0">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="relative h-8 px-3 bg-muted border-transparent shadow-none hover:bg-muted/80">
+                <Filter size={16} className="sm:mr-1" />
+                <span className="hidden sm:inline">Filtros</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" side="bottom" className="p-0 w-80">
+              <div className="p-4 bg-popover rounded-md border border-border shadow-md">
+                <CRMFilters />
+              </div>
+            </PopoverContent>
+          </Popover>
 
           <Button
             size="sm"
             onClick={() => setShowCreateFunnel(true)}
-            className="h-10 px-3 bg-primary hover:bg-primary-dark text-primary-foreground shadow-orange"
+            className="h-8 px-3 shadow-sm"
           >
-            <Plus size={16} className="sm:mr-1.5" />
+            <Plus size={16} className="sm:mr-1" />
             <span className="hidden sm:inline">Novo funil</span>
           </Button>
 
@@ -132,9 +102,9 @@ export const CRMHeader = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowEditFunnel(true)}
-              className="h-10 px-3"
+              className="h-8 px-3 bg-muted border-transparent shadow-none hover:bg-muted/80"
             >
-              <Edit size={16} className="sm:mr-1.5" />
+              <Edit size={16} className="sm:mr-1" />
               <span className="hidden sm:inline">Editar</span>
             </Button>
           )}
@@ -143,27 +113,29 @@ export const CRMHeader = () => {
             variant="outline" 
             size="sm"
             onClick={() => setShowSettings(true)}
-            className="h-10 w-10"
+            className="h-8 w-8 p-0 bg-muted border-transparent shadow-none hover:bg-muted/80"
           >
             <Settings size={16} />
           </Button>
         </div>
       </div>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="animate-fade-in">
-          <CRMFilters />
-        </div>
-      )}
+      {/* Metrics Row - super compact */}
+      <div className="flex flex-wrap items-center gap-4 mt-2">
+        {metricsData.map((metric, index) => (
+          <div key={index} className="flex items-center gap-1.5 text-xs">
+            <metric.icon className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-muted-foreground font-medium">{metric.title}:</span>
+            <span className="font-bold text-secondary">{metric.value} {metric.suffix}</span>
+          </div>
+        ))}
+      </div>
 
-      {/* Create Funnel Dialog */}
       <CreateFunnelDialog
         open={showCreateFunnel}
         onOpenChange={setShowCreateFunnel}
       />
 
-      {/* Edit Funnel Dialog */}
       {currentFunnel && (
         <EditFunnelDialog
           open={showEditFunnel}
@@ -172,7 +144,6 @@ export const CRMHeader = () => {
         />
       )}
 
-      {/* Settings Dialog */}
       <CRMSettings
         open={showSettings}
         onOpenChange={setShowSettings}
