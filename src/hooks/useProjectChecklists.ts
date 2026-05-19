@@ -44,7 +44,7 @@ export const useProjectChecklists = (cardId?: string) => {
     try {
       const { data: newChecklist, error } = await supabase
         .from('project_checklists')
-        .insert(data)
+        .insert(data as any)
         .select()
         .single();
 
@@ -67,7 +67,7 @@ export const useProjectChecklists = (cardId?: string) => {
     try {
       const { error } = await supabase
         .from('project_checklists')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id);
 
       if (error) throw error;
