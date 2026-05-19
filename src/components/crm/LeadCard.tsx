@@ -148,12 +148,21 @@ export const LeadCard = ({
       await markLeadAsLost(lead.id, motivo);
     }
   };
-  return <Card className="p-3.5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30 transition-all duration-200 border border-border bg-surface-elevated rounded-xl" onClick={handleClick}>
+  return (
+    <Card 
+      className="group relative p-3.5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 transition-all duration-300 border border-border bg-surface-elevated rounded-xl overflow-hidden" 
+      onClick={handleClick}
+    >
+      {/* Indicador visual lateral baseado na temperatura */}
+      {lead.temperaturaNegociacao && (
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${getTemperatureColor(lead.temperaturaNegociacao).replace('text-', 'bg-')} opacity-60`} />
+      )}
+
       {/* Header */}
-      <div className="flex items-start justify-between mb-2.5">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9 ring-2 ring-accent">
-            <AvatarFallback className="text-xs font-semibold bg-gradient-primary text-primary-foreground">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2.5">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="text-[10px] font-semibold bg-secondary/5 text-secondary">
               {getInitials(lead.nome)}
             </AvatarFallback>
           </Avatar>
@@ -161,121 +170,74 @@ export const LeadCard = ({
             <h4 className="font-display font-semibold text-sm text-secondary truncate tracking-tight">
               {lead.nome}
             </h4>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Building2 className="h-3 w-3" />
               <span className="truncate">{lead.empresa}</span>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          {/* Follow-up Indicator */}
+        <div className="flex items-center gap-1">
           {hasPendingFollowUp && followUpState && (
-            <div className="flex items-center" title={
-              followUpState === 'overdue' ? 'Follow-up atrasado' :
-              followUpState === 'today' ? 'Follow-up hoje' :
-              'Follow-up agendado'
-            }>
-              <Bell className={`h-4 w-4 ${
-                followUpState === 'overdue' ? 'text-red-500' :
-                followUpState === 'today' ? 'text-orange-500 animate-pulse' :
-                'text-blue-500'
-              }`} />
+            <div title={followUpState === 'overdue' ? 'Follow-up atrasado' : followUpState === 'today' ? 'Follow-up hoje' : 'Follow-up agendado'}>
+              <Bell className={`h-3.5 w-3.5 ${followUpState === 'overdue' ? 'text-red-500' : followUpState === 'today' ? 'text-primary animate-pulse' : 'text-blue-500'}`} />
             </div>
           )}
 
-          {/* Actions Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={handleMenuClick}>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-secondary opacity-0 group-hover:opacity-100 transition-opacity">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem 
-                onClick={() => setActionDialog({ isOpen: true, action: 'close' })}
-                className="text-green-600"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Marcar como Fechado
+              <DropdownMenuItem onClick={() => setActionDialog({ isOpen: true, action: 'close' })} className="text-green-600">
+                <CheckCircle className="h-4 w-4 mr-2" /> Fechado
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setActionDialog({ isOpen: true, action: 'lose' })}
-                className="text-red-600"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Marcar como Perdido
+              <DropdownMenuItem onClick={() => setActionDialog({ isOpen: true, action: 'lose' })} className="text-red-600">
+                <XCircle className="h-4 w-4 mr-2" /> Perdido
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* Contact Info */}
-      <div className="space-y-1 mb-3">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Mail className="h-3 w-3" />
-          <span className="truncate">{lead.email}</span>
-        </div>
-        {lead.cnpj && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <FileText className="h-3 w-3" />
-            <span>{formatCNPJ(lead.cnpj)}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Phone className="h-3 w-3" />
-          <span>{formatPhone(lead.telefone)}</span>
-        </div>
-      </div>
-
       {/* Value and Temperature */}
-      <div className="flex items-center justify-between mb-3 px-2.5 py-2 rounded-lg bg-accent/60">
-        <div className="flex items-center gap-1.5 text-sm">
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-1">
           <DollarSign className="h-3.5 w-3.5 text-primary" />
-          <span className="font-display font-bold text-secondary tabular-nums">
-            R$ {lead.valor.toLocaleString('pt-BR')}
+          <span className="font-display font-bold text-sm text-secondary tabular-nums">
+            {lead.valor.toLocaleString('pt-BR')}
           </span>
         </div>
         
-        {/* Negotiation Temperature */}
         {lead.temperaturaNegociacao && (
-          <div className="flex items-center gap-1 text-xs">
-            <Thermometer className={`h-3 w-3 ${getTemperatureColor(lead.temperaturaNegociacao)}`} />
-            <span className={`font-medium ${getTemperatureColor(lead.temperaturaNegociacao)}`}>
-              {getTemperatureLabel(lead.temperaturaNegociacao)}
-            </span>
-          </div>
+          <Badge variant="outline" className={`text-[10px] h-5 px-1.5 border-transparent bg-secondary/5 ${getTemperatureColor(lead.temperaturaNegociacao)}`}>
+            {getTemperatureLabel(lead.temperaturaNegociacao)}
+          </Badge>
         )}
       </div>
 
-      {/* Last Contact and Stage Selector */}
-      <div className="flex items-center justify-between border-t pt-2">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3" />
-          <span>
-            Últ. contato: {format(new Date(lead.ultimaInteracao), "dd/MM", {
-            locale: ptBR
-          })}
-          </span>
+      {/* Hidden Info revealed on Hover */}
+      <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-in-out">
+        <div className="overflow-hidden">
+          <div className="space-y-1.5 pt-2 border-t border-border/50 pb-1">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Mail className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{lead.email}</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Phone className="h-3 w-3 flex-shrink-0" />
+              <span>{formatPhone(lead.telefone)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Calendar className="h-3 w-3 flex-shrink-0" />
+              <span>Últ. contato: {format(new Date(lead.ultimaInteracao), "dd/MM", { locale: ptBR })}</span>
+            </div>
+          </div>
         </div>
-        
-        <LeadStageSelector
-          leadId={lead.id}
-          currentStageId={lead.funnelStageId}
-          currentStageTitle={lead.etapaFunil}
-          funnelId={lead.funnelId}
-          onStageChange={onLeadUpdate}
-        />
       </div>
 
-      {/* Score Indicator */}
-      <div className="mt-2">
-        
-        
-      </div>
-
-      {/* Lead Action Dialog */}
       <LeadActionDialog
         isOpen={actionDialog.isOpen}
         onClose={() => setActionDialog({ isOpen: false, action: null })}
@@ -283,5 +245,6 @@ export const LeadCard = ({
         action={actionDialog.action!}
         leadName={lead.nome}
       />
-    </Card>;
+    </Card>
+  );
 };
