@@ -6,61 +6,69 @@
 
 @layer base {
   :root {
-    /* Background colors */
-    --background: 0 0% 98%;
-    --foreground: 222 84% 15%;
+    /* Poderalize palette — Marinho profundo + Laranja + Creme */
+    /* Background colors (warm cream for airy feel) */
+    --background: 28 60% 97%;
+    --foreground: 222 70% 12%;
+
+    /* Surfaces: layered (subtle, card, elevated) */
+    --surface-subtle: 28 50% 95%;
+    --surface-elevated: 0 0% 100%;
 
     /* Card colors */
     --card: 0 0% 100%;
-    --card-foreground: 222 84% 15%;
+    --card-foreground: 222 70% 12%;
 
     /* Popover colors */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 84% 15%;
+    --popover-foreground: 222 70% 12%;
 
     /* Primary - Poderalize Orange */
-    --primary: 20 85% 55%;
+    --primary: 18 88% 56%;
     --primary-foreground: 0 0% 98%;
-    --primary-light: 20 85% 65%;
-    --primary-dark: 20 85% 45%;
+    --primary-light: 18 90% 66%;
+    --primary-dark: 18 80% 46%;
 
-    /* Secondary - Navy Blue */
-    --secondary: 222 84% 15%;
+    /* Secondary - Navy Blue (institutional, deeper) */
+    --secondary: 222 70% 16%;
     --secondary-foreground: 0 0% 98%;
+    --secondary-deep: 222 78% 11%;
 
     /* Muted colors */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 28 30% 93%;
+    --muted-foreground: 222 16% 42%;
 
     /* Accent - Light Orange */
-    --accent: 20 85% 95%;
-    --accent-foreground: 222 84% 15%;
+    --accent: 22 90% 95%;
+    --accent-foreground: 222 70% 16%;
 
     /* Destructive colors */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     /* Border and input */
-    --border: 210 40% 90%;
-    --input: 210 40% 94%;
-    --ring: 20 85% 55%;
+    --border: 28 28% 88%;
+    --input: 28 30% 94%;
+    --ring: 18 88% 56%;
 
     /* Additional design tokens */
-    --radius: 8px;
+    --radius: 14px;
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(20 85% 55%), hsl(20 85% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(222 84% 15%), hsl(222 84% 25%));
-    --gradient-accent: linear-gradient(135deg, hsl(20 85% 95%), hsl(20 85% 90%));
+    --gradient-primary: linear-gradient(135deg, hsl(18 88% 56%), hsl(22 92% 64%));
+    --gradient-secondary: linear-gradient(135deg, hsl(222 78% 11%), hsl(222 70% 22%));
+    --gradient-accent: linear-gradient(135deg, hsl(22 90% 96%), hsl(28 60% 92%));
+    --gradient-mesh: radial-gradient(at 0% 0%, hsl(22 90% 95% / 0.6) 0px, transparent 50%), radial-gradient(at 100% 0%, hsl(222 70% 16% / 0.06) 0px, transparent 50%);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(222 84% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 84% 15% / 0.1), 0 2px 4px -1px hsl(222 84% 15% / 0.06);
-    --shadow-lg: 0 10px 15px -3px hsl(222 84% 15% / 0.1), 0 4px 6px -2px hsl(222 84% 15% / 0.05);
-    --shadow-orange: 0 10px 25px -5px hsl(20 85% 55% / 0.25);
+    /* Shadows — soft, layered, branded */
+    --shadow-sm: 0 1px 2px 0 hsl(222 70% 16% / 0.04);
+    --shadow-md: 0 4px 12px -2px hsl(222 70% 16% / 0.08), 0 2px 4px -2px hsl(222 70% 16% / 0.04);
+    --shadow-lg: 0 16px 32px -12px hsl(222 70% 16% / 0.18), 0 4px 8px -4px hsl(222 70% 16% / 0.08);
+    --shadow-orange: 0 12px 28px -8px hsl(18 88% 56% / 0.35);
+    --shadow-navy: 0 12px 28px -8px hsl(222 78% 11% / 0.25);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -130,6 +138,13 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.02em;
   }
 
   /* Custom scrollbar */
