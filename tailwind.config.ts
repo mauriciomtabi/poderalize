@@ -12,10 +12,10 @@ export default {
         "2xl": "1400px",
       },
     },
-    screens: {
-      'landscape': { 'raw': '(max-height: 600px) and (orientation: landscape)' },
-    },
     extend: {
+      screens: {
+        'landscape': { 'raw': '(max-height: 600px) and (orientation: landscape)' },
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
