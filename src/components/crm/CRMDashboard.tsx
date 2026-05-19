@@ -26,7 +26,7 @@ export const CRMDashboard = () => {
   const totalValue = funnelLeads.reduce((sum, lead) => sum + (lead.valor || 0), 0);
   const totalLeads = funnelLeads.length;
 
-  const formatMoney = (val: number) => {
+  const formatMoney = (val) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
 
@@ -63,10 +63,10 @@ export const CRMDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
-                <RechartsTooltip formatter={(value) => [\\ leads\, 'Quantidade']} />
+                <RechartsTooltip formatter={(value) => [value + ' leads', 'Quantidade']} />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                   {stageData.map((entry, index) => (
-                    <Cell key={\cell-\\} fill={entry.color} />
+                    <Cell key={'cell-' + index} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
@@ -77,7 +77,7 @@ export const CRMDashboard = () => {
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Valor por Etapa</CardTitle>
-            <CardDescription>Distribuição financeira do funil</CardDescription>
+            <CardDescription>Distribuiï¿½ï¿½o financeira do funil</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -87,16 +87,16 @@ export const CRMDashboard = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => \\ (\%)\}
+                  label={({ name, percent }) => name + ' (' + (percent * 100).toFixed(0) + '%)'}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
                 >
                   {stageData.filter(d => d.value > 0).map((entry, index) => (
-                    <Cell key={\cell-\\} fill={entry.color} />
+                    <Cell key={'cell-' + index} fill={entry.color} />
                   ))}
                 </Pie>
-                <RechartsTooltip formatter={(value) => [formatMoney(value as number), 'Valor']} />
+                <RechartsTooltip formatter={(value) => [formatMoney(value), 'Valor']} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
