@@ -27,19 +27,12 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
 
   // Load unassigned leads when dialog opens
   useEffect(() => {
-    if (open) {
-      const loadUnassignedLeads = async () => {
-        try {
-          const leads = await funnelLeadHooks.getUnassignedLeads();
-          setUnassignedLeads(leads);
-        } catch (error) {
-          console.error('Error loading unassigned leads:', error);
-          setUnassignedLeads([]);
-        }
-      };
-      loadUnassignedLeads();
+    if (open && currentFunnel) {
+      // Use leads already loaded in memory to avoid query errors
+      const availableLeads = leadHooks.leads.filter(lead => lead.funnel_id !== currentFunnel.id);
+      setUnassignedLeads(availableLeads);
     }
-  }, [open, funnelLeadHooks]);
+  }, [open, currentFunnel, leadHooks.leads]);
 
   useEffect(() => {
     if (open) {
@@ -143,7 +136,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
             <div ref={existingScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2">
               {filteredExistingLeads.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead disponível fora de funis"}
+                  {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead disponível "}
                 </div>
               ) : (
                 filteredExistingLeads.map((lead) => (
