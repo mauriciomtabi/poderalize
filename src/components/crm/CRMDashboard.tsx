@@ -77,7 +77,7 @@ export const CRMDashboard = () => {
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Valor por Etapa</CardTitle>
-            <CardDescription>Distribui��o financeira do funil</CardDescription>
+            <CardDescription>Distribuição financeira do funil</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
