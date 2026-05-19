@@ -9,11 +9,11 @@ import { CreateClienteData } from './useClientes';
 const leadSchema = z.object({
   // Dados básicos
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
-  empresa: z.string().trim().min(1, "Empresa é obrigatória").max(100, "Empresa deve ter no máximo 100 caracteres"),
-  email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres"),
+  empresa: z.string().trim().max(100, "Empresa deve ter no máximo 100 caracteres").optional().or(z.literal("")),
+  email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres").optional().or(z.literal("")),
   cnpj: z.string().trim().max(18, "CNPJ deve ter no máximo 18 caracteres").optional(),
   telefone: z.string().trim().optional(),
-  fonte: z.string().trim().min(1, "Fonte é obrigatória").max(50, "Fonte deve ter no máximo 50 caracteres"),
+  fonte: z.string().trim().max(50, "Fonte deve ter no máximo 50 caracteres").optional().or(z.literal("")),
   status_simple: z.enum(['novo', 'qualificado', 'proposta', 'negociacao', 'fechado', 'perdido']).optional(),
   status_advanced: z.enum(['frio', 'morno', 'quente']).optional(),
   etapa_funil: z.enum(['descoberta', 'consideracao', 'decisao', 'fechamento', 'fidelizacao']).optional(),
@@ -47,7 +47,7 @@ const leadSchema = z.object({
   
   // Atração e Conversão
   anuncio_origem: z.string().trim().optional(),
-  produto_interesse: z.string().trim().min(1, "Produto de interesse é obrigatório"),
+  produto_interesse: z.string().trim().max(100, "Produto de interesse deve ter no máximo 100 caracteres").optional().or(z.literal("")),
   oferta_atrativa: z.string().trim().optional(),
   gatilhos_funcionais: z.array(z.string()).optional(),
   
