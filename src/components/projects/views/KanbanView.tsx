@@ -270,10 +270,10 @@ export const KanbanView = () => {
                                           <InlineEdit
                                             value={list.title}
                                             onSave={(newTitle) => actions.updateList(list.id, { title: newTitle })}
-                                            className="text-sm font-semibold text-secondary"
+                                            className="text-sm font-semibold text-white drop-shadow-sm"
                                             placeholder="Título da lista"
                                           />
-                                          <Badge variant="secondary" className="text-xs bg-secondary/10 text-secondary-foreground border-secondary/20">
+                                          <Badge variant="secondary" className="text-xs bg-black/20 text-white border-white/20 shadow-none">
                                             {filteredCards.length}
                                           </Badge>
                                           {(() => {
@@ -286,7 +286,7 @@ export const KanbanView = () => {
                                                 <TooltipProvider>
                                                   <Tooltip>
                                                     <TooltipTrigger asChild>
-                                                      <Clock className="h-3.5 w-3.5 text-secondary-foreground/60" />
+                                                      <Clock className="h-3.5 w-3.5 text-white/80 drop-shadow-sm" />
                                                     </TooltipTrigger>
                                                     <TooltipContent>
                                                       <p>Arquivamento automático após {autoArchiveDays} dias</p>
@@ -300,7 +300,7 @@ export const KanbanView = () => {
                                         </div>
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                          <Button variant="ghost" size="sm" className="text-secondary-foreground hover:bg-secondary/20">
+                                          <Button variant="ghost" size="sm" className="text-white hover:bg-black/10">
                                             <MoreHorizontal size={16} />
                                           </Button>
                                         </DropdownMenuTrigger>
