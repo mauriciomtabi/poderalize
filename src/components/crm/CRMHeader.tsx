@@ -3,7 +3,6 @@ import { Search, Filter, Plus, Settings, Zap, TrendingUp, Clock, DollarSign, Edi
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCRM } from "@/contexts/CRMContext";
 import { CreateFunnelDialog } from "./CreateFunnelDialog";
@@ -30,68 +29,55 @@ export const CRMHeader = () => {
   };
 
   const metricsData = [
-    {
-      title: "Total de Leads",
-      value: metrics.totalLeads,
-      icon: Zap,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
-    },
-    {
-      title: "Taxa de Conversão",
-      value: `${metrics.conversionRate}%`,
-      icon: TrendingUp,
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    {
-      title: "Ciclo Médio",
-      value: `${metrics.averageCycleTime} dias`,
-      icon: Clock,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50"
-    },
-    {
-      title: "Receita Prevista",
-      value: `R$ ${metrics.predictedRevenue.toLocaleString()}`,
-      icon: DollarSign,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50"
-    }
+    { title: "Total de Leads", value: metrics.totalLeads.toString(), icon: Zap, hint: "no funil ativo" },
+    { title: "Taxa de Conversão", value: `${metrics.conversionRate}%`, icon: TrendingUp, hint: "leads → fechados" },
+    { title: "Ciclo Médio", value: `${metrics.averageCycleTime}`, suffix: "dias", icon: Clock, hint: "do primeiro contato" },
+    { title: "Receita Prevista", value: `R$ ${metrics.predictedRevenue.toLocaleString('pt-BR')}`, icon: DollarSign, hint: "soma do pipeline" },
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-4 gap-4">
+    <div className="space-y-6">
+      {/* Metrics Cards — airy grid, editorial hierarchy */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {metricsData.map((metric, index) => (
-          <Card key={index} className="p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
+          <div
+            key={index}
+            className="group relative overflow-hidden rounded-2xl border border-border bg-surface-elevated p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+          >
+            <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] uppercase tracking-[0.12em] font-semibold text-muted-foreground mb-3">
                   {metric.title}
                 </p>
-                <p className="text-2xl font-bold text-foreground">
-                  {metric.value}
-                </p>
+                <div className="flex items-baseline gap-1.5">
+                  <p className="font-display text-3xl font-bold text-secondary leading-none tracking-tight">
+                    {metric.value}
+                  </p>
+                  {metric.suffix && (
+                    <span className="text-sm font-medium text-muted-foreground">{metric.suffix}</span>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{metric.hint}</p>
               </div>
-              <div className={`p-3 rounded-full ${metric.bgColor}`}>
-                <metric.icon className={`h-6 w-6 ${metric.color}`} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-primary ring-1 ring-primary/10">
+                <metric.icon className="h-5 w-5" strokeWidth={2.2} />
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
-      {/* Header Controls */}
-      <div className="flex flex-row items-center justify-between gap-2 px-3 py-2">
+      {/* Toolbar — funnel + search + actions */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-border bg-surface-elevated px-4 py-3 shadow-sm">
         {/* 1. Funnel Selector */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center gap-2">
+          <div className="hidden sm:flex h-2 w-2 rounded-full bg-primary animate-pulse" />
           <Select
             value={currentFunnel?.id || ""}
             onValueChange={handleFunnelChange}
           >
-            <SelectTrigger className="h-8 text-sm min-w-[150px]">
+            <SelectTrigger className="h-10 text-sm min-w-[200px] border-border bg-background font-medium">
               <SelectValue placeholder="Selecionar funil" />
             </SelectTrigger>
             <SelectContent>
@@ -100,7 +86,7 @@ export const CRMHeader = () => {
                   <div className="flex items-center gap-2">
                     <span>{funnel.name}</span>
                     {funnel.isActive && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
                         Ativo
                       </Badge>
                     )}
@@ -112,38 +98,37 @@ export const CRMHeader = () => {
         </div>
 
         {/* 2. Search */}
-        <div className="flex-1 min-w-0 max-w-xs">
+        <div className="flex-1 min-w-0 max-w-md">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar leads..."
               value={filters.search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-8 h-8 text-sm"
+              className="w-full pl-10 h-10 text-sm bg-background border-border"
             />
           </div>
         </div>
 
         {/* 3. Action Buttons */}
-        <div className="flex gap-1 flex-shrink-0">
+        <div className="flex gap-1.5 flex-shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
-            className={`h-8 px-2 ${showFilters ? "bg-muted" : ""}`}
+            className={`h-10 px-3 ${showFilters ? "bg-accent text-primary border-primary/30" : ""}`}
           >
-            <Filter size={16} className="sm:mr-1" />
+            <Filter size={16} className="sm:mr-1.5" />
             <span className="hidden sm:inline">Filtros</span>
           </Button>
 
           <Button
-            variant="outline"
             size="sm"
             onClick={() => setShowCreateFunnel(true)}
-            className="h-8 px-2"
+            className="h-10 px-3 bg-primary hover:bg-primary-dark text-primary-foreground shadow-orange"
           >
-            <Plus size={16} className="sm:mr-1" />
-            <span className="hidden sm:inline">Novo</span>
+            <Plus size={16} className="sm:mr-1.5" />
+            <span className="hidden sm:inline">Novo funil</span>
           </Button>
 
           {currentFunnel && (
@@ -151,9 +136,9 @@ export const CRMHeader = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowEditFunnel(true)}
-              className="h-8 px-2"
+              className="h-10 px-3"
             >
-              <Edit size={16} className="sm:mr-1" />
+              <Edit size={16} className="sm:mr-1.5" />
               <span className="hidden sm:inline">Editar</span>
             </Button>
           )}
@@ -162,7 +147,7 @@ export const CRMHeader = () => {
             variant="outline" 
             size="sm"
             onClick={() => setShowSettings(true)}
-            className="h-8 w-8"
+            className="h-10 w-10"
           >
             <Settings size={16} />
           </Button>
