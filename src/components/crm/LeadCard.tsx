@@ -148,17 +148,17 @@ export const LeadCard = ({
       await markLeadAsLost(lead.id, motivo);
     }
   };
-  return <Card className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 border border-border" onClick={handleClick}>
+  return <Card className="p-3.5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30 transition-all duration-200 border border-border bg-surface-elevated rounded-xl" onClick={handleClick}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2.5">
         <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs font-medium">
+          <Avatar className="h-9 w-9 ring-2 ring-accent">
+            <AvatarFallback className="text-xs font-semibold bg-gradient-primary text-primary-foreground">
               {getInitials(lead.nome)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm text-foreground truncate">
+            <h4 className="font-display font-semibold text-sm text-secondary truncate tracking-tight">
               {lead.nome}
             </h4>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -230,11 +230,11 @@ export const LeadCard = ({
       </div>
 
       {/* Value and Temperature */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1 text-sm">
-          <DollarSign className="h-3 w-3 text-green-600" />
-          <span className="font-medium text-green-600">
-            R$ {lead.valor.toLocaleString()}
+      <div className="flex items-center justify-between mb-3 px-2.5 py-2 rounded-lg bg-accent/60">
+        <div className="flex items-center gap-1.5 text-sm">
+          <DollarSign className="h-3.5 w-3.5 text-primary" />
+          <span className="font-display font-bold text-secondary tabular-nums">
+            R$ {lead.valor.toLocaleString('pt-BR')}
           </span>
         </div>
         
