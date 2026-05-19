@@ -7,7 +7,7 @@ const INITIAL_DELAY_MAX = 30 * 1000; // 0-30 seconds random delay
 
 export const AutomationWatcher = () => {
   const { processAutomations, isProcessing } = useAutomationProcessor();
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
     // Add random initial delay to prevent simultaneous calls from multiple users
