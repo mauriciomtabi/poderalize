@@ -146,15 +146,19 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       dispatch({ type: 'SET_FUNNELS', payload: convertedFunnels });
       
-      // Set current funnel if none selected
-      if (!state.currentFunnel && convertedFunnels.length > 0) {
-        dispatch({ type: 'SET_CURRENT_FUNNEL', payload: convertedFunnels[0] });
+      // Set or update current funnel
+      if (convertedFunnels.length > 0) {
+        const currentId = state.currentFunnel?.id;
+        const updatedCurrentFunnel = currentId 
+          ? convertedFunnels.find(f => f.id === currentId) || convertedFunnels[0]
+          : convertedFunnels[0];
+        dispatch({ type: 'SET_CURRENT_FUNNEL', payload: updatedCurrentFunnel });
       }
     }
     
     // Set loading state based on hooks
     dispatch({ type: 'SET_LOADING', payload: funnelHooks.isLoading });
-  }, [funnelHooks.funnels, funnelHooks.isLoading, state.currentFunnel]);
+  }, [funnelHooks.funnels, funnelHooks.isLoading, state.currentFunnel?.id]);
 
   useEffect(() => {
     if (leadHooks.leads.length >= 0) {
@@ -337,7 +341,13 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       dispatch({ type: 'SET_CURRENT_FUNNEL', payload: currentFunnelWithLeads });
     }
-  }, [state.currentFunnel?.id, funnelLeadHooks.funnelLeads, leadHooks.leads, state.filters]);
+  }, [
+    state.currentFunnel?.id, 
+    funnelLeadHooks.funnelLeads, 
+    leadHooks.leads, 
+    state.filters,
+    JSON.stringify(state.currentFunnel?.stages?.map(s => ({ id: s.id, position: s.position, title: s.title, color: s.color })) || [])
+  ]);
 
   // Funnel actions
   const setCurrentFunnel = useCallback((funnel: CustomFunnel | null) => {
