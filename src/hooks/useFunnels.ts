@@ -47,13 +47,13 @@ export function useFunnels() {
       setIsLoading(true);
       
       // Load funnels with their stages
+      // Removed .eq('user_id', user.id) so all users with CRM access can see all funnels
       const { data: funnelsData, error: funnelsError } = await supabase
         .from('funnels')
         .select(`
           *,
           funnel_stages (*)
         `)
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (funnelsError) {
