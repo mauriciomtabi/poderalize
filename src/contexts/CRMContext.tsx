@@ -166,8 +166,8 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         email: lead.email,
         telefone: lead.telefone || '',
         fonte: lead.fonte,
-        status: 'morno', // Default status for CRM context
-        etapaFunil: lead.etapa_funil || 'descoberta',
+        status: (lead.status_advanced || 'morno') as 'frio' | 'morno' | 'quente',
+        etapaFunil: (lead.etapa_funil || 'descoberta') as 'descoberta' | 'consideracao' | 'decisao' | 'fechamento' | 'fidelizacao',
         valor: lead.valor || 0,
         probabilidade: lead.probabilidade || 0,
         dataContato: lead.data_contato || new Date().toISOString(),
@@ -190,30 +190,62 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       dispatch({ type: 'SET_LEADS', payload: convertedLeads });
       
-      // Calculate metrics based on real data
-      const totalLeads = convertedLeads.length;
+      // Filter leads to get only those in the current funnel
+      let funnelLeads = convertedLeads.filter(lead => lead.funnelId === state.currentFunnel?.id);
       
-      // Taxa de conversão: percentual de leads fechados
-      const closedLeads = convertedLeads.filter(l => 
+      // Apply filters for metrics
+      if (state.filters.search) {
+        const search = state.filters.search.toLowerCase();
+        funnelLeads = funnelLeads.filter(lead => 
+          lead.nome.toLowerCase().includes(search) ||
+          (lead.empresa && lead.empresa.toLowerCase().includes(search)) ||
+          (lead.email && lead.email.toLowerCase().includes(search)) ||
+          (lead.telefone && lead.telefone.toLowerCase().includes(search))
+        );
+      }
+      
+      if (state.filters.dateRange) {
+        const { start, end } = state.filters.dateRange;
+        funnelLeads = funnelLeads.filter(lead => {
+          const contactDate = new Date(lead.dataContato);
+          if (start && contactDate < new Date(start)) return false;
+          if (end && contactDate > new Date(end)) return false;
+          return true;
+        });
+      }
+      
+      if (state.filters.leadSource && state.filters.leadSource.length > 0) {
+        funnelLeads = funnelLeads.filter(lead => state.filters.leadSource.includes(lead.fonte));
+      }
+      
+      if (state.filters.responsible && state.filters.responsible.length > 0) {
+        funnelLeads = funnelLeads.filter(lead => state.filters.responsible.includes(lead.vendedorNome));
+      }
+      
+      // Calculate metrics based on filtered funnel leads
+      const totalLeads = funnelLeads.length;
+      
+      // Taxa de convers�o: percentual de leads fechados ou quente
+      const closedLeads = funnelLeads.filter(l => 
         l.etapaFunil === 'fechamento' || l.status === 'quente'
       ).length;
       const conversionRate = totalLeads > 0 ? (closedLeads / totalLeads) * 100 : 0;
       
-      // Ciclo médio: tempo médio desde o primeiro contato até agora
+      // Ciclo m�dio: tempo m�dio desde o primeiro contato at� agora
       let averageCycleTime = 30; // Default
-      if (convertedLeads.length > 0) {
+      if (funnelLeads.length > 0) {
         const now = new Date();
-        const totalDays = convertedLeads.reduce((sum, lead) => {
+        const totalDays = funnelLeads.reduce((sum, lead) => {
           const contactDate = new Date(lead.dataContato);
           const diffTime = Math.abs(now.getTime() - contactDate.getTime());
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           return sum + diffDays;
         }, 0);
-        averageCycleTime = Math.round(totalDays / convertedLeads.length);
+        averageCycleTime = Math.round(totalDays / funnelLeads.length);
       }
       
       // Receita prevista: soma do valor de todos os leads do funil atual
-      const predictedRevenue = convertedLeads.reduce((sum, lead) => 
+      const predictedRevenue = funnelLeads.reduce((sum, lead) => 
         sum + lead.valor, 0
       );
       
@@ -226,7 +258,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       dispatch({ type: 'UPDATE_METRICS', payload: metrics });
     }
-  }, [leadHooks.leads]);
+  }, [leadHooks.leads, state.currentFunnel?.id, state.filters]);
 
   // Inject leads from funnelLeadHooks into current funnel stages
   useEffect(() => {
@@ -238,7 +270,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const stageLeads = funnelLeadHooks.funnelLeads[stage.id] || [];
         
         // Convert Lead[] to LeadAdvanced[] using full lead data
-        const leadsAdvanced: LeadAdvanced[] = stageLeads.map(lead => {
+        let leadsAdvanced: LeadAdvanced[] = stageLeads.map(lead => {
           const fullLead = leadHooks.leads.find(l => l.id === lead.id);
           return {
             id: lead.id,
@@ -268,6 +300,35 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
         });
 
+        // Apply filters
+        if (state.filters.search) {
+          const search = state.filters.search.toLowerCase();
+          leadsAdvanced = leadsAdvanced.filter(lead => 
+            lead.nome.toLowerCase().includes(search) ||
+            (lead.empresa && lead.empresa.toLowerCase().includes(search)) ||
+            (lead.email && lead.email.toLowerCase().includes(search)) ||
+            (lead.telefone && lead.telefone.toLowerCase().includes(search))
+          );
+        }
+
+        if (state.filters.dateRange) {
+          const { start, end } = state.filters.dateRange;
+          leadsAdvanced = leadsAdvanced.filter(lead => {
+            const contactDate = new Date(lead.dataContato);
+            if (start && contactDate < new Date(start)) return false;
+            if (end && contactDate > new Date(end)) return false;
+            return true;
+          });
+        }
+
+        if (state.filters.leadSource && state.filters.leadSource.length > 0) {
+          leadsAdvanced = leadsAdvanced.filter(lead => state.filters.leadSource.includes(lead.fonte));
+        }
+
+        if (state.filters.responsible && state.filters.responsible.length > 0) {
+          leadsAdvanced = leadsAdvanced.filter(lead => state.filters.responsible.includes(lead.vendedorNome));
+        }
+
         return {
           ...stage,
           leads: leadsAdvanced
@@ -276,7 +337,7 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       dispatch({ type: 'SET_CURRENT_FUNNEL', payload: currentFunnelWithLeads });
     }
-  }, [state.currentFunnel?.id, funnelLeadHooks.funnelLeads, leadHooks.leads]);
+  }, [state.currentFunnel?.id, funnelLeadHooks.funnelLeads, leadHooks.leads, state.filters]);
 
   // Funnel actions
   const setCurrentFunnel = useCallback((funnel: CustomFunnel | null) => {
@@ -395,25 +456,36 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (updates.vendedorNome) updateData.vendedor_nome = updates.vendedorNome;
 
       await leadHooks.updateLead(id, updateData);
+      
+      // Refresh funnel leads to ensure synchronization on the Kanban board
+      if (state.currentFunnel) {
+        await funnelLeadHooks.refreshFunnelLeads();
+      }
     } catch (error) {
       console.error('Error updating lead:', error);
     }
-  }, [leadHooks]);
+  }, [leadHooks, funnelLeadHooks, state.currentFunnel]);
 
   const deleteLead = useCallback(async (id: string) => {
     try {
       await leadHooks.deleteLead(id);
+      
+      // Refresh funnel leads to ensure synchronization on the Kanban board
+      if (state.currentFunnel) {
+        await funnelLeadHooks.refreshFunnelLeads();
+      }
     } catch (error) {
       console.error('Error deleting lead:', error);
     }
-  }, [leadHooks]);
+  }, [leadHooks, funnelLeadHooks, state.currentFunnel]);
 
   const moveLead = useCallback(async (leadId: string, newStageId: string) => {
     if (state.currentFunnel) {
       await funnelLeadHooks.moveLeadToStage(leadId, newStageId, state.currentFunnel.id);
       await funnelLeadHooks.refreshFunnelLeads();
+      await leadHooks.refreshLeads(); // Sync global leads list!
     }
-  }, [funnelLeadHooks, state.currentFunnel]);
+  }, [funnelLeadHooks, leadHooks, state.currentFunnel]);
 
   const setSelectedLead = useCallback((lead: LeadAdvanced | null) => {
     dispatch({ type: 'SET_SELECTED_LEAD', payload: lead });

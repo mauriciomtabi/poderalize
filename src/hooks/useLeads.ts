@@ -9,62 +9,62 @@ import { CreateClienteData } from './useClientes';
 const leadSchema = z.object({
   // Dados básicos
   nome: z.string().trim().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
-  empresa: z.string().trim().max(100, "Empresa deve ter no máximo 100 caracteres").optional().or(z.literal("")),
-  email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres").optional().or(z.literal("")),
-  cnpj: z.string().trim().max(18, "CNPJ deve ter no máximo 18 caracteres").optional(),
-  telefone: z.string().trim().optional(),
-  fonte: z.string().trim().max(50, "Fonte deve ter no máximo 50 caracteres").optional().or(z.literal("")),
-  status_simple: z.enum(['novo', 'qualificado', 'proposta', 'negociacao', 'fechado', 'perdido']).optional(),
-  status_advanced: z.enum(['frio', 'morno', 'quente']).optional(),
-  etapa_funil: z.enum(['descoberta', 'consideracao', 'decisao', 'fechamento', 'fidelizacao']).optional(),
-  valor: z.number().min(0, "Valor deve ser positivo").optional(),
-  probabilidade: z.number().min(0, "Probabilidade deve ser entre 0 e 100").max(100, "Probabilidade deve ser entre 0 e 100").optional(),
-  data_contato: z.string().optional(),
-  observacoes: z.string().trim().max(1000, "Observações devem ter no máximo 1000 caracteres").optional(),
-  avatar_url: z.string().trim().optional(),
+  empresa: z.string().trim().max(100, "Empresa deve ter no máximo 100 caracteres").optional().nullable().or(z.literal("")),
+  email: z.string().trim().email("Email inválido").max(255, "Email deve ter no máximo 255 caracteres").optional().nullable().or(z.literal("")),
+  cnpj: z.string().trim().max(18, "CNPJ deve ter no máximo 18 caracteres").optional().nullable(),
+  telefone: z.string().trim().optional().nullable(),
+  fonte: z.string().trim().max(50, "Fonte deve ter no máximo 50 caracteres").optional().nullable().or(z.literal("")),
+  status_simple: z.enum(['novo', 'qualificado', 'proposta', 'negociacao', 'fechado', 'perdido']).optional().nullable(),
+  status_advanced: z.enum(['frio', 'morno', 'quente']).optional().nullable(),
+  etapa_funil: z.enum(['descoberta', 'consideracao', 'decisao', 'fechamento', 'fidelizacao']).optional().nullable(),
+  valor: z.number().min(0, "Valor deve ser positivo").optional().nullable(),
+  probabilidade: z.number().min(0, "Probabilidade deve ser entre 0 e 100").max(100, "Probabilidade deve ser entre 0 e 100").optional().nullable(),
+  data_contato: z.string().optional().nullable(),
+  observacoes: z.string().trim().max(1000, "Observações devem ter no máximo 1000 caracteres").optional().nullable(),
+  avatar_url: z.string().trim().optional().nullable(),
   
   // Presença Digital
-  site: z.string().trim().optional(),
-  instagram: z.string().trim().optional(),
-  facebook: z.string().trim().optional(),
-  outras_redes_sociais: z.string().trim().optional(),
+  site: z.string().trim().optional().nullable(),
+  instagram: z.string().trim().optional().nullable(),
+  facebook: z.string().trim().optional().nullable(),
+  outras_redes_sociais: z.string().trim().optional().nullable(),
   
   // Faturamento
-  faturamento_atual: z.number().min(0).optional(),
-  faturamento_desejado: z.number().min(0).optional(),
+  faturamento_atual: z.number().min(0).optional().nullable(),
+  faturamento_desejado: z.number().min(0).optional().nullable(),
   
   // Comportamento e Potencial
-  dores_identificadas: z.array(z.string()).optional(),
-  nivel_consciencia: z.string().optional(),
-  etapa_jornada: z.string().optional(),
-  indicador_potencial: z.string().optional(),
-  equipe_atual: z.string().optional(),
+  dores_identificadas: z.array(z.string()).optional().nullable(),
+  nivel_consciencia: z.string().optional().nullable(),
+  etapa_jornada: z.string().optional().nullable(),
+  indicador_potencial: z.string().optional().nullable(),
+  equipe_atual: z.string().optional().nullable(),
   
   // Mindset Comercial Poderalize
-  trava_emocional: z.enum(['inseguranca_financeira', 'medo_dar_errado', 'falta_apoio', 'falta_tempo', 'desconfianca']).optional(),
-  tipo_discurso: z.enum(['tecnico', 'emocional', 'inspirador']).optional(),
-  necessidade_oculta: z.array(z.string()).optional(),
+  trava_emocional: z.enum(['inseguranca_financeira', 'medo_dar_errado', 'falta_apoio', 'falta_tempo', 'desconfianca']).optional().nullable(),
+  tipo_discurso: z.enum(['tecnico', 'emocional', 'inspirador']).optional().nullable(),
+  necessidade_oculta: z.array(z.string()).optional().nullable(),
   
   // Atração e Conversão
-  anuncio_origem: z.string().trim().optional(),
-  produto_interesse: z.string().trim().max(100, "Produto de interesse deve ter no máximo 100 caracteres").optional().or(z.literal("")),
-  oferta_atrativa: z.string().trim().optional(),
-  gatilhos_funcionais: z.array(z.string()).optional(),
+  anuncio_origem: z.string().trim().optional().nullable(),
+  produto_interesse: z.string().trim().max(100, "Produto de interesse deve ter no máximo 100 caracteres").optional().nullable().or(z.literal("")),
+  oferta_atrativa: z.string().trim().optional().nullable(),
+  gatilhos_funcionais: z.array(z.string()).optional().nullable(),
   
   // Lead Scoring
-  pontuacao: z.number().min(0).optional(),
-  ultima_interacao: z.string().optional(),
+  pontuacao: z.number().min(0).optional().nullable(),
+  ultima_interacao: z.string().optional().nullable(),
   
   // Vendedor responsável
-  vendedor_id: z.string().optional(),
-  vendedor_nome: z.string().trim().optional(),
+  vendedor_id: z.string().optional().nullable(),
+  vendedor_nome: z.string().trim().optional().nullable(),
   
   // Temperatura da negociação
-  temperatura_negociacao: z.enum(['muito_fraca', 'fraca', 'mediana', 'forte', 'muito_forte']).optional(),
+  temperatura_negociacao: z.enum(['muito_fraca', 'fraca', 'mediana', 'forte', 'muito_forte']).optional().nullable(),
 
   // Funnel relationship (novos campos)
-  funnel_id: z.string().uuid().optional(),
-  funnel_stage_id: z.string().uuid().optional(),
+  funnel_id: z.string().uuid().optional().nullable(),
+  funnel_stage_id: z.string().uuid().optional().nullable(),
 });
 
 export interface Lead {

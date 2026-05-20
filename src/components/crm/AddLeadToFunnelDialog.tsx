@@ -66,6 +66,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
     try {
       const success = await funnelLeadHooks.addLeadToFunnel(lead.id, currentFunnel.id, stageId);
       if (success) {
+        await leadHooks.refreshLeads();
         onOpenChange(false);
       }
     } catch (error) {
