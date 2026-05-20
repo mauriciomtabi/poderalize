@@ -26,7 +26,7 @@ export const useFunnelLeads = (funnelId?: string) => {
           *,
           funnel_stages!inner(id, title, position, color)
         `)
-        .eq('user_id', user.id)
+        
         .eq('funnel_id', targetFunnelId)
         .order('created_at', { ascending: false });
 
@@ -86,7 +86,7 @@ export const useFunnelLeads = (funnelId?: string) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', leadId)
-        .eq('user_id', user.id);
+        ;
 
       if (error) {
         console.error('Error moving lead:', error);
@@ -130,7 +130,7 @@ export const useFunnelLeads = (funnelId?: string) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', leadId)
-        .eq('user_id', user.id);
+        ;
 
       if (error) {
         console.error('Error adding lead to funnel:', error);
@@ -167,7 +167,7 @@ export const useFunnelLeads = (funnelId?: string) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', leadId)
-        .eq('user_id', user.id);
+        ;
 
       if (error) {
         console.error('Error removing lead from funnel:', error);
@@ -202,7 +202,7 @@ export const useFunnelLeads = (funnelId?: string) => {
       let query = supabase
         .from('leads')
         .select('*')
-        .eq('user_id', user.id)
+        
         .order('created_at', { ascending: false });
 
       if (funnelId) {

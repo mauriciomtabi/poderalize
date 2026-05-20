@@ -111,7 +111,7 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
         .from('leads')
         .select('id')
         .eq('funnel_id', funnel.id)
-        .eq('user_id', user.id);
+        ;
 
       if (fetchLeadsError) throw fetchLeadsError;
 

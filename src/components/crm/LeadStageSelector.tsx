@@ -68,7 +68,7 @@ export const LeadStageSelector = ({
         .from('leads')
         .update({ funnel_stage_id: newStageId })
         .eq('id', leadId)
-        .eq('user_id', user.id);
+        ;
 
       if (error) {
         console.error('Erro ao mover lead:', error);
