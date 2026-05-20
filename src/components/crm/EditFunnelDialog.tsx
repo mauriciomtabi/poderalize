@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical, Plus, X, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { useFunnels } from "@/hooks/useFunnels";
+import { useCRM } from "@/contexts/CRMContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -29,7 +29,8 @@ const defaultColors = [
 ];
 
 export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialogProps) => {
-  const { updateFunnel } = useFunnels();
+  const { funnelHooks, leadHooks, funnelLeadHooks } = useCRM();
+  const { updateFunnel } = funnelHooks;
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: funnel.name,
@@ -159,65 +160,55 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
         return;
       }
 
-      // Primeiro, buscar os IDs dos leads deste funil para reassignar depois
-      const { data: leadsToUpdate, error: fetchLeadsError } = await supabase
-        .from('leads')
-        .select('id')
-        .eq('funnel_id', funnel.id)
-        ;
-
-      if (fetchLeadsError) throw fetchLeadsError;
-
-      const leadIds = leadsToUpdate?.map(l => l.id) || [];
-
-      // Setar funnel_id e funnel_stage_id como null (constraint exige ambos null ou ambos not null)
-      if (leadIds.length > 0) {
-        const { error: updateLeadsError } = await supabase
-          .from('leads')
-          .update({ 
-            funnel_stage_id: null,
-            funnel_id: null 
-          })
-          .in('id', leadIds);
-
-        if (updateLeadsError) throw updateLeadsError;
-      }
-
-      // Deletar etapas existentes
-      const { error: deleteError } = await supabase
+            // 1. Buscar etapas atuais no banco
+      const { data: dbStages, error: dbStagesError } = await supabase
         .from('funnel_stages')
-        .delete()
+        .select('id')
         .eq('funnel_id', funnel.id);
 
-      if (deleteError) throw deleteError;
+      if (dbStagesError) throw dbStagesError;
 
-      // Criar novas etapas
-      const stageInserts = stages.map((stage, index) => ({
-        funnel_id: funnel.id,
-        title: stage.title.trim(),
-        color: stage.color,
-        position: index,
-      }));
+      const dbStageIds = dbStages?.map(s => s.id) || [];
+      const updatedStageIds = stages.filter(s => !s.id.startsWith('new-')).map(s => s.id);
 
-      const { data: newStages, error: insertError } = await supabase
-        .from('funnel_stages')
-        .insert(stageInserts)
-        .select();
+      // 2. Identificar etapas deletadas (existem no banco, mas n�o no novo array)
+      const stageIdsToDelete = dbStageIds.filter(id => !updatedStageIds.includes(id));
 
-      if (insertError) throw insertError;
+      if (stageIdsToDelete.length > 0) {
+        const { error: deleteStagesError } = await supabase
+          .from('funnel_stages')
+          .delete()
+          .in('id', stageIdsToDelete);
 
-      // Reassignar leads à primeira etapa do funil
-      if (newStages && newStages.length > 0 && leadIds.length > 0) {
-        const { error: assignLeadsError } = await supabase
-          .from('leads')
-          .update({ 
-            funnel_id: funnel.id,
-            funnel_stage_id: newStages[0].id 
-          })
-          .in('id', leadIds);
-
-        if (assignLeadsError) throw assignLeadsError;
+        if (deleteStagesError) throw deleteStagesError;
       }
+
+      // 3. Preparar upsert: etapas existentes mant�m o ID para preservar os leads nelas
+      const stagesToUpsert = stages.map((stage, index) => {
+        const item = {
+          funnel_id: funnel.id,
+          title: stage.title.trim(),
+          color: stage.color,
+          position: index,
+        };
+        if (!stage.id.startsWith('new-')) {
+          item.id = stage.id;
+        }
+        return item;
+      });
+
+      const { error: upsertError } = await supabase
+        .from('funnel_stages')
+        .upsert(stagesToUpsert);
+
+      if (upsertError) throw upsertError;
+
+      // Sincronizar todos os hooks instantaneamente antes de fechar o modal
+      await Promise.all([
+        funnelHooks.refreshFunnels(),
+        leadHooks.refreshLeads(),
+        funnelLeadHooks.refreshFunnelLeads()
+      ]);
 
       toast.success('Funil atualizado com sucesso!');
       onOpenChange(false);
