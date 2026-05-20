@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CustomFunnel, FunnelStage } from "@/types/crm";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GripVertical, Plus, X } from "lucide-react";
+import { GripVertical, Plus, X, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useFunnels } from "@/hooks/useFunnels";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,59 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
   });
   const [stages, setStages] = useState<FunnelStage[]>(funnel.stages);
   const [isLoading, setIsLoading] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.style.opacity = '1';
+    setDraggedIndex(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newStages = [...stages];
+    const [draggedItem] = newStages.splice(draggedIndex, 1);
+    newStages.splice(index, 0, draggedItem);
+    
+    const updatedStages = newStages.map((stage, i) => ({
+      ...stage,
+      position: i
+    }));
+    
+    setStages(updatedStages);
+  };
+
+  const handleMoveStage = (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === stages.length - 1) return;
+
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    const newStages = [...stages];
+    
+    const temp = newStages[index];
+    newStages[index] = newStages[newIndex];
+    newStages[newIndex] = temp;
+
+    const updatedStages = newStages.map((stage, i) => ({
+      ...stage,
+      position: i
+    }));
+
+    setStages(updatedStages);
+  };
 
   useEffect(() => {
     setFormData({
@@ -226,9 +279,45 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
 
             <div className="space-y-3">
               {stages.map((stage, index) => (
-                <Card key={stage.id} className="p-4">
+                <Card 
+                  key={stage.id} 
+                  className={`p-4 transition-all duration-200 ${
+                    draggedIndex === index ? 'border-dashed border-primary/50 bg-primary/5 opacity-50' : ''
+                  }`}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                >
                   <div className="flex items-center gap-3">
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                    <div className="flex flex-col items-center gap-1">
+                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
+                      <div className="flex flex-col gap-0.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-secondary disabled:opacity-30"
+                          onClick={() => handleMoveStage(index, 'up')}
+                          disabled={index === 0}
+                          title="Mover para cima"
+                        >
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-secondary disabled:opacity-30"
+                          onClick={() => handleMoveStage(index, 'down')}
+                          disabled={index === stages.length - 1}
+                          title="Mover para baixo"
+                        >
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                     
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-3">
