@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LeadAdvanced } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
-import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell, MoreVertical, CheckCircle, XCircle, FileText } from "lucide-react";
+import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell, MoreVertical, CheckCircle, XCircle, FileText, LogOut } from "lucide-react";
 import { formatCNPJ, formatPhone } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -11,7 +11,7 @@ import { NegotiationTemperature } from "@/types/crm";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { LeadActionDialog } from "./LeadActionDialog";
 import { useLeads } from "@/hooks/useLeads";
@@ -148,6 +148,27 @@ export const LeadCard = ({
       await markLeadAsLost(lead.id, motivo);
     }
   };
+
+  const handleRemoveFromFunnel = async () => {
+    setIsRemoving(true);
+    try {
+      const success = await funnelLeadHooks.removeLeadFromFunnel(lead.id);
+      if (success) {
+        await leadHooks.refreshLeads();
+        await funnelLeadHooks.refreshFunnelLeads();
+        toast.success('Lead removido do funil com sucesso!');
+      } else {
+        toast.error('Erro ao remover lead do funil');
+      }
+    } catch (error) {
+      console.error('Error removing lead from funnel:', error);
+      toast.error('Erro ao remover lead do funil');
+    } finally {
+      setIsRemoving(false);
+      setRemoveConfirmOpen(false);
+    }
+  };
+
   return (
     <Card 
       className="group relative p-3.5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 transition-all duration-300 border border-border bg-surface-elevated rounded-xl overflow-hidden" 
@@ -174,6 +195,12 @@ export const LeadCard = ({
               <Building2 className="h-3 w-3" />
               <span className="truncate">{lead.empresa}</span>
             </div>
+            {lead.telefone && (
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                <Phone className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{formatPhone(lead.telefone)}</span>
+              </div>
+            )}
           </div>
         </div>
         
@@ -197,6 +224,17 @@ export const LeadCard = ({
               <DropdownMenuItem onClick={() => setActionDialog({ isOpen: true, action: 'lose' })} className="text-red-600">
                 <XCircle className="h-4 w-4 mr-2" /> Perdido
               </DropdownMenuItem>
+              {currentFunnel && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => { e.stopPropagation(); setRemoveConfirmOpen(true); }}
+                    className="text-orange-600"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" /> Remover do funil
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -245,6 +283,27 @@ export const LeadCard = ({
         action={actionDialog.action!}
         leadName={lead.nome}
       />
+
+      <AlertDialog open={removeConfirmOpen} onOpenChange={setRemoveConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover lead do funil?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O lead <strong>{lead.nome}</strong> será removido do funil atual. Ele continuará disponível na lista de leads e pode ser adicionado a qualquer funil novamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemoving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveFromFunnel}
+              disabled={isRemoving}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              {isRemoving ? 'Removendo...' : 'Remover do funil'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
