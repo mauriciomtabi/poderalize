@@ -19,6 +19,7 @@ import { LeadInteraction, InteractionType } from "@/types/crm";
 interface InteractionHistoryProps {
   interactions: LeadInteraction[];
   loading?: boolean;
+  hideCard?: boolean;
 }
 
 const interactionIcons: Record<InteractionType, React.ReactNode> = {
@@ -60,20 +61,81 @@ const interactionColors: Record<InteractionType, string> = {
   'follow_up': 'bg-gray-100 text-gray-800 border-gray-200'
 };
 
-export const InteractionHistory = ({ interactions, loading }: InteractionHistoryProps) => {
+export const InteractionHistory = ({ interactions, loading, hideCard }: InteractionHistoryProps) => {
   if (loading) {
+    const spinner = (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+    if (hideCard) return spinner;
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Histórico de Interações</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
+        <CardContent>{spinner}</CardContent>
       </Card>
     );
+  }
+
+  const listContent = (
+    interactions.length === 0 ? (
+      <div className="text-center py-8 text-muted-foreground bg-background/30 rounded-xl border border-dashed border-border p-6">
+        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <p className="font-semibold text-sm">Nenhuma interação registrada</p>
+        <p className="text-xs text-muted-foreground mt-1">Use o botão "Registrar Contato" para adicionar interações</p>
+      </div>
+    ) : (
+      <ScrollArea className={hideCard ? "h-full pr-2" : "h-[400px]"}>
+        <div className="space-y-4">
+          {interactions.map((interaction, index) => (
+            <div key={interaction.id}>
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                  {interactionIcons[interaction.interactionType]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${interactionColors[interaction.interactionType]}`}
+                    >
+                      {interactionLabels[interaction.interactionType]}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(interaction.interactionDate), "dd/MM/yyyy 'às' HH:mm", { 
+                        locale: ptBR 
+                      })}
+                    </span>
+                    {interaction.createdByUserName && (
+                      <Badge variant="secondary" className="text-xs">
+                        {interaction.createdByUserName}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {interaction.description}
+                  </p>
+                  {interaction.metadata && Object.keys(interaction.metadata).length > 0 && (
+                    <div className="mt-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                      <pre className="whitespace-pre-wrap">
+                        {JSON.stringify(interaction.metadata, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {index < interactions.length - 1 && <Separator className="mt-4" />}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    )
+  );
+
+  if (hideCard) {
+    return listContent;
   }
 
   return (
@@ -87,60 +149,7 @@ export const InteractionHistory = ({ interactions, loading }: InteractionHistory
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {interactions.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhuma interação registrada</p>
-            <p className="text-sm">Use o botão "Registrar Contato" para adicionar interações</p>
-          </div>
-        ) : (
-          <ScrollArea className="h-[400px]">
-            <div className="space-y-4">
-              {interactions.map((interaction, index) => (
-                <div key={interaction.id}>
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      {interactionIcons[interaction.interactionType]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${interactionColors[interaction.interactionType]}`}
-                        >
-                          {interactionLabels[interaction.interactionType]}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(interaction.interactionDate), "dd/MM/yyyy 'às' HH:mm", { 
-                            locale: ptBR 
-                          })}
-                        </span>
-                        {interaction.createdByUserName && (
-                          <Badge variant="secondary" className="text-xs">
-                            {interaction.createdByUserName}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-foreground leading-relaxed">
-                        {interaction.description}
-                      </p>
-                      {interaction.metadata && Object.keys(interaction.metadata).length > 0 && (
-                        <div className="mt-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                          <pre className="whitespace-pre-wrap">
-                            {JSON.stringify(interaction.metadata, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {index < interactions.length - 1 && <Separator className="mt-4" />}
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-      </CardContent>
+      <CardContent>{listContent}</CardContent>
     </Card>
   );
 };
