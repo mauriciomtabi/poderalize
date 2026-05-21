@@ -229,13 +229,13 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Calculate metrics based on filtered funnel leads
       const totalLeads = funnelLeads.length;
       
-      // Taxa de convers�o: percentual de leads fechados ou quente
+      // Taxa de conversão: percentual de leads fechados ou quente
       const closedLeads = funnelLeads.filter(l => 
         l.etapaFunil === 'fechamento' || l.status === 'quente'
       ).length;
       const conversionRate = totalLeads > 0 ? (closedLeads / totalLeads) * 100 : 0;
       
-      // Ciclo m�dio: tempo m�dio desde o primeiro contato at� agora
+      // Ciclo m?dio: tempo m?dio desde o primeiro contato at? agora
       let averageCycleTime = 30; // Default
       if (funnelLeads.length > 0) {
         const now = new Date();

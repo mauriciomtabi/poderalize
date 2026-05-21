@@ -170,7 +170,7 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
                         {isAlreadyInThisFunnel(lead) && (
                           <Badge className="text-xs bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
-                            J� neste funil
+                            Já neste funil
                           </Badge>
                         )}
                         {lead.funnel_id && !isAlreadyInThisFunnel(lead) && (

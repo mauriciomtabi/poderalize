@@ -171,7 +171,7 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
       const dbStageIds = dbStages?.map(s => s.id) || [];
       const updatedStageIds = stages.filter(s => !s.id.startsWith('new-')).map(s => s.id);
 
-      // 2. Identificar etapas deletadas (existem no banco, mas n�o no novo array)
+      // 2. Identificar etapas deletadas (existem no banco, mas não no novo array)
       const stageIdsToDelete = dbStageIds.filter(id => !updatedStageIds.includes(id));
 
       if (stageIdsToDelete.length > 0) {
@@ -183,7 +183,7 @@ export const EditFunnelDialog = ({ open, onOpenChange, funnel }: EditFunnelDialo
         if (deleteStagesError) throw deleteStagesError;
       }
 
-      // 3. Preparar upsert: etapas existentes mant�m o ID para preservar os leads nelas
+      // 3. Preparar upsert: etapas existentes mantêm o ID para preservar os leads nelas
       const stagesToUpsert = stages.map((stage, index) => {
         const item = {
           funnel_id: funnel.id,

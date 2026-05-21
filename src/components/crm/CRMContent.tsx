@@ -16,7 +16,7 @@ export const CRMContent = () => {
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Nenhum funil selecionado</h3>
           <p className="text-muted-foreground">
-            Selecione um funil existente ou crie um novo para come�ar.
+            Selecione um funil existente ou crie um novo para começar.
           </p>
         </Card>
       </div>
