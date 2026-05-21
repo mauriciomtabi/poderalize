@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Plus, UserPlus } from "lucide-react";
+import { Search, Plus, UserPlus, CheckCircle2 } from "lucide-react";
 import { useCRM } from "@/contexts/CRMContext";
 import { LeadForm } from "./LeadForm";
 import { Lead, LeadAdvanced } from "@/types/crm";
@@ -25,12 +25,10 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
   const newScrollRef = useRef<HTMLDivElement | null>(null);
   const existingScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Load unassigned leads when dialog opens
+  // Load ALL leads when dialog opens (all leads are available in all funnels)
   useEffect(() => {
     if (open && currentFunnel) {
-      // Use leads already loaded in memory to avoid query errors
-      const availableLeads = leadHooks.leads.filter(lead => lead.funnel_id !== currentFunnel.id);
-      setUnassignedLeads(availableLeads);
+      setUnassignedLeads(leadHooks.leads);
     }
   }, [open, currentFunnel, leadHooks.leads]);
 
@@ -52,9 +50,12 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
 
   const filteredExistingLeads = unassignedLeads.filter(lead =>
     lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (lead.empresa || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (lead.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const isAlreadyInThisFunnel = (lead: any) => 
+    currentFunnel && lead.funnel_id === currentFunnel.id;
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -159,13 +160,24 @@ export const AddLeadToFunnelDialog = ({ open, onOpenChange, stageId }: AddLeadTo
                           <p className="text-xs text-muted-foreground">{lead.email}</p>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-1">
                         <div className="font-medium text-green-600">
                           R$ {(lead.valor || 0).toLocaleString()}
                         </div>
                         <Badge variant="outline" className="text-xs">
                           {lead.fonte}
                         </Badge>
+                        {isAlreadyInThisFunnel(lead) && (
+                          <Badge className="text-xs bg-primary/10 text-primary border-primary/20 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            J� neste funil
+                          </Badge>
+                        )}
+                        {lead.funnel_id && !isAlreadyInThisFunnel(lead) && (
+                          <Badge variant="secondary" className="text-xs opacity-70">
+                            Em outro funil
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </Card>

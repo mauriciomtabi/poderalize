@@ -24,10 +24,9 @@ export const useFunnelLeads = (funnelId?: string) => {
         .from('leads')
         .select(`
           *,
-          funnel_stages!inner(id, title, position, color)
+          funnel_stages(id, title, position, color)
         `)
-        
-        .eq('funnel_id', targetFunnelId)
+        .or(`funnel_id.eq.${targetFunnelId},funnel_id.is.null`)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -40,20 +39,23 @@ export const useFunnelLeads = (funnelId?: string) => {
       }
 
       // Group leads by stage
-      const leadsByStage: FunnelLeadsData = {};
+      // Leads with no funnel_stage_id go into the special 'unassigned' bucket (will be placed in first stage)
+      const leadsByStage: FunnelLeadsData = { _unassigned: [] };
       leads?.forEach((lead: any) => {
         const stageId = lead.funnel_stage_id;
+        const mappedLead: Lead = {
+          ...lead,
+          status: lead.status_simple || 'novo',
+          dataContato: lead.data_contato || new Date().toISOString()
+        };
         if (stageId) {
           if (!leadsByStage[stageId]) {
             leadsByStage[stageId] = [];
           }
-          // Map database lead to Lead interface
-          const mappedLead: Lead = {
-            ...lead,
-            status: lead.status_simple || 'novo',
-            dataContato: lead.data_contato || new Date().toISOString()
-          };
           leadsByStage[stageId].push(mappedLead);
+        } else {
+          // Lead without stage goes to _unassigned bucket (placed in first stage by CRMContext)
+          leadsByStage['_unassigned'].push(mappedLead);
         }
       });
 
@@ -205,11 +207,7 @@ export const useFunnelLeads = (funnelId?: string) => {
         
         .order('created_at', { ascending: false });
 
-      if (funnelId) {
-        query = query.or('funnel_id.is.null,funnel_id.neq.' + funnelId);
-      } else {
-        query = query.is('funnel_id', null);
-      }
+      // No filter � return ALL leads so any lead can be added to any funnel
 
       const { data: leads, error } = await query;
 

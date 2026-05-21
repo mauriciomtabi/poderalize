@@ -269,9 +269,18 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (state.currentFunnel && funnelLeadHooks.funnelLeads && leadHooks.leads.length > 0) {
       const currentFunnelWithLeads = { ...state.currentFunnel };
       
+      // Leads without a funnel/stage go into the first stage (_unassigned bucket)
+      const unassignedLeads = funnelLeadHooks.funnelLeads['_unassigned'] || [];
+      const sortedStages = [...currentFunnelWithLeads.stages].sort((a, b) => a.position - b.position);
+      const firstStageId = sortedStages[0]?.id;
+      
       // For each stage, populate leads from funnelLeadHooks
       currentFunnelWithLeads.stages = currentFunnelWithLeads.stages.map(stage => {
-        const stageLeads = funnelLeadHooks.funnelLeads[stage.id] || [];
+        // Leads explicitly assigned to this stage + unassigned leads placed in first stage
+        const stageLeads = [
+          ...(funnelLeadHooks.funnelLeads[stage.id] || []),
+          ...(stage.id === firstStageId ? unassignedLeads : [])
+        ];
         
         // Convert Lead[] to LeadAdvanced[] using full lead data
         let leadsAdvanced: LeadAdvanced[] = stageLeads.map(lead => {
