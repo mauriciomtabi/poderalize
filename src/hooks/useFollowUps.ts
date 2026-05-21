@@ -26,7 +26,6 @@ export const useFollowUps = () => {
       let query = supabase
         .from('follow_ups')
         .select('*')
-        .eq('user_id', user.id)
         .order('data_agendada', { ascending: true });
 
       if (leadId) {
@@ -107,8 +106,7 @@ export const useFollowUps = () => {
       const { error } = await supabase
         .from('follow_ups')
         .update(payload)
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Error updating follow-up:', error);
@@ -129,8 +127,7 @@ export const useFollowUps = () => {
       const { error } = await supabase
         .from('follow_ups')
         .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Error deleting follow-up:', error);

@@ -61,7 +61,6 @@ export const LeadCard = ({
         const { data, error } = await supabase
           .from('follow_ups')
           .select('data_agendada')
-          .eq('user_id', user.id)
           .eq('lead_id', lead.id)
           .eq('status', 'pendente');
 

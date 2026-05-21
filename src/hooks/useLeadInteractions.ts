@@ -16,7 +16,6 @@ export const useLeadInteractions = () => {
       let query = supabase
         .from('lead_interactions')
         .select('*')
-        .eq('user_id', user.id)
         .order('interaction_date', { ascending: false });
 
       if (leadId) {
@@ -109,8 +108,7 @@ export const useLeadInteractions = () => {
       const { error } = await supabase
         .from('lead_interactions')
         .update(payload)
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Error updating interaction:', error);
@@ -131,8 +129,7 @@ export const useLeadInteractions = () => {
       const { error } = await supabase
         .from('lead_interactions')
         .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Error deleting interaction:', error);

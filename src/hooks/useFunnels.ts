@@ -152,7 +152,6 @@ export function useFunnels() {
         .from('funnels')
         .update(updates)
         .eq('id', id)
-        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -185,8 +184,7 @@ export function useFunnels() {
       const { error } = await supabase
         .from('funnels')
         .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('id', id);
 
       if (error) {
         console.error('Erro ao deletar funil:', error);

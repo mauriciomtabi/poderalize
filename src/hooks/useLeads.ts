@@ -517,7 +517,6 @@ export function useLeads() {
           motivo_perda: motivo.trim()
         })
         .eq('id', leadId)
-        .eq('user_id', user.id)
         .select()
         .single();
 
