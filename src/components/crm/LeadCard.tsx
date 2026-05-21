@@ -3,6 +3,17 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LeadAdvanced } from "@/types/crm";
 import { useCRM } from "@/contexts/CRMContext";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Building2, Mail, Phone, DollarSign, Calendar, Thermometer, Bell, MoreVertical, CheckCircle, XCircle, FileText, LogOut } from "lucide-react";
 import { formatCNPJ, formatPhone } from "@/lib/utils";
 import { format } from "date-fns";
@@ -25,8 +36,13 @@ export const LeadCard = ({
   onLeadUpdate
 }: LeadCardProps) => {
   const {
-    setSelectedLead
+    setSelectedLead,
+    currentFunnel,
+    funnelLeadHooks,
+    leadHooks
   } = useCRM();
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const { user } = useAuth();
   const [hasPendingFollowUp, setHasPendingFollowUp] = useState(false);
   const [followUpState, setFollowUpState] = useState<'overdue' | 'today' | 'scheduled' | null>(null);
