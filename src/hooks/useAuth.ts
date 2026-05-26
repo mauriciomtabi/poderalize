@@ -45,11 +45,15 @@ export const useAuth = () => {
   const fetchUserProfile = async (authUser: User) => {
     try {
       // Fetch profile data
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', authUser.id)
         .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
 
       // Fetch user roles (may have multiple rows)
       const { data: rolesData, error: rolesError } = await supabase
@@ -58,7 +62,7 @@ export const useAuth = () => {
         .eq('user_id', authUser.id);
 
       if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
+        throw rolesError;
       }
 
       const rolePriority: UserRole[] = ['admin', 'colaborador', 'pending'];
@@ -77,13 +81,33 @@ export const useAuth = () => {
         role: resolvedRole
       };
 
-      setUser(userData);
+      // Only set user if it has actually changed to keep references stable
+      setUser((current) => {
+        if (
+          current &&
+          current.id === userData.id &&
+          current.email === userData.email &&
+          current.full_name === userData.full_name &&
+          current.avatar_url === userData.avatar_url &&
+          current.role === userData.role
+        ) {
+          return current;
+        }
+        return userData;
+      });
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      setUser({
-        id: authUser.id,
-        email: authUser.email,
-        role: 'pending'
+      // Preserve current user if it matches authUser.id to prevent lockout on transient network issues
+      setUser((current) => {
+        if (current && current.id === authUser.id) {
+          console.log('Preserving current user state due to fetch failure:', current);
+          return current;
+        }
+        return {
+          id: authUser.id,
+          email: authUser.email,
+          role: 'pending'
+        };
       });
     }
   };

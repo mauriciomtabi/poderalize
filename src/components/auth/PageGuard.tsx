@@ -41,7 +41,14 @@ export const PageGuard: React.FC<PageGuardProps> = ({ children, page }) => {
         setHasPermission(data || false);
       } catch (error) {
         console.error('Error checking permission:', error);
-        setHasPermission(false);
+        // Preserva a permissão anterior se já era true para evitar bloqueio por falha de conexão temporária
+        setHasPermission((prev) => {
+          if (prev === true) {
+            console.log('Preserving previous permission due to transient RPC error');
+            return true;
+          }
+          return false;
+        });
       } finally {
         setLoading(false);
       }
