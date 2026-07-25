@@ -322,7 +322,7 @@ export const KanbanView = () => {
                                       <CardContent
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden px-2 pb-1 ${
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden px-2 pb-2 ${
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >
@@ -348,35 +348,34 @@ export const KanbanView = () => {
                                           </Draggable>
                                         ))}
                                         {provided.placeholder}
+                                        <button
+                                          onClick={() => handleAddCard(list.id)}
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            marginTop: '4px',
+                                            background: 'rgba(0,0,0,0.15)',
+                                            border: '1px solid rgba(255,255,255,0.25)',
+                                            borderRadius: '8px',
+                                            color: 'rgba(255,255,255,0.95)',
+                                            cursor: 'pointer',
+                                            fontWeight: '500',
+                                            fontSize: '14px',
+                                            fontFamily: 'inherit',
+                                            gap: '8px',
+                                            flexShrink: 0,
+                                          }}
+                                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.28)'; }}
+                                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.15)'; }}
+                                        >
+                                          <Plus size={16} style={{ flexShrink: 0, color: 'rgba(255,255,255,0.95)' }} />
+                                          <span style={{ color: 'rgba(255,255,255,0.95)', whiteSpace: 'nowrap' }}>Adicionar cartão</span>
+                                        </button>
                                       </CardContent>
                                     )}
                                   </Droppable>
-                                  {/* Pinned footer – never inside the scroll area */}
-                                  <div style={{ flexShrink: 0, padding: '4px 8px 8px 8px' }}>
-                                    <button
-                                      onClick={() => handleAddCard(list.id)}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        width: '100%',
-                                        padding: '8px 12px',
-                                        background: 'rgba(0,0,0,0.15)',
-                                        border: '1px solid rgba(255,255,255,0.25)',
-                                        borderRadius: '8px',
-                                        color: 'rgba(255,255,255,0.95)',
-                                        cursor: 'pointer',
-                                        fontWeight: '500',
-                                        fontSize: '14px',
-                                        fontFamily: 'inherit',
-                                        gap: '8px',
-                                      }}
-                                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.28)'; }}
-                                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.15)'; }}
-                                    >
-                                      <Plus size={16} style={{ flexShrink: 0, color: 'rgba(255,255,255,0.95)' }} />
-                                      <span style={{ color: 'rgba(255,255,255,0.95)', whiteSpace: 'nowrap' }}>Adicionar cartão</span>
-                                    </button>
-                                  </div>
                                 </Card>
                               </div>
                             )}
