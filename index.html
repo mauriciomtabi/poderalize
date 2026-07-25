@@ -30,6 +30,23 @@
         adjustViewport();
         window.addEventListener('resize', adjustViewport);
         window.addEventListener('orientationchange', adjustViewport);
+
+        // Unregister any existing service workers to prevent stale cache issues
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(registration) {
+              registration.unregister();
+            });
+          });
+          // Also clear all caches
+          if ('caches' in window) {
+            caches.keys().then(function(cacheNames) {
+              cacheNames.forEach(function(cacheName) {
+                caches.delete(cacheName);
+              });
+            });
+          }
+        }
       })();
     </script>
     <meta name="description" content="Gerencie colaboradores, projetos e leads com eficiência." />
