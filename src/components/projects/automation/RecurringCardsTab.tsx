@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit, Building2, Check, ChevronsUpDown, X, CheckCircle2 } from "lucide-react";
+import { Trash2, Plus, Tag, Users, Calendar, Clock, Edit, Building2, Check, ChevronsUpDown, X, CheckCircle2, Search } from "lucide-react";
 import { useRecurringCards, RecurringCard } from "@/hooks/useRecurringCards";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useClientes } from "@/hooks/useClientes";
@@ -60,6 +60,7 @@ export const RecurringCardsTab = ({
   const { members } = useProjectMembers(boardId || undefined);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [clientePopoverOpen, setClientePopoverOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
@@ -324,6 +325,28 @@ export const RecurringCardsTab = ({
       assignee_ids: prev.assignee_ids.includes(memberId) ? prev.assignee_ids.filter(id => id !== memberId) : [...prev.assignee_ids, memberId]
     }));
   };
+
+  const filteredCards = cards.filter(card => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+
+    if (card.title.toLowerCase().includes(term)) return true;
+    if (card.description && card.description.toLowerCase().includes(term)) return true;
+
+    const config = typeof card.template_config === 'object' && card.template_config !== null ? card.template_config as Record<string, any> : {};
+    if (config.client_id) {
+      const cliente = clientes.find(c => c.id === config.client_id);
+      if (cliente && (cliente.nome.toLowerCase().includes(term) || cliente.empresa?.toLowerCase().includes(term))) {
+        return true;
+      }
+    }
+
+    const freqLabel = frequencyLabels[card.frequency]?.toLowerCase() || "";
+    if (freqLabel.includes(term)) return true;
+
+    return false;
+  });
+
   return <div className="space-y-4">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
@@ -358,6 +381,26 @@ export const RecurringCardsTab = ({
           <Plus className="h-4 w-4 mr-2" />
           Novo Card Recorrente
         </Button>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar automação por título, descrição ou cliente..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9 pr-9"
+        />
+        {searchTerm && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSearchTerm("")}
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
 
       {showForm && <Card>
@@ -652,7 +695,9 @@ export const RecurringCardsTab = ({
       <div className="space-y-3">
         {isLoading ? <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p> : cards.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
             Nenhum card recorrente criado ainda
-          </p> : cards.map(card => <Card key={card.id}>
+          </p> : filteredCards.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
+            Nenhuma automação encontrada para "{searchTerm}"
+          </p> : filteredCards.map(card => <Card key={card.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
