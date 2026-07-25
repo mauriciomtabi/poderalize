@@ -264,11 +264,11 @@ export const KanbanBoard = () => {
                         
                         <Button
                           variant="ghost"
-                          className="w-full justify-start text-muted-foreground hover:text-foreground"
+                          className="w-full justify-start text-white/90 hover:text-white bg-black/15 hover:bg-black/25 active:scale-[0.99] border border-white/20 shadow-sm font-medium transition-all flex-shrink-0 mt-2 rounded-lg py-2.5 px-3"
                           onClick={() => handleAddCard(column.id)}
                         >
-                          <Plus size={16} className="mr-2" />
-                          Adicionar cartão
+                          <Plus size={16} className="mr-2 flex-shrink-0" />
+                          <span>Adicionar cartão</span>
                         </Button>
                       </CardContent>
                     )}
