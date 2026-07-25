@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -403,11 +404,17 @@ export const RecurringCardsTab = ({
         )}
       </div>
 
-      {showForm && <Card>
-          <CardHeader>
-            <CardTitle>{editingId ? "Editar" : "Novo"} Card Recorrente</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <Dialog open={showForm} onOpenChange={(open) => {
+        if (!open) {
+          setShowForm(false);
+          setEditingId(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar" : "Novo"} Card Recorrente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="title">Título do Card</Label>
               <Input id="title" value={formData.title} onChange={e => setFormData({
@@ -678,7 +685,7 @@ export const RecurringCardsTab = ({
               
             </div>
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-end pt-2">
               <Button variant="ghost" onClick={() => {
             setShowForm(false);
             setEditingId(null);
@@ -689,8 +696,9 @@ export const RecurringCardsTab = ({
                 {editingId ? "Salvar" : "Criar"}
               </Button>
             </div>
-          </CardContent>
-        </Card>}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-3">
         {isLoading ? <p className="text-sm text-muted-foreground text-center py-8">Carregando...</p> : cards.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">
