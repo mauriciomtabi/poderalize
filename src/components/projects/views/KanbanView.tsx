@@ -322,7 +322,7 @@ export const KanbanView = () => {
                                       <CardContent
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden px-2 pb-2 ${
+                                        className={`flex-1 space-y-3 min-h-24 overflow-y-auto overflow-x-hidden px-2 ${
                                           snapshot.isDraggingOver ? "kanban-drop-zone" : ""
                                         }`}
                                       >
@@ -348,20 +348,17 @@ export const KanbanView = () => {
                                           </Draggable>
                                         ))}
                                         {provided.placeholder}
+                                        <Button
+                                          variant="ghost"
+                                          className="w-full justify-start text-white/90 hover:text-white bg-black/15 hover:bg-black/25 border border-white/20 font-medium transition-all flex-shrink-0 mt-1 rounded-lg"
+                                          onClick={() => handleAddCard(list.id)}
+                                        >
+                                          <Plus size={16} className="mr-2 flex-shrink-0" />
+                                          <span className="truncate">Adicionar cartão</span>
+                                        </Button>
                                       </CardContent>
                                     )}
                                   </Droppable>
-                                  {/* Footer pinned — always visible */}
-                                  <div className="flex-shrink-0 px-2 pb-2">
-                                    <Button
-                                      variant="ghost"
-                                      className="w-full justify-start text-white/90 hover:text-white bg-black/15 hover:bg-black/25 active:scale-[0.99] border border-white/20 shadow-sm font-medium transition-all rounded-lg py-2.5 px-3"
-                                      onClick={() => handleAddCard(list.id)}
-                                    >
-                                      <Plus size={16} className="mr-2 flex-shrink-0" />
-                                      <span>Adicionar cartão</span>
-                                    </Button>
-                                  </div>
                                 </Card>
                               </div>
                             )}
