@@ -163,8 +163,9 @@ serve(async (req) => {
           nextCreation.setDate(targetDay);
         }
 
-        // Set the time
-        nextCreation.setUTCHours(hours, minutes, 0, 0);
+        // Set the time - time_of_day is stored in BRT (UTC-3), so add 3h to convert to UTC
+        const BRT_OFFSET_HOURS = 3;
+        nextCreation.setUTCHours(hours + BRT_OFFSET_HOURS, minutes, 0, 0);
 
         // Check if next_creation_at would be after end_date
         if (recurringCard.end_date) {
