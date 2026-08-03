@@ -221,17 +221,16 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const activeBoard = boardsHook.boards.find(b => b.status === 'active');
         
         if (!activeBoard) {
-          // No active board exists, this shouldn't happen after consolidation
-          console.warn('No active board found. Creating one...');
-          setState(prev => ({ ...prev, isLoading: true }));
-          const { createInitialBoard } = await import('@/utils/projectMigration');
-          const newBoard = await createInitialBoard(user.id, user.email, user.full_name);
-          
-          if (newBoard) {
-            await boardsHook.fetchBoards();
-          } else {
-            setState(prev => ({ ...prev, isLoading: false }));
-          }
+          // SAFETY GUARD: Do NOT auto-create a board here.
+          // The real board may simply be hidden by RLS policies (e.g. user not yet
+          // added as a member). Auto-creating causes duplicate "ghost" boards that
+          // override the real one for all users.
+          console.warn(
+            'No active board visible for this user. ' +
+            'This may be an RLS membership issue — do NOT auto-create a board. ' +
+            'Add the user to project_members for the correct board in Supabase.'
+          );
+          setState(prev => ({ ...prev, isLoading: false }));
         } else if (!state.currentBoard) {
           // Load the single active board for everyone
           console.log('Loading unified board:', activeBoard.id);
