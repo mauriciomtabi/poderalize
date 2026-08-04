@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useClientes } from "@/hooks/useClientes";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 interface CardDetailModalProps {
   card?: ProjectCard;
   listId?: string;
@@ -42,6 +43,7 @@ export const CardDetailModal = ({
 }: CardDetailModalProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isAdmin } = useAuthContext();
   const {
     actions,
     state
@@ -49,12 +51,23 @@ export const CardDetailModal = ({
   
   const isCreationMode = !card;
   const { clientes } = useClientes();
+
+  // When a non-admin creates a new card, auto-assign themselves
+  const getInitialAssignees = (): Member[] => {
+    if (card) return card.assignees || [];
+    if (isAdmin) return [];
+    // Find the current user in the board member list
+    const selfMember = state.currentBoard?.members.find(
+      m => m.email === user?.email
+    );
+    return selfMember ? [selfMember] : [];
+  };
   
   const [isEditingTitle, setIsEditingTitle] = useState(isCreationMode);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [title, setTitle] = useState(card?.title || '');
   const [description, setDescription] = useState(card?.description || '');
-  const [selectedMembers, setSelectedMembers] = useState<Member[]>(card?.assignees || []);
+  const [selectedMembers, setSelectedMembers] = useState<Member[]>(getInitialAssignees);
   const [selectedLabels, setSelectedLabels] = useState<ProjectLabel[]>(card?.labels || []);
   const [selectedDueDate, setSelectedDueDate] = useState<string | undefined>(card?.dueDate);
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(card?.client_id);

@@ -520,7 +520,6 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         for (const list of lists) {
           let listCards = allCards.filter(card => card.listId === list.id);
           
-          // Apply filtering based on admin toggle and ownership
           if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
             // Admin with toggle OFF and not board owner: filter to only their cards
             listCards = listCards.filter(card => {
@@ -531,6 +530,14 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
               return isCreator || isAssigned;
             });
             console.log(`🔒 Filtered ${list.title}: ${listCards.length} cards (admin, toggle OFF)`);
+          } else if (!isAdmin && currentUser?.id) {
+            // Non-admin: always show only cards where the user is an assignee
+            listCards = listCards.filter(card =>
+              card.assignees?.some((a: any) =>
+                members.some(m => m.id === a.id && m.email === user?.email)
+              )
+            );
+            console.log(`🔒 Non-admin filtered ${list.title}: ${listCards.length} cards`);
           } else {
             console.log(`🔓 Showing all cards in ${list.title}: ${listCards.length} cards`);
           }
