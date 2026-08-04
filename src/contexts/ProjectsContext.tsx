@@ -522,21 +522,25 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           
           if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
             // Admin with toggle OFF and not board owner: filter to only their cards
+            const selfMemberAdmin = members.find((m: any) => m.user_id === currentUser.id);
             listCards = listCards.filter(card => {
               const isCreator = card.createdBy === currentUser.id;
-              const isAssigned = card.assignees?.some((a: any) => {
-                return members.some(m => m.id === a.id && m.email === user?.email);
-              });
+              const isAssigned = card.assignees?.some((a: any) => a.id === selfMemberAdmin?.id);
               return isCreator || isAssigned;
             });
             console.log(`🔒 Filtered ${list.title}: ${listCards.length} cards (admin, toggle OFF)`);
           } else if (!isAdmin && currentUser?.id) {
-            // Non-admin: always show only cards where the user is an assignee
-            listCards = listCards.filter(card =>
-              card.assignees?.some((a: any) =>
-                members.some(m => m.id === a.id && m.email === user?.email)
-              )
-            );
+            // Non-admin: always show only cards where the user is an assignee.
+            // Use user_id (auth ID) to find their project_member record, then
+            // match by member.id (project_members PK) against card assignees.
+            const selfMember = members.find((m: any) => m.user_id === currentUser.id);
+            if (selfMember) {
+              listCards = listCards.filter(card =>
+                card.assignees?.some((a: any) => a.id === selfMember.id)
+              );
+            } else {
+              listCards = []; // user has no member record on this board
+            }
             console.log(`🔒 Non-admin filtered ${list.title}: ${listCards.length} cards`);
           } else {
             console.log(`🔓 Showing all cards in ${list.title}: ${listCards.length} cards`);

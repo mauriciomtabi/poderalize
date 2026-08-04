@@ -56,9 +56,9 @@ export const CardDetailModal = ({
   const getInitialAssignees = (): Member[] => {
     if (card) return card.assignees || [];
     if (isAdmin) return [];
-    // Find the current user in the board member list
+    // Find the current user in the board member list by their auth user_id
     const selfMember = state.currentBoard?.members.find(
-      m => m.email === user?.email
+      (m: any) => m.user_id === user?.id
     );
     return selfMember ? [selfMember] : [];
   };
