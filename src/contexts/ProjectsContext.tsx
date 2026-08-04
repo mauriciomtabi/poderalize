@@ -531,17 +531,28 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
             console.log(`🔒 Filtered ${list.title}: ${listCards.length} cards (admin, toggle OFF)`);
           } else if (!isAdmin && currentUser?.id) {
             // Non-admin: always show only cards where the user is an assignee.
-            // Use user_id (auth ID) to find their project_member record, then
-            // match by member.id (project_members PK) against card assignees.
-            const selfMember = members.find((m: any) => m.user_id === currentUser.id);
+            // Strategy 1: find by user_id, but only real project_members records
+            //   (exclude synthetic fallback entry whose id === auth user id)
+            // Strategy 2: fall back to email match when user_id is null in project_members
+            const selfMember =
+              members.find((m: any) =>
+                m.user_id === currentUser.id && m.id !== currentUser.id
+              ) ||
+              members.find((m: any) =>
+                currentUser.email &&
+                m.email &&
+                m.email.toLowerCase() === currentUser.email.toLowerCase() &&
+                m.id !== currentUser.id
+              );
+
             if (selfMember) {
               listCards = listCards.filter(card =>
                 card.assignees?.some((a: any) => a.id === selfMember.id)
               );
             } else {
-              listCards = []; // user has no member record on this board
+              listCards = []; // user has no project_member record on this board
             }
-            console.log(`🔒 Non-admin filtered ${list.title}: ${listCards.length} cards`);
+            console.log(`🔒 Non-admin filtered ${list.title}: ${listCards.length} cards (selfMember: ${selfMember?.id})`);
           } else {
             console.log(`🔓 Showing all cards in ${list.title}: ${listCards.length} cards`);
           }
