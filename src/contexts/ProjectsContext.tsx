@@ -515,44 +515,53 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           listsWithCards.push(transformDBList(list, listCards));
           console.log(`🔓 Admin view: ${list.title} => ${listCards.length} cards (matched ${matchingListIds.length} lists)`);
         }
-      } else {
+        // Helper to check if a card belongs to the current user (by creation, member_id, user_id, or email)
+        const isCardForUser = (card: ProjectCard) => {
+          if (!currentUser?.id) return false;
+          if (card.createdBy === currentUser.id) return true;
+          if (!card.assignees || card.assignees.length === 0) return false;
+          
+          const normalizedEmail = currentUser.email?.toLowerCase().trim();
+          
+          return card.assignees.some((a: any) => {
+            if (a.id === currentUser.id || a.user_id === currentUser.id) return true;
+            
+            const memberInBoard = members.find((m: any) => m.id === a.id);
+            if (memberInBoard) {
+              if (memberInBoard.user_id === currentUser.id) return true;
+              if (
+                normalizedEmail &&
+                memberInBoard.email &&
+                memberInBoard.email.toLowerCase().trim() === normalizedEmail
+              ) {
+                return true;
+              }
+            }
+            
+            if (
+              normalizedEmail &&
+              a.email &&
+              a.email.toLowerCase().trim() === normalizedEmail
+            ) {
+              return true;
+            }
+            
+            return false;
+          });
+        };
+
         // Regular view: only show lists from current board
         for (const list of lists) {
           let listCards = allCards.filter(card => card.listId === list.id);
           
           if (isAdmin && !viewAllCards && currentUser?.id && !isBoardOwner) {
             // Admin with toggle OFF and not board owner: filter to only their cards
-            const selfMemberAdmin = members.find((m: any) => m.user_id === currentUser.id);
-            listCards = listCards.filter(card => {
-              const isCreator = card.createdBy === currentUser.id;
-              const isAssigned = card.assignees?.some((a: any) => a.id === selfMemberAdmin?.id);
-              return isCreator || isAssigned;
-            });
+            listCards = listCards.filter(isCardForUser);
             console.log(`🔒 Filtered ${list.title}: ${listCards.length} cards (admin, toggle OFF)`);
           } else if (!isAdmin && currentUser?.id) {
-            // Non-admin: always show only cards where the user is an assignee.
-            // Strategy 1: find by user_id, but only real project_members records
-            //   (exclude synthetic fallback entry whose id === auth user id)
-            // Strategy 2: fall back to email match when user_id is null in project_members
-            const selfMember =
-              members.find((m: any) =>
-                m.user_id === currentUser.id && m.id !== currentUser.id
-              ) ||
-              members.find((m: any) =>
-                currentUser.email &&
-                m.email &&
-                m.email.toLowerCase() === currentUser.email.toLowerCase() &&
-                m.id !== currentUser.id
-              );
-
-            if (selfMember) {
-              listCards = listCards.filter(card =>
-                card.assignees?.some((a: any) => a.id === selfMember.id)
-              );
-            } else {
-              listCards = []; // user has no project_member record on this board
-            }
-            console.log(`🔒 Non-admin filtered ${list.title}: ${listCards.length} cards (selfMember: ${selfMember?.id})`);
+            // Non-admin: always show only cards assigned to or created by them
+            listCards = listCards.filter(isCardForUser);
+            console.log(`🔒 Non-admin filtered ${list.title}: ${listCards.length} cards`);
           } else {
             console.log(`🔓 Showing all cards in ${list.title}: ${listCards.length} cards`);
           }
