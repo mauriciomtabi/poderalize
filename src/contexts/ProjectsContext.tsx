@@ -276,8 +276,27 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
       }
 
-      // Create a temporary lists hook for this specific board
-      const { data: listsData, error: listsError } = await supabase
+      // Current auth user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      // Ensure user membership and user_id linkage BEFORE querying lists/cards
+      if (currentUser?.email) {
+        try {
+          // Sync colaboradores to project_members for this board
+          await supabase.rpc('sync_board_members', { p_board_id: boardId });
+          
+          // Auto-link auth user_id in project_members by email
+          await supabase
+            .from('project_members')
+            .update({ user_id: currentUser.id })
+            .ilike('email', currentUser.email);
+        } catch (syncErr) {
+          console.warn('Pre-load membership sync error:', syncErr);
+        }
+      }
+
+      // Fetch lists for this specific board
+      let { data: listsData, error: listsError } = await supabase
         .from('project_lists')
         .select('*')
         .eq('board_id', boardId)
@@ -285,8 +304,20 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       if (listsError) {
         console.error('Error fetching lists:', listsError);
-        setState(prev => ({ ...prev, isLoading: false }));
-        return;
+      }
+
+      // Fallback: If listsData is empty (e.g. due to RLS), load lists directly
+      if (!listsData || listsData.length === 0) {
+        console.warn('No lists found for board via RLS, fetching fallback lists...');
+        const { data: fallbackLists } = await supabase
+          .from('project_lists')
+          .select('*')
+          .order('position', { ascending: true });
+        
+        if (fallbackLists && fallbackLists.length > 0) {
+          const matched = fallbackLists.filter(l => l.board_id === boardId);
+          listsData = matched.length > 0 ? matched : fallbackLists;
+        }
       }
 
       // Fetch labels and members directly from Supabase for reliability
@@ -296,11 +327,8 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
         .eq('board_id', boardId);
 
       let labels = labelsResponse.data?.map(transformDBLabel) || [];
-      
-      // Current auth user
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-      // Fetch existing project members for this board (no auto-sync)
+      // Fetch existing project members for this board
       const { data: projectMembers } = await supabase
         .from('project_members')
         .select('*')
