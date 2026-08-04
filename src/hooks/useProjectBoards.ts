@@ -23,6 +23,19 @@ export const useProjectBoards = () => {
   const fetchBoards = async () => {
     if (!user) return;
     
+    // Auto-link auth user_id in project_members if email matches but user_id is null
+    if (user.email) {
+      try {
+        await supabase
+          .from('project_members')
+          .update({ user_id: user.id })
+          .eq('email', user.email)
+          .is('user_id', null);
+      } catch (err) {
+        console.warn('Auto-link project_member error:', err);
+      }
+    }
+
     try {
       const { data, error } = await supabase
         .from('project_boards')
