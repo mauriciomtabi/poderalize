@@ -219,7 +219,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (!boardsHook.isLoading && user) {
         // Find the single active board (should be only one after consolidation)
         const activeBoard = boardsHook.boards.find(b => b.status === 'active');
-        const PRIMARY_BOARD_ID = '16e9448b-f6ea-45c4-8b4a-a1d123d19a4';
+        const PRIMARY_BOARD_ID = '16e9448b-f6ea-45c4-8b4a-a41d123d19a4';
         
         if (!activeBoard && !state.currentBoard) {
           // Fallback: Load the primary active board if RLS hid project_boards from boardsHook
