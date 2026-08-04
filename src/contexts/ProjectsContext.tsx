@@ -560,6 +560,7 @@ export const ProjectsProvider: React.FC<{ children: ReactNode }> = ({ children }
           listsWithCards.push(transformDBList(list, listCards));
           console.log(`🔓 Admin view: ${list.title} => ${listCards.length} cards (matched ${matchingListIds.length} lists)`);
         }
+      } else {
         // Helper to check if a card belongs to the current user (by creation, member_id, user_id, or email)
         const isCardForUser = (card: ProjectCard) => {
           if (!currentUser?.id) return false;
